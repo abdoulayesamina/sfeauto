@@ -7,8 +7,8 @@ export default function LoginLayout({
 }) {
   return (
     <html lang="en">
-      <body className="flex min-h-screen max-h-screen">
-        <div className="flex min-h-full bg-red-100  max-h-full items-center justify-center dark:bg-black ">
+      <body className="flex min-h-screen max-h-screen w-full">
+        <div className="w-full flex min-h-full max-h-full items-center justify-center dark:bg-black ">
           {children}
         </div>
       </body>
