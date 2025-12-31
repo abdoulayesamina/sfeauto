@@ -9,6 +9,7 @@ const adapter = new PrismaMariaDb({
   database: process.env.DATABASE_NAME,
   connectionLimit: 5
 });
+//dave
 const prisma = new PrismaClient({ adapter });
 
 export { prisma }
