@@ -1,0 +1,156 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model User {
+  id              String          @id @default(cuid())
+  email           String          @unique
+  name            String
+  role            Role
+  password        String
+  isSystemAccount Boolean         @default(false)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  clientId        String?
+  baseId          String?
+  invoicesHandled Invoice[]       @relation("InvoiceHandler")
+  statusChanges   StatusHistory[] @relation("StatusChanger")
+  changeHistory   ChangeHistory[] @relation("ChangeHistoryUser")
+  base            Base?           @relation(fields: [baseId], references: [id])
+  client          Client?         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  vehiclesHandled Vehicle[]       @relation("VehicleHandler")
+
+  @@index([email])
+  @@index([role])
+}
+
+model Client {
+  id        String    @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  bases     Base[]
+  users     User[]
+  vehicles  Vehicle[]
+
+  @@index([name])
+}
+
+model Base {
+  id        String    @id @default(cuid())
+  location  String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  clientId  String
+  client    Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  users     User[]
+  vehicles  Vehicle[]
+
+  @@index([clientId])
+  @@index([location])
+}
+
+model Vehicle {
+  id           String    @id @default(cuid())
+  licensePlate String    @unique
+  model        String?
+  brand        String?
+  year         Int?
+  color        String?
+  entryDate    DateTime  @default(now())
+  exitDate     DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  clientId     String
+  baseId       String
+  handledById  String?
+  invoices     Invoice[]
+  base         Base      @relation(fields: [baseId], references: [id], onDelete: Cascade)
+  client       Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  handledBy    User?     @relation("VehicleHandler", fields: [handledById], references: [id])
+
+  @@index([licensePlate])
+  @@index([clientId])
+  @@index([baseId])
+  @@index([handledById])
+}
+
+model Invoice {
+  id                 String          @id @default(cuid())
+  accordNumber       String?         @unique
+  dateOfConfirmation DateTime?
+  invoiceConfirmed   Boolean         @default(false)
+  status             WorkStatus      @default(CONFIRMED_IN_PLANNING)
+  statusUpdatedAt    DateTime        @default(now())
+  workDescription    String?
+  didOrderParts      Boolean         @default(false)
+  ordersDetails      String?
+  comments           String?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  vehicleId          String
+  handledById        String?
+  handledBy          User?           @relation("InvoiceHandler", fields: [handledById], references: [id])
+  vehicle            Vehicle         @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  statusHistory      StatusHistory[]
+  changeHistory      ChangeHistory[]
+
+  @@index([accordNumber])
+  @@index([vehicleId])
+  @@index([status])
+  @@index([invoiceConfirmed])
+  @@index([handledById])
+  @@index([invoiceConfirmed, status, createdAt])
+}
+
+model StatusHistory {
+  id             String     @id @default(cuid())
+  previousStatus WorkStatus
+  newStatus      WorkStatus
+  changedAt      DateTime   @default(now())
+  invoiceId      String
+  changedById    String
+  changedBy      User       @relation("StatusChanger", fields: [changedById], references: [id], onDelete: Cascade)
+  invoice        Invoice    @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@index([changedById])
+  @@index([changedAt])
+}
+
+model ChangeHistory {
+  id         String   @id @default(cuid())
+  invoiceId  String
+  invoice    Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  changedBy  String
+  user       User     @relation("ChangeHistoryUser", fields: [changedBy], references: [id])
+  changedAt  DateTime @default(now())
+  fieldName  String
+  oldValue   String?
+  newValue   String?
+  changeType String
+
+  @@index([invoiceId])
+  @@index([changedAt])
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  MECHANIC
+  CLIENT
+}
+
+enum WorkStatus {
+  CONFIRMED_IN_PLANNING
+  WAITING_FOR_PARTS
+  FIXING_STARTED
+  FIXING_FINISHED
+}
