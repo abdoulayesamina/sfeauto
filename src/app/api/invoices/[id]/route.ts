@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/src/lib/prisma";
 import { auth } from "@/auth";
-import { logError } from "@/lib/logger";
+import { logError } from "@/src/lib/logger";
 
 // PATCH /api/invoices/[id] - Update an existing invoice
 export async function PATCH(

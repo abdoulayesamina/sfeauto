@@ -4,13 +4,27 @@ import { DataTable } from "@/src/shared/components/data-table"
 import { SectionCards } from "@/src/shared/components/section-cards"
 import { SiteHeader } from "@/src/shared/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/src/shared/components/ui/sidebar"
+import { redirect } from "next/navigation"
 
 import data from "./data.json"
+import { auth } from "@/auth"
 
-export default function Page() {
+export default async function Page() {
+  const session = await auth()
+
+  if (!session) {
+    redirect("/auth/login")
+  }
+
+  const user = {
+    name: session.user.name,
+    email: session.user.email,
+    avatar: "/avatars/default.jpg",
+  }
+
   return (
     <SidebarProvider>
-      <AppSidebar variant="inset" />
+      <AppSidebar user={user} variant="inset" />
       <SidebarInset>
         <SiteHeader />
         <div className="flex flex-1 flex-col">
