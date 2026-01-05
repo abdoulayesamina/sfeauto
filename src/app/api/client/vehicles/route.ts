@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
-import { logError } from "@/lib/logger";
+import { prisma } from "@/src/lib/prisma";
+import { logError } from "@/src/lib/logger";
 
 // GET /api/client/vehicles - Get all vehicles for the logged-in client's company
 export async function GET() {
