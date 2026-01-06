@@ -15,21 +15,37 @@ import { useForm } from "react-hook-form"
 import { Loader2 } from "lucide-react"
 import Image from "next/image"
 
+import { signIn } from "next-auth/react"
+import { useRouter } from "next/navigation"
+
 type LoginForm = {
   email: string
   password: string
 }
 
-export default function LoginPage() {
+export default function LoginForm() {
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<LoginForm>()
 
-  const onSubmit = async (data: LoginForm) => {
-    console.log(data)
+  const router = useRouter()
+
+const onSubmit = async (data: LoginForm) => {
+  const res = await signIn("credentials", {
+    email: data.email,
+    password: data.password,
+    redirect: false,
+  })
+
+  if (res?.ok) {
+    router.push("/dashboard")
+  } else {
+    alert("Email ou mot de passe incorrect")
   }
+}
+
 
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
