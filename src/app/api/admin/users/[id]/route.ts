@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/src/lib/prisma'
 import bcrypt from 'bcryptjs'
-import { logError } from '@/lib/logger'
-import { validatePassword, validateEmail } from '@/lib/validators'
+import { logError } from '@/src/lib/logger'
+import { validatePassword, validateEmail } from '@/src/lib/validators'
 
 // PUT update user
 export async function PUT(
