@@ -11,104 +11,104 @@ import { useUserApi } from "./shared/useUser.api"
 import { confirmAlert, errorAlert, successAlert } from "@/src/lib/alerts"
 
 export default function UsersPage() {
-  const { getUsers, createUser ,updateUser,deleteUser} = useUserApi()
+    const { getUsers, createUser ,updateUser,deleteUser} = useUserApi()
 
-  const [users, setUsers] = useState<User[]>([])
-  const [loading, setLoading] = useState(true)
+    const [users, setUsers] = useState<User[]>([])
+    const [loading, setLoading] = useState(true)
 
-  const [isOpen, setIsOpen] = useState(false)
-  const [editOpen, setEditOpen] = useState(false)
+    const [isOpen, setIsOpen] = useState(false)
+    const [editOpen, setEditOpen] = useState(false)
 
-  const [formData, setFormData] = useState<Partial<User>>({})
-  const [userToEdit, setUserToEdit] = useState<User | null>(null)
+    const [formData, setFormData] = useState<Partial<User>>({})
+    const [userToEdit, setUserToEdit] = useState<User | null>(null)
 
-  useEffect(() => {
-    loadUsers()
-  }, [])
+    useEffect(() => {
+        loadUsers()
+    }, [])
 
-  const loadUsers = async () => {
-    setLoading(true)
-    const data = await getUsers()
-    setUsers(data)
-    setLoading(false)
-  }
+    const loadUsers = async () => {
+        setLoading(true)
+        const data = await getUsers()
+        setUsers(data)
+        setLoading(false)
+    }
 
-  const handleCreate = async () => {
-    await createUser(formData)
-    setIsOpen(false)
-    setFormData({})
-    loadUsers()
-  }
+    const handleCreate = async () => {
+        await createUser(formData)
+        setIsOpen(false)
+        setFormData({})
+        loadUsers()
+    }
 
- const handleEdit = (user: User) => {
-  setUserToEdit(user)
-
-
-  setFormData({
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-    clientId: user.clientId,
-    baseId: user.baseId,
-  })
-
-  setEditOpen(true)
-}
+    const handleEdit = (user: User) => {
+        setUserToEdit(user)
 
 
-  const handleUpdate = async () => {
-  const payload = { ...formData }
+        setFormData({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            clientId: user.clientId,
+            baseId: user.baseId,
+        })
 
-  if (!payload.password) {
-    delete payload.password
-  }
+        setEditOpen(true)
+    }
 
-  await updateUser(userToEdit!.id, payload)
 
-  setEditOpen(false)
-  setUserToEdit(null)
-  setFormData({})
-  loadUsers()
-}
+    const handleUpdate = async () => {
+        const payload = { ...formData }
 
-const handleDelete = async (user: User) => {
-  const confirmed = await confirmAlert(
-    "Confirmer la suppression",
-    `Êtes-vous sûr de vouloir supprimer "${user.name}" ?`
-  )
-  if (!confirmed) return
+        if (!payload.password) {
+            delete payload.password
+        }
 
-  try {
-    await deleteUser(user.id)
-    successAlert("Utilisateur supprimé", `"${user.name}" a été supprimé avec succès.`)
-    loadUsers()
-  } catch (err: any) {
-    errorAlert("Erreur", err.message || "Impossible de supprimer l'utilisateur")
-  }
-}
+        await updateUser(userToEdit!.id, payload)
 
-  const columns: ColumnDef<User>[] = [
-    { accessorKey: "name", header: "Nom" },
-    { accessorKey: "email", header: "Email" },
-    { accessorKey: "role", header: "Rôle" },
-    {
-      accessorKey: "client",
-      header: "Client",
-      cell: ({ row }) => row.original.client?.name || "N/A",
-    },
-    {
-      header: "Actions",
-      cell: ({ row }) => (
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => handleEdit(row.original)}>
-            Modifier
-          </Button>
-          <Button variant="destructive" onClick={() => handleDelete(row.original)}>Supprimer</Button>
-        </div>
-      ),
-    },
-  ]
+        setEditOpen(false)
+        setUserToEdit(null)
+        setFormData({})
+        loadUsers()
+    }
+
+    const handleDelete = async (user: User) => {
+        const confirmed = await confirmAlert(
+            "Confirmer la suppression",
+            `Êtes-vous sûr de vouloir supprimer "${user.name}" ?`
+        )
+        if (!confirmed) return
+
+        try {
+            await deleteUser(user.id)
+            successAlert("Utilisateur supprimé", `"${user.name}" a été supprimé avec succès.`)
+            loadUsers()
+        } catch (err: any) {
+            errorAlert("Erreur", err.message || "Impossible de supprimer l'utilisateur")
+        }
+    }
+
+    const columns: ColumnDef<User>[] = [
+        { accessorKey: "name", header: "Nom" },
+        { accessorKey: "email", header: "Email" },
+        { accessorKey: "role", header: "Rôle" },
+        {
+        accessorKey: "client",
+        header: "Client",
+        cell: ({ row }) => row.original.client?.name || "N/A",
+        },
+        {
+        header: "Actions",
+        cell: ({ row }) => (
+            <div className="flex gap-2">
+            <Button variant="outline" onClick={() => handleEdit(row.original)}>
+                Modifier
+            </Button>
+            <Button variant="destructive" onClick={() => handleDelete(row.original)}>Supprimer</Button>
+            </div>
+        ),
+        },
+    ]
 
   const tableColumns = createColumns({ columns })
 

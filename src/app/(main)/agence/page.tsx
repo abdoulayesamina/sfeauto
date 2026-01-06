@@ -86,7 +86,7 @@ export default function AgencePage() {
     return (
         <div className="p-10">
             <div className="flex justify-between items-center mb-4 px-6">
-                <span className="font-bold">Page Agences</span>
+                <span className="font-bold">Gestion agences</span>
                 <Button variant={"outline"} onClick={handleOpen}>
                     Ajouter une agence
                 </Button>

@@ -1,8 +1,11 @@
+import { Client } from "@/generated/prisma";
 import { Button } from "@/src/shared/components/ui/button";
 import { Input } from "@/src/shared/components/ui/input";
 import { Label } from "@/src/shared/components/ui/label";
 
-export function ClientForm({ onClose, onSubmit }: { onClose: () => void; onSubmit: () => void }) {
+export function ClientForm({ onClose, onSubmit, mode, data }: { onClose: () => void; onSubmit: () => void, mode : "create" | "edit", data? : Client }) {
+
+
 
     return (
         <form className="">

@@ -47,8 +47,8 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
   const navMain = [
     { title: "Tableau de bord", url: "/dashboard", icon: LayoutDashboardIcon },
     { title: "Utilisateurs", url: "/users", icon: ListIcon },
-    { title: "Agences", url: "/bases", icon: BarChartIcon },
-    { title: "Clients", url: "#", icon: FolderIcon },
+    { title: "Agences", url: "/agence", icon: BarChartIcon },
+    { title: "Clients", url: "clients", icon: FolderIcon },
     //{ title: "Team", url: "#", icon: UsersIcon },
   ]
 
