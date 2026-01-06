@@ -4,8 +4,8 @@ import { ClientForm } from "./form/client-form";
 import { Button } from "@/src/shared/components/ui/button";
 import { Modal } from "@/src/shared/components/modal";
 import { ColumnDef } from "@tanstack/react-table";
-import { Client } from "@/generated/prisma";
 import { DataTable } from "@/src/shared/components/data-table";
+import { Client } from "@/src/utils/types/client";
 
 export default function ClientPage() {
     const [isOpen, setIsOpen] = useState(false);
@@ -38,7 +38,44 @@ export default function ClientPage() {
         
     }
 
-    
+    const dataClient : Client[] = [
+        {
+            id: "cl_001",
+            name: "Abdallah Traoré",
+            email: "abdallah.traore@gmail.com",
+            phone: "+22370000001",
+            createdAt: "2025-01-02T10:15:30.000Z",
+            updatedAt: "2025-01-10T08:45:12.000Z",
+            _count: {
+            bases: 2,
+            vehicles: 5,
+            },
+        },
+        {
+            id: "cl_002",
+            name: "Moussa Diarra",
+            email: null,
+            phone: "+22370000002",
+            createdAt: "2025-01-05T14:20:00.000Z",
+            updatedAt: "2025-01-12T09:10:45.000Z",
+            _count: {
+            bases: 1,
+            vehicles: 1,
+            },
+        },
+        {
+            id: "cl_003",
+            name: "Fatou Coulibaly",
+            email: "fatou.coulibaly@gmail.com",
+            phone: null,
+            createdAt: "2025-01-08T16:30:00.000Z",
+            updatedAt: "2025-01-15T11:05:22.000Z",
+            _count: {
+                bases: 0,
+                vehicles: 3,
+            },
+        },
+    ]
 
     const columns: ColumnDef<Client>[] = [
         { accessorKey: "name", header: "Nom" },
@@ -60,14 +97,14 @@ export default function ClientPage() {
     return (
         <div className="p-10">
             <div className="flex justify-between items-center mb-4">
-                <span>Page Clients</span>
+                <span className="font-bold">Page Clients</span>
                 <Button variant={"outline"} onClick={handleOpen}>
                     Ajouter un client
                 </Button>
             </div>
 
             <div>
-                <DataTable data={} columnsProps={columns} />
+                <DataTable data={dataClient} columnsProps={columns} />
             </div>
             
             <Modal open={isOpen} modalTitle="Nouveau client" onClose={handleClose} >
