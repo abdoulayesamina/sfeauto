@@ -5,8 +5,8 @@ export const AgenceSchema = z.object({
 
   location: z.string(),
 
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
+  createdAt: z.string().datetime().optional(),
+  updatedAt: z.string().datetime().optional(),
 
   clientId: z.string(),
 
