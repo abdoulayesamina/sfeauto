@@ -38,14 +38,16 @@ type AppSidebarProps = {
     name: string
     email: string
     avatar: string
-  }
+  },
+    variant?: "inset" | "sidebar"
+
 } & React.ComponentProps<typeof Sidebar>
 
 export function AppSidebar({ user, ...props }: AppSidebarProps) {
   const navMain = [
     { title: "Tableau de bord", url: "/dashboard", icon: LayoutDashboardIcon },
-    { title: "Utilisateurs", url: "#", icon: ListIcon },
-    { title: "Agences", url: "#", icon: BarChartIcon },
+    { title: "Utilisateurs", url: "/users", icon: ListIcon },
+    { title: "Agences", url: "/agences", icon: BarChartIcon },
     { title: "Clients", url: "#", icon: FolderIcon },
     //{ title: "Team", url: "#", icon: UsersIcon },
   ]
