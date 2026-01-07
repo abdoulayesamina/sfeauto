@@ -9,12 +9,15 @@ import { Agence } from "@/src/utils/types/agence"
 import { ColumnDef } from "@tanstack/react-table"
 import { Badge } from "@/src/shared/components/ui/badge"
 import { useAgenceApi } from "./shared/useAgence.api"
+import { useClientApi } from "../clients/shared/useClient.api"
 import { confirmAlert, errorAlert, successAlert } from "@/src/lib/alerts"
 
 export default function AgencePage() {
   const { getAgences, createAgence, updateAgence, deleteAgence } = useAgenceApi()
+  const { getClients } = useClientApi()
 
   const [agences, setAgences] = useState<Agence[]>([])
+  const [clients, setClients] = useState<{ id: string; name: string }[]>([])
   const [loading, setLoading] = useState(true)
 
   const [isOpen, setIsOpen] = useState(false)
@@ -24,8 +27,18 @@ export default function AgencePage() {
   const [agenceToEdit, setAgenceToEdit] = useState<Agence | null>(null)
 
   useEffect(() => {
+    loadClients()
     loadAgences()
   }, [])
+
+  const loadClients = async () => {
+    try {
+      const data = await getClients()
+      setClients(data.map((c) => ({ id: c.id, name: c.name })))
+    } catch (e: any) {
+      errorAlert("Erreur", e.message)
+    }
+  }
 
   const loadAgences = async () => {
     setLoading(true)
@@ -58,7 +71,6 @@ export default function AgencePage() {
 
   const handleUpdate = async () => {
     if (!agenceToEdit) return
-
     try {
       await updateAgence(agenceToEdit.id, formData)
       successAlert("Agence mise à jour")
@@ -88,20 +100,12 @@ export default function AgencePage() {
   }
 
   const columns: ColumnDef<Agence>[] = [
-    {
-      accessorKey: "location",
-      header: "Emplacement",
-    },
-    {
-      header: "Client",
-      cell: ({ row }) => row.original.client?.name || "N/A",
-    },
+    { accessorKey: "location", header: "Emplacement" },
+    { header: "Client", cell: ({ row }) => row.original.client?.name || "N/A" },
     {
       header: "Véhicules",
       cell: ({ row }) => (
-        <Badge className="bg-green-200 text-green-900">
-          {row.original._count?.vehicles || 0}
-        </Badge>
+        <Badge className="bg-green-200 text-green-900">{row.original._count?.vehicles || 0}</Badge>
       ),
     },
     {
@@ -134,6 +138,9 @@ export default function AgencePage() {
       <Modal open={isOpen} modalTitle="Nouvelle agence" onClose={() => setIsOpen(false)}>
         <AgenceForm
           mode="create"
+          data={formData}
+          clients={clients}
+          onChange={setFormData}
           onClose={() => setIsOpen(false)}
           onSubmit={handleCreate}
         />
@@ -144,6 +151,8 @@ export default function AgencePage() {
         <AgenceForm
           mode="edit"
           data={formData}
+          clients={clients}
+          onChange={setFormData}
           onClose={() => setEditOpen(false)}
           onSubmit={handleUpdate}
         />
