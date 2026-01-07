@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/src/shared/components/ui/select"
+import { useEffect, useState } from "react"
 import { User } from "@/src/utils/types/user"
 
 type UserFormProps = {
@@ -18,6 +19,8 @@ type UserFormProps = {
   onChange: (data: Partial<User>) => void
   onSubmit: () => void
   onClose: () => void
+  clients: { id: string; name: string }[]
+  agences: { id: string; location: string; clientId: string }[]
 }
 
 export function UserForm({
@@ -26,6 +29,8 @@ export function UserForm({
   onChange,
   onSubmit,
   onClose,
+  clients,
+  agences,
 }: UserFormProps) {
   const roles = [
     { id: "ADMIN", name: "Administrateur" },
@@ -33,6 +38,10 @@ export function UserForm({
     { id: "MECHANIC", name: "Mécanicien" },
     { id: "CLIENT", name: "Client" },
   ]
+
+  const filteredAgences = value.clientId
+    ? agences.filter((a) => a.clientId === value.clientId)
+    : []
 
   return (
     <form
@@ -60,7 +69,6 @@ export function UserForm({
         />
       </div>
 
-      {/* 🔐 MOT DE PASSE */}
       <div>
         <Label>Mot de passe</Label>
         <Input
@@ -72,13 +80,8 @@ export function UserForm({
               ? "Mot de passe (laisser vide pour ne pas changer)"
               : "Mot de passe"
           }
-          onChange={(e) =>
-            onChange({ ...value, password: e.target.value })
-          }
+          onChange={(e) => onChange({ ...value, password: e.target.value })}
         />
-        <p className="text-xs text-muted-foreground mt-1">
-          Le mot de passe est automatiquement chiffré (bcrypt) lors de l’enregistrement.
-        </p>
       </div>
 
       <div>
@@ -100,13 +103,54 @@ export function UserForm({
         </Select>
       </div>
 
+      {value.role === "CLIENT" && (
+        <>
+          <div>
+            <Label>Client</Label>
+            <Select
+              value={value.clientId || ""}
+              onValueChange={(clientId) => onChange({ ...value, clientId, baseId: "" })}
+            >
+              <SelectTrigger className="h-12">
+                <SelectValue placeholder="Sélectionnez un client" />
+              </SelectTrigger>
+              <SelectContent>
+                {clients.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label>Agence</Label>
+            <Select
+              value={value.baseId || ""}
+              onValueChange={(baseId) => onChange({ ...value, baseId })}
+              disabled={!value.clientId}
+            >
+              <SelectTrigger className="h-12">
+                <SelectValue placeholder="Sélectionnez une agence" />
+              </SelectTrigger>
+              <SelectContent>
+                {filteredAgences.map((a) => (
+                  <SelectItem key={a.id} value={a.id}>
+                    {a.location}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </>
+      )}
+
       <div className="flex justify-end gap-3 pt-4">
         <Button type="button" variant="outline" onClick={onClose}>
           Annuler
         </Button>
-        <Button type="submit">
-          {mode === "create" ? "Créer" : "Modifier"}
-        </Button>
+        <Button type="submit">{mode === "create" ? "Créer" : "Modifier"}</Button>
       </div>
     </form>
   )
