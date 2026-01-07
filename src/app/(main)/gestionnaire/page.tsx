@@ -5,10 +5,15 @@ import { Button } from "@/src/shared/components/ui/button";
 import { Input } from "@/src/shared/components/ui/input";
 import { CarFront , Loader, CheckCircle, AlertCircle, List, DiamondPlus, ArrowLeft, PlusCircle, SearchX, CheckCircle2, Wrench, Calendar, MapPin, User, Car} from "lucide-react";
 import { useState } from "react";
-import { AddVehiculeForm } from "./form/addVehiculeForm";
+import { AddVehiculeForm } from "./form/add-vehicule-form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/shared/components/ui/select";
 import { Client } from "@/src/utils/types/client";
 import { Agence } from "@/src/utils/types/agence";
+import { Vehicule } from "@/src/utils/types/vehicule";
+import { Span } from "next/dist/trace";
+import { VehicleFilters } from "./shared/components/vehicle-filters";
+import { VehicleListAll } from "./shared/components/vehicle-list-all";
+import { VehicleListByAgence } from "./shared/components/vehicle-list-by-agence";
 
 export default function GestionnairePage(){
 
@@ -92,6 +97,36 @@ export default function GestionnairePage(){
         },
     ]
 
+    const mockVehicules: Vehicule[] = [
+        {
+            baseId: "ag_001",
+            clientId: "cl_001",
+            licensePlate: "DK-2345-AB",
+            brand: "Citroën",
+            model: "Megane",
+            year: 2025,
+            color: "Gris",
+        },
+        {
+            baseId: "ag_002",
+            clientId: "cl_002",
+            licensePlate: "BG-9087-CD",
+            brand: "Toyota",
+            model: "Hilux",
+            year: 2023,
+            color: "Blanc",
+        },
+        {
+            baseId: "ag_003",
+            clientId: "cl_003",
+            licensePlate: "AA-1122-EF",
+            brand: "Peugeot",
+            model: "308",
+            year: 2024,
+            color: "Noir",
+        },
+    ]
+
     const [openCreateVehiculeModal,setOpenCreateVehiculeModal] = useState(false);
     const handleSubmitCreate = ()=>{
         setOpenCreateVehiculeModal(false)
@@ -99,6 +134,7 @@ export default function GestionnairePage(){
     const [vehiculeNotFound, setVehiculeNotFound] = useState(false)
 
     const [apercuVehiculeOpen, setApercuVehiculeOpen] = useState(false)
+    const [filterByAllVehicule,setFilterByAllVehicule] = useState(false)
 
     return(
         <div className="h-full py-4 px-12 bg-zinc-50">
@@ -112,52 +148,11 @@ export default function GestionnairePage(){
                 </div>
                 { !vehiculeNotFound ?
                     <div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-                            <Select>
-                                <SelectTrigger className="h-16">
-                                    <SelectValue placeholder="Trier par client" />
-                                </SelectTrigger>
-
-                                <SelectContent>
-                                    {mockClients.map((client) => (
-                                    <SelectItem
-                                        key={client.id}
-                                        value={client.id}
-                                    >
-                                        {client.name}
-                                    </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <Select>
-                                <SelectTrigger className="h-16">
-                                    <SelectValue placeholder="Trier par agence" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {mockAgences.map((agence) => (
-                                    <SelectItem
-                                        key={agence.id}
-                                        value={agence.id}
-                                    >
-                                        {agence.location}
-                                    </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <Select>
-                                <SelectTrigger className="h-16">
-                                    <SelectValue placeholder="Statut du véhicule" />
-                                </SelectTrigger>
-
-                                <SelectContent>
-                                    <SelectItem value="CONFIRME">Confirmé</SelectItem>
-                                    <SelectItem value="ATTENTE_PIECES">Attente pièces</SelectItem>
-                                    <SelectItem value="EN_REPARATION">En réparation</SelectItem>
-                                    <SelectItem value="TERMINE">Terminé</SelectItem>
-                                    <SelectItem value="SANS_INTERVENTION">Sans intervention</SelectItem>
-                                </SelectContent>
-                            </Select>
+                        <div className="flex items-center gap-2 py-3">
+                            <Button variant={filterByAllVehicule ? "default" : "outline"} onClick={()=>setFilterByAllVehicule(true)}>Tous les véhicules</Button>
+                            <Button variant={filterByAllVehicule ? "outline" : "default"} onClick={()=>setFilterByAllVehicule(false)}>Par Agence</Button>
                         </div>
+                        <VehicleFilters agences={mockAgences} clients={mockClients} />
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
                             
                             <div className="min-h-[150px] bg-blue-50 border border-blue-200 shadow rounded p-2 flex flex-col">
@@ -222,33 +217,23 @@ export default function GestionnairePage(){
                                     </div>
                                 </div>
                             </div>
-                            <div className=" max-h-[500px] overflow-auto mt-4 shadow cursor-pointer">
-                                <div className="border shadow mt-4 rounded p-4 flex flex-col md:flex-col lg:flex-row lg:items-center md:justify-between gap-2"
-                                    onClick={()=>{
-                                        setApercuVehiculeOpen(true)
-                                        //initialise les data a afficher dans le modal dans un state
-                                    }}
-                                >
 
-                                    <div className="flex flex-col md:flex-row md:items-center gap-3">
-                                        <span className="font-bold text-gray-800">DDDF</span>
-                                        <span className="text-gray-500 italic">Citroen Megane (2025)</span>
-                                    </div>
-
-                                    <div className="flex flex-col md:flex-row md:items-center gap-3 text-gray-600 text-sm">
-                                        <span>Dave DI</span>
-                                        <span>· Charles de Gaulle</span>
-                                        <span>· Entrée: 17/12/2025</span>
-                                    </div>
-
-                                    <div className="flex flex-col sm:flex-row items-center gap-2 mt-2 md:mt-0">
-                                        <span className="bg-yellow-100 text-yellow-800 font-bold text-xs px-2 py-0.5 w-full sm:w-auto rounded-lg sm:rounded-full lg:text-xl">1 <span className="inline lg:hidden">en réparation</span></span>
-                                        <span className="bg-green-100 text-green-800 font-bold text-xs px-2 py-0.5 w-full sm:w-auto rounded-lg sm:rounded-full lg:text-xl">1 <span className="inline lg:hidden">terminé</span></span>
-                                        <Button className="text-sm px-3 py-1 w-full  sm:w-auto" >
-                                            <span><DiamondPlus /></span> Intervention
-                                        </Button>
-                                    </div>
-                                </div>
+                            <div className="max-h-[500px] overflow-auto mt-4 shadow">
+                                {filterByAllVehicule ? (
+                                    <VehicleListAll
+                                    vehicles={mockVehicules}
+                                    clients={mockClients}
+                                    agences={mockAgences}
+                                    onSelect={() => setApercuVehiculeOpen(true)}
+                                    />
+                                ) : (
+                                    <VehicleListByAgence
+                                    vehicles={mockVehicules}
+                                    agences={mockAgences}
+                                    clients={mockClients}
+                                    onSelect={() => setApercuVehiculeOpen(true)}
+                                    />
+                                )}
                             </div>
                         </div>
                     </div> :
@@ -360,7 +345,7 @@ export default function GestionnairePage(){
                     </div>
 
                     <div className="flex justify-center pt-2">
-                        <Button className="flex items-center gap-2">
+                        <Button className="flex items-center gap-2" >
                             <PlusCircle size={18} />
                             Nouvelle intervention
                         </Button>
