@@ -42,7 +42,6 @@ export function NavUser({ user }: NavUserProps) {
   const { isMobile } = useSidebar()
   const handleLogout = () => signOut({ callbackUrl: "/auth/login" })
 
-  // 🔹 Fallbacks pour éviter crash
   const name = user?.name ?? "Invité"
   const email = user?.email ?? ""
   const avatar = user?.avatar ?? "/avatars/default.jpg"
