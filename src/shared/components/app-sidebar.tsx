@@ -3,20 +3,12 @@
 import * as React from "react"
 import {
   ArrowUpCircleIcon,
-  BarChartIcon,
-  CameraIcon,
-  ClipboardListIcon,
-  DatabaseIcon,
-  FileCodeIcon,
-  FileIcon,
-  FileTextIcon,
-  FolderIcon,
-  HelpCircleIcon,
-  LayoutDashboardIcon,
-  ListIcon,
-  SearchIcon,
-  SettingsIcon,
-  UsersIcon,
+  LayoutDashboard,
+  Users,
+  Building2,
+  Briefcase,
+  Wrench,
+  UserCog
 } from "lucide-react"
 
 import { NavDocuments } from "@/src/shared/components/nav-documents"
@@ -45,24 +37,49 @@ type AppSidebarProps = {
 
 export function AppSidebar({ user, ...props }: AppSidebarProps) {
   const navMain = [
-    { title: "Tableau de bord", url: "/dashboard", icon: LayoutDashboardIcon },
-    { title: "Utilisateurs", url: "/users", icon: ListIcon },
-    { title: "Agences", url: "/agence", icon: BarChartIcon },
-    { title: "Clients", url: "clients", icon: FolderIcon },
-    //{ title: "Team", url: "#", icon: UsersIcon },
+    {
+      title: "Tableau de bord",
+      url: "/dashboard",
+      icon: LayoutDashboard,
+    },
+    {
+      title: "Utilisateurs",
+      url: "/users",
+      icon: Users,
+    },
+    {
+      title: "Agences",
+      url: "/agence",
+      icon: Building2,
+    },
+    {
+      title: "Clients",
+      url: "/clients",
+      icon: Briefcase,
+    },
+    {
+      title: "Gestionnaire",
+      url: "/gestionnaire",
+      icon: UserCog,
+    },
+    {
+      title: "Mécanicien",
+      url: "/mecanicien",
+      icon: Wrench,
+    },
   ]
 
-  const documents = [
-    { name: "Data Library", url: "#", icon: DatabaseIcon },
-    { name: "Reports", url: "#", icon: ClipboardListIcon },
-    { name: "Word Assistant", url: "#", icon: FileIcon },
-  ]
+  // const documents = [
+  //   { name: "Data Library", url: "#", icon: DatabaseIcon },
+  //   { name: "Reports", url: "#", icon: ClipboardListIcon },
+  //   { name: "Word Assistant", url: "#", icon: FileIcon },
+  // ]
 
-  const navSecondary = [
-    { title: "Paramètres", url: "#", icon: SettingsIcon },
-    { title: "Aide", url: "#", icon: HelpCircleIcon },
-    { title: "Recherche", url: "#", icon: SearchIcon },
-  ]
+  // const navSecondary = [
+  //   { title: "Paramètres", url: "#", icon: SettingsIcon },
+  //   { title: "Aide", url: "#", icon: HelpCircleIcon },
+  //   { title: "Recherche", url: "#", icon: SearchIcon },
+  // ]
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -84,8 +101,8 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
 
       <SidebarContent>
         <NavMain items={navMain} />
-        <NavDocuments items={documents} />
-        <NavSecondary items={navSecondary} className="mt-auto" />
+        {/* <NavDocuments items={documents} />
+        <NavSecondary items={navSecondary} className="mt-auto" /> */}
       </SidebarContent>
 
       <SidebarFooter>

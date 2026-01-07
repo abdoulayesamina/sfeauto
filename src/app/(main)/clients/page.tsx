@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ClientForm } from "./form/client-form";
 import { Button } from "@/src/shared/components/ui/button";
 import { Modal } from "@/src/shared/components/modal";
@@ -38,7 +38,7 @@ export default function ClientPage() {
         
     }
 
-    const dataClient : Client[] = [
+    const [dataClient, setDataClient] = useState<Client[]>([
         {
             id: "cl_001",
             name: "Abdallah Traoré",
@@ -75,7 +75,9 @@ export default function ClientPage() {
                 vehicles: 3,
             },
         },
-    ]
+    ])
+
+    const [dataClientSearched, setDataClientSearched] = useState<Client[]>([...dataClient])
 
     const columns: ColumnDef<Client>[] = [
         { accessorKey: "name", header: "Nom" },
@@ -92,7 +94,13 @@ export default function ClientPage() {
             </div>
         ),
         },
-    ]
+    ] 
+
+    const handleSearch = (e:string) => {
+        console.log("Value : " + e);
+        let clientSorted = dataClient.filter((c)=>c.name.toLocaleLowerCase().includes(e.toLocaleLowerCase()))
+        setDataClientSearched(clientSorted);
+    }
 
     return (
         <div className="p-10">
@@ -104,7 +112,7 @@ export default function ClientPage() {
             </div>
 
             <div>
-                <DataTable data={dataClient} columnsProps={columns} />
+                <DataTable data={dataClientSearched} columnsProps={columns} handleSearch={(e)=>handleSearch(e)}/>
             </div>
             
             <Modal open={isOpen} modalTitle="Nouveau client" onClose={handleClose} >
