@@ -1,25 +1,29 @@
-// src/app/(main)/gestionnaire/shared/useManage.api.ts
 import { Vehicule } from "@/src/utils/types/vehicule"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL + "/vehicles"
 
-
 export function useManageApi() {
-
-    const searchVehicles = async (search?: string): Promise<Vehicule[]> => {
-    const res = await fetch(
-      search ? `${API_URL}?search=${encodeURIComponent(search)}` : API_URL,
-      { method: "GET" }
-    )
+  const getVehicles = async (): Promise<Vehicule[]> => {
+    const res = await fetch(API_URL)
 
     if (!res.ok) {
       const err = await res.json()
-      throw new Error(err.error || "Erreur lors de la recherche")
+      throw new Error(err.error || "Erreur chargement véhicules")
     }
 
     return res.json()
   }
 
+  const searchVehicles = async (search: string): Promise<Vehicule[]> => {
+    const res = await fetch(`${API_URL}?search=${encodeURIComponent(search)}`)
+
+    if (!res.ok) {
+      const err = await res.json()
+      throw new Error(err.error || "Erreur recherche véhicule")
+    }
+
+    return res.json()
+  }
 
   const createVehicle = async (data: Partial<Vehicule>) => {
     const res = await fetch(API_URL, {
@@ -30,13 +34,14 @@ export function useManageApi() {
 
     if (!res.ok) {
       const err = await res.json()
-      throw new Error(err.error || "Erreur lors de la création")
+      throw new Error(err.error || "Erreur création véhicule")
     }
 
     return res.json()
   }
 
   return {
+    getVehicles,
     searchVehicles,
     createVehicle,
   }
