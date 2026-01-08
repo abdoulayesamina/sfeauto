@@ -1,9 +1,14 @@
 import { z } from "zod"
 
 export const VehiculeSchema = z.object({
+
   baseId: z
     .string()
     .min(1, "Agence obligatoire"),
+
+  id: z
+    .string()
+    .optional(),
 
   clientId: z
     .string()

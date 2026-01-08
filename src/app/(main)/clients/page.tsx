@@ -7,7 +7,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/src/shared/components/data-table";
 import { Client } from "@/src/utils/types/client";
 
-export default function ClientPage() {
+export default function ClientsPage() {
     const [isOpen, setIsOpen] = useState(false);
     const [EditOpen, setEditOpen] = useState(false);
     const [clientToEdit, setClientToEdit] = useState<Client | undefined>(undefined);

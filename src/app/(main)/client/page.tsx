@@ -19,6 +19,7 @@ import {
   Eye,
 } from "lucide-react"
 import { useState } from "react"
+import { VehicleStats } from "../gestionnaire/shared/components/vehicule-stats"
 
 const interventionsMock = [
   {
@@ -59,8 +60,13 @@ const statusStyles: Record<string, string> = {
   TERMINEE: "bg-green-100 text-green-700",
 }
 
+const statusLabel: Record<string, string> = {
+  EN_COURS: "En cours",
+  ATTENTE_PIECES: "Attente pièces",
+  TERMINEE: "Terminée",
+}
 
-export default function MecanicienPage() {
+export default function ClientPage() {
   const [filterStatus, setFilterStatus] = useState("EN_COURS")
 
   return (
@@ -69,39 +75,20 @@ export default function MecanicienPage() {
 
         <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-blue-100 text-blue-700">
-                <Wrench />
+                <User />
             </div>
-            <h1 className="text-2xl font-bold">Espace Mécanicien</h1>
+            <h1 className="text-2xl font-bold">Espace Client</h1>
         </div>
 
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex flex-col sm:flex-row gap-3">
-                <Select>
-                    <SelectTrigger className="w-full sm:w-[180px]">
-                        <SelectValue placeholder="Trier par client" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="client">Client</SelectItem>
-                    </SelectContent>
-                </Select>
-
-                <Select>
-                    <SelectTrigger className="w-full sm:w-[180px]">
-                        <SelectValue placeholder="Trier par agence" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="agence">Agence</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
-
-            <div className="flex items-center gap-2">
-                <Input placeholder="Rechercher..." className="w-full sm:w-[250px]" />
+        <div>
+            <div className="flex items-center gap-2 sm:max-w-[90%] sm:mx-auto">
+                <Input placeholder="Rechercher..." className="h-14 flex-1 " />
                 <Button size="icon" variant="outline">
                     <Search size={18} />
                 </Button>
             </div>
         </div>
+        <VehicleStats total={3} enCours={1} termine={1} sansIntervention={1} />
 
         <div className="flex gap-2">
             <Button
@@ -146,29 +133,10 @@ export default function MecanicienPage() {
                         </div>
                     </div>
 
-                    <div className="flex items-start gap-3 flex-1">
-                        <User className="text-gray-400 mt-1" />
-                        <div>
-                            <p className="font-medium">{intervention.client}</p>
-                            <p className="text-sm text-gray-500 flex items-center gap-1">
-                            <MapPin size={14} />
-                            {intervention.agence}
-                            </p>
-                        </div>
-                    </div>
-
                     <span
+                    className={`px-3 py-1 rounded-full text-sm font-medium w-fit ${statusStyles[intervention.status]}`}
                     >
-                        <Select >
-                            <SelectTrigger  className={`w-full sm:w-[180px] ${statusStyles[filterStatus]}`}>
-                                <SelectValue placeholder="Trier par agence" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="En_COURS">En Cours</SelectItem>
-                                <SelectItem value="EN_ATTENTE">En entente de pièces</SelectItem>
-                                <SelectItem value="TERMINE">Réparation terminé</SelectItem>
-                            </SelectContent>
-                        </Select>
+                        {statusLabel[intervention.status]}
                     </span>
 
                     <Button variant="outline" className="gap-2">
