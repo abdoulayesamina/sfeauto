@@ -1,109 +1,162 @@
 "use client"
 
-import { Button } from "@/src/shared/components/ui/button"; 
-import { Modal } from "@/src/shared/components/modal";
-import { useState } from "react";
-import { AgenceForm } from "./form/agence-form";
-import { createColumns, DataTable } from "@/src/shared/components/data-table";
-import { Agence } from "@/src/utils/types/agence";
-import { ColumnDef } from "@tanstack/react-table";
-import { Badge } from "@/src/shared/components/ui/badge";
+import { Button } from "@/src/shared/components/ui/button"
+import { Modal } from "@/src/shared/components/modal"
+import { useEffect, useState } from "react"
+import { AgenceForm } from "./form/agence-form"
+import { createColumns, DataTable } from "@/src/shared/components/data-table"
+import { Agence } from "@/src/utils/types/agence"
+import { ColumnDef } from "@tanstack/react-table"
+import { Badge } from "@/src/shared/components/ui/badge"
+import { useAgenceApi } from "./shared/useAgence.api"
+import { useClientApi } from "../clients/shared/useClient.api"
+import { confirmAlert, errorAlert, successAlert } from "@/src/lib/alerts"
 
 export default function AgencePage() {
-    
-    const dataMock : Agence[] = [
-        { id: "1", location: "Paris", clientId: "1", createdAt: "2023-01-01T00:00:00Z", updatedAt: "2023-01-01T00:00:00Z", client: { name: "Client A" }, _count: { vehicles: 5 } },
-        { id: "2", location: "Lyon", clientId: "2", createdAt: "2023-01-01T00:00:00Z", updatedAt: "2023-01-01T00:00:00Z", client: { name: "Client B" }, _count: { vehicles: 3 } },
-        { id: "3", location: "Marseille", clientId: "3", createdAt: "2023-01-01T00:00:00Z", updatedAt: "2023-01-01T00:00:00Z", client: { name: "Client C" }, _count: { vehicles: 8 } },
-    ];
+  const { getAgences, createAgence, updateAgence, deleteAgence } = useAgenceApi()
+  const { getClients } = useClientApi()
 
-    const [isOpen, setIsOpen] = useState(false);
-    const [EditOpen, setIsEditOpen] = useState(false);
-    const [agenceToEdit, setAgenceToEdit] = useState<Agence | undefined>(undefined);
-    const handleClose = () => {
-        setIsOpen(false);
-        setIsEditOpen(false);
+  const [agences, setAgences] = useState<Agence[]>([])
+  const [clients, setClients] = useState<{ id: string; name: string }[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const [isOpen, setIsOpen] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
+
+  const [formData, setFormData] = useState<Partial<Agence>>({})
+  const [agenceToEdit, setAgenceToEdit] = useState<Agence | null>(null)
+
+  useEffect(() => {
+    loadClients()
+    loadAgences()
+  }, [])
+
+  const loadClients = async () => {
+    try {
+      const data = await getClients()
+      setClients(data.map((c) => ({ id: c.id, name: c.name })))
+    } catch (e: any) {
+      errorAlert("Erreur", e.message)
     }
-    const handleOpen = () => {
-        setIsOpen(true);
+  }
+
+  const loadAgences = async () => {
+    setLoading(true)
+    try {
+      const data = await getAgences()
+      setAgences(data)
+    } catch (e: any) {
+      errorAlert("Erreur", e.message)
     }
-    const handleEditOpen = () => {
-        setIsEditOpen(true);
+    setLoading(false)
+  }
+
+  const handleCreate = async () => {
+    try {
+      await createAgence(formData)
+      successAlert("Agence créée")
+      setIsOpen(false)
+      setFormData({})
+      loadAgences()
+    } catch (e: any) {
+      errorAlert("Erreur", e.message)
     }
+  }
 
-    const handleSubmit = () => {
-        setIsOpen(false);
-        setIsEditOpen(false);
+  const handleEdit = (agence: Agence) => {
+    setAgenceToEdit(agence)
+    setFormData(agence)
+    setEditOpen(true)
+  }
+
+  const handleUpdate = async () => {
+    if (!agenceToEdit) return
+    try {
+      await updateAgence(agenceToEdit.id, formData)
+      successAlert("Agence mise à jour")
+      setEditOpen(false)
+      setAgenceToEdit(null)
+      setFormData({})
+      loadAgences()
+    } catch (e: any) {
+      errorAlert("Erreur", e.message)
     }
+  }
 
-    const handleModify = (rowData: any) => {
-        console.log("Modify", rowData);
-        setAgenceToEdit(rowData);
-        handleEditOpen();
+  const handleDelete = async (agence: Agence) => {
+    const confirmed = await confirmAlert(
+      "Supprimer l’agence",
+      `Supprimer "${agence.location}" ?`
+    )
+    if (!confirmed) return
+
+    try {
+      await deleteAgence(agence.id)
+      successAlert("Agence supprimée")
+      loadAgences()
+    } catch (e: any) {
+      errorAlert("Suppression impossible", e.message)
     }
+  }
 
-    const handleDelete = (rowData: any) => {
-        console.log("Delete", rowData);
-    }
-
-
-    const columns : ColumnDef<any>[] = [
-        { 
-            accessorKey: 'emplacement',
-            header: 'Emplacement',
-            cell: ({ row }) => (
-            <div className="font-medium">{row.original.location}</div>
-            ),
-        },
-
-        { 
-            accessorKey: 'client',
-            header: 'Client',
-            cell: ({ row }) => (
-            <div className="text-sm text-gray-500">{row.original.client?.name || "N/A"}</div>
-            ),
-        },
-        { 
-            accessorKey: 'vehicules',
-            header: 'Véhicules',
-            cell: ({ row }) => (
-            <div><Badge className="bg-green-200 text-green-1000">{row.original._count?.vehicles || 0}</Badge></div>
-            ),
-        },
-        { 
-            accessorKey: 'Actions',
-            header: 'Actions',
-            cell: ({ row }) => (
-            <div className="flex gap-2 items-center justify-start">
-                <Button variant={"outline"} onClick={() => handleModify(row.original)}>Modifier</Button>
-                <Button variant={"destructive"} onClick={() => handleDelete(row.original)}>Suprimmer</Button>
-            </div>
-            ),
-        },
-    ]
-    const tableColumns = createColumns({columns});
-
-    return (
-        <div className="p-10">
-            <div className="flex justify-between items-center mb-4 px-6">
-                <span className="font-bold">Gestion agences</span>
-                <Button variant={"outline"} onClick={handleOpen}>
-                    Ajouter une agence
-                </Button>
-            </div>
-            <div>
-                <DataTable data={dataMock} columnsProps={tableColumns} />
-            </div>
-            <Modal open={isOpen} modalTitle="Nouvelle agence" onClose={handleClose} >
-                <div>
-                    <AgenceForm mode="create" onClose={handleClose} onSubmit={handleSubmit} />
-                </div>
-            </Modal>
-            <Modal open={EditOpen} modalTitle="Modifier une agence" onClose={handleClose} >
-                <div>
-                    <AgenceForm mode="edit" data={agenceToEdit} onClose={handleClose} onSubmit={handleSubmit} />
-                </div>
-            </Modal>
+  const columns: ColumnDef<Agence>[] = [
+    { accessorKey: "location", header: "Emplacement" },
+    { header: "Client", cell: ({ row }) => row.original.client?.name || "N/A" },
+    {
+      header: "Véhicules",
+      cell: ({ row }) => (
+        <Badge className="bg-green-200 text-green-900">{row.original._count?.vehicles || 0}</Badge>
+      ),
+    },
+    {
+      header: "Actions",
+      cell: ({ row }) => (
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => handleEdit(row.original)}>
+            Modifier
+          </Button>
+          <Button variant="destructive" onClick={() => handleDelete(row.original)}>
+            Supprimer
+          </Button>
         </div>
-    );
+      ),
+    },
+  ]
+
+  const tableColumns = createColumns({ columns })
+
+  return (
+    <div className="p-10">
+      <div className="flex justify-between mb-6">
+        <h2 className="font-bold">Gestion des agences</h2>
+        <Button onClick={() => setIsOpen(true)}>Ajouter une agence</Button>
+      </div>
+
+      {!loading && <DataTable data={agences} columnsProps={tableColumns} />}
+
+      {/* CREATE */}
+      <Modal open={isOpen} modalTitle="Nouvelle agence" onClose={() => setIsOpen(false)}>
+        <AgenceForm
+          mode="create"
+          data={formData}
+          clients={clients}
+          onChange={setFormData}
+          onClose={() => setIsOpen(false)}
+          onSubmit={handleCreate}
+        />
+      </Modal>
+
+      {/* EDIT */}
+      <Modal open={editOpen} modalTitle="Modifier agence" onClose={() => setEditOpen(false)}>
+        <AgenceForm
+          mode="edit"
+          data={formData}
+          clients={clients}
+          onChange={setFormData}
+          onClose={() => setEditOpen(false)}
+          onSubmit={handleUpdate}
+        />
+      </Modal>
+    </div>
+  )
 }

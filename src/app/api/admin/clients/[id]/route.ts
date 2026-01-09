@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { prisma } from '@/lib/prisma'
-import { logError } from '@/lib/logger'
+import { prisma } from '@/src/lib/prisma'
+import { logError } from '@/src/lib/logger'
 
 // PUT update client
 export async function PUT(

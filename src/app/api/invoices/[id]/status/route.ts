@@ -1,10 +1,11 @@
+// src/app/api/invoices/[id]/status/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { prisma } from '@/src/lib/prisma'
-import { WorkStatus } from '@prisma/client'
+import { prisma } from '@/src/lib/prisma'  // ton import correct
+import { WorkStatus } from '@/generated/prisma'
 import { logError } from '@/src/lib/logger'
 
-// Status transition validation
+// Validation des transitions de statut
 function isValidStatusTransition(currentStatus: WorkStatus, newStatus: WorkStatus): boolean {
   const forward: Record<WorkStatus, WorkStatus[]> = {
     CONFIRMED_IN_PLANNING: ['WAITING_FOR_PARTS', 'FIXING_STARTED', 'FIXING_FINISHED'],
@@ -13,9 +14,7 @@ function isValidStatusTransition(currentStatus: WorkStatus, newStatus: WorkStatu
     FIXING_FINISHED: []
   }
 
-  // Allow staying at same status
   if (currentStatus === newStatus) return true
-
   return forward[currentStatus]?.includes(newStatus) || false
 }
 
@@ -25,16 +24,16 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params
-    const session = await auth()
+    console.log("[PATCH /status] Called with invoiceId:", id)
 
+    const session = await auth()
     if (!session?.user) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
     }
 
-    // Only mechanics and admins can update status
     if (session.user.role !== 'MECHANIC' && session.user.role !== 'ADMIN') {
       return NextResponse.json(
-        { error: 'Seuls les mécaniciens peuvent modifier le statut des travaux' },
+        { error: 'Seuls les mécaniciens ou admins peuvent modifier le statut' },
         { status: 403 }
       )
     }
@@ -49,28 +48,29 @@ export async function PATCH(
       )
     }
 
-    // Get current invoice
+    // On récupère l'intervention
     const invoice = await prisma.invoice.findUnique({
       where: { id },
       include: {
         vehicle: {
           include: {
-            base: {
-              select: { location: true }
-            }
+            client: { select: { id: true, name: true } },
+            base: { select: { id: true, location: true } }
           }
-        }
+        },
+        handledBy: { select: { id: true, name: true } },
+        statusHistory: { include: { changedBy: { select: { name: true } } }, orderBy: { changedAt: 'asc' } }
       }
     })
 
     if (!invoice) {
+      console.log("[PATCH /status] Invoice not found for id:", id)
       return NextResponse.json(
-        { error: 'Intervention non trouvée' },
+        { error: `Aucune intervention trouvée avec l'id ${id}` },
         { status: 404 }
       )
     }
 
-    // Block status updates for unapproved interventions
     if (!invoice.invoiceConfirmed) {
       return NextResponse.json(
         { error: 'Impossible de modifier le statut d\'une intervention non approuvée' },
@@ -78,7 +78,6 @@ export async function PATCH(
       )
     }
 
-    // Validate status transition
     if (!isValidStatusTransition(invoice.status, newStatus)) {
       return NextResponse.json(
         { error: `Transition de statut invalide de ${invoice.status} vers ${newStatus}` },
@@ -86,24 +85,21 @@ export async function PATCH(
       )
     }
 
-    // Only create history if status actually changed
     const statusChanged = invoice.status !== newStatus
 
-    // Fast write-only transaction - minimal lock time for better concurrency
+    // Transaction rapide
     await prisma.$transaction(async (tx) => {
-      // Create status history record (if status changed)
       if (statusChanged) {
         await tx.statusHistory.create({
           data: {
             invoiceId: id,
             previousStatus: invoice.status,
-            newStatus: newStatus,
+            newStatus,
             changedById: session.user.id
           }
         })
       }
 
-      // Update invoice status (no includes to keep transaction fast)
       await tx.invoice.update({
         where: { id },
         data: {
@@ -113,33 +109,20 @@ export async function PATCH(
       })
     })
 
-    // Fetch updated invoice with all relations OUTSIDE transaction
-    // This keeps transaction lock time minimal and improves performance
+    // Fetch mise à jour pour retourner au client
     const updated = await prisma.invoice.findUnique({
       where: { id },
       include: {
         vehicle: {
           include: {
-            client: {
-              select: { id: true, name: true }
-            },
-            base: {
-              select: { id: true, location: true }
-            }
+            client: { select: { id: true, name: true } },
+            base: { select: { id: true, location: true } }
           }
         },
-        handledBy: {
-          select: { name: true, email: true }
-        },
+        handledBy: { select: { id: true, name: true, email: true } },
         statusHistory: {
-          include: {
-            changedBy: {
-              select: { name: true }
-            }
-          },
-          orderBy: {
-            changedAt: 'asc'
-          }
+          include: { changedBy: { select: { name: true } } },
+          orderBy: { changedAt: 'asc' }
         }
       }
     })
@@ -151,11 +134,10 @@ export async function PATCH(
       )
     }
 
-    // Serialize for client (no extra fetch needed!)
     const serialized = {
       id: updated.id,
-      accordNumber: updated.accordNumber!,
-      dateOfConfirmation: updated.dateOfConfirmation!.toISOString(),
+      accordNumber: updated.accordNumber,
+      dateOfConfirmation: updated.dateOfConfirmation?.toISOString(),
       status: updated.status,
       statusUpdatedAt: updated.statusUpdatedAt.toISOString(),
       workDescription: updated.workDescription,
@@ -185,10 +167,11 @@ export async function PATCH(
 
     return NextResponse.json(serialized)
 
-  } catch (error) {
+  } catch (error: any) {
     logError('Failed to update invoice status', error)
+    console.error("[PATCH /status] Error:", error)
     return NextResponse.json(
-      { error: 'Échec de la mise à jour du statut' },
+      { error: 'Erreur serveur inconnue' },
       { status: 500 }
     )
   }

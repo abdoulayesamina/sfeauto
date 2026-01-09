@@ -23,6 +23,7 @@ export default async function MainLayout({
     name: session.user?.name ?? "Invité",
     email: session.user?.email ?? "",
     avatar: session.user?.image ?? "/avatars/default.jpg",
+    role: session.user.role,
   }
 
   return (

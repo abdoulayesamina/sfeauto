@@ -10,12 +10,11 @@ export function VehicleListByAgence({
     <>
       {agences.map((agence: any) => {
         const vehiculesAgence = vehicles.filter(
-          (v: any) => v.baseId === agence.id
+          (v: any) => v.base?.id === agence.id
         )
 
         return (
           <div key={agence.id} className="mt-8 border rounded">
-
             <div className="mb-3 flex items-center gap-2 p-2">
               <span className="text-lg font-semibold">
                 {agence.location}
@@ -28,7 +27,7 @@ export function VehicleListByAgence({
             {vehiculesAgence.length > 0 ? (
               vehiculesAgence.map((v: any) => (
                 <VehicleItem
-                  key={v.licensePlate}
+                  key={v.id}
                   vehicle={v}
                   clients={clients}
                   compact
@@ -40,7 +39,6 @@ export function VehicleListByAgence({
                 Aucun véhicule pour cette agence
               </div>
             )}
-
           </div>
         )
       })}
