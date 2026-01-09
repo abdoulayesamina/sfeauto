@@ -7,12 +7,15 @@ import { logError } from "@/src/lib/logger";
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
-    
+
     if (!session || session.user.role !== "MANAGER") {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
     const body = await request.json();
+
+    console.log("[API /invoices] Body reçu :", body);
+
     const {
       vehicleId,
       accordNumber,
@@ -23,6 +26,12 @@ export async function POST(request: NextRequest) {
       comments,
     } = body;
 
+    console.log("[API /invoices] vehicleId :", vehicleId);
+    console.log("[API /invoices] accordNumber :", accordNumber);
+    console.log("[API /invoices] dateOfConfirmation :", dateOfConfirmation);
+    console.log("[API /invoices] didOrderParts :", didOrderParts);
+    console.log("[API /invoices] session.user.id :", session.user?.id);
+
     // Validate required fields
     if (!vehicleId) {
       return NextResponse.json(
@@ -31,11 +40,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Determine if this is an approved or unapproved intervention
+    // Calcul correct de invoiceConfirmed (Boolean)
     const hasAccordNumber = accordNumber && accordNumber.trim().length > 0;
-    const invoiceConfirmed = hasAccordNumber && dateOfConfirmation;
+    const invoiceConfirmed = hasAccordNumber && !!dateOfConfirmation;
 
-    // Date of confirmation cannot be in the future (only validate if provided)
+    // Validate dateOfConfirmation (si fournie)
     if (dateOfConfirmation) {
       const confirmationDate = new Date(dateOfConfirmation);
       const today = new Date();
@@ -48,15 +57,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create invoice - auto-set status to WAITING_FOR_PARTS if parts ordered AND approved
-    // Vehicle existence validated by FK constraint (caught below)
+    // Création de l'invoice
     const invoice = await prisma.invoice.create({
       data: {
         vehicleId,
         accordNumber: hasAccordNumber ? accordNumber : null,
         dateOfConfirmation: dateOfConfirmation ? new Date(dateOfConfirmation) : null,
-        invoiceConfirmed, // Conditional based on accord number and date presence
-        status: invoiceConfirmed && didOrderParts ? 'WAITING_FOR_PARTS' : 'CONFIRMED_IN_PLANNING',
+        invoiceConfirmed,  
+        status:
+          invoiceConfirmed && didOrderParts
+            ? "WAITING_FOR_PARTS"
+            : "CONFIRMED_IN_PLANNING",
         workDescription,
         didOrderParts: didOrderParts || false,
         ordersDetails,
@@ -79,12 +90,14 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Create change history entry for creation
+    console.log("[API /invoices] Invoice créée :", invoice);
+
+    // Historique de changement
     await prisma.changeHistory.create({
       data: {
         invoiceId: invoice.id,
         changedBy: session.user.id,
-        fieldName: 'created',
+        fieldName: "created",
         newValue: JSON.stringify({
           invoiceConfirmed,
           accordNumber: accordNumber || null,
@@ -92,17 +105,17 @@ export async function POST(request: NextRequest) {
           workDescription: workDescription || null,
           didOrderParts: didOrderParts || false,
         }),
-        changeType: 'created',
+        changeType: "created",
       },
     });
 
-    // If parts were ordered AND intervention is approved, create a StatusHistory entry
+    // Historique de status si pièces commandées
     if (invoiceConfirmed && didOrderParts) {
       await prisma.statusHistory.create({
         data: {
           invoiceId: invoice.id,
-          previousStatus: 'CONFIRMED_IN_PLANNING',
-          newStatus: 'WAITING_FOR_PARTS',
+          previousStatus: "CONFIRMED_IN_PLANNING",
+          newStatus: "WAITING_FOR_PARTS",
           changedById: session.user.id,
         },
       });
@@ -110,13 +123,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(invoice, { status: 201 });
   } catch (error: any) {
-    // Handle FK constraint error (invalid vehicleId)
-    if (error.code === 'P2003') {
-      logError('Failed to create invoice - invalid vehicle', error);
-      return NextResponse.json({ error: 'Véhicule invalide' }, { status: 400 });
+    // FK constraint (véhicule invalide)
+    if (error.code === "P2003") {
+      logError("Failed to create invoice - invalid vehicle", error);
+      return NextResponse.json({ error: "Véhicule invalide" }, { status: 400 });
     }
 
-    logError('Failed to create invoice', error);
+    logError("Failed to create invoice", error);
     return NextResponse.json(
       { error: "Échec de la création de l'intervention" },
       { status: 500 }
