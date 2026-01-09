@@ -120,18 +120,18 @@ export default function MecanicienPage() {
 
                 {/* Statut (modifiable) */}
                 <Select
-  defaultValue={uiStatus}
-  onValueChange={async (val) => {
-    const success = await updateStatus(inv.id, val as any)
-    if (!success) return alert(statusError || "Impossible de mettre à jour le statut")
+          defaultValue={uiStatus}
+          onValueChange={async (val) => {
+            const success = await updateStatus(inv.id, val as any)
+            if (!success) return alert(statusError || "Impossible de mettre à jour le statut")
 
-    // ✅ Mise à jour locale pour ne pas recharger la page
-    setInterventions(prev =>
-      prev.map(item =>
-        item.id === inv.id ? { ...item, status: Object.keys(STATUS_UI_MAP).find(key => STATUS_UI_MAP[key] === val) || item.status } : item
-      )
-    )
-  }}
+            // ✅ Mise à jour locale pour ne pas recharger la page
+            setInterventions(prev =>
+              prev.map(item =>
+                item.id === inv.id ? { ...item, status: Object.keys(STATUS_UI_MAP).find(key => STATUS_UI_MAP[key] === val) || item.status } : item
+              )
+            )
+          }}
 >
 
                   <SelectTrigger className={`w-[180px] ${statusStyles[uiStatus]}`}>
