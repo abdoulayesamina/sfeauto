@@ -16,7 +16,7 @@ export function Modal({open, modalTitle, modalDescription, children, onClose }: 
 
     return (
         <Dialog open={open} >
-            <DialogContent >
+            <DialogContent className="max-h-[90%] overflow-auto" >
                 <DialogHeader className="relative">
                     <Button
                         onClick={onClose}

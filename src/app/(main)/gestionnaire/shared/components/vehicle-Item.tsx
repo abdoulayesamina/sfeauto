@@ -66,7 +66,7 @@ export function VehicleItem({
         </Button>
       </div>
 
-      <Modal open={interventionModalOpen} onClose={()=>setInterventionModalOpen(false)} >
+      <Modal open={interventionModalOpen} onClose={()=>setInterventionModalOpen(false)} modalTitle="Créer une intervention" >
             <InterventionForm onSubmit={()=>setInterventionModalOpen(false)} onClose={()=>setInterventionModalOpen(false)}/>
       </Modal>
 

@@ -191,7 +191,6 @@ export default function GestionnairePage(){
                         termine={1}
                         onNewIntervention={() => console.log("Nouvelle intervention")}
                     />
-
                 </div>
             </Modal>
         </div>
