@@ -1,6 +1,9 @@
+"use client"
+
 import React from "react"
 import { Car, User, MapPin, Wrench } from "lucide-react"
 import { Button } from "@/src/shared/components/ui/button"
+import { useHistoryStatus } from "../useHistoryStatus.api"
 
 type Props = {
   selectedIntervention: any
@@ -20,6 +23,14 @@ export default function InterventionDetail({
   getStatusMeta,
   translateStatus,
 }: Props) {
+  const invoiceId = selectedIntervention?.id
+
+  const {
+    history,
+    loading,
+    error,
+  } = useHistoryStatus(invoiceId)
+
   return (
     <div className="space-y-6 md:w-[600px]">
                     
@@ -123,35 +134,48 @@ export default function InterventionDetail({
             </p>
         </div>
 
-        <div className="rounded-xl border p-4">
-            <p className="font-semibold mb-4">Historique des statuts</p>
+       {/* HISTORIQUE */}
+      <div className="rounded-xl border p-4">
+        <p className="font-semibold mb-4">Historique des statuts</p>
 
-            <div className="space-y-4">
-            {selectedIntervention?.statusHistory.map((h: any, idx: number) => (
-                <div key={idx} className="flex gap-4">
-                <div className="flex flex-col items-center">
-                    <div className="w-3 h-3 rounded-full bg-blue-500 mt-1" />
-                    <div className="flex-1 w-px bg-gray-300" />
-                </div>
+        {loading && <p className="text-sm text-gray-500">Chargement...</p>}
+        {error && <p className="text-sm text-red-500">{error}</p>}
 
-                <div className="flex-1 pb-4">
-                    <p className="text-sm font-medium">
-                    {translateStatus(h.previousStatus)} →{" "}
-                    <span className="text-blue-600">
-                        {translateStatus(h.newStatus)}
-                    </span>
-                    </p>
-                    <p className="text-xs text-gray-500">
-                    {new Date(h.changedAt).toLocaleString("fr-FR")}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                    Modifié par <span className="font-medium">{h.changedBy.name}</span>
-                    </p>
-                </div>
-                </div>
-            ))}
+        {!loading && history.length === 0 && (
+          <p className="text-sm text-gray-400">Aucun historique disponible</p>
+        )}
+
+        <div className="space-y-4">
+          {history.map((h: any, idx: number) => (
+            <div key={idx} className="flex gap-4">
+              <div className="flex flex-col items-center">
+                <div className="w-3 h-3 rounded-full bg-blue-500 mt-1" />
+                {idx < history.length - 1 && (
+                  <div className="flex-1 w-px bg-gray-300" />
+                )}
+              </div>
+
+              <div className="flex-1 pb-4">
+                <p className="text-sm font-medium">
+                  {translateStatus(h.previousStatus)} →{" "}
+                  <span className="text-blue-600">
+                    {translateStatus(h.newStatus)}
+                  </span>
+                </p>
+                <p className="text-xs text-gray-500">
+                  {new Date(h.changedAt).toLocaleString("fr-FR")}
+                </p>
+                <p className="text-xs text-gray-500">
+                  Modifié par{" "}
+                  <span className="font-medium">
+                    {h.changedBy?.name || "Système"}
+                  </span>
+                </p>
+              </div>
             </div>
+          ))}
         </div>
+      </div>
 
         <div className="rounded-xl border p-4 bg-zinc-50">
             <p className="font-semibold mb-2">Informations</p>
