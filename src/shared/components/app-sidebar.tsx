@@ -107,7 +107,7 @@ const filteredNav = navMain.filter(item =>
             >
               <a href="#">
                 <ArrowUpCircleIcon className="h-5 w-5" />
-                <span className="text-base font-semibold">Acme Inc.</span>
+                <span className="text-base font-semibold">SFE Auto</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
