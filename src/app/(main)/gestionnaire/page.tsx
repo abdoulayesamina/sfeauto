@@ -17,6 +17,7 @@ import { VehiclePreview } from "./shared/components/vehicle-apercu"
 import { errorAlert, successAlert } from "@/src/lib/alerts"
 
 export default function GestionnairePage() {
+    //ggh
   const { getVehicles, searchVehicles, createVehicle } = useManageApi()
   const { getClients } = useClientApi()
   const { getAgences } = useAgenceApi()
