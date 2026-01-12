@@ -15,8 +15,8 @@ type ModalProps = {
 export function Modal({open, modalTitle, modalDescription, children, onClose }: ModalProps) {
 
     return (
-        <Dialog open={open} >
-            <DialogContent className="max-h-[90%] overflow-auto" >
+        <Dialog open={open}>
+            <DialogContent className="max-h-[90%] overflow-auto w-full max-w-[600px]" >
                 <DialogHeader className="relative">
                     <Button
                         onClick={onClose}

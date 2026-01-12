@@ -8,7 +8,8 @@ import {
   Building2,
   Briefcase,
   Wrench,
-  UserCog
+  UserCog,
+  User
 } from "lucide-react"
 
 import { NavDocuments } from "@/src/shared/components/nav-documents"
@@ -78,6 +79,12 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       icon: Wrench,
             roles:["MECHANIC"],
 
+    },
+    {
+      title: "Client",
+      url: "/client",
+      icon: User,
+      roles:["CLIENT"],
     },
   ]
 

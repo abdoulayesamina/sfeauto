@@ -102,7 +102,7 @@ export function VehicleItem({
       </div>
 
       {/* Modal intervention */}
-      <Modal open={interventionModalOpen} onClose={() => setInterventionModalOpen(false)}>
+      <Modal open={interventionModalOpen} onClose={() => setInterventionModalOpen(false)} modalTitle="Créer une intervention">
         <InterventionForm
           vehicleDisplayText={`${vehicle.licensePlate} - ${vehicle.brand} ${vehicle.model}`}
           defaultAccordNumber="ACC-2026-001"

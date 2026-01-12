@@ -5,6 +5,7 @@ import { Button } from "@/src/shared/components/ui/button"
 import { Input } from "@/src/shared/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/shared/components/ui/select"
 import { Car, Calendar, User, MapPin, Eye, Wrench, Search, AlertTriangle, XCircle, CheckCircle2, Clock } from "lucide-react"
+import { Car, Calendar, User, MapPin, Eye, Wrench, Search, AlertTriangle, XCircle, CheckCircle2, Clock } from "lucide-react"
 import { useBases } from "./shared/useBases.api"
 import { useStatusInt } from "./shared/useStatusInt.api"
 import { useInterventions } from "./shared/useinterventions.api"
@@ -35,7 +36,6 @@ export const getStatusMeta = (status?: string) => {
             color: "text-blue-700",
             bg: "bg-blue-100",
         }
-
         case "WAITING_FOR_PARTS":
         return {
             label: "En attente de pièces",
@@ -43,7 +43,6 @@ export const getStatusMeta = (status?: string) => {
             color: "text-orange-700",
             bg: "bg-orange-100",
         }
-
         case "FIXING_DONE":
         return {
             label: "Réparation terminée",
@@ -51,7 +50,6 @@ export const getStatusMeta = (status?: string) => {
             color: "text-green-700",
             bg: "bg-green-100",
         }
-
         case "CANCELLED":
         return {
             label: "Annulée",
@@ -59,7 +57,6 @@ export const getStatusMeta = (status?: string) => {
             color: "text-red-700",
             bg: "bg-red-100",
         }
-
         default:
         return {
             label: "Statut inconnu",
