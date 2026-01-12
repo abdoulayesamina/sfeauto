@@ -24,8 +24,8 @@ import { useState } from "react"
 import { VehicleStats } from "../gestionnaire/shared/components/vehicule-stats"
 import { Intervention } from "@/src/utils/types/intervention"
 import { Modal } from "@/src/shared/components/modal"
-import { getStatusMeta, interventionsMock, statusStyles, translateStatus } from "../mecanicien/page"
 import InterventionDetail from "../mecanicien/shared/components/intervention-detail"
+import { getStatusMeta, statusStyles, translateStatus } from "../mecanicien/page"
 
 const mockVehicule = {
   baseId: "base_001",
@@ -38,74 +38,142 @@ const mockVehicule = {
   color: "Noir",
 }
 
-// const interventionsMock: Intervention[] = [
-//   {
-//     id: "int_001",
-//     accordNumber: "ACC-2024-001",
-//     dateOfConfirmation: "2024-06-01T10:00:00Z",
-//     status: "TERMINEE",
-//     statusUpdatedAt: "2024-06-01T10:00:00Z",
-//     workDescription: "Vidange moteur et remplacement du filtre à huile",
-//     didOrderParts: false,
-//     ordersDetails: null,
-//     comments: null,
-//     createdAt: "2024-05-31T16:30:00Z",
+export const interventionsMock = [
+    {
+      "id": "cmja5d8su0007l804r8kzkupv",
+      "accordNumber": "ACCBGH",
+      "dateOfConfirmation": "2025-12-17T00:00:00.000Z",
+      "status": "FIXING_STARTED",
+      "statusUpdatedAt": "2026-01-07T14:28:29.247Z",
+      "workDescription": "fdgfdf",
+      "didOrderParts": false,
+      "ordersDetails": null,
+      "comments": null,
+      "createdAt": "2025-12-17T15:09:12.177Z",
+      "vehicle": {
+          "id": "cmja56dk40001l804jjm8wyif",
+          "licensePlate": "DDDF",
+          "brand": "Citroen ",
+          "model": "Megane",
+          "year": 2025,
+          "color": "gris",
+          "client": {
+              "id": "cmj9wlor80002kz04kgiwopk7",
+              "name": "Dave DI"
+          },
+          "base": {
+              "id": "cmj9wlzva0005jm04b2v5y7t7",
+              "location": "Charles de gaule"
+          }
+      },
+      "handledBy": {
+          "name": "Dembélé Dave",
+          "email": "david.dembele@samina.tech"
+      },
+      "statusHistory": [
+        {
+            "id": "cmja5f0jd0001l804v261ojak",
+            "previousStatus": "CONFIRMED_IN_PLANNING",
+            "newStatus": "FIXING_STARTED",
+            "changedAt": "2025-12-17T15:10:34.873Z",
+            "changedBy": {
+                "name": "Cissé abdoulaye"
+            }
+        },
+        {
+            "id": "cmjb9vhze0001l504z8u89n5e",
+            "previousStatus": "FIXING_STARTED",
+            "newStatus": "WAITING_FOR_PARTS",
+            "changedAt": "2025-12-18T10:03:08.618Z",
+            "changedBy": {
+                "name": "Cissé abdoulaye"
+            }
+        },
+        {
+            "id": "cmjb9wb4d0003l5047lug22fo",
+            "previousStatus": "WAITING_FOR_PARTS",
+            "newStatus": "FIXING_STARTED",
+            "changedAt": "2025-12-18T10:03:46.382Z",
+            "changedBy": {
+                "name": "Cissé abdoulaye"
+            }
+        },
+        {
+            "id": "cmjbabhpn0005l504ho8ev5om",
+            "previousStatus": "FIXING_STARTED",
+            "newStatus": "WAITING_FOR_PARTS",
+            "changedAt": "2025-12-18T10:15:34.764Z",
+            "changedBy": {
+                "name": "Cissé abdoulaye"
 
-//     vehicle: mockVehicule,
-
-//     handledBy: {
-//       location: "Agence Bamako Centre",
-//     },
-
-//     statusHistory: [],
-//   },
-//   {
-//     id: "int_002",
-//     accordNumber: "ACC-2024-002",
-//     dateOfConfirmation: "2024-08-15T09:15:00Z",
-//     status: "EN_COURS",
-//     statusUpdatedAt: "2024-08-16T11:45:00Z",
-//     workDescription: "Changement plaquettes de frein avant",
-//     didOrderParts: true,
-//     ordersDetails: {
-//       supplier: "AutoParts Mali",
-//       reference: "BRK-PLA-789",
-//     },
-//     comments: "Client demande un contrôle général",
-//     createdAt: "2024-08-14T14:10:00Z",
-
-//     vehicle: mockVehicule,
-
-//     handledBy: {
-//       location: "Agence Bamako Centre",
-//     },
-
-//     statusHistory: [],
-//   },
-//   {
-//     id: "int_003",
-//     accordNumber: "ACC-2024-003",
-//     dateOfConfirmation: "2024-11-03T08:40:00Z",
-//     status: "TERMINEE",
-//     statusUpdatedAt: "2024-11-04T17:20:00Z",
-//     workDescription: "Remplacement batterie",
-//     didOrderParts: true,
-//     ordersDetails: {
-//       supplier: "Energie Auto",
-//       reference: "BAT-12V-60AH",
-//     },
-//     comments: null,
-//     createdAt: "2024-11-02T15:55:00Z",
-
-//     vehicle: mockVehicule,
-
-//     handledBy: {
-//       location: "Agence Bamako Nord",
-//     },
-
-//     statusHistory: [],
-//   },
-// ]
+            }
+        },
+        {
+            "id": "cmjbaut5u0001kv04lafajarv",
+            "previousStatus": "WAITING_FOR_PARTS",
+            "newStatus": "FIXING_STARTED",
+            "changedAt": "2025-12-18T10:30:36.066Z",
+            "changedBy": {
+                "name": "Cissé abdoulaye"
+            }
+        },
+        {
+            "id": "cmjbauvt20003kv04ft21cu3z",
+            "previousStatus": "FIXING_STARTED",
+            "newStatus": "WAITING_FOR_PARTS",
+            "changedAt": "2025-12-18T10:30:39.494Z",
+            "changedBy": {
+                "name": "Cissé abdoulaye"
+            }
+        },
+        {
+            "id": "cmjbav4se0005kv04am597lrf",
+            "previousStatus": "WAITING_FOR_PARTS",
+            "newStatus": "FIXING_STARTED",
+            "changedAt": "2025-12-18T10:30:51.134Z",
+            "changedBy": {
+                "name": "Cissé abdoulaye"
+            }
+        },
+        {
+            "id": "cmk445f3i0001l104idwy76fw",
+            "previousStatus": "FIXING_STARTED",
+            "newStatus": "WAITING_FOR_PARTS",
+            "changedAt": "2026-01-07T14:28:12.846Z",
+            "changedBy": {
+                "name": "Cissé abdoulaye"
+            }
+        },
+        {
+            "id": "cmk445hds0003l104nljz1kri",
+            "previousStatus": "WAITING_FOR_PARTS",
+            "newStatus": "FIXING_STARTED",
+            "changedAt": "2026-01-07T14:28:15.808Z",
+            "changedBy": {
+                "name": "Cissé abdoulaye"
+            }
+        },
+        {
+            "id": "cmk445nan0005l104xyudfm98",
+            "previousStatus": "FIXING_STARTED",
+            "newStatus": "WAITING_FOR_PARTS",
+            "changedAt": "2026-01-07T14:28:23.472Z",
+            "changedBy": {
+                "name": "Cissé abdoulaye"
+            }
+        },
+        {
+            "id": "cmk445roh0007l104iz0lz0na",
+            "previousStatus": "WAITING_FOR_PARTS",
+            "newStatus": "FIXING_STARTED",
+            "changedAt": "2026-01-07T14:28:29.153Z",
+            "changedBy": {
+                "name": "Cissé abdoulaye"
+            }
+        }
+      ]
+    },
+]
 
 
 
@@ -114,9 +182,11 @@ export default function ClientPage() {
     const [openInterventionModal,setOpenInterventionModal] = useState(false);
     const [openDetailModal,setOpenDetailModal] = useState(false);
     const [interventionsVehicule,setInterventionVehicule] = useState<any>(null)
+    const [vehiculeSelect, SetVehiculeSelect] = useState<any>();
 
-    const handleViewInterventions = () => {
+    const handleViewInterventions = (v:any) => {
         setOpenInterventionModal(true)
+        SetVehiculeSelect(v);
     }
 
     const handleViewDetails = (interventions : any) => {
@@ -145,7 +215,8 @@ export default function ClientPage() {
                 </div>
                 <VehicleStats total={3} enCours={1} termine={1} sansIntervention={1} />
 
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-col sm:flex-row">
+                  <div className="flex gap-2">
                     <Button
                         onClick={() => setFilterStatus("FIXING_STARTED")}
                         variant={filterStatus === "FIXING_STARTED" ? "default" : "outline"}
@@ -158,129 +229,149 @@ export default function ClientPage() {
                     >
                         Terminées
                     </Button>
+                  </div>
+
+                  <Select value={filterStatus} onValueChange={setFilterStatus}>
+                    <SelectTrigger className="sm:w-[220px] ">
+                      <SelectValue placeholder="Tous les statuts"/>
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      <SelectItem value="ALL">Tous les statuts</SelectItem>
+                      <SelectItem value="CONFIRME">Confirmé</SelectItem>
+                      <SelectItem value="ATTENTE_PIECES">Attente pièces</SelectItem>
+                      <SelectItem value="EN_REPARATION">En réparation</SelectItem>
+                      <SelectItem value="TERMINE">Terminé</SelectItem>
+                      <SelectItem value="SANS_INTERVENTION">Sans intervention</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 {!openInterventionModal ? 
                     <div className="space-y-4">
-                        {interventionsMock
-                        .filter(i => i.status === filterStatus)
-                        .map(intervention => (
-                            <div
-                                key={intervention.id}
-                                className="border rounded-xl p-5 flex flex-col gap-4 lg:flex-row lg:items-center hover:shadow-md transition"
-                            >
-                                <div className="flex items-start gap-3 flex-1">
-                                    <Car className="text-gray-400 mt-1" />
-                                    <div>
-                                        <p className="font-bold">{intervention.vehicle.licensePlate}</p>
-                                        <p className="text-sm text-gray-500">
-                                            {intervention.vehicle.brand}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-start gap-3 flex-1">
-                                    <Calendar className="text-gray-400 mt-1" />
-                                    <div>
-                                        <p className="font-medium">{intervention.handledBy.name}</p>
-                                        <p className="text-sm text-gray-500">
-                                        {new Date(intervention.createdAt).toLocaleString()}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <span
-                                className={`px-3 py-1 rounded-full text-sm font-medium w-fit ${statusStyles[intervention.status]}`}
-                                >
-                                    2 {translateStatus(intervention.status)}
-                                </span>
-
-                                <Button variant="outline" className="gap-2" onClick={()=>handleViewInterventions()}>
-                                    <Eye size={16} />
-                                    Détails
-                                </Button>
+                      {interventionsMock
+                      .filter(i => i.status === filterStatus)
+                      .map(intervention => (
+                        <div
+                          key={intervention.id}
+                          className="border rounded-xl p-5 flex flex-col gap-4 lg:flex-row lg:items-center hover:shadow-md transition"
+                        >
+                          <div className="flex items-start gap-3 flex-1">
+                            <Car className="text-gray-400 mt-1" />
+                            <div>
+                              <p className="font-bold">{intervention.vehicle.licensePlate}</p>
+                              <p className="text-sm text-gray-500">
+                                {intervention.vehicle.brand}
+                              </p>
                             </div>
-                        ))}
+                          </div>
+
+                          <div className="flex items-start gap-3 flex-1">
+                            <Calendar className="text-gray-400 mt-1" />
+                            <div>
+                              <p className="font-medium">{intervention.handledBy.name}</p>
+                              <p className="text-sm text-gray-500">
+                                {new Date(intervention.createdAt).toLocaleString()}
+                              </p>
+                            </div>
+                          </div>
+
+                          <span
+                          className={`px-3 py-1 rounded-full text-sm font-medium w-fit ${statusStyles[intervention.status]}`}
+                          >
+                            2 {translateStatus(intervention.status)}
+                          </span>
+
+                          <Button variant="outline" className="gap-2" onClick={()=>handleViewInterventions(intervention.vehicle)}>
+                            <Eye size={16} />
+                            Détails
+                          </Button>
+                        </div>
+                      ))}
                     </div> :
 
-                    <div className="space-y-6 max-h-[400px] overflow-auto p-4 shadow-xl border rounded-lg">
+                    <div className="space-y-6 p-4 shadow-xl border rounded-lg">
+                      <div>
                         <div className="flex justify-end">
-                            <Button onClick={()=>setOpenInterventionModal(false)}>Fermer</Button>
+                          <Button onClick={()=>setOpenInterventionModal(false)}>Fermer</Button>
                         </div>
+                        <div className="mb-4 px-4 ">
+                          <p className="font-bold text-lg">
+                            {vehiculeSelect.licensePlate}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {vehiculeSelect.brand} {vehiculeSelect.model} (
+                            {vehiculeSelect.year})
+                          </p>
+
+                          <div className="flex flex-wrap gap-4 mt-2 text-sm text-gray-600">
+                            <span>
+                            <strong>Couleur :</strong> {vehiculeSelect.color}
+                            </span>
+                            <span>
+                            <strong>Agence :</strong> {vehiculeSelect.base.location}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="max-h-[400px] overflow-auto ">
+                        {/* Possibilité de filtrer par rapport au filtre "filterStatus"  */}
                         {interventionsMock.map((intervention) => {
                             const statusMeta = getStatusMeta(intervention.status)
                             const Icon = statusMeta.icon
                             return (
-                                <div
-                                    key={intervention.id}
-                                    className="border rounded-2xl p-5 shadow-sm hover:shadow-md transition bg-white"
-                                >
-                                    <div className="mb-4">
-                                        <p className="font-bold text-lg">
-                                            {intervention.vehicle.licensePlate}
-                                        </p>
-                                        <p className="text-sm text-gray-500">
-                                            {intervention.vehicle.brand} {intervention.vehicle.model} (
-                                            {intervention.vehicle.year})
-                                        </p>
+                              <div
+                                key={intervention.id}
+                                className="border rounded-2xl p-5 shadow-sm hover:shadow-md transition bg-white"
+                              >
+                                <div className="border rounded-xl p-4 bg-gray-50">
 
-                                        <div className="flex flex-wrap gap-4 mt-2 text-sm text-gray-600">
-                                            <span>
-                                            <strong>Couleur :</strong> {intervention.vehicle.color}
-                                            </span>
-                                            <span>
-                                            <strong>Agence :</strong> {intervention.vehicle.base.location}
-                                            </span>
-                                        </div>
+                                  <div className="flex justify-between items-center mb-3">
+                                    <p className="font-semibold">{intervention.accordNumber}</p>
+
+                                    <div className="flex items-center gap-1 text-sm text-gray-500">
+                                      <Calendar size={14} />
+                                      Confirmé le{" "}
+                                      {new Date(
+                                          intervention.dateOfConfirmation
+                                      ).toLocaleDateString()}
                                     </div>
+                                  </div>
 
-                                    <div className="border rounded-xl p-4 bg-gray-50">
+                                  <div
+                                    className={`flex items-center gap-2 text-sm font-medium ${statusMeta.color} ${statusMeta.bg} px-3 py-1 rounded-full w-fit mb-2`}
+                                  >
+                                    <Icon />
+                                    {statusMeta.label}
+                                  </div>
 
-                                        <div className="flex justify-between items-center mb-3">
-                                            <p className="font-semibold">{intervention.accordNumber}</p>
+                                  <p className="text-xs text-gray-500 mb-3">
+                                    Mis à jour :{" "}
+                                    {new Date(intervention.statusUpdatedAt).toLocaleString()}
+                                  </p>
 
-                                            <div className="flex items-center gap-1 text-sm text-gray-500">
-                                                <Calendar size={14} />
-                                                Confirmé le{" "}
-                                                {new Date(
-                                                    intervention.dateOfConfirmation
-                                                ).toLocaleDateString()}
-                                            </div>
-                                        </div>
+                                  <div className="mb-4">
+                                    <p className="text-sm font-medium text-gray-700 mb-1">
+                                      Travaux :
+                                    </p>
+                                    <p className="text-sm text-gray-600 line-clamp-2">
+                                      {intervention.workDescription}
+                                    </p>
+                                  </div>
 
-                                        <div
-                                            className={`flex items-center gap-2 text-sm font-medium ${statusMeta.color} ${statusMeta.bg} px-3 py-1 rounded-full w-fit mb-2`}
-                                        >
-                                            <Icon />
-                                            {statusMeta.label}
-                                        </div>
-
-                                        <p className="text-xs text-gray-500 mb-3">
-                                            Mis à jour :{" "}
-                                            {new Date(intervention.statusUpdatedAt).toLocaleString()}
-                                        </p>
-
-                                        <div className="mb-4">
-                                            <p className="text-sm font-medium text-gray-700 mb-1">
-                                                Travaux :
-                                            </p>
-                                            <p className="text-sm text-gray-600 line-clamp-2">
-                                                {intervention.workDescription}
-                                            </p>
-                                        </div>
-
-                                        <div className="flex justify-end">
-                                            <Button
-                                                className="flex items-center gap-2 text-sm font-medium"
-                                                onClick={() =>handleViewDetails(intervention)}
-                                            >
-                                                <Eye size={16} />
-                                                Afficher détail
-                                            </Button>
-                                        </div>
-                                    </div>
+                                  <div className="flex justify-end">
+                                    <Button
+                                      className="flex items-center gap-2 text-sm font-medium"
+                                      onClick={() =>handleViewDetails(intervention)}
+                                    >
+                                      <Eye size={16} />
+                                      Afficher détail
+                                    </Button>
+                                  </div>
                                 </div>
+                              </div>
                             )
                         })}
+                      </div>
                     </div>
                 }
             </div>
