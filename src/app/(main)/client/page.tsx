@@ -208,7 +208,7 @@ export default function ClientPage() {
                 <div>
                     <div className="flex items-center gap-2 sm:max-w-[90%] sm:mx-auto">
                         <Input placeholder="Rechercher..." className="h-14 flex-1 " />
-                        <Button size="icon" variant="outline">
+                        <Button size="icon" variant="outline" >
                             <Search size={18} />
                         </Button>
                     </div>

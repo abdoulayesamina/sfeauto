@@ -10,11 +10,13 @@ import { useInterventions } from "./shared/useinterventions.api"
 import { useClients } from "./shared/useClient.api"
 import InterventionDetail from "./shared/components/intervention-detail"
 import { Modal } from "@/src/shared/components/modal"
+
 export const statusStyles: Record<string, string> = {
     EN_COURS: "bg-blue-100 text-blue-700",
     ATTENTE_PIECES: "bg-orange-100 text-orange-700",
     TERMINEE: "bg-green-100 text-green-700",
 }
+
 export const STATUS_UI_MAP: Record<string, string> = {
     CONFIRMED_IN_PLANNING: "EN_COURS",
     EN_REPARATION: "EN_COURS",
@@ -23,6 +25,7 @@ export const STATUS_UI_MAP: Record<string, string> = {
     FIXING_FINISHED: "TERMINEE",
     TERMINE: "TERMINEE",
 }
+
 export const getStatusMeta = (status?: string) => {
     switch (status) {
         case "FIXING_STARTED":
