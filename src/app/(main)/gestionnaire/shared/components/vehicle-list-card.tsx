@@ -22,8 +22,7 @@ export function VehicleListCard({
       {/* Header */}
       <div className="flex items-center border-b p-2 bg-gray-700 backdrop-blur-xl text-white rounded">
         <div className="flex items-center gap-2 font-bold">
-          <List size={25} />
-          <h1>Liste des véhicules</h1>
+           <h1>Liste des véhicules</h1>
         </div>
       </div>
 
