@@ -226,12 +226,13 @@ const filteredVehicles = useMemo(() => {
         {selectedVehicle && (
           <VehiclePreview
             licensePlate={selectedVehicle.licensePlate}
-            brand={selectedVehicle.brand}
-            model={selectedVehicle.model}
-            year={selectedVehicle.year}
+            brand={selectedVehicle.brand ?? ""}
+            model={selectedVehicle.model ?? ""}
+            year={selectedVehicle.year ?? 0}
             client={selectedVehicle.client?.name}
             agence={selectedVehicle.base?.location}
             entreeDate={selectedVehicle.entryDate}
+            color={selectedVehicle.color ?? ""}
             enReparation={1}
             termine={0}
             onNewIntervention={() => {}}

@@ -1,5 +1,11 @@
+"use client"
+
 import { Button } from "@/src/shared/components/ui/button"
 import { Car, User, MapPin, Calendar, Wrench, CheckCircle2, PlusCircle, Eye } from "lucide-react"
+import { useState } from "react"
+import { getStatusMeta, statusStyles } from "../../../mecanicien/page"
+import { Modal } from "@/src/shared/components/modal"
+import InterventionDetail from "../../../mecanicien/shared/components/intervention-detail"
 
 type VehiclePreviewProps = {
   licensePlate: string
@@ -9,6 +15,7 @@ type VehiclePreviewProps = {
   client: string
   agence: string
   entreeDate: string
+  color: string
   enReparation: number
   termine: number
   onNewIntervention: () => void
@@ -46,15 +53,28 @@ export function VehiclePreview({
   client,
   agence,
   entreeDate,
+  color,
   enReparation,
   termine,
   onNewIntervention,
 }: VehiclePreviewProps) {
+
+  const [filteredStatus,setFilteredStatus] = useState("EN_COURS");
+  const [openDetailModal,setOpenDetailModal] = useState(false);
+  const [interventionDetail,setInterventionDetail] = useState<any>();
+
+  function handleViewDetail(intervention: any): void {
+    setInterventionDetail(intervention);
+    setOpenDetailModal(true);
+  }
+
+
   return (
     <div className="rounded-xl border bg-gradient-to-r from-zinc-50 to-white p-5 shadow-sm flex flex-col gap-4">
 
       <div className="rounded-xl bg-gradient-to-r from-black to-gray-900 p-6 text-white shadow-lg">
-        <h1 className="text-2xl font-bold mb-4">DDDF</h1>
+        
+        <h1 className="text-2xl font-bold mb-4">{licensePlate}</h1>
 
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
           <div>
@@ -64,39 +84,39 @@ export function VehiclePreview({
 
           <div>
             <p className="text-white/70">Année & Couleur</p>
-            <p className="font-semibold">2025 • Gris</p>
+            <p className="font-semibold">{year} • {color}</p>
           </div>
 
           <div>
             <p className="text-white/70">Client</p>
-            <p className="font-semibold">Dave DI</p>
+            <p className="font-semibold">{client}</p>
           </div>
 
           <div>
             <p className="text-white/70">Base</p>
-            <p className="font-semibold">Charles de gaule</p>
+            <p className="font-semibold">{agence}</p>
           </div>
 
           <div>
             <p className="text-white/70">Date d’entrée</p>
-            <p className="font-semibold">17/12/2025</p>
+            <p className="font-semibold">{new Date(entreeDate).toLocaleDateString()}</p>
           </div>
         </div>
       </div>
 
       <div className="flex gap-3 mt-6">
-        <button className="px-5 py-2 rounded-full bg-zinc-100 text-zinc-700 font-medium">
-          En cours (1)
-        </button>
+        <Button variant={filteredStatus=="EN_COURS" ? "default" : "outline"} className="font-medium" onClick={()=>setFilteredStatus("EN_COURS")}>
+          En cours ({enReparation})
+        </Button>
 
-        <button className="px-5 py-2 rounded-full bg-green-600 text-white font-medium shadow">
-          Terminées (2)
-        </button>
+        <Button variant={filteredStatus=="TERMINEE" ? "default" : "outline"} className="font-medium" onClick={()=>setFilteredStatus("TERMINEE")}>
+          Terminées ({termine})
+        </Button>
       </div>
 
-      <div className="mt-6 space-y-4">
+      <div className="mt-6 space-y-4 p-2 min-h-[350px] max-h-[350px] overflow-auto">
         {mockInterventions
-          .filter(i => i.status === "TERMINEE")
+          .filter(i => i.status === filteredStatus)
           .map(intervention => (
             <div
               key={intervention.id}
@@ -117,14 +137,16 @@ export function VehiclePreview({
                     </span>
                   </div>
 
-                  <button className="flex items-center gap-2 mt-3 text-blue-600 text-sm font-medium hover:underline">
+                  <button className="flex items-center gap-2 mt-3 text-blue-600 text-sm font-medium hover:underline"
+                    onClick={()=>handleViewDetail(intervention)}
+                  >
                     <Eye size={16} />
                     Cliquer pour voir tous les détails
                   </button>
                 </div>
 
-                <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm font-medium">
-                  Réparation terminée
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusStyles[intervention.status]} `}>
+                  Réparation {intervention.status}
                 </span>
               </div>
             </div>
@@ -136,7 +158,13 @@ export function VehiclePreview({
            Nouvelle intervention
          </Button>
       </div>
-
+      
+      <Modal open={openDetailModal} onClose={()=>setOpenDetailModal(false)} >
+        <InterventionDetail getStatusMeta={getStatusMeta} 
+          selectedIntervention={interventionDetail} 
+          onClose={()=>setOpenDetailModal(false)}
+        />
+      </Modal>
 
     </div>
   )

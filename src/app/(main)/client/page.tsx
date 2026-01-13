@@ -25,7 +25,14 @@ import { VehicleStats } from "../gestionnaire/shared/components/vehicule-stats"
 import { Intervention } from "@/src/utils/types/intervention"
 import { Modal } from "@/src/shared/components/modal"
 import InterventionDetail from "../mecanicien/shared/components/intervention-detail"
-import { getStatusMeta, statusStyles, translateStatus } from "../mecanicien/page"
+import { getStatusMeta, translateStatus } from "../mecanicien/page"
+
+
+const statusStyles: Record<string, string> = {
+    EN_COURS: "bg-blue-100 text-blue-700",
+    ATTENTE_PIECES: "bg-orange-100 text-orange-700",
+    TERMINEE: "bg-green-100 text-green-700",
+}
 
 const mockVehicule = {
   baseId: "base_001",

@@ -13,8 +13,9 @@ type Props = {
     color: string
     bg: string
     icon: any
-  }
-  translateStatus: (status: string) => string
+  } | any
+
+  translateStatus ?: (status: string) => string 
 }
 
 export default function InterventionDetail({
@@ -36,7 +37,7 @@ export default function InterventionDetail({
                     
         <div className="border-b bg-black/90 rounded-xl p-6 text-white pb-4">
             <h2 className="text-xl font-bold">
-            Intervention – {selectedIntervention?.vehicle.licensePlate}
+            Intervention – {selectedIntervention?.vehicle?.licensePlate}
             </h2>
             <p className="text-sm text-gray-500">
             Accord N° {selectedIntervention?.accordNumber}
@@ -52,10 +53,10 @@ export default function InterventionDetail({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-            <p><span className="font-medium">Immatriculation :</span> {selectedIntervention?.vehicle.licensePlate}</p>
-            <p><span className="font-medium">Modèle :</span> {selectedIntervention?.vehicle.brand} {selectedIntervention?.vehicle.model}</p>
-            <p><span className="font-medium">Année :</span> {selectedIntervention?.vehicle.year}</p>
-            <p><span className="font-medium">Couleur :</span> {selectedIntervention?.vehicle.color}</p>
+            <p><span className="font-medium">Immatriculation :</span> {selectedIntervention?.vehicle?.licensePlate}</p>
+            <p><span className="font-medium">Modèle :</span> {selectedIntervention?.vehicle?.brand} {selectedIntervention?.vehicle?.model}</p>
+            <p><span className="font-medium">Année :</span> {selectedIntervention?.vehicle?.year}</p>
+            <p><span className="font-medium">Couleur :</span> {selectedIntervention?.vehicle?.color}</p>
             </div>
         </div>
 
@@ -65,7 +66,7 @@ export default function InterventionDetail({
                 <User />
             </div>
             <div>
-                <p className="font-semibold">{selectedIntervention?.vehicle.client.name}</p>
+                <p className="font-semibold">{selectedIntervention?.vehicle?.client.name}</p>
                 <p className="text-sm text-gray-500">Client</p>
             </div>
             </div>
@@ -75,7 +76,7 @@ export default function InterventionDetail({
                 <MapPin />
             </div>
             <div>
-                <p className="font-semibold">{selectedIntervention?.vehicle.base.location}</p>
+                <p className="font-semibold">{selectedIntervention?.vehicle?.base.location}</p>
                 <p className="text-sm text-gray-500">Base</p>
             </div>
             </div>
@@ -156,12 +157,15 @@ export default function InterventionDetail({
               </div>
 
               <div className="flex-1 pb-4">
-                <p className="text-sm font-medium">
-                  {translateStatus(h.previousStatus)} →{" "}
-                  <span className="text-blue-600">
-                    {translateStatus(h.newStatus)}
-                  </span>
-                </p>
+                {translateStatus ?
+                  <p className="text-sm font-medium">
+                    {translateStatus(h.previousStatus)} →{" "}
+                    <span className="text-blue-600">
+                      {translateStatus(h.newStatus)}
+                    </span>
+                  </p>
+                  : ""
+                }
                 <p className="text-xs text-gray-500">
                   {new Date(h.changedAt).toLocaleString("fr-FR")}
                 </p>
@@ -189,10 +193,10 @@ export default function InterventionDetail({
             <p className="text-sm mt-1">
             Géré par{" "}
             <span className="font-medium">
-                {selectedIntervention?.handledBy.name}
+                {selectedIntervention?.handledBy?.name}
             </span>{" "}
             <span className="text-gray-500">
-                ({selectedIntervention?.handledBy.email})
+                ({selectedIntervention?.handledBy?.email})
             </span>
             </p>
         </div>
