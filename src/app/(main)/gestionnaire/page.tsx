@@ -247,6 +247,7 @@ export default function GestionnairePage() {
             agence={selectedVehicle.base?.location}
             entreeDate={selectedVehicle.entryDate}
             color={selectedVehicle.color ?? ""}
+            invoices={selectedVehicle.invoices ?? []} 
             enReparation={1}
             termine={0}
             onNewIntervention={() => {}}
