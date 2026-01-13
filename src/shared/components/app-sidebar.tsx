@@ -3,20 +3,13 @@
 import * as React from "react"
 import {
   ArrowUpCircleIcon,
-  BarChartIcon,
-  CameraIcon,
-  ClipboardListIcon,
-  DatabaseIcon,
-  FileCodeIcon,
-  FileIcon,
-  FileTextIcon,
-  FolderIcon,
-  HelpCircleIcon,
-  LayoutDashboardIcon,
-  ListIcon,
-  SearchIcon,
-  SettingsIcon,
-  UsersIcon,
+  LayoutDashboard,
+  Users,
+  Building2,
+  Briefcase,
+  Wrench,
+  UserCog,
+  User
 } from "lucide-react"
 
 import { NavDocuments } from "@/src/shared/components/nav-documents"
@@ -38,32 +31,78 @@ type AppSidebarProps = {
     name: string
     email: string
     avatar: string
+    role:"ADMIN" |"MANAGER"|"MECHANIC"|"CLIENT"
   },
     variant?: "inset" | "sidebar"
 
 } & React.ComponentProps<typeof Sidebar>
 
 export function AppSidebar({ user, ...props }: AppSidebarProps) {
+  
   const navMain = [
-    { title: "Tableau de bord", url: "/dashboard", icon: LayoutDashboardIcon },
-    { title: "Utilisateurs", url: "/users", icon: ListIcon },
-    { title: "Agences", url: "/agence", icon: BarChartIcon },
-    { title: "Clients", url: "clients", icon: FolderIcon },
-    //{ title: "Team", url: "#", icon: UsersIcon },
+    {
+      title: "Tableau de bord",
+      url: "/dashboard",
+      icon: LayoutDashboard,
+      roles:["ADMIN"],
+    },
+    {
+      title: "Utilisateurs",
+      url: "/users",
+      icon: Users,
+      roles:["ADMIN"],
+
+    },
+    {
+      title: "Agences",
+      url: "/agence",
+      icon: Building2,
+      roles:["ADMIN"],
+    },
+    {
+      title: "Clients",
+      url: "/clients",
+      icon: Briefcase,
+            roles:["ADMIN"],
+
+    },
+    {
+      title: "Gestionnaire",
+      url: "/gestionnaire",
+      icon: UserCog,
+            roles:["MANAGER"],
+
+    },
+    {
+      title: "Mécanicien",
+      url: "/mecanicien",
+      icon: Wrench,
+            roles:["MECHANIC"],
+
+    },
+    {
+      title: "Client",
+      url: "/client",
+      icon: User,
+      roles:["CLIENT"],
+    },
   ]
 
-  const documents = [
-    { name: "Data Library", url: "#", icon: DatabaseIcon },
-    { name: "Reports", url: "#", icon: ClipboardListIcon },
-    { name: "Word Assistant", url: "#", icon: FileIcon },
-  ]
+  // const documents = [
+  //   { name: "Data Library", url: "#", icon: DatabaseIcon },
+  //   { name: "Reports", url: "#", icon: ClipboardListIcon },
+  //   { name: "Word Assistant", url: "#", icon: FileIcon },
+  // ]
 
-  const navSecondary = [
-    { title: "Paramètres", url: "#", icon: SettingsIcon },
-    { title: "Aide", url: "#", icon: HelpCircleIcon },
-    { title: "Recherche", url: "#", icon: SearchIcon },
-  ]
-
+  // const navSecondary = [
+  //   { title: "Paramètres", url: "#", icon: SettingsIcon },
+  //   { title: "Aide", url: "#", icon: HelpCircleIcon },
+  //   { title: "Recherche", url: "#", icon: SearchIcon },
+  // ]
+const filteredNav = navMain.filter(item =>
+    item.roles.includes(user.role)
+  )
+  
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -75,7 +114,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
             >
               <a href="#">
                 <ArrowUpCircleIcon className="h-5 w-5" />
-                <span className="text-base font-semibold">Acme Inc.</span>
+                <span className="text-base font-semibold">SFE Auto</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -83,9 +122,9 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       </SidebarHeader>
 
       <SidebarContent>
-        <NavMain items={navMain} />
-        <NavDocuments items={documents} />
-        <NavSecondary items={navSecondary} className="mt-auto" />
+        <NavMain items={filteredNav} />
+        {/* <NavDocuments items={documents} />
+        <NavSecondary items={navSecondary} className="mt-auto" /> */}
       </SidebarContent>
 
       <SidebarFooter>

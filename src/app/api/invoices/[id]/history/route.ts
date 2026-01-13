@@ -3,21 +3,20 @@ import { prisma } from "@/src/lib/prisma";
 import { auth } from "@/auth";
 import { logError } from "@/src/lib/logger";
 
-// GET /api/invoices/[id]/history - Get change history for an invoice
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await context.params; // <-- Important, await ici
+
     const session = await auth();
 
     if (!session?.user) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
-    const { id } = params;
-
-    // Verify invoice exists
+    // Vérifier la facture
     const invoice = await prisma.invoice.findUnique({
       where: { id },
       select: { id: true },
@@ -30,16 +29,11 @@ export async function GET(
       );
     }
 
-    // Get change history
+    // Historique
     const history = await prisma.changeHistory.findMany({
       where: { invoiceId: id },
       include: {
-        user: {
-          select: {
-            name: true,
-            email: true,
-          },
-        },
+        user: { select: { name: true, email: true } },
       },
       orderBy: { changedAt: 'desc' },
     });
@@ -53,3 +47,4 @@ export async function GET(
     );
   }
 }
+
