@@ -49,7 +49,7 @@ export function AgenceForm({ mode, data, clients, onClose, onSubmit, onChange }:
         />
       </div>
 
-      <div className="mt-6 flex justify-end gap-4">
+      <div className="mt-6 grid grid-cols-2 gap-2">
         <Button type="button" variant="outline" onClick={onClose}>
           Annuler
         </Button>

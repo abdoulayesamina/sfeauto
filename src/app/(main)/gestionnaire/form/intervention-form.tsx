@@ -115,7 +115,7 @@ export function InterventionForm({
       </div>
 
       {/* Boutons */}
-      <div className="flex justify-end gap-4 pt-4">
+      <div className="grid grid-cols-2 gap-2">
         <Button type="button" variant="outline" onClick={onClose}>
           Annuler
         </Button>

@@ -17,6 +17,7 @@ export default function AgencePage() {
   const { getClients } = useClientApi()
 
   const [agences, setAgences] = useState<Agence[]>([])
+  const [agenceSearch, setAgenceSearch] = useState<Agence[]>([])
   const [clients, setClients] = useState<{ id: string; name: string }[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -30,6 +31,10 @@ export default function AgencePage() {
     loadClients()
     loadAgences()
   }, [])
+
+  useEffect(() => {
+    setAgenceSearch(agences)
+  }, [agences])
 
   const loadClients = async () => {
     try {
@@ -125,14 +130,28 @@ export default function AgencePage() {
 
   const tableColumns = createColumns({ columns })
 
+  const handleSearch = (e:string)=>{
+    let value = e.toLocaleLowerCase().trim()
+    if(!value){
+      setAgenceSearch(agences)
+      return
+    }
+    
+    let agenceFiltered = agences.filter(a=>
+      a.location.toLocaleLowerCase().includes(value)
+      || a.client?.name?.toLocaleLowerCase().includes(value)
+    )
+    setAgenceSearch(agenceFiltered);
+  }
+
   return (
     <div className="p-10">
-      <div className="flex justify-between mb-6">
-        <h2 className="font-bold">Gestion des agences</h2>
+      <div className="flex justify-between mb-2 p-6 items-center">
+        <h2 className="font-bold text-2xl">Gestion des agences</h2>
         <Button onClick={() => setIsOpen(true)}>Ajouter une agence</Button>
       </div>
 
-      {!loading && <DataTable data={agences} columnsProps={tableColumns} />}
+      {!loading && <DataTable data={agenceSearch} columnsProps={tableColumns} handleSearch={(e)=>handleSearch(e)}/>}
 
       {/* CREATE */}
       <Modal open={isOpen} modalTitle="Nouvelle agence" onClose={() => setIsOpen(false)}>

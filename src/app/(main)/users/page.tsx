@@ -18,6 +18,7 @@ export default function UsersPage() {
   const { getAgences } = useAgenceApi()
 
   const [users, setUsers] = useState<User[]>([])
+  const [userSearch, setUserSearch] = useState<User[]>([])
   const [clients, setClients] = useState<{ id: string; name: string }[]>([])
   const [agences, setAgences] = useState<{ id: string; location: string; clientId: string }[]>([])
   const [loading, setLoading] = useState(true)
@@ -32,6 +33,10 @@ export default function UsersPage() {
     loadClients()
     loadAgences()
   }, [])
+
+  useEffect(() => {
+    setUserSearch(users)
+  }, [users])
 
   const loadUsers = async () => {
     setLoading(true)
@@ -151,14 +156,31 @@ export default function UsersPage() {
 
   const tableColumns = createColumns({ columns })
 
+  const handleSearch = (e:string)=>{
+    let value = e.toLocaleLowerCase().trim()
+    if(!value){
+      setUserSearch(users)
+      return
+    }
+    
+    let userFiltered = users.filter(u=>
+      u.name.toLocaleLowerCase().includes(value)
+      || u.email?.toLocaleLowerCase().includes(value)
+      ||u.role?.toLocaleLowerCase().includes(value)
+      ||u.client?.name.toLocaleLowerCase().includes(value)
+      ||u.base?.location.toLocaleLowerCase().includes(value)
+    )
+    setUserSearch(userFiltered);
+  }
+
   return (
     <div className="p-10">
-      <div className="flex justify-between mb-6">
-        <h2 className="font-bold">Gestion des utilisateurs</h2>
+      <div className="flex justify-between mb-2 items-center p-6">
+        <h2 className="font-bold text-2xl">Gestion des utilisateurs</h2>
         <Button onClick={() => setIsOpen(true)}>Ajouter</Button>
       </div>
 
-      {!loading && <DataTable data={users} columnsProps={tableColumns} />}
+      {!loading && <DataTable data={userSearch} columnsProps={tableColumns} handleSearch={(e)=>handleSearch(e)}/>}
 
       {/* CREATE */}
       <Modal open={isOpen} modalTitle="Nouvel utilisateur" onClose={() => setIsOpen(false)}>
