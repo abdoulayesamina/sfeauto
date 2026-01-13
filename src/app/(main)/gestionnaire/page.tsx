@@ -15,6 +15,8 @@ import { VehicleStats } from "./shared/components/vehicule-stats"
 import { VehicleNotFound } from "./vehicle-not-found"
 import { VehiclePreview } from "./shared/components/vehicle-apercu"
 import { errorAlert, successAlert } from "@/src/lib/alerts"
+import { useInterventionApi } from "./shared/useIntervention.api"
+import { InterventionForm } from "./form/intervention-form"
 
 export default function GestionnairePage() {
   const { getVehicles, searchVehicles, createVehicle } = useManageApi()
@@ -37,6 +39,8 @@ export default function GestionnairePage() {
   const [clientId, setClientId] = useState<string>()
   const [agenceId, setAgenceId] = useState<string>()
   const [statut, setStatut] = useState<string>()
+  const [interventionModalOpen, setInterventionModalOpen] = useState(false);
+  const { createIntervention } = useInterventionApi()
 
   // Chargement initial
   useEffect(() => {
@@ -117,6 +121,23 @@ export default function GestionnairePage() {
     if (clientId) return agences.filter(a => a.clientId === clientId)
     return agences
   }, [agences, clientId])
+  
+  const handleSubmitIntervention = async (data: any) => {
+    await createIntervention({
+      vehicleId: selectedVehicle?.id ?? "", // important
+      accordNumber: data.numeroAccord,
+      dateOfConfirmation: data.dateConfirmation,
+      workDescription: data.descriptionTravaux,
+      didOrderParts: data.piecesCommande === "oui",
+      ordersDetails: data.detailsCommande || null,
+      comments: data.commentaires || null,
+    })
+    setInterventionModalOpen(false)
+  }
+
+  const handleNewInterventionFromVehiculePreview = ()=>{
+    setInterventionModalOpen(true)
+  }
 
   return (
     <div className="h-full py-4 px-12 bg-zinc-50">
@@ -226,11 +247,24 @@ export default function GestionnairePage() {
             agence={selectedVehicle.base?.location}
             entreeDate={selectedVehicle.entryDate}
             color={selectedVehicle.color ?? ""}
-            invoices={selectedVehicle.invoices ?? []} // ✅ Passer les invoices réelles
+            invoices={selectedVehicle.invoices ?? []} 
+            enReparation={1}
+            termine={0}
             onNewIntervention={() => {}}
           />
         )}
       </Modal>
+
+      <Modal open={interventionModalOpen} onClose={() => setInterventionModalOpen(false)} modalTitle="Créer une intervention">
+        <InterventionForm
+          vehicleDisplayText={`${selectedVehicle?.licensePlate} - ${selectedVehicle?.brand} ${selectedVehicle?.model}`}
+          defaultAccordNumber="ACC-2026-001"
+          onSubmit={handleSubmitIntervention}
+          onClose={() => setInterventionModalOpen(false)}
+          loading={loading}
+        />
+      </Modal>
+
     </div>
   )
 }

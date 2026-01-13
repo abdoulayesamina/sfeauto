@@ -37,14 +37,12 @@ export function VehiclePreview({
   const [openDetailModal, setOpenDetailModal] = useState(false)
   const [selectedInvoice, setSelectedInvoice] = useState<any>()
 
-  // Filtrer les invoices selon le statut UI
-  const filteredInvoices = invoices
+  const filteredInvoices = invoices 
     .map(inv => ({ ...inv, uiStatus: toUIStatus(inv.status) }))
     .filter(inv =>
       filteredStatus === "EN_COURS" ? inv.uiStatus !== "TERMINEE" : inv.uiStatus === "TERMINEE"
     )
 
-  // Afficher le détail avec toutes les infos du véhicule
   const handleViewDetail = (invoice: any) => {
     setSelectedInvoice({
       ...invoice,

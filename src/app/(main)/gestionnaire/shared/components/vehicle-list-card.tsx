@@ -20,25 +20,14 @@ export function VehicleListCard({
   return (
     <div className="mt-6 border p-3 rounded">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center border-b p-2 bg-gray-700 backdrop-blur-xl text-white rounded">
         <div className="flex items-center gap-2 font-bold">
-          <List size={25} />
-          <h1>Liste des véhicules</h1>
-        </div>
-        <div className="flex items-center gap-4 hidden lg:inline">
-          <div className="flex items-center gap-1 text-sm text-gray-300">
-            <span className="bg-yellow-400 rounded-full w-4 h-4 inline-block"></span>
-            <span>En réparation</span>
-          </div>
-          <div className="flex items-center gap-1 text-sm text-gray-300">
-            <span className="bg-green-400 rounded-full w-4 h-4 inline-block"></span>
-            <span>Terminé</span>
-          </div>
+           <h1>Liste des véhicules</h1>
         </div>
       </div>
 
       {/* Liste véhicules */}
-      <div className="max-h-[500px] overflow-auto mt-4 shadow">
+      <div className="max-h-[500px] overflow-auto mb-4">
         {filterByAllVehicule ? (
           <VehicleListAll
             vehicles={vehicles}
@@ -54,6 +43,7 @@ export function VehicleListCard({
             onSelect={onSelect}
           />
         )}
+
       </div>
     </div>
   )
