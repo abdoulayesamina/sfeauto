@@ -32,7 +32,7 @@ export function InterventionForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 p-4 w-screen max-w-[600px]">
+    <form onSubmit={handleSubmit} className="space-y-8 max-h-screen overflow-y-auto p-4">
       {/* Véhicule affichage seulement */}
       <div className="space-y-2">
         <Label>Véhicule</Label>
