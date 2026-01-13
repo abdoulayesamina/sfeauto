@@ -1,4 +1,5 @@
 "use client"
+
 import { useState } from "react"
 import { Button } from "@/src/shared/components/ui/button"
 import { Input } from "@/src/shared/components/ui/input"
@@ -68,6 +69,7 @@ export const translateStatus = (status?: string): string => {
     if (!status) return "Statut inconnu"
     return STATUS_TRANSLATIONS[status] ?? status
 }
+
 const STATUS_TRANSLATIONS: Record<string, string> = {
   CONFIRMED_IN_PLANNING: "Confirmée et planifiée",
   FIXING_STARTED: "Réparation en cours",
@@ -83,10 +85,12 @@ export default function MecanicienPage() {
     const [clientId, setClientId] = useState<string>()
     const [baseId, setBaseId] = useState<string>()
     const [search, setSearch] = useState("")
+
     const { clients } = useClients()
     const { bases } = useBases(clientId)
     const { interventions, setInterventions, loading } = useInterventions(undefined, clientId, baseId, search)
     const { updateStatus, loading: statusLoading, error: statusError } = useStatusInt()
+
     const openModal = (intervention: any) => {
         setSelectedIntervention(intervention)
         setOpen(true)
@@ -105,6 +109,7 @@ export default function MecanicienPage() {
                     </div>
                     <h1 className="text-2xl font-bold">Espace Mécanicien</h1>
                 </div>
+
                 {/* Filtres */}
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div className="flex flex-col sm:flex-row gap-3">
@@ -116,6 +121,7 @@ export default function MecanicienPage() {
                                 {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
+
                         <Select onValueChange={setBaseId}>
                             <SelectTrigger className="w-[180px]">
                                 <SelectValue placeholder="Agence" />
@@ -125,21 +131,25 @@ export default function MecanicienPage() {
                             </SelectContent>
                         </Select>
                     </div>
+
                     <div className="flex items-center gap-2">
                         <Input placeholder="Rechercher plaque ou accord..." value={search} onChange={e => setSearch(e.target.value)} />
                         <Button size="icon" variant="outline"><Search size={18} /></Button>
                     </div>
                 </div>
+
                 {/* Statut filter */}
                 <div className="flex gap-2">
                     <Button onClick={() => setFilterStatus("EN_COURS")} variant={filterStatus === "EN_COURS" ? "default" : "outline"}>En cours</Button>
                     <Button onClick={() => setFilterStatus("TERMINEE")} variant={filterStatus === "TERMINEE" ? "default" : "outline"}>Terminées</Button>
                 </div>
+
                 {/* Liste */}
                 <div className="space-y-4">
                     {loading && <p>Chargement...</p>}
                     {!loading && filteredInterventions.map(inv => {
                         const uiStatus = STATUS_UI_MAP[inv.status]
+
                         return (
                             <div key={inv.id} className="border rounded-xl p-5 flex flex-col gap-4 lg:flex-row lg:items-center hover:shadow-md transition">
                                 <div className="flex items-start gap-3 flex-1">
@@ -149,6 +159,7 @@ export default function MecanicienPage() {
                                         <p className="text-sm text-gray-500">{inv.vehicle.brand} {inv.vehicle.model}</p>
                                     </div>
                                 </div>
+
                                 <div className="flex items-start gap-3 flex-1">
                                     <Calendar className="text-gray-400 mt-1" />
                                     <div>
@@ -156,6 +167,7 @@ export default function MecanicienPage() {
                                         <p className="text-sm text-gray-500">{inv.createdAt.slice(0, 10)}</p>
                                     </div>
                                 </div>
+
                                 <div className="flex items-start gap-3 flex-1">
                                     <User className="text-gray-400 mt-1" />
                                     <div>
@@ -166,12 +178,14 @@ export default function MecanicienPage() {
                                         </p>
                                     </div>
                                 </div>
+
                                 {/* Statut (modifiable) */}
                                 <Select
                                     defaultValue={uiStatus}
                                     onValueChange={async (val) => {
                                         const success = await updateStatus(inv.id, val as any)
                                         if (!success) return alert(statusError || "Impossible de mettre à jour le statut")
+
                                         setInterventions(prev =>
                                             prev.map(item =>
                                                 item.id === inv.id ? { ...item, status: Object.keys(STATUS_UI_MAP).find(key => STATUS_UI_MAP[key] === val) || item.status } : item
@@ -179,6 +193,7 @@ export default function MecanicienPage() {
                                         )
                                     }}
                                 >
+
                                     <SelectTrigger className={`w-[180px] ${statusStyles[uiStatus]}`}>
                                         <SelectValue />
                                     </SelectTrigger>
@@ -188,6 +203,7 @@ export default function MecanicienPage() {
                                         <SelectItem value="TERMINEE">Terminée</SelectItem>
                                     </SelectContent>
                                 </Select>
+
                                 <Button variant="outline" className="gap-2" onClick={() => openModal(inv)} >
                                     <Eye size={16} />
                                     Détails

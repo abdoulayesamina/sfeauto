@@ -146,7 +146,7 @@ export function UserForm({
         </>
       )}
 
-      <div className="flex justify-end gap-3 pt-4">
+      <div className="mt-6 grid grid-cols-2 gap-2">
         <Button type="button" variant="outline" onClick={onClose}>
           Annuler
         </Button>

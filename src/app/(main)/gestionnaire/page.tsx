@@ -15,6 +15,8 @@ import { VehicleStats } from "./shared/components/vehicule-stats"
 import { VehicleNotFound } from "./vehicle-not-found"
 import { VehiclePreview } from "./shared/components/vehicle-apercu"
 import { errorAlert, successAlert } from "@/src/lib/alerts"
+import { useInterventionApi } from "./shared/useIntervention.api"
+import { InterventionForm } from "./form/intervention-form"
 
 export default function GestionnairePage() {
     //ggh
@@ -39,6 +41,8 @@ export default function GestionnairePage() {
   const [clientId, setClientId] = useState<string>()
   const [agenceId, setAgenceId] = useState<string>()
   const [statut, setStatut] = useState<string>()
+  const [interventionModalOpen, setInterventionModalOpen] = useState(false);
+  const { createIntervention } = useInterventionApi()
 
   useEffect(() => {
     loadAll()
@@ -96,26 +100,26 @@ export default function GestionnairePage() {
     }
   }
 
-const filteredVehicles = useMemo(() => {
-  return vehicles.filter(v => {
-    if (clientId && v.client?.id !== clientId) return false
+  const filteredVehicles = useMemo(() => {
+    return vehicles.filter(v => {
+      if (clientId && v.client?.id !== clientId) return false
 
-    if (agenceId && v.base?.id !== agenceId) return false
+      if (agenceId && v.base?.id !== agenceId) return false
 
-    if (statut && statut !== "all") {
-      if (statut === "SANS_INTERVENTION") {
-        if (v.invoices && v.invoices.length > 0) return false
-      } else {
-        // Cas normal : vérifier le dernier invoice
-        const lastInvoice = v.invoices?.[v.invoices.length - 1]
-        if (!lastInvoice) return false
-        if (lastInvoice.status !== statut) return false
+      if (statut && statut !== "all") {
+        if (statut === "SANS_INTERVENTION") {
+          if (v.invoices && v.invoices.length > 0) return false
+        } else {
+          // Cas normal : vérifier le dernier invoice
+          const lastInvoice = v.invoices?.[v.invoices.length - 1]
+          if (!lastInvoice) return false
+          if (lastInvoice.status !== statut) return false
+        }
       }
-    }
 
-    return true
-  })
-}, [vehicles, clientId, agenceId, statut])
+      return true
+    })
+  }, [vehicles, clientId, agenceId, statut])
 
 
 
@@ -125,6 +129,23 @@ const filteredVehicles = useMemo(() => {
     }
     return agences
   }, [agences, clientId])
+  
+  const handleSubmitIntervention = async (data: any) => {
+    await createIntervention({
+      vehicleId: selectedVehicle?.id ?? "", // important
+      accordNumber: data.numeroAccord,
+      dateOfConfirmation: data.dateConfirmation,
+      workDescription: data.descriptionTravaux,
+      didOrderParts: data.piecesCommande === "oui",
+      ordersDetails: data.detailsCommande || null,
+      comments: data.commentaires || null,
+    })
+    setInterventionModalOpen(false)
+  }
+
+  const handleNewInterventionFromVehiculePreview = ()=>{
+    setInterventionModalOpen(true)
+  }
 
   return (
     <div className="h-full py-4 px-12 bg-zinc-50">
@@ -235,10 +256,21 @@ const filteredVehicles = useMemo(() => {
             color={selectedVehicle.color ?? ""}
             enReparation={1}
             termine={0}
-            onNewIntervention={() => {}}
+            onNewIntervention={handleNewInterventionFromVehiculePreview}
           />
         )}
       </Modal>
+
+      <Modal open={interventionModalOpen} onClose={() => setInterventionModalOpen(false)} modalTitle="Créer une intervention">
+        <InterventionForm
+          vehicleDisplayText={`${selectedVehicle?.licensePlate} - ${selectedVehicle?.brand} ${selectedVehicle?.model}`}
+          defaultAccordNumber="ACC-2026-001"
+          onSubmit={handleSubmitIntervention}
+          onClose={() => setInterventionModalOpen(false)}
+          loading={loading}
+        />
+      </Modal>
+
     </div>
   )
 }

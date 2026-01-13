@@ -16,6 +16,7 @@ export default function ClientPage() {
   const { getClients, createClient, updateClient, deleteClient } = useClientApi()
 
   const [clients, setClients] = useState<Client[]>([])
+  const [clientSearch, setClientSearch] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
 
   const [isOpen, setIsOpen] = useState(false)
@@ -27,6 +28,10 @@ export default function ClientPage() {
   useEffect(() => {
     loadClients()
   }, [])
+
+  useEffect(() => {
+    setClientSearch(clients)
+  }, [clients])
 
   const loadClients = async () => {
     setLoading(true)
@@ -124,14 +129,29 @@ export default function ClientPage() {
 
   const tableColumns = createColumns({ columns })
 
+  const handleSearch = (e:string)=>{
+    let value = e.toLocaleLowerCase().trim()
+    if(!value){
+      setClientSearch(clients)
+      return
+    }
+    
+    let clientFiltered = clients.filter(c=>
+      c.name.toLocaleLowerCase().includes(value)
+      || c.email?.toLocaleLowerCase().includes(value)
+      ||c.phone?.toLocaleLowerCase().includes(value)
+    )
+    setClientSearch(clientFiltered);
+  }
+
   return (
     <div className="p-10">
-      <div className="flex justify-between mb-6">
-        <h2 className="font-bold">Gestion des clients</h2>
+      <div className="flex justify-between mb-2 p-6 items-center">
+        <h2 className="font-bold text-2xl">Gestion des clients</h2>
         <Button onClick={() => setIsOpen(true)}>Ajouter un client</Button>
       </div>
 
-      {!loading && <DataTable data={clients} columnsProps={tableColumns} />}
+      {!loading && <DataTable data={clientSearch} columnsProps={tableColumns} handleSearch={(e)=>handleSearch(e)}/>}
 
       {/* CREATE */}
       <Modal open={isOpen} modalTitle="Nouveau client" onClose={() => setIsOpen(false)}>

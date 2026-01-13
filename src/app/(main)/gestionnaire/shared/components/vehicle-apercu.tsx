@@ -106,11 +106,11 @@ export function VehiclePreview({
 
       <div className="flex gap-3 mt-6">
         <Button variant={filteredStatus=="EN_COURS" ? "default" : "outline"} className="font-medium" onClick={()=>setFilteredStatus("EN_COURS")}>
-          En cours ({enReparation})
+          En cours ({mockInterventions.filter(i => i.status === "EN_COURS").length})
         </Button>
 
         <Button variant={filteredStatus=="TERMINEE" ? "default" : "outline"} className="font-medium" onClick={()=>setFilteredStatus("TERMINEE")}>
-          Terminées ({termine})
+          Terminées ({mockInterventions.filter(i => i.status === "TERMINEE").length})
         </Button>
       </div>
 
