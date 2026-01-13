@@ -14,22 +14,30 @@ import { Car, Calendar, User, Eye, Search } from "lucide-react"
 import { VehicleStats } from "../gestionnaire/shared/components/vehicule-stats"
 import { Modal } from "@/src/shared/components/modal"
 import InterventionDetail from "../mecanicien/shared/components/intervention-detail"
-import { getStatusMeta, translateStatus } from "../mecanicien/page"
-import { useInterventionsApi } from "./shared/useInterventions.api"
 import { useVehiculesApi } from "./shared/useVehicules.api"
+import {
+  toUIStatus,
+  filterByUIStatus,
+} from "@/src/utils/constants/intervention-status"
+import InterventionDetailClient from "./components/detailsInterv"
+
+const statusStyles: Record<string, string> = {
+  EN_COURS: "bg-blue-100 text-blue-700",
+  ATTENTE_PIECES: "bg-orange-100 text-orange-700",
+  TERMINEE: "bg-green-100 text-green-700",
+}
 
 export default function ClientPage() {
   const { getVehicules } = useVehiculesApi()
-  const { searchInterventions } = useInterventionsApi()
 
   const [vehicles, setVehicles] = useState<any[]>([])
   const [interventionsVehicule, setInterventionVehicule] = useState<any[]>([])
   const [vehiculeSelect, setVehiculeSelect] = useState<any>(null)
-  const [filterStatus, setFilterStatus] = useState("FIXING_STARTED")
+  const [filterStatus, setFilterStatus] = useState<"ALL" | "EN_COURS" | "TERMINEE" | "ATTENTE_PIECES">("ALL")
   const [openInterventionModal, setOpenInterventionModal] = useState(false)
   const [openDetailModal, setOpenDetailModal] = useState(false)
 
-  // Récupération des véhicules et leurs interventions
+  // Récupération des véhicules et interventions
   useEffect(() => {
     const fetchVehicules = async () => {
       try {
@@ -39,28 +47,28 @@ export default function ClientPage() {
         console.error("Erreur récupération véhicules :", err.message)
       }
     }
-
     fetchVehicules()
   }, [])
 
   // Ouvre le modal d’un véhicule et récupère ses interventions
   const handleViewInterventions = (v: any) => {
     setVehiculeSelect(v)
-    setInterventionVehicule(v.invoices) // Les interventions du véhicule
+    setInterventionVehicule(Array.isArray(v.invoices) ? v.invoices : [])
     setOpenInterventionModal(true)
   }
 
-  const handleViewDetails = (intervention: any) => {
-    setInterventionVehicule([intervention])
+  const handleViewDetails = (intervention: any, vehicle?: any) => {
+    setInterventionVehicule([{ ...intervention, vehicle }])
     setOpenDetailModal(true)
   }
+
 
   // Statistiques
   const stats = {
     total: vehicles.length,
-    enCours: vehicles.filter(v => v.invoices.some(i => i.status !== "FIXING_FINISHED")).length,
-    termine: vehicles.filter(v => v.invoices.every(i => i.status === "FIXING_FINISHED")).length,
-    sansIntervention: vehicles.filter(v => v.invoices.length === 0).length,
+    enCours: vehicles.filter(v => Array.isArray(v.invoices) && v.invoices.some(i => toUIStatus(i.status) === "EN_COURS")).length,
+    termine: vehicles.filter(v => Array.isArray(v.invoices) && v.invoices.every(i => toUIStatus(i.status) === "TERMINEE") && v.invoices.length > 0).length,
+    sansIntervention: vehicles.filter(v => !Array.isArray(v.invoices) || v.invoices.length === 0).length,
   }
 
   return (
@@ -75,14 +83,14 @@ export default function ClientPage() {
         </div>
 
         {/* Recherche */}
-     <div>
-                    <div className="flex items-center gap-2 sm:max-w-[90%] sm:mx-auto">
-                        <Input placeholder="Rechercher..." className="h-14 flex-1 " />
-                        <Button size="icon" variant="outline">
-                            <Search size={18} />
-                        </Button>
-                    </div>
-                </div>
+        <div>
+          <div className="flex items-center gap-2 sm:max-w-[90%] sm:mx-auto">
+            <Input placeholder="Rechercher..." className="h-14 flex-1 " />
+            <Button size="icon" variant="outline">
+              <Search size={18} />
+            </Button>
+          </div>
+        </div>
 
         {/* Stats */}
         <VehicleStats
@@ -96,16 +104,22 @@ export default function ClientPage() {
         <div className="flex gap-2 flex-col sm:flex-row">
           <div className="flex gap-2">
             <Button
-              onClick={() => setFilterStatus("FIXING_STARTED")}
-              variant={filterStatus === "FIXING_STARTED" ? "default" : "outline"}
+              onClick={() => setFilterStatus("EN_COURS")}
+              variant={filterStatus === "EN_COURS" ? "default" : "outline"}
             >
               En cours
             </Button>
             <Button
-              onClick={() => setFilterStatus("FIXING_DONE")}
-              variant={filterStatus === "FIXING_DONE" ? "default" : "outline"}
+              onClick={() => setFilterStatus("TERMINEE")}
+              variant={filterStatus === "TERMINEE" ? "default" : "outline"}
             >
               Terminées
+            </Button>
+            <Button
+              onClick={() => setFilterStatus("ATTENTE_PIECES")}
+              variant={filterStatus === "ATTENTE_PIECES" ? "default" : "outline"}
+            >
+              Attente pièces
             </Button>
           </div>
 
@@ -113,14 +127,11 @@ export default function ClientPage() {
             <SelectTrigger className="sm:w-[220px] ">
               <SelectValue placeholder="Tous les statuts" />
             </SelectTrigger>
-
             <SelectContent>
               <SelectItem value="ALL">Tous les statuts</SelectItem>
-              <SelectItem value="CONFIRME">Confirmé</SelectItem>
+              <SelectItem value="EN_COURS">En cours</SelectItem>
               <SelectItem value="ATTENTE_PIECES">Attente pièces</SelectItem>
-              <SelectItem value="EN_REPARATION">En réparation</SelectItem>
-              <SelectItem value="TERMINE">Terminé</SelectItem>
-              <SelectItem value="SANS_INTERVENTION">Sans intervention</SelectItem>
+              <SelectItem value="TERMINEE">Terminées</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -129,10 +140,8 @@ export default function ClientPage() {
         {!openInterventionModal ? (
           <div className="space-y-4">
             {vehicles
-              .flatMap(v => v.invoices.map(i => ({ ...i, vehicle: v })))
-              .filter(i =>
-                filterStatus === "ALL" ? true : i.status === filterStatus
-              )
+              .flatMap(v => Array.isArray(v.invoices) ? v.invoices.map(i => ({ ...i, vehicle: v })) : [])
+              .filter(inv => filterStatus === "ALL" ? true : toUIStatus(inv.status) === filterStatus)
               .map(intervention => (
                 <div
                   key={intervention.id}
@@ -142,9 +151,7 @@ export default function ClientPage() {
                     <Car className="text-gray-400 mt-1" />
                     <div>
                       <p className="font-bold">{intervention.vehicle.licensePlate}</p>
-                      <p className="text-sm text-gray-500">
-                        {intervention.vehicle.brand}
-                      </p>
+                      <p className="text-sm text-gray-500">{intervention.vehicle.brand}</p>
                     </div>
                   </div>
 
@@ -159,9 +166,9 @@ export default function ClientPage() {
                   </div>
 
                   <span
-                    className={`px-3 py-1 rounded-full text-sm font-medium w-fit ${statusStyles[intervention.status]}`}
+                    className={`px-3 py-1 rounded-full text-sm font-medium w-fit ${statusStyles[toUIStatus(intervention.status)]}`}
                   >
-                    {translateStatus(intervention.status)}
+                    {toUIStatus(intervention.status)}
                   </span>
 
                   <Button
@@ -182,7 +189,7 @@ export default function ClientPage() {
               <div className="flex justify-end">
                 <Button onClick={() => setOpenInterventionModal(false)}>Fermer</Button>
               </div>
-              <div className="mb-4 px-4 ">
+              <div className="mb-4 px-4">
                 <p className="font-bold text-lg">{vehiculeSelect.licensePlate}</p>
                 <p className="text-sm text-gray-500">
                   {vehiculeSelect.brand} {vehiculeSelect.model} ({vehiculeSelect.year})
@@ -192,19 +199,13 @@ export default function ClientPage() {
                     <strong>Couleur :</strong> {vehiculeSelect.color}
                   </span>
                   <span>
-                    <strong>Agence :</strong> {vehiculeSelect.base.location}
+                    <strong>Agence :</strong> {vehiculeSelect.base?.location}
                   </span>
                 </div>
               </div>
-            </div>
-            <div className="max-h-[400px] overflow-auto ">
-              {interventionsVehicule
-                .filter(i =>
-                  filterStatus === "ALL" ? true : i.status === filterStatus
-                )
-                .map(intervention => {
-                  const statusMeta = getStatusMeta(intervention.status)
-                  const Icon = statusMeta.icon
+
+              <div className="max-h-[400px] overflow-auto">
+                {filterByUIStatus(interventionsVehicule, filterStatus).map(intervention => {
                   return (
                     <div
                       key={intervention.id}
@@ -215,20 +216,20 @@ export default function ClientPage() {
                           <p className="font-semibold">{intervention.accordNumber}</p>
                           <div className="flex items-center gap-1 text-sm text-gray-500">
                             <Calendar size={14} />
-                            Confirmé le{" "}
-                            {new Date(intervention.dateOfConfirmation).toLocaleDateString()}
+                            Confirmé le {new Date(intervention.dateOfConfirmation).toLocaleDateString()}
                           </div>
                         </div>
 
-                        <div
-                          className={`flex items-center gap-2 text-sm font-medium ${statusMeta.color} ${statusMeta.bg} px-3 py-1 rounded-full w-fit mb-2`}
+                        <span
+                          className={`flex items-center gap-2 text-sm font-medium ${statusStyles[toUIStatus(intervention.status)]} px-3 py-1 rounded-full w-fit mb-2`}
                         >
-                          <Icon />
-                          {statusMeta.label}
-                        </div>
+                          {toUIStatus(intervention.status)}
+                        </span>
 
                         <p className="text-xs text-gray-500 mb-3">
-                          Mis à jour : {new Date(intervention.statusUpdatedAt).toLocaleString()}
+                          Mis à jour :{intervention.statusUpdatedAt
+                            ? new Date(intervention.statusUpdatedAt).toLocaleString()
+                            : new Date(intervention.createdAt).toLocaleDateString()}
                         </p>
 
                         <div className="mb-4">
@@ -243,16 +244,18 @@ export default function ClientPage() {
                         <div className="flex justify-end">
                           <Button
                             className="flex items-center gap-2 text-sm font-medium"
-                            onClick={() => handleViewDetails(intervention)}
+                            onClick={() => handleViewDetails(intervention, intervention.vehicle)}
                           >
                             <Eye size={16} />
                             Afficher détail
                           </Button>
+
                         </div>
                       </div>
                     </div>
                   )
                 })}
+              </div>
             </div>
           </div>
         )}
@@ -263,13 +266,15 @@ export default function ClientPage() {
         onClose={() => setOpenDetailModal(false)}
         modalDescription="Détail de l’intervention"
       >
-        <InterventionDetail
-          selectedIntervention={interventionsVehicule[0]}
-          onClose={() => setOpenDetailModal(false)}
-          getStatusMeta={getStatusMeta}
-          translateStatus={translateStatus}
-        />
+        {interventionsVehicule[0] && (
+        <InterventionDetailClient
+  selectedVehicle={vehiculeSelect}
+  onClose={() => setOpenDetailModal(false)}
+/>
+
+        )}
       </Modal>
+
     </div>
   )
 }

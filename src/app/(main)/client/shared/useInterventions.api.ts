@@ -1,11 +1,8 @@
-"use client"
-
 import { Intervention } from "@/src/utils/types/intervention"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL + "/client/interventions"
 
 export function useInterventionsApi() {
-  // Recherche d'interventions par plaque
   const searchInterventions = async (search: string): Promise<Intervention[]> => {
     if (!search.trim()) throw new Error("Recherche requise")
 
@@ -21,7 +18,5 @@ export function useInterventionsApi() {
     return res.json()
   }
 
-  return {
-    searchInterventions,
-  }
+  return { searchInterventions }
 }

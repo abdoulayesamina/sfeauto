@@ -1,11 +1,8 @@
-"use client"
-
 import { Vehicule } from "@/src/utils/types/vehicule"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL + "/client/vehicles"
 
 export function useVehiculesApi() {
-  // Récupérer tous les véhicules et leurs interventions
   const getVehicules = async (): Promise<{ vehicles: Vehicule[], bases: any[], stats: any }> => {
     const res = await fetch(API_URL)
     if (!res.ok) {
@@ -15,7 +12,5 @@ export function useVehiculesApi() {
     return res.json()
   }
 
-  return {
-    getVehicules,
-  }
+  return { getVehicules }
 }
