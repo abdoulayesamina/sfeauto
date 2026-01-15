@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/src/shared/components/ui/button"
 import { Input } from "@/src/shared/components/ui/input"
+import { Invoice } from "@/src/utils/types/invoice";
+
 import {
   Select,
   SelectContent,
@@ -66,8 +68,8 @@ export default function ClientPage() {
   // Statistiques
   const stats = {
     total: vehicles.length,
-    enCours: vehicles.filter(v => Array.isArray(v.invoices) && v.invoices.some(i => toUIStatus(i.status) === "EN_COURS")).length,
-    termine: vehicles.filter(v => Array.isArray(v.invoices) && v.invoices.every(i => toUIStatus(i.status) === "TERMINEE") && v.invoices.length > 0).length,
+    enCours: vehicles.filter(v => Array.isArray(v.invoices) && v.invoices.some((i: Invoice) => toUIStatus(i.status) === "EN_COURS")).length,
+    termine: vehicles.filter(v => Array.isArray(v.invoices) && v.invoices.every((i: Invoice)=> toUIStatus(i.status) === "TERMINEE") && v.invoices.length > 0).length,
     sansIntervention: vehicles.filter(v => !Array.isArray(v.invoices) || v.invoices.length === 0).length,
   }
 
@@ -123,7 +125,10 @@ export default function ClientPage() {
             </Button>
           </div>
 
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <Select
+                value={filterStatus}
+                onValueChange={(value: string) => setFilterStatus(value as "ALL" | "EN_COURS" | "TERMINEE" | "ATTENTE_PIECES")}
+              >
             <SelectTrigger className="sm:w-[220px] ">
               <SelectValue placeholder="Tous les statuts" />
             </SelectTrigger>
@@ -140,7 +145,7 @@ export default function ClientPage() {
         {!openInterventionModal ? (
           <div className="space-y-4">
             {vehicles
-              .flatMap(v => Array.isArray(v.invoices) ? v.invoices.map(i => ({ ...i, vehicle: v })) : [])
+              .flatMap(v => Array.isArray(v.invoices) ? v.invoices.map((i:Invoice) => ({ ...i, vehicle: v })) : [])
               .filter(inv => filterStatus === "ALL" ? true : toUIStatus(inv.status) === filterStatus)
               .map(intervention => (
                 <div

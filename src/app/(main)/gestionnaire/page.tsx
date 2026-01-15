@@ -243,14 +243,14 @@ export default function GestionnairePage() {
             brand={selectedVehicle.brand ?? ""}
             model={selectedVehicle.model ?? ""}
             year={selectedVehicle.year ?? 0}
-            client={selectedVehicle.client?.name}
-            agence={selectedVehicle.base?.location}
-            entreeDate={selectedVehicle.entryDate}
+            client={selectedVehicle.client?.name ?? ""}
+            agence={selectedVehicle.base?.location ?? ""}
+            entreeDate={selectedVehicle.entryDate ?? ""}
             color={selectedVehicle.color ?? ""}
             invoices={selectedVehicle.invoices ?? []} 
             enReparation={1}
             termine={0}
-            onNewIntervention={() => {}}
+            onNewIntervention={() => {handleNewInterventionFromVehiculePreview}}
           />
         )}
       </Modal>
