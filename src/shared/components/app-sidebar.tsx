@@ -105,17 +105,17 @@ const filteredNav = navMain.filter(item =>
   
   return (
     <Sidebar collapsible="offcanvas" {...props}>
-      <SidebarHeader>
+      <SidebarHeader className="w-full border-b ">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              className="data-[slot=sidebar-menu-button]:!p-1.5"
+              className="data-[slot=sidebar-menu-button]:!p-1.5 "
             >
-              <a href="#">
+              <span>
                 <ArrowUpCircleIcon className="h-5 w-5" />
                 <span className="text-base font-semibold">SFE Auto</span>
-              </a>
+              </span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -127,7 +127,7 @@ const filteredNav = navMain.filter(item =>
         <NavSecondary items={navSecondary} className="mt-auto" /> */}
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter className="w-full border-t">
         <NavUser user={user} />
       </SidebarFooter>
     </Sidebar>
