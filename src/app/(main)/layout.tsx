@@ -22,7 +22,7 @@ export default async function MainLayout({
   const user = {
     name: session.user?.name ?? "Invité",
     email: session.user?.email ?? "",
-    avatar: session.user?.image ?? "/avatars/default.jpg",
+    avatar: "/avatars/default.jpg", // on utilise juste le fallback
     role: session.user.role,
   }
 
