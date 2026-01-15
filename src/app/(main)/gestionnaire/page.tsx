@@ -250,7 +250,7 @@ export default function GestionnairePage() {
             invoices={selectedVehicle.invoices ?? []} 
             enReparation={1}
             termine={0}
-            onNewIntervention={() => {}}
+            onNewIntervention={handleNewInterventionFromVehiculePreview}
           />
         )}
       </Modal>
