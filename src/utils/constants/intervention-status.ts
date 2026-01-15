@@ -12,7 +12,8 @@ export const STATUS_UI_MAP: Record<WorkStatus, "ATTENTE_REPARATION" | "ATTENTE_P
   CONFIRMED_IN_PLANNING: "ATTENTE_REPARATION", // confirmé mais non commencé
   FIXING_STARTED: "ATTENTE_REPARATION",       // travail commencé → attente de réparation
   WAITING_FOR_PARTS: "ATTENTE_PIECES",        // pièces commandées
-  FIXING_FINISHED: "TERMINEE",                // intervention terminée
+  FIXING_FINISHED: "TERMINEE",        
+          // intervention terminée
 }
 
 /**
