@@ -6,7 +6,9 @@ export interface CreateInterventionData {
   workDescription?: string  
   didOrderParts?: boolean   
   ordersDetails?: string     
-  comments?: string          
+  comments?: string      
+  status?: "FIXING_STARTED" | "WAITING_FOR_PARTS" // ✅ Ajouté
+    
 }
 import z from "zod";
 import { UserSchema } from "./user";

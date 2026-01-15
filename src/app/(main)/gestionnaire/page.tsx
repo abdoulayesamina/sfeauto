@@ -123,6 +123,7 @@ export default function GestionnairePage() {
   }, [agences, clientId])
   
   const handleSubmitIntervention = async (data: any) => {
+    
     await createIntervention({
       vehicleId: selectedVehicle?.id ?? "", // important
       accordNumber: data.numeroAccord,

@@ -13,6 +13,7 @@ import { Modal } from "@/src/shared/components/modal"
 
 import { InterventionForm } from "../../form/intervention-form"
 import { useInterventionApi } from "../useIntervention.api"
+import { toUIStatus, getStatusMeta } from "@/src/utils/constants/intervention-status"
 
 type VehicleItemProps = {
   vehicle?: Vehicule
@@ -23,7 +24,7 @@ type VehicleItemProps = {
   loading?: boolean
 }
 
-
+/* ----------------------------- SKELETON ----------------------------- */
 function VehicleItemSkeleton() {
   return (
     <div className="mt-4 bg-white border border-gray-200 rounded-xl shadow-sm p-6">
@@ -35,8 +36,8 @@ function VehicleItemSkeleton() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Skeleton className="h-6 w-24 rounded-full" />
-          <Skeleton className="h-6 w-20 rounded-full" />
+          <Skeleton className="h-6 w-28 rounded-full" />
+          <Skeleton className="h-6 w-36 rounded-full" />
           <Skeleton className="h-9 w-32 rounded-lg" />
         </div>
       </div>
@@ -44,7 +45,7 @@ function VehicleItemSkeleton() {
   )
 }
 
-
+/* ----------------------------- COMPONENT ----------------------------- */
 export function VehicleItem({
   vehicle,
   clients = [],
@@ -56,6 +57,9 @@ export function VehicleItem({
   const [interventionModalOpen, setInterventionModalOpen] = useState(false)
   const { createIntervention, loading: submitting } = useInterventionApi()
 
+  // State local pour les interventions (pour refresh instantané)
+  const [localInterventions, setLocalInterventions] = useState(vehicle?.invoices ?? [])
+
   if (loading || !vehicle) {
     return <VehicleItemSkeleton />
   }
@@ -66,25 +70,17 @@ export function VehicleItem({
   const agenceName =
     agences.find(a => a.id === vehicle.base?.id)?.location ?? "—"
 
-const enReparationCount =
-  vehicle.invoices?.filter(
-    i => i.status === "FIXING_STARTED" || i.status === "WAITING_FOR_PARTS"
-  ).length ?? 0
-
-const termineCount =
-  vehicle.invoices?.filter(
-    i => i.status === "FIXING_FINISHED"
-  ).length ?? 0
-
-
-  const aucuneIntervention = (vehicle.invoices?.length ?? 0) === 0
-
+  /* ----------------------------- ACTIONS ----------------------------- */
   const handleSubmitIntervention = async (data: any) => {
-    if (!vehicle.id) {
-    console.error("Impossible de créer l'intervention : véhicule sans ID")
-    return
-  }
-    await createIntervention({
+    if (!vehicle.id) return
+
+    const status =
+      data.piecesCommande === "oui"
+        ? "WAITING_FOR_PARTS"
+        : "FIXING_STARTED"
+
+    // Création intervention via API
+    const newIntervention = await createIntervention({
       vehicleId: vehicle.id,
       accordNumber: data.numeroAccord,
       dateOfConfirmation: data.dateConfirmation,
@@ -92,27 +88,26 @@ const termineCount =
       didOrderParts: data.piecesCommande === "oui",
       ordersDetails: data.detailsCommande || null,
       comments: data.commentaires || null,
+      status,
     })
+
+    // Ajout direct au state local pour update instantané
+    setLocalInterventions(prev => [newIntervention, ...prev])
 
     setInterventionModalOpen(false)
   }
 
+  /* ----------------------------- UI ----------------------------- */
   return (
     <>
       <div
         className="
-          mt-4
-          bg-white
-          border border-gray-200
-          rounded-xl
-          shadow-sm
-          hover:shadow-lg
-          transition-all duration-200
-          flex flex-col lg:flex-row
-          gap-4
+          mt-4 bg-white border border-gray-200 rounded-xl
+          shadow-sm hover:shadow-md transition-all
+          flex flex-col lg:flex-row gap-4
         "
       >
-        {/* Infos véhicule */}
+        {/* INFOS VEHICULE */}
         <div
           className="flex-1 px-6 py-5 cursor-pointer"
           onClick={onClick}
@@ -130,35 +125,39 @@ const termineCount =
             <span>{clientName}</span>
             {!compact && <span className="text-gray-400">• {agenceName}</span>}
             <span className="text-gray-400">
-              <span className="text-gray-400">
-                • Entrée : {vehicle.entryDate ? vehicle.entryDate.toString().slice(0, 10) : "—"}
-              </span>
+              • Entrée : {vehicle.entryDate ? vehicle.entryDate.toString().slice(0, 10) : "—"}
             </span>
           </div>
         </div>
 
-        {/* Statuts & actions */}
-        <div className="px-6 py-5 flex flex-col sm:flex-row items-center gap-3 border-t lg:border-t-0 lg:border-l border-gray-100">
-          {enReparationCount > 0 && (
-            <span className="bg-yellow-50 text-yellow-700 text-xs font-medium px-3 py-1 rounded-full">
-              {enReparationCount} en réparation
-            </span>
-          )}
+        {/* STATUTS & ACTION */}
+        <div className="px-6 py-5 flex flex-wrap sm:flex-row items-center gap-2 border-t lg:border-t-0 lg:border-l border-gray-100">
+          {localInterventions.length > 0 ? (
+            localInterventions.map((interv) => {
+              const uiStatus = toUIStatus(interv.status)
+              const statusMeta = getStatusMeta(uiStatus)
 
-          {termineCount > 0 && (
-            <span className="bg-green-50 text-green-700 text-xs font-medium px-3 py-1 rounded-full">
-              {termineCount} terminé
-            </span>
-          )}
-
-          {aucuneIntervention && (
-            <span className="bg-gray-50 text-gray-700 text-xs font-medium px-3 py-1 rounded-full">
+              return (
+                <span
+                  key={interv.id}
+                  className={`
+                    ${statusMeta.bg} ${statusMeta.color} text-xs font-medium
+                    px-3 py-1 rounded-full flex items-center gap-1
+                  `}
+                >
+                  <statusMeta.icon className="w-3 h-3" />
+                  {statusMeta.label}
+                </span>
+              )
+            })
+          ) : (
+            <span className="bg-gray-100 text-gray-700 text-xs font-medium px-3 py-1 rounded-full">
               Aucune intervention
             </span>
           )}
 
           <Button
-            className="px-4 py-2 rounded-lg shadow-sm hover:shadow transition"
+            className="px-4 py-2 rounded-lg shadow-sm hover:shadow transition ml-2"
             onClick={() => setInterventionModalOpen(true)}
           >
             <DiamondPlus className="mr-2 h-4 w-4" />
@@ -167,7 +166,7 @@ const termineCount =
         </div>
       </div>
 
-      {/* Modal */}
+      {/* MODAL INTERVENTION */}
       <Modal
         open={interventionModalOpen}
         onClose={() => setInterventionModalOpen(false)}

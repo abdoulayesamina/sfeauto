@@ -2,51 +2,88 @@
 import { WorkStatus } from '@/generated/prisma'
 import { Wrench, Car } from "lucide-react"
 
-
-export const STATUS_UI_MAP: Record<WorkStatus, "EN_COURS" | "ATTENTE_PIECES" | "TERMINEE"> = {
-  CONFIRMED_IN_PLANNING: "EN_COURS",
-  FIXING_STARTED: "EN_COURS",
-  WAITING_FOR_PARTS: "ATTENTE_PIECES",
-  FIXING_FINISHED: "TERMINEE",
+/**
+ * Mapping du statut backend vers un statut UI plus lisible
+ * ATTENTE_REPARATION = "En attente de réparation"
+ * ATTENTE_PIECES = "En attente de pièces"
+ * TERMINEE = "Terminée"
+ */
+export const STATUS_UI_MAP: Record<WorkStatus, "ATTENTE_REPARATION" | "ATTENTE_PIECES" | "TERMINEE"> = {
+  CONFIRMED_IN_PLANNING: "ATTENTE_REPARATION", // confirmé mais non commencé
+  FIXING_STARTED: "ATTENTE_REPARATION",       // travail commencé → attente de réparation
+  WAITING_FOR_PARTS: "ATTENTE_PIECES",        // pièces commandées
+  FIXING_FINISHED: "TERMINEE",                // intervention terminée
 }
 
-export const UI_TO_WORKSTATUS: Record<"EN_COURS" | "ATTENTE_PIECES" | "TERMINEE", WorkStatus> = {
-  EN_COURS: "FIXING_STARTED",
+/**
+ * Mapping inverse : du statut UI vers le statut backend (utile pour création)
+ */
+export const UI_TO_WORKSTATUS: Record<"ATTENTE_REPARATION" | "ATTENTE_PIECES" | "TERMINEE", WorkStatus> = {
+  ATTENTE_REPARATION: "FIXING_STARTED",
   ATTENTE_PIECES: "WAITING_FOR_PARTS",
   TERMINEE: "FIXING_FINISHED",
 }
 
 /**
- * Transforme un statut backend en statut front (EN_COURS, TERMINEE, ATTENTE_PIECES)
+ * Transforme un statut backend en statut UI (pour affichage)
  */
-export const toUIStatus = (backendStatus?: string): "EN_COURS" | "ATTENTE_PIECES" | "TERMINEE" => {
-  if (!backendStatus) return "EN_COURS" 
-  return STATUS_UI_MAP[backendStatus as WorkStatus] ?? "EN_COURS"
+export const toUIStatus = (
+  backendStatus?: string
+): "ATTENTE_REPARATION" | "ATTENTE_PIECES" | "TERMINEE" => {
+  if (!backendStatus) return "ATTENTE_REPARATION"
+  return STATUS_UI_MAP[backendStatus as WorkStatus] ?? "ATTENTE_REPARATION"
 }
 
 /**
- * Filtre les interventions selon le statut UI sélectionné
+ * Filtrer les interventions selon le statut UI
  */
 export const filterByUIStatus = (
   interventions: any[] | undefined,
-  uiStatus: "ALL" | "EN_COURS" | "TERMINEE" | "ATTENTE_PIECES"
+  uiStatus: "ALL" | "ATTENTE_REPARATION" | "ATTENTE_PIECES" | "TERMINEE"
 ) => {
   if (!Array.isArray(interventions)) return []
   if (uiStatus === "ALL") return interventions
   return interventions.filter(i => toUIStatus(i.status) === uiStatus)
 }
 
-export const getStatusMeta = (status: "EN_COURS" | "ATTENTE_PIECES" | "TERMINEE") => {
+/**
+ * Métadonnées pour affichage badge + couleur + icône
+ */
+export const getStatusMeta = (
+  status: "ATTENTE_REPARATION" | "ATTENTE_PIECES" | "TERMINEE"
+) => {
   const map = {
-    EN_COURS: { label: "En cours", color: "text-blue-700", bg: "bg-blue-100", icon: Wrench },
-    ATTENTE_PIECES: { label: "En attente de pièces", color: "text-orange-700", bg: "bg-orange-100", icon: Wrench },
-    TERMINEE: { label: "Terminée", color: "text-green-700", bg: "bg-green-100", icon: Car },
+    ATTENTE_REPARATION: {
+      label: "En attente de réparation",
+      color: "text-blue-700",
+      bg: "bg-blue-100",
+      icon: Wrench,
+    },
+    ATTENTE_PIECES: {
+      label: "En attente de pièces",
+      color: "text-orange-700",
+      bg: "bg-orange-100",
+      icon: Wrench,
+    },
+    TERMINEE: {
+      label: "Terminée",
+      color: "text-green-700",
+      bg: "bg-green-100",
+      icon: Car,
+    },
   }
 
-  return map[status] ?? { label: "Statut inconnu", color: "text-gray-500", bg: "bg-gray-100", icon: Wrench }
+  return map[status] ?? {
+    label: "Statut inconnu",
+    color: "text-gray-500",
+    bg: "bg-gray-100",
+    icon: Wrench,
+  }
 }
 
-
+/**
+ * Labels pour historique (optionnel pour timeline)
+ */
 export const HISTORY_LABELS: Record<string, string> = {
   CONFIRMED_IN_PLANNING: "Confirmée et planifiée",
   FIXING_STARTED: "Travail commencé",
