@@ -12,6 +12,13 @@ import { Badge } from "@/src/shared/components/ui/badge"
 import { useClientApi } from "./shared/useClient.api"
 import { confirmAlert, errorAlert, successAlert } from "@/src/lib/alerts"
 
+type ClientWithCount = Client & {
+  _count?: {
+    bases: number
+    vehicles: number
+  }
+}
+
 export default function ClientPage() {
   const { getClients, createClient, updateClient, deleteClient } = useClientApi()
 
@@ -93,7 +100,7 @@ export default function ClientPage() {
     }
   }
 
-  const columns: ColumnDef<Client>[] = [
+  const columns: ColumnDef<ClientWithCount>[] = [
     {
       accessorKey: "name",
       header: "Nom",

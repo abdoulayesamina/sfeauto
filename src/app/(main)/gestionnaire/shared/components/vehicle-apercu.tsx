@@ -17,6 +17,8 @@ type VehiclePreviewProps = {
   entreeDate: string
   color: string
   invoices: any[]
+  enReparation?:number
+  termine?:number
   onNewIntervention: () => void
 }
 

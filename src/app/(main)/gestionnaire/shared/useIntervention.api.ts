@@ -1,11 +1,15 @@
+import { useState } from "react"
 import { errorAlert, successAlert } from "@/src/lib/alerts"
 import { CreateInterventionData } from "@/src/utils/types/intervention"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL + "/invoices"
 
 export function useInterventionApi() {
+  const [loading, setLoading] = useState(false)
+
   const createIntervention = async (data: CreateInterventionData) => {
     console.log("[InterventionApi] Création intervention, données envoyées :", data)
+    setLoading(true)
 
     try {
       const res = await fetch(API_URL, {
@@ -38,8 +42,10 @@ export function useInterventionApi() {
       console.error("[InterventionApi] Exception attrapée :", e)
       errorAlert("Erreur création intervention", e.message)
       throw e
+    } finally {
+      setLoading(false)
     }
   }
 
-  return { createIntervention }
+  return { createIntervention, loading }
 }

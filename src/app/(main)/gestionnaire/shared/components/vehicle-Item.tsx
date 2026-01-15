@@ -66,19 +66,24 @@ export function VehicleItem({
   const agenceName =
     agences.find(a => a.id === vehicle.base?.id)?.location ?? "—"
 
-  const enReparationCount =
-    vehicle.invoices?.filter(
-      i => i.status === "EN_REPARATION" || i.status === "FIXING_STARTED"
-    ).length ?? 0
+const enReparationCount =
+  vehicle.invoices?.filter(
+    i => i.status === "FIXING_STARTED" || i.status === "WAITING_FOR_PARTS"
+  ).length ?? 0
 
-  const termineCount =
-    vehicle.invoices?.filter(
-      i => i.status === "TERMINE" || i.status === "FIXING_FINISHED"
-    ).length ?? 0
+const termineCount =
+  vehicle.invoices?.filter(
+    i => i.status === "FIXING_FINISHED"
+  ).length ?? 0
+
 
   const aucuneIntervention = (vehicle.invoices?.length ?? 0) === 0
 
   const handleSubmitIntervention = async (data: any) => {
+    if (!vehicle.id) {
+    console.error("Impossible de créer l'intervention : véhicule sans ID")
+    return
+  }
     await createIntervention({
       vehicleId: vehicle.id,
       accordNumber: data.numeroAccord,
@@ -125,7 +130,9 @@ export function VehicleItem({
             <span>{clientName}</span>
             {!compact && <span className="text-gray-400">• {agenceName}</span>}
             <span className="text-gray-400">
-              • Entrée : {vehicle.entryDate.toString().slice(0, 10)}
+              <span className="text-gray-400">
+                • Entrée : {vehicle.entryDate ? vehicle.entryDate.toString().slice(0, 10) : "—"}
+              </span>
             </span>
           </div>
         </div>
