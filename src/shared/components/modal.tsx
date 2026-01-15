@@ -14,6 +14,8 @@ type ModalProps = {
   modalDescription?: string;
   children: React.ReactNode;
   onClose: () => void;
+  className?: string 
+
 }
 
 export function Modal({open, modalTitle, modalDescription, children, onClose }: ModalProps) {
