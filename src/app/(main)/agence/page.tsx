@@ -11,6 +11,7 @@ import { Badge } from "@/src/shared/components/ui/badge"
 import { useAgenceApi } from "./shared/useAgence.api"
 import { useClientApi } from "../clients/shared/useClient.api"
 import { confirmAlert, errorAlert, successAlert } from "@/src/lib/alerts"
+import { Spinner } from "@/src/shared/components/spinner"
 
 export default function AgencePage() {
   const { getAgences, createAgence, updateAgence, deleteAgence } = useAgenceApi()
@@ -56,13 +57,22 @@ export default function AgencePage() {
     setLoading(false)
   }
 
+  const loadAgencesWithoutSpin = async () => {
+    try {
+      const data = await getAgences()
+      setAgences(data)
+    } catch (e: any) {
+      errorAlert("Erreur", e.message)
+    }
+  }
+
   const handleCreate = async () => {
     try {
       await createAgence(formData)
       successAlert("Agence créée")
       setIsOpen(false)
       setFormData({})
-      loadAgences()
+      loadAgencesWithoutSpin()
     } catch (e: any) {
       errorAlert("Erreur", e.message)
     }
@@ -82,7 +92,7 @@ export default function AgencePage() {
       setEditOpen(false)
       setAgenceToEdit(null)
       setFormData({})
-      loadAgences()
+      loadAgencesWithoutSpin()
     } catch (e: any) {
       errorAlert("Erreur", e.message)
     }
@@ -98,7 +108,7 @@ export default function AgencePage() {
     try {
       await deleteAgence(agence.id)
       successAlert("Agence supprimée")
-      loadAgences()
+      setAgences((prev) => prev.filter((a) => a.id !== agence.id))
     } catch (e: any) {
       errorAlert("Suppression impossible", e.message)
     }
@@ -150,8 +160,11 @@ export default function AgencePage() {
         <h2 className="font-bold text-2xl">Gestion des agences</h2>
         <Button onClick={() => setIsOpen(true)}>Ajouter une agence</Button>
       </div>
+      {loading && <div className="px-6 flex justify-center mb-4">
+        <Spinner className="size-6" />
+      </div>}
 
-      {!loading && <DataTable data={agenceSearch} columnsProps={tableColumns} handleSearch={(e)=>handleSearch(e)}/>}
+      {<DataTable data={agenceSearch} columnsProps={tableColumns} handleSearch={(e)=>handleSearch(e)}/>}
 
       {/* CREATE */}
       <Modal open={isOpen} modalTitle="Nouvelle agence" onClose={() => setIsOpen(false)}>

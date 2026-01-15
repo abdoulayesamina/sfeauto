@@ -11,6 +11,7 @@ import {
   SidebarMenuItem,
 } from "@/src/shared/components/ui/sidebar"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 export function NavMain({
   items,
@@ -21,6 +22,7 @@ export function NavMain({
     icon?: LucideIcon
   }[]
 }) {
+  const pathname = usePathname();
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
@@ -46,9 +48,11 @@ export function NavMain({
         <SidebarMenu>
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton tooltip={item.title}>
-                {item.icon && <item.icon />}
-                <Link href={item.url}>{item.title}</Link>
+              <SidebarMenuButton tooltip={item.title} className="p-0">
+                <Link href={item.url} className={`w-full flex items-center gap-2 p-2 ${pathname === item.url ? 'bg-gray-300' : ''}`}>
+                  {item.icon && <item.icon size={18} />}
+                  <span>{item.title}</span>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}

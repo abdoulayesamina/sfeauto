@@ -93,7 +93,7 @@ export function UserForm({
           <SelectTrigger className="h-12">
             <SelectValue placeholder="Sélectionnez un rôle" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="z-[2000]">
             {roles.map((r) => (
               <SelectItem key={r.id} value={r.id}>
                 {r.name}
@@ -114,7 +114,7 @@ export function UserForm({
               <SelectTrigger className="h-12">
                 <SelectValue placeholder="Sélectionnez un client" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-[2000]">
                 {clients.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
                     {c.name}
@@ -134,7 +134,7 @@ export function UserForm({
               <SelectTrigger className="h-12">
                 <SelectValue placeholder="Sélectionnez une agence" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-[2000]">
                 {filteredAgences.map((a) => (
                   <SelectItem key={a.id} value={a.id}>
                     {a.location}

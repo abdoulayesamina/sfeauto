@@ -11,6 +11,7 @@ import { useUserApi } from "./shared/useUser.api"
 import { useClientApi } from "../clients/shared/useClient.api"
 import { confirmAlert, errorAlert, successAlert } from "@/src/lib/alerts"
 import { useAgenceApi } from "../agence/shared/useAgence.api"
+import { Spinner } from "@/src/shared/components/spinner"
 
 export default function UsersPage() {
   const { getUsers, createUser, updateUser, deleteUser } = useUserApi()
@@ -49,6 +50,15 @@ export default function UsersPage() {
     setLoading(false)
   }
 
+  const loadUsersWithoutSpin = async () => {
+    try {
+      const data = await getUsers()
+      setUsers(data)
+    } catch (e: any) {
+      errorAlert("Erreur", e.message)
+    }
+  }
+
   const loadClients = async () => {
     try {
       const data = await getClients()
@@ -73,7 +83,7 @@ export default function UsersPage() {
       successAlert("Utilisateur créé")
       setIsOpen(false)
       setFormData({})
-      loadUsers()
+      loadUsersWithoutSpin()
     } catch (e: any) {
       errorAlert("Erreur", e.message)
     }
@@ -103,7 +113,7 @@ export default function UsersPage() {
       setEditOpen(false)
       setUserToEdit(null)
       setFormData({})
-      loadUsers()
+      loadUsersWithoutSpin()
     } catch (e: any) {
       errorAlert("Erreur", e.message)
     }
@@ -119,7 +129,7 @@ export default function UsersPage() {
     try {
       await deleteUser(user.id)
       successAlert("Utilisateur supprimé", `"${user.name}" a été supprimé avec succès.`)
-      loadUsers()
+      setUsers((prev) => prev.filter((u) => u.id !== user.id))
     } catch (err: any) {
       errorAlert("Erreur", err.message || "Impossible de supprimer l'utilisateur")
     }
@@ -180,7 +190,10 @@ export default function UsersPage() {
         <Button onClick={() => setIsOpen(true)}>Ajouter</Button>
       </div>
 
-      {!loading && <DataTable data={userSearch} columnsProps={tableColumns} handleSearch={(e)=>handleSearch(e)}/>}
+      {loading && <div className="px-6 flex justify-center mb-4">
+        <Spinner className="size-6" />
+      </div>}
+      {<DataTable data={userSearch} columnsProps={tableColumns} handleSearch={(e)=>handleSearch(e)}/>}
 
       {/* CREATE */}
       <Modal open={isOpen} modalTitle="Nouvel utilisateur" onClose={() => setIsOpen(false)}>
