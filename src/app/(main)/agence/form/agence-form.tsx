@@ -29,7 +29,7 @@ export function AgenceForm({ mode, data, clients, onClose, onSubmit, onChange }:
           <SelectTrigger className="w-full !h-16">
             <SelectValue placeholder="Sélectionnez un client" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="z-[2000]">
             {clients.map((c) => (
               <SelectItem key={c.id} value={c.id}>
                 {c.name}

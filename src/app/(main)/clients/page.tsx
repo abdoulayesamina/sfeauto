@@ -11,6 +11,7 @@ import { Badge } from "@/src/shared/components/ui/badge"
 
 import { useClientApi } from "./shared/useClient.api"
 import { confirmAlert, errorAlert, successAlert } from "@/src/lib/alerts"
+import { Spinner } from "@/src/shared/components/spinner"
 
 type ClientWithCount = Client & {
   _count?: {
@@ -51,13 +52,22 @@ export default function ClientPage() {
     setLoading(false)
   }
 
+  const loadClientsWithoutSpin = async () => {
+    try {
+      const data = await getClients()
+      setClients(data)
+    } catch (e: any) {
+      errorAlert("Erreur", e.message)
+    }
+  }
+
   const handleCreate = async () => {
     try {
       await createClient(formData)
       successAlert("Client créé")
       setIsOpen(false)
       setFormData({})
-      loadClients()
+      loadClientsWithoutSpin()
     } catch (e: any) {
       errorAlert("Erreur", e.message)
     }
@@ -78,7 +88,7 @@ export default function ClientPage() {
       setEditOpen(false)
       setClientToEdit(null)
       setFormData({})
-      loadClients()
+      loadClientsWithoutSpin()
     } catch (e: any) {
       errorAlert("Erreur", e.message)
     }
@@ -94,7 +104,7 @@ export default function ClientPage() {
     try {
       await deleteClient(client.id)
       successAlert("Client supprimé")
-      loadClients()
+      setClients((prev) => prev.filter((c) => c.id !== client.id))
     } catch (e: any) {
       errorAlert("Suppression impossible", e.message)
     }
@@ -157,8 +167,12 @@ export default function ClientPage() {
         <h2 className="font-bold text-2xl">Gestion des clients</h2>
         <Button onClick={() => setIsOpen(true)}>Ajouter un client</Button>
       </div>
+      
+      {loading && <div className="px-6 flex justify-center mb-4">
+        <Spinner className="size-6" />
+      </div>}
 
-      {!loading && <DataTable data={clientSearch} columnsProps={tableColumns} handleSearch={(e)=>handleSearch(e)}/>}
+      {<DataTable data={clientSearch} columnsProps={tableColumns} handleSearch={(e)=>handleSearch(e)}/>}
 
       {/* CREATE */}
       <Modal open={isOpen} modalTitle="Nouveau client" onClose={() => setIsOpen(false)}>
