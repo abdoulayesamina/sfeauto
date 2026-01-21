@@ -5,7 +5,7 @@ import { Car, User, MapPin, Wrench, FileText, Calendar } from "lucide-react"
 import { Button } from "@/src/shared/components/ui/button"
 import { toUIStatus, getStatusMeta, HISTORY_LABELS } from "@/src/utils/constants/intervention-status"
 
-type UIStatus = "EN_COURS" | "ATTENTE_PIECES" | "TERMINEE"
+type UIStatus = "EN_COURS" | "ATTENTE_PIECES" | "ATTENTE_REPARATION" | "TERMINEE"
 
 type Props = {
   selectedIntervention: any
