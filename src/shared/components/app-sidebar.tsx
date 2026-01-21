@@ -9,7 +9,10 @@ import {
   Briefcase,
   Wrench,
   UserCog,
-  User
+  User,
+  Layers,
+  FolderOpen,
+  Package
 } from "lucide-react"
 
 import { NavDocuments } from "@/src/shared/components/nav-documents"
@@ -63,6 +66,27 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       title: "Clients",
       url: "/clients",
       icon: Briefcase,
+            roles:["ADMIN"],
+
+    },
+    {
+      title: "Familles",
+      url: "/famille",
+      icon: Layers,
+            roles:["ADMIN"],
+
+    },
+    {
+      title: "Collections",
+      url: "/collection",
+      icon: FolderOpen,
+            roles:["ADMIN"],
+
+    },
+    {
+      title: "Articles",
+      url: "/article",
+      icon: Package,
             roles:["ADMIN"],
 
     },

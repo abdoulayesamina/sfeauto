@@ -136,7 +136,7 @@ export default function GestionnairePage() {
     setInterventionModalOpen(false)
   }
 
-  const handleNewInterventionFromVehiculePreview = ()=>{
+  const handleNewInterventionFromVehiculePreview = ()=>{    
     setInterventionModalOpen(true)
   }
 
@@ -251,7 +251,7 @@ export default function GestionnairePage() {
             invoices={selectedVehicle.invoices ?? []} 
             enReparation={1}
             termine={0}
-            onNewIntervention={() => {handleNewInterventionFromVehiculePreview}}
+            onNewIntervention={handleNewInterventionFromVehiculePreview}
           />
         )}
       </Modal>

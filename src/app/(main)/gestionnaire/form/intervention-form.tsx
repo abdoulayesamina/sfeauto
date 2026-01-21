@@ -3,7 +3,8 @@ import { Input } from "@/src/shared/components/ui/input"
 import { Label } from "@/src/shared/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/src/shared/components/ui/radio-group"
 import { Textarea } from "@/src/shared/components/ui/textarea"
-import { useState } from "react"
+import Image from "next/image"
+import { useEffect, useState } from "react"
 
 type PiecesCommande = "oui" | "non"
 
@@ -23,6 +24,26 @@ export function InterventionForm({
   loading = false,
 }: InterventionFormProps) {
   const [piecesCommande, setPiecesCommande] = useState<PiecesCommande>("non")
+  const [imagesBlob, setImagesBlob] = useState<string[]>([])
+  const [images, setImages] = useState<File[]>([])
+
+  useEffect(() => 
+    console.log("Images selected:", imagesBlob)
+  , [imagesBlob])
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return
+
+    const files = Array.from(e.target.files)
+    setImages(files)
+
+    const previews = files.map((file) => URL.createObjectURL(file))
+
+    setImagesBlob(previews)
+
+
+  }
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -53,6 +74,42 @@ export function InterventionForm({
         />
       </div>
 
+      <div className="flex flex-col  space-y-2">
+        <Label>Photo</Label>
+        <span className="text-sm text-gray-500 border p-2 rounded-md bg-gray-50 cursor-pointer hover:bg-gray-100" 
+          onClick={() => {
+            document.getElementById("InputImages")?.click();
+          }}
+        >
+          {imagesBlob.length > 0 ? `${images.length} fichier(s) sélectionné(s)` : "Sélectionner des images "}
+        </span>
+        <Input id="InputImages" type="file" name="photoTravaux" className="cursor-pointer hidden" accept="image/*" multiple onChange={handleFileChange} />
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {imagesBlob.length > 0 ? imagesBlob.map((src, index) => (
+          <div className="relative">
+            <Image
+              key={index}
+              src={src}
+              alt={`preview-${index}`}
+              width={128}
+              height={128}
+              className="w-full h-32 object-cover rounded-lg border"
+              onClick={() => window.open(src, "_blank")}
+            />
+            <Button type="button" className="font-bold shadow-2xl bg-red-200 hover:bg-red-300 absolute top-2 right-2 text-black text-[10px] rounded-full w-8 h-8 flex items-center justify-center"
+              onClick={() => {
+                  setImages(prev => prev.filter((_, i) => i !== index))
+                  setImagesBlob(imagesBlob.filter((_, i) => i !== index))
+                }
+              }
+            >
+              X
+            </Button>
+          </div>
+        )): <span className="text-gray-500 text-sm italic">Images</span> }
+      </div>
 
       <div className="space-y-3">
         <Label>Pièces commandées</Label>
@@ -94,12 +151,11 @@ export function InterventionForm({
 
       <div className="border-t pt-6 space-y-6">
         <div className="space-y-2">
-          <Label>Numéro d’accord *</Label>
+          <Label>Numéro d’accord</Label>
           <Input
             name="numeroAccord"
             className="h-15"
             defaultValue={defaultAccordNumber}
-            required
           />
         </div>
 
