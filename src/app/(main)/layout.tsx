@@ -31,7 +31,7 @@ export default async function MainLayout({
       <AppSidebar user={user} variant="inset"/>
       <SidebarInset>
         <SiteHeader />
-            {children}
+        {children}
       </SidebarInset>
     </SidebarProvider>
   )

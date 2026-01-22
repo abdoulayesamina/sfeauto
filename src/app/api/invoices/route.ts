@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
 
     // Calcul correct de invoiceConfirmed (Boolean)
     const hasAccordNumber = accordNumber && accordNumber.trim().length > 0;
-    const invoiceConfirmed = hasAccordNumber && !!dateOfConfirmation;
+    const invoiceConfirmed = Boolean(hasAccordNumber && !!dateOfConfirmation);
 
     // Validate dateOfConfirmation (si fournie)
     if (dateOfConfirmation) {
@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
 
     logError("Failed to create invoice", error);
     return NextResponse.json(
-      { error: "Échec de la création de l'intervention" },
+      { error: "Échec de la création de l'intervention : "},
       { status: 500 }
     );
   }

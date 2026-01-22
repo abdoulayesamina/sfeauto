@@ -169,7 +169,7 @@ export function AddVehiculeForm({
           <SelectTrigger className="h-16">
             <SelectValue placeholder={loadingClients ? "Chargement..." : "Sélectionnez un client"} />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="z-[2000]">
             {clients.map((c) => (
               <SelectItem key={c.id} value={c.id}>
                 {c.name}
@@ -190,7 +190,7 @@ export function AddVehiculeForm({
           <SelectTrigger className="h-16">
             <SelectValue placeholder={!vehicule.clientId ? "Sélectionnez un client d'abord" : loadingAgences ? "Chargement..." : "Sélectionnez une agence"} />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="z-[2000]">
             {agences.map((b) => (
               <SelectItem key={b.id} value={b.id}>
                 {b.location}

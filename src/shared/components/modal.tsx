@@ -33,7 +33,7 @@ export function Modal({open, modalTitle, modalDescription, children, onClose }: 
         <div className="fixed flex items-center justify-center inset-0 z-[1000]">
         
             <div
-                className="absolute inset-0 bg-black/50 backdrop-blur-sm cursor-pointer"
+                className="absolute inset-0 bg-black/50 backdrop-blur-sm cursor-pointer z-[1000]"
                 onClick={onClose}
             />
 
