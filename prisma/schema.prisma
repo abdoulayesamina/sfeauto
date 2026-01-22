@@ -8,22 +8,24 @@ datasource db {
 }
 
 model User {
-  id              String          @id @default(cuid())
-  email           String          @unique
-  name            String
-  role            Role
-  password        String
-  isSystemAccount Boolean         @default(false)
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-  clientId        String?
-  baseId          String?
-  invoicesHandled Invoice[]       @relation("InvoiceHandler")
-  statusChanges   StatusHistory[] @relation("StatusChanger")
-  changeHistory   ChangeHistory[] @relation("ChangeHistoryUser")
-  base            Base?           @relation(fields: [baseId], references: [id])
-  client          Client?         @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  vehiclesHandled Vehicle[]       @relation("VehicleHandler")
+  id                    String          @id @default(cuid())
+  email                 String          @unique
+  name                  String
+  role                  Role
+  password              String
+  isSystemAccount       Boolean         @default(false)
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  clientId              String?
+  baseId                String?
+  invoicesHandled       Invoice[]       @relation("InvoiceHandler")
+  statusChanges         StatusHistory[] @relation("StatusChanger")
+  changeHistory         ChangeHistory[] @relation("ChangeHistoryUser")
+  uploadedInvoicePhotos InvoicePhoto[]  @relation("InvoicePhotoUploader")
+
+  base            Base?     @relation(fields: [baseId], references: [id])
+  client          Client?   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  vehiclesHandled Vehicle[] @relation("VehicleHandler")
 
   @@index([email])
   @@index([role])
@@ -82,6 +84,24 @@ model Vehicle {
   @@index([handledById])
 }
 
+model InvoicePhoto {
+  id        String  @id @default(cuid())
+  invoiceId String
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  blobName    String   @unique
+  url         String
+  contentType String?
+  size        Int?
+  createdAt   DateTime @default(now())
+
+  uploadedById String?
+  uploadedBy   User?   @relation("InvoicePhotoUploader", fields: [uploadedById], references: [id])
+
+  @@index([invoiceId])
+  @@index([createdAt])
+}
+
 model Invoice {
   id                 String          @id @default(cuid())
   accordNumber       String?         @unique
@@ -101,6 +121,7 @@ model Invoice {
   vehicle            Vehicle         @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
   statusHistory      StatusHistory[]
   changeHistory      ChangeHistory[]
+  photos             InvoicePhoto[]
 
   @@index([accordNumber])
   @@index([vehicleId])
