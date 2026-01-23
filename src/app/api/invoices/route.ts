@@ -10,90 +10,53 @@ export const runtime = "nodejs"
 const MAX_FILE_SIZE = 8 * 1024 * 1024 // 8MB
 const ALLOWED_PREFIX = "image/"
 
-// Helpers
 function asString(v: FormDataEntryValue | null): string | null {
   if (!v) return null
-  if (typeof v === "string") return v
-  // if it's File, not expected for text fields
-  return null
+  return typeof v === "string" ? v : null
 }
-
 function asBool(v: FormDataEntryValue | null): boolean {
   const s = asString(v)
   if (!s) return false
   return ["true", "1", "yes", "oui", "on"].includes(s.toLowerCase())
 }
 
-function parseDateOrNull(v: string | null): Date | null {
-  if (!v) return null
-  const d = new Date(v)
-  return isNaN(d.getTime()) ? null : d
-}
-
-// POST /api/invoices - Create a new invoice (intervention) + optional photos
 export async function POST(request: NextRequest) {
   try {
     const session = await auth()
-
     if (!session || session.user.role !== "MANAGER") {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
     }
 
     const contentType = request.headers.get("content-type") || ""
-    const isMultipart = contentType.includes("multipart/form-data")
-
-    // -------------------------
-    // 1) Lire données (JSON ou FormData)
-    // -------------------------
-    let vehicleId: string | null = null
-    let accordNumber: string | null = null
-    let dateOfConfirmation: string | null = null
-    let workDescription: string | null = null
-    let didOrderParts: boolean = false
-    let ordersDetails: string | null = null
-    let comments: string | null = null
-
-    let files: File[] = []
-
-    if (isMultipart) {
-      const form = await request.formData()
-
-      vehicleId = asString(form.get("vehicleId"))
-      accordNumber = asString(form.get("accordNumber"))
-      dateOfConfirmation = asString(form.get("dateOfConfirmation"))
-      workDescription = asString(form.get("workDescription"))
-      didOrderParts = asBool(form.get("didOrderParts"))
-      ordersDetails = asString(form.get("ordersDetails"))
-      comments = asString(form.get("comments"))
-
-      // IMPORTANT: on attend "photos" (multiples)
-      files = (form.getAll("photos") as File[])?.filter(Boolean) ?? []
-    } else {
-      const body = await request.json()
-
-      vehicleId = body.vehicleId ?? null
-      accordNumber = body.accordNumber ?? null
-      dateOfConfirmation = body.dateOfConfirmation ?? null
-      workDescription = body.workDescription ?? null
-      didOrderParts = Boolean(body.didOrderParts)
-      ordersDetails = body.ordersDetails ?? null
-      comments = body.comments ?? null
-
-      // JSON => pas de fichiers
-      files = []
+    if (!contentType.includes("multipart/form-data")) {
+      return NextResponse.json(
+        { error: "Format invalide : utilisez multipart/form-data (FormData) pour envoyer l’intervention + photos." },
+        { status: 400 }
+      )
     }
 
-    console.log("[API /invoices] multipart =", isMultipart)
-    console.log("[API /invoices] vehicleId :", vehicleId)
-    console.log("[API /invoices] accordNumber :", accordNumber)
-    console.log("[API /invoices] dateOfConfirmation :", dateOfConfirmation)
-    console.log("[API /invoices] didOrderParts :", didOrderParts)
-    console.log("[API /invoices] files count :", files.length)
-    console.log("[API /invoices] session.user.id :", session.user?.id)
+    const form = await request.formData()
 
-    // -------------------------
-    // 2) Validations identiques à ton code
-    // -------------------------
+    const vehicleId = asString(form.get("vehicleId"))
+    const accordNumber = asString(form.get("accordNumber"))
+    const dateOfConfirmation = asString(form.get("dateOfConfirmation"))
+    const workDescription = asString(form.get("workDescription"))
+    const didOrderParts = asBool(form.get("didOrderParts"))
+    const ordersDetails = asString(form.get("ordersDetails"))
+    const comments = asString(form.get("comments"))
+
+    const files = (form.getAll("photos") as File[]) ?? []
+
+    console.log("[API /invoices] multipart=true")
+    console.log("[API /invoices] vehicleId:", vehicleId)
+    console.log("[API /invoices] accordNumber:", accordNumber)
+    console.log("[API /invoices] dateOfConfirmation:", dateOfConfirmation)
+    console.log("[API /invoices] didOrderParts:", didOrderParts)
+    console.log("[API /invoices] files count:", files.length)
+    console.log("[API /invoices] session.user.id:", session.user?.id)
+    
+
+    // Validate required fields
     if (!vehicleId) {
       return NextResponse.json(
         { error: "L'identifiant du véhicule est requis" },
@@ -101,11 +64,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // accordNumber peut être vide => null
-    const hasAccordNumber =
-      typeof accordNumber === "string" && accordNumber.trim().length > 0
-
     // Calcul correct de invoiceConfirmed (Boolean)
+    const hasAccordNumber = accordNumber && accordNumber.trim().length > 0
     const invoiceConfirmed = Boolean(hasAccordNumber && !!dateOfConfirmation)
 
     // Validate dateOfConfirmation (si fournie)
@@ -121,146 +81,141 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // -------------------------
-    // 3) Créer l'intervention (Invoice)
-    // -------------------------
-    const invoice = await prisma.invoice.create({
-      data: {
-        vehicleId,
-        accordNumber: hasAccordNumber ? (accordNumber as string) : null,
-        dateOfConfirmation: dateOfConfirmation ? new Date(dateOfConfirmation) : null,
-        invoiceConfirmed,
-        status:
-          invoiceConfirmed && didOrderParts
-            ? "WAITING_FOR_PARTS"
-            : "CONFIRMED_IN_PLANNING",
-        workDescription,
-        didOrderParts: didOrderParts || false,
-        ordersDetails,
-        comments,
-        handledById: session.user.id,
-      },
-      include: {
-        vehicle: {
-          include: {
-            client: true,
-            base: true,
-          },
-        },
-        handledBy: {
-          select: {
-            name: true,
-            email: true,
-          },
-        },
-        photos: true, // ✅ pour cohérence (vide au départ)
-      },
-    })
-
-    console.log("[API /invoices] Invoice créée :", invoice.id)
-
-    // -------------------------
-    // 4) Historique de changement (comme ton code)
-    // -------------------------
-    await prisma.changeHistory.create({
-      data: {
-        invoiceId: invoice.id,
-        changedBy: session.user.id,
-        fieldName: "created",
-        newValue: JSON.stringify({
-          invoiceConfirmed,
-          accordNumber: hasAccordNumber ? accordNumber : null,
-          dateOfConfirmation: dateOfConfirmation || null,
-          workDescription: workDescription || null,
-          didOrderParts: didOrderParts || false,
-        }),
-        changeType: "created",
-      },
-    })
-
-    // Historique de status si pièces commandées
-    if (invoiceConfirmed && didOrderParts) {
-      await prisma.statusHistory.create({
-        data: {
-          invoiceId: invoice.id,
-          previousStatus: "CONFIRMED_IN_PLANNING",
-          newStatus: "WAITING_FOR_PARTS",
-          changedById: session.user.id,
-        },
-      })
-    }
-
-    // -------------------------
-    // 5) Upload des photos (si multipart + photos)
-    // -------------------------
-    let createdPhotos: any[] = []
-
-    if (isMultipart && files.length > 0) {
-      const container = getContainerClient()
-      await container.createIfNotExists()
-
-      for (const file of files) {
-        if (!(file instanceof File)) continue
-
-        if (!file.type?.startsWith(ALLOWED_PREFIX)) {
-          return NextResponse.json(
-            { error: `Type non supporté: ${file.type || "unknown"}` },
-            { status: 400 }
-          )
-        }
-
-        if (file.size > MAX_FILE_SIZE) {
-          return NextResponse.json(
-            { error: `Fichier trop lourd: ${file.name}` },
-            { status: 400 }
-          )
-        }
-
-        const ext = file.name.includes(".") ? file.name.split(".").pop() : "jpg"
-        const blobName = `invoice/${invoice.id}/${randomUUID()}.${ext}`
-
-        const blockBlob = container.getBlockBlobClient(blobName)
-        const buffer = Buffer.from(await file.arrayBuffer())
-
-        await blockBlob.uploadData(buffer, {
-          blobHTTPHeaders: { blobContentType: file.type },
-        })
-
-        const row = await prisma.invoicePhoto.create({
-          data: {
-            invoiceId: invoice.id,
-            blobName,
-            url: blockBlob.url,
-            contentType: file.type,
-            size: file.size,
-            uploadedById: session.user.id,
-          },
-        })
-
-        createdPhotos.push({
-          ...row,
-          sasUrl: getSasUrlForBlob(blobName),
-        })
+    // Validate files (si fournis)
+    for (const f of files) {
+      if (!(f instanceof File)) continue
+      if (!f.type?.startsWith(ALLOWED_PREFIX)) {
+        return NextResponse.json(
+          { error: `Type non supporté: ${f.type || "unknown"}` },
+          { status: 400 }
+        )
+      }
+      if (f.size > MAX_FILE_SIZE) {
+        return NextResponse.json(
+          { error: `Fichier trop lourd: ${f.name}` },
+          { status: 400 }
+        )
       }
     }
 
-    // -------------------------
-    // 6) Retourner l'invoice + photos[]
-    // -------------------------
-    // On renvoie un objet enrichi: photos + sasUrl
-    const responseInvoice = {
-      ...invoice,
-      photos: createdPhotos.length
-        ? createdPhotos
-        : (invoice.photos || []).map(p => ({
-            ...p,
-            sasUrl: getSasUrlForBlob(p.blobName),
-          })),
-    }
+    const container = getContainerClient()
+    await container.createIfNotExists()
 
-    return NextResponse.json(responseInvoice, { status: 201 })
+    // Pour cleanup si échec
+    const uploadedBlobNames: string[] = []
+
+    try {
+      const result = await prisma.$transaction(async (tx) => {
+        // 1) Création de l'invoice
+        const invoice = await tx.invoice.create({
+          data: {
+            vehicleId,
+            accordNumber: hasAccordNumber ? (accordNumber as string) : null,
+            dateOfConfirmation: dateOfConfirmation ? new Date(dateOfConfirmation) : null,
+            invoiceConfirmed,
+            status:
+              invoiceConfirmed && didOrderParts
+                ? "WAITING_FOR_PARTS"
+                : "CONFIRMED_IN_PLANNING",
+            workDescription,
+            didOrderParts: didOrderParts || false,
+            ordersDetails,
+            comments,
+            handledById: session.user.id,
+          },
+          include: {
+            vehicle: { include: { client: true, base: true } },
+            handledBy: { select: { name: true, email: true } },
+          },
+        })
+
+        // 2) Historique de changement
+        await tx.changeHistory.create({
+          data: {
+            invoiceId: invoice.id,
+            changedBy: session.user.id,
+            fieldName: "created",
+            newValue: JSON.stringify({
+              invoiceConfirmed,
+              accordNumber: hasAccordNumber ? accordNumber : null,
+              dateOfConfirmation: dateOfConfirmation || null,
+              workDescription: workDescription || null,
+              didOrderParts: didOrderParts || false,
+            }),
+            changeType: "created",
+          },
+        })
+
+        // 3) Historique de status si pièces commandées
+        if (invoiceConfirmed && didOrderParts) {
+          await tx.statusHistory.create({
+            data: {
+              invoiceId: invoice.id,
+              previousStatus: "CONFIRMED_IN_PLANNING",
+              newStatus: "WAITING_FOR_PARTS",
+              changedById: session.user.id,
+            },
+          })
+        }
+
+        // 4) Upload + insert InvoicePhoto
+        const createdPhotos: any[] = []
+
+        for (const file of files) {
+          if (!(file instanceof File)) continue
+
+          const ext = file.name.includes(".") ? file.name.split(".").pop() : "jpg"
+          const blobName = `invoice/${invoice.id}/${randomUUID()}.${ext}`
+
+          const blockBlob = container.getBlockBlobClient(blobName)
+          const buffer = Buffer.from(await file.arrayBuffer())
+
+          await blockBlob.uploadData(buffer, {
+            blobHTTPHeaders: { blobContentType: file.type || "application/octet-stream" },
+          })
+
+          uploadedBlobNames.push(blobName)
+
+          const row = await tx.invoicePhoto.create({
+            data: {
+              invoiceId: invoice.id,
+              blobName,
+              url: blockBlob.url,
+              contentType: file.type || null,
+              size: file.size,
+              uploadedById: session.user.id,
+            },
+          })
+
+          createdPhotos.push({
+            ...row,
+            sasUrl: getSasUrlForBlob(blobName),
+          })
+        }
+
+        return { invoice, photos: createdPhotos }
+      })
+
+      // ✅ Response: invoice + photos[]
+      return NextResponse.json(
+        { ...result.invoice, photos: result.photos },
+        { status: 201 }
+      )
+    } catch (err: any) {
+      // Compensation: supprimer les blobs déjà uploadés si rollback / erreur
+      try {
+        await Promise.all(
+          uploadedBlobNames.map(async (blobName) => {
+            const blobClient = container.getBlockBlobClient(blobName)
+            await blobClient.deleteIfExists()
+          })
+        )
+      } catch (cleanupErr: any) {
+        logError("Cleanup Azure blobs failed", cleanupErr)
+      }
+      throw err
+    }
   } catch (error: any) {
-    // FK constraint (véhicule invalide)
     if (error?.code === "P2003") {
       logError("Failed to create invoice - invalid vehicle", error)
       return NextResponse.json({ error: "Véhicule invalide" }, { status: 400 })

@@ -123,21 +123,22 @@ export default function GestionnairePage() {
   }, [agences, clientId])
   
 const handleSubmitIntervention = async (data: any) => {
-  await createIntervention({
-    vehicleId: selectedVehicle?.id ?? "",
-    accordNumber: data.numeroAccord,
-    dateOfConfirmation: data.dateConfirmation,
-    workDescription: data.descriptionTravaux,
-    didOrderParts: data.piecesCommande === "oui",
-    ordersDetails: data.detailsCommande || null,
-    comments: data.commentaires || null,
+ await createIntervention({
+  vehicleId: selectedVehicle?.id ?? "",
+  accordNumber: data.numeroAccord,
+  dateOfConfirmation: data.dateConfirmation,
+  workDescription: data.descriptionTravaux,
+  didOrderParts: data.piecesCommande === "oui",
+  ordersDetails: data.detailsCommande || null,
+  comments: data.commentaires || null,
+  images: data.images || [],
+})
 
-    // ✅ AJOUT
-    images: data.images || [],
-  })
 
   setInterventionModalOpen(false)
 }
+
+
 
 
 

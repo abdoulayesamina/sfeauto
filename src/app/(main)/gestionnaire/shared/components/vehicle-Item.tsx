@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { DiamondPlus } from "lucide-react"
 
 import { Vehicule } from "@/src/utils/types/vehicule"
@@ -57,29 +57,38 @@ export function VehicleItem({
   const [interventionModalOpen, setInterventionModalOpen] = useState(false)
   const { createIntervention, loading: submitting } = useInterventionApi()
 
-  // State local pour les interventions (pour refresh instantané)
-  const [localInterventions, setLocalInterventions] = useState(vehicle?.invoices ?? [])
+  // State local pour les interventions (refresh instantané)
+  const [localInterventions, setLocalInterventions] = useState<any[]>(
+    vehicle?.invoices ?? []
+  )
+
+  // Quand le vehicle change, on resynchronise le state local
+  useEffect(() => {
+    setLocalInterventions(vehicle?.invoices ?? [])
+  }, [vehicle?.id]) // on se base sur l'id pour éviter des re-renders inutiles
 
   if (loading || !vehicle) {
     return <VehicleItemSkeleton />
   }
 
-  const clientName =
-    clients.find(c => c.id === vehicle.client?.id)?.name ?? "—"
+  const clientName = useMemo(() => {
+    return clients.find((c) => c.id === vehicle.client?.id)?.name ?? "—"
+  }, [clients, vehicle.client?.id])
 
-  const agenceName =
-    agences.find(a => a.id === vehicle.base?.id)?.location ?? "—"
+  const agenceName = useMemo(() => {
+    return agences.find((a) => a.id === vehicle.base?.id)?.location ?? "—"
+  }, [agences, vehicle.base?.id])
+
+  const entryDateText = useMemo(() => {
+    return vehicle.entryDate ? String(vehicle.entryDate).slice(0, 10) : "—"
+  }, [vehicle.entryDate])
 
   /* ----------------------------- ACTIONS ----------------------------- */
   const handleSubmitIntervention = async (data: any) => {
     if (!vehicle.id) return
 
-    const status =
-      data.piecesCommande === "oui"
-        ? "WAITING_FOR_PARTS"
-        : "FIXING_STARTED"
+    const status = data.piecesCommande === "oui" ? "WAITING_FOR_PARTS" : "FIXING_STARTED"
 
-    // Création intervention via API
     const newIntervention = await createIntervention({
       vehicleId: vehicle.id,
       accordNumber: data.numeroAccord,
@@ -89,11 +98,11 @@ export function VehicleItem({
       ordersDetails: data.detailsCommande || null,
       comments: data.commentaires || null,
       status,
+      images: data.images || [], // ✅ AJOUT
+
     })
 
-    // Ajout direct au state local pour update instantané
-    setLocalInterventions(prev => [newIntervention, ...prev])
-
+    setLocalInterventions((prev) => [newIntervention, ...prev])
     setInterventionModalOpen(false)
   }
 
@@ -108,14 +117,9 @@ export function VehicleItem({
         "
       >
         {/* INFOS VEHICULE */}
-        <div
-          className="flex-1 px-6 py-5 cursor-pointer"
-          onClick={onClick}
-        >
+        <div className="flex-1 px-6 py-5 cursor-pointer" onClick={onClick}>
           <div className="flex flex-col md:flex-row md:items-center gap-3">
-            <span className="text-lg font-semibold text-gray-900">
-              {vehicle.licensePlate}
-            </span>
+            <span className="text-lg font-semibold text-gray-900">{vehicle.licensePlate}</span>
             <span className="text-gray-500">
               {vehicle.brand} {vehicle.model} · {vehicle.year}
             </span>
@@ -124,9 +128,7 @@ export function VehicleItem({
           <div className="mt-2 flex flex-wrap gap-3 text-sm text-gray-600">
             <span>{clientName}</span>
             {!compact && <span className="text-gray-400">• {agenceName}</span>}
-            <span className="text-gray-400">
-              • Entrée : {vehicle.entryDate ? vehicle.entryDate.toString().slice(0, 10) : "—"}
-            </span>
+            <span className="text-gray-400">• Entrée : {entryDateText}</span>
           </div>
         </div>
 
@@ -173,6 +175,7 @@ export function VehicleItem({
         modalTitle="Créer une intervention"
       >
         <InterventionForm
+          vehicleId={vehicle.id ?? ""} // ✅ FIX: on passe l'id du véhicule, pas selectedVehicle
           vehicleDisplayText={`${vehicle.licensePlate} - ${vehicle.brand} ${vehicle.model}`}
           defaultAccordNumber="ACC-2026-001"
           onSubmit={handleSubmitIntervention}

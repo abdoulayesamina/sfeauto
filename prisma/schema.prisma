@@ -2,11 +2,9 @@ generator client {
   provider = "prisma-client-js"
   output   = "../generated/prisma"
 }
-
 datasource db {
   provider = "mysql"
 }
-
 model User {
   id                    String          @id @default(cuid())
   email                 String          @unique
@@ -22,15 +20,12 @@ model User {
   statusChanges         StatusHistory[] @relation("StatusChanger")
   changeHistory         ChangeHistory[] @relation("ChangeHistoryUser")
   uploadedInvoicePhotos InvoicePhoto[]  @relation("InvoicePhotoUploader")
-
   base            Base?     @relation(fields: [baseId], references: [id])
   client          Client?   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   vehiclesHandled Vehicle[] @relation("VehicleHandler")
-
   @@index([email])
   @@index([role])
 }
-
 model Client {
   id        String    @id @default(cuid())
   name      String
@@ -41,10 +36,8 @@ model Client {
   bases     Base[]
   users     User[]
   vehicles  Vehicle[]
-
   @@index([name])
 }
-
 model Base {
   id        String    @id @default(cuid())
   location  String
@@ -54,11 +47,9 @@ model Base {
   client    Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
   users     User[]
   vehicles  Vehicle[]
-
   @@index([clientId])
   @@index([location])
 }
-
 model Vehicle {
   id           String    @id @default(cuid())
   licensePlate String    @unique
@@ -77,31 +68,25 @@ model Vehicle {
   base         Base      @relation(fields: [baseId], references: [id], onDelete: Cascade)
   client       Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
   handledBy    User?     @relation("VehicleHandler", fields: [handledById], references: [id])
-
   @@index([licensePlate])
   @@index([clientId])
   @@index([baseId])
   @@index([handledById])
 }
-
 model InvoicePhoto {
   id        String  @id @default(cuid())
   invoiceId String
   invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-
   blobName    String   @unique
   url         String
   contentType String?
   size        Int?
   createdAt   DateTime @default(now())
-
   uploadedById String?
   uploadedBy   User?   @relation("InvoicePhotoUploader", fields: [uploadedById], references: [id])
-
   @@index([invoiceId])
   @@index([createdAt])
 }
-
 model Invoice {
   id                 String          @id @default(cuid())
   accordNumber       String?         @unique
@@ -122,7 +107,6 @@ model Invoice {
   statusHistory      StatusHistory[]
   changeHistory      ChangeHistory[]
   photos             InvoicePhoto[]
-
   @@index([accordNumber])
   @@index([vehicleId])
   @@index([status])
@@ -130,7 +114,6 @@ model Invoice {
   @@index([handledById])
   @@index([invoiceConfirmed, status, createdAt])
 }
-
 model StatusHistory {
   id             String     @id @default(cuid())
   previousStatus WorkStatus
@@ -140,12 +123,10 @@ model StatusHistory {
   changedById    String
   changedBy      User       @relation("StatusChanger", fields: [changedById], references: [id], onDelete: Cascade)
   invoice        Invoice    @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-
   @@index([invoiceId])
   @@index([changedById])
   @@index([changedAt])
 }
-
 model ChangeHistory {
   id         String   @id @default(cuid())
   invoiceId  String
@@ -157,9 +138,39 @@ model ChangeHistory {
   oldValue   String?
   newValue   String?
   changeType String
-
   @@index([invoiceId])
   @@index([changedAt])
+}
+
+model te_famille_fam {
+  fam_id          Int          @id @default(autoincrement())
+  fam_name        String
+  collections te_collection_col[] @relation("Famille_Collections")
+
+  @@index([fam_name])
+}
+
+model te_collection_col {
+  col_id        Int      @id @default(autoincrement())
+  col_name      String
+  col_familleId Int
+  col_famille   te_famille_fam  @relation("Famille_Collections", fields: [col_familleId], references: [fam_id])
+
+  articles  te_article_art[] @relation("Collection_Articles")
+
+  @@index([col_name])
+  @@index([col_familleId])
+}
+
+model te_article_art {
+  art_id        Int      @id @default(autoincrement())
+  art_name      String
+  art_price     Int
+  art_collectionId Int 
+  collection te_collection_col @relation("Collection_Articles", fields: [art_collectionId], references: [col_id])
+
+  @@index([art_name])
+  @@index([art_collectionId])
 }
 
 enum Role {
@@ -168,7 +179,6 @@ enum Role {
   MECHANIC
   CLIENT
 }
-
 enum WorkStatus {
   CONFIRMED_IN_PLANNING
   WAITING_FOR_PARTS
