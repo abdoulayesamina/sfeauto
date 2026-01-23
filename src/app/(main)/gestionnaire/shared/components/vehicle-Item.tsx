@@ -14,6 +14,7 @@ import { Modal } from "@/src/shared/components/modal"
 import { InterventionForm } from "../../form/intervention-form"
 import { useInterventionApi } from "../useIntervention.api"
 import { toUIStatus, getStatusMeta } from "@/src/utils/constants/intervention-status"
+import { groupInterventionsByStatus } from "@/src/utils/constants/groupInterventionsByStatus"
 
 type VehicleItemProps = {
   vehicle?: Vehicule
@@ -65,7 +66,7 @@ export function VehicleItem({
   // Quand le vehicle change, on resynchronise le state local
   useEffect(() => {
     setLocalInterventions(vehicle?.invoices ?? [])
-  }, [vehicle?.id]) // on se base sur l'id pour éviter des re-renders inutiles
+  }, [vehicle?.id])
 
   if (loading || !vehicle) {
     return <VehicleItemSkeleton />
@@ -98,13 +99,18 @@ export function VehicleItem({
       ordersDetails: data.detailsCommande || null,
       comments: data.commentaires || null,
       status,
-      images: data.images || [], // ✅ AJOUT
-
+      images: data.images || [],
     })
 
     setLocalInterventions((prev) => [newIntervention, ...prev])
     setInterventionModalOpen(false)
   }
+
+  /* ----------------------------- BADGES GROUPES ----------------------------- */
+  const groupedBadges = useMemo(() => {
+    if (!localInterventions || localInterventions.length === 0) return []
+    return groupInterventionsByStatus(localInterventions as any[])
+  }, [localInterventions])
 
   /* ----------------------------- UI ----------------------------- */
   return (
@@ -119,7 +125,9 @@ export function VehicleItem({
         {/* INFOS VEHICULE */}
         <div className="flex-1 px-6 py-5 cursor-pointer" onClick={onClick}>
           <div className="flex flex-col md:flex-row md:items-center gap-3">
-            <span className="text-lg font-semibold text-gray-900">{vehicle.licensePlate}</span>
+            <span className="text-lg font-semibold text-gray-900">
+              {vehicle.licensePlate}
+            </span>
             <span className="text-gray-500">
               {vehicle.brand} {vehicle.model} · {vehicle.year}
             </span>
@@ -134,21 +142,21 @@ export function VehicleItem({
 
         {/* STATUTS & ACTION */}
         <div className="px-6 py-5 flex flex-wrap sm:flex-row items-center gap-2 border-t lg:border-t-0 lg:border-l border-gray-100">
-          {localInterventions.length > 0 ? (
-            localInterventions.map((interv) => {
-              const uiStatus = toUIStatus(interv.status)
-              const statusMeta = getStatusMeta(uiStatus)
+          {groupedBadges.length > 0 ? (
+            groupedBadges.map((g) => {
+              const statusMeta = getStatusMeta(g.uiStatus)
+              const label = g.count >= 2 ? `${g.count} ${statusMeta.label}` : statusMeta.label
 
               return (
                 <span
-                  key={interv.id}
+                  key={String(g.uiStatus)}
                   className={`
                     ${statusMeta.bg} ${statusMeta.color} text-xs font-medium
                     px-3 py-1 rounded-full flex items-center gap-1
                   `}
                 >
                   <statusMeta.icon className="w-3 h-3" />
-                  {statusMeta.label}
+                  {label}
                 </span>
               )
             })
@@ -175,7 +183,7 @@ export function VehicleItem({
         modalTitle="Créer une intervention"
       >
         <InterventionForm
-          vehicleId={vehicle.id ?? ""} // ✅ FIX: on passe l'id du véhicule, pas selectedVehicle
+          vehicleId={vehicle.id ?? ""}
           vehicleDisplayText={`${vehicle.licensePlate} - ${vehicle.brand} ${vehicle.model}`}
           defaultAccordNumber="ACC-2026-001"
           onSubmit={handleSubmitIntervention}
