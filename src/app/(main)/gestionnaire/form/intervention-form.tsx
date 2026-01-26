@@ -9,7 +9,8 @@ import { useEffect, useState } from "react"
 type PiecesCommande = "oui" | "non"
 
 interface InterventionFormProps {
-  vehicleDisplayText: string // juste pour affichage
+  vehicleId: string // ✅ AJOUT (id réel)
+  vehicleDisplayText: string
   defaultAccordNumber?: string
   onSubmit?: (data: any) => void
   onClose?: () => void
@@ -17,6 +18,7 @@ interface InterventionFormProps {
 }
 
 export function InterventionForm({
+  vehicleId,
   vehicleDisplayText,
   defaultAccordNumber = "ACC-2026-001",
   onSubmit,
@@ -27,9 +29,9 @@ export function InterventionForm({
   const [imagesBlob, setImagesBlob] = useState<string[]>([])
   const [images, setImages] = useState<File[]>([])
 
-  useEffect(() => 
+  useEffect(() => {
     console.log("Images selected:", imagesBlob)
-  , [imagesBlob])
+  }, [imagesBlob])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return
@@ -38,22 +40,29 @@ export function InterventionForm({
     setImages(files)
 
     const previews = files.map((file) => URL.createObjectURL(file))
-
     setImagesBlob(previews)
-
-
   }
-
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+
     const formData = new FormData(e.currentTarget as HTMLFormElement)
     const data = Object.fromEntries(formData.entries())
-    onSubmit?.(data)
+
+    // ✅ On ajoute explicitement ce qui n'est pas dans FormData:
+    onSubmit?.({
+      ...data,
+      vehicleId,
+      piecesCommande, // "oui" | "non"
+      images,         // File[]
+    })
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8 p-4">
+      {/* ✅ hidden utile si un jour tu veux utiliser FormData direct */}
+      <input type="hidden" name="vehicleId" value={vehicleId} />
+
       {/* Véhicule affichage seulement */}
       <div className="space-y-2">
         <Label>Véhicule</Label>
@@ -74,41 +83,57 @@ export function InterventionForm({
         />
       </div>
 
-      <div className="flex flex-col  space-y-2">
+      <div className="flex flex-col space-y-2">
         <Label>Photo</Label>
-        <span className="text-sm text-gray-500 border p-2 rounded-md bg-gray-50 cursor-pointer hover:bg-gray-100" 
+        <span
+          className="text-sm text-gray-500 border p-2 rounded-md bg-gray-50 cursor-pointer hover:bg-gray-100"
           onClick={() => {
-            document.getElementById("InputImages")?.click();
+            document.getElementById("InputImages")?.click()
           }}
         >
-          {imagesBlob.length > 0 ? `${images.length} fichier(s) sélectionné(s)` : "Sélectionner des images "}
+          {imagesBlob.length > 0
+            ? `${images.length} fichier(s) sélectionné(s)`
+            : "Sélectionner des images "}
         </span>
-        <Input id="InputImages" type="file" name="photoTravaux" className="cursor-pointer hidden" accept="image/*" multiple onChange={handleFileChange} />
+
+        <Input
+          id="InputImages"
+          type="file"
+          name="photoTravaux"
+          className="cursor-pointer hidden"
+          accept="image/*"
+          multiple
+          onChange={handleFileChange}
+        />
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {imagesBlob.length > 0 ? imagesBlob.map((src, index) => (
-          <div className="relative">
-            <Image
-              key={index}
-              src={src}
-              alt={`preview-${index}`}
-              width={128}
-              height={128}
-              className="w-full h-32 object-cover rounded-lg border"
-              onClick={() => window.open(src, "_blank")}
-            />
-            <Button type="button" className="font-bold shadow-2xl bg-red-200 hover:bg-red-300 absolute top-2 right-2 text-black text-[10px] rounded-full w-8 h-8 flex items-center justify-center"
-              onClick={() => {
-                  setImages(prev => prev.filter((_, i) => i !== index))
-                  setImagesBlob(imagesBlob.filter((_, i) => i !== index))
-                }
-              }
-            >
-              X
-            </Button>
-          </div>
-        )): <span className="text-gray-500 text-sm italic">Images</span> }
+        {imagesBlob.length > 0 ? (
+          imagesBlob.map((src, index) => (
+            <div className="relative" key={index}>
+              <Image
+                src={src}
+                alt={`preview-${index}`}
+                width={128}
+                height={128}
+                className="w-full h-32 object-cover rounded-lg border"
+                onClick={() => window.open(src, "_blank")}
+              />
+              <Button
+                type="button"
+                className="font-bold shadow-2xl bg-red-200 hover:bg-red-300 absolute top-2 right-2 text-black text-[10px] rounded-full w-8 h-8 flex items-center justify-center"
+                onClick={() => {
+                  setImages((prev) => prev.filter((_, i) => i !== index))
+                  setImagesBlob((prev) => prev.filter((_, i) => i !== index))
+                }}
+              >
+                X
+              </Button>
+            </div>
+          ))
+        ) : (
+          <span className="text-gray-500 text-sm italic">Images</span>
+        )}
       </div>
 
       <div className="space-y-3">
@@ -170,7 +195,6 @@ export function InterventionForm({
         </div>
       </div>
 
-      {/* Boutons */}
       <div className="grid grid-cols-2 gap-2">
         <Button type="button" variant="outline" onClick={onClose}>
           Annuler

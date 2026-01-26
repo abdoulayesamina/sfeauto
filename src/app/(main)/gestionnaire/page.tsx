@@ -122,18 +122,25 @@ export default function GestionnairePage() {
     return agences
   }, [agences, clientId])
   
-  const handleSubmitIntervention = async (data: any) => {
-    await createIntervention({
-      vehicleId: selectedVehicle?.id ?? "", // important
-      accordNumber: data.numeroAccord,
-      dateOfConfirmation: data.dateConfirmation,
-      workDescription: data.descriptionTravaux,
-      didOrderParts: data.piecesCommande === "oui",
-      ordersDetails: data.detailsCommande || null,
-      comments: data.commentaires || null,
-    })
-    setInterventionModalOpen(false)
-  }
+const handleSubmitIntervention = async (data: any) => {
+ await createIntervention({
+  vehicleId: selectedVehicle?.id ?? "",
+  accordNumber: data.numeroAccord,
+  dateOfConfirmation: data.dateConfirmation,
+  workDescription: data.descriptionTravaux,
+  didOrderParts: data.piecesCommande === "oui",
+  ordersDetails: data.detailsCommande || null,
+  comments: data.commentaires || null,
+  images: data.images || [],
+})
+
+
+  setInterventionModalOpen(false)
+}
+
+
+
+
 
   const handleNewInterventionFromVehiculePreview = ()=>{    
     setInterventionModalOpen(true)
@@ -256,13 +263,16 @@ export default function GestionnairePage() {
       </Modal>
 
       <Modal open={interventionModalOpen} onClose={() => setInterventionModalOpen(false)} modalTitle="Créer une intervention">
-        <InterventionForm
-          vehicleDisplayText={`${selectedVehicle?.licensePlate} - ${selectedVehicle?.brand} ${selectedVehicle?.model}`}
-          defaultAccordNumber="ACC-2026-001"
-          onSubmit={handleSubmitIntervention}
-          onClose={() => setInterventionModalOpen(false)}
-          loading={loading}
-        />
+<InterventionForm
+  vehicleId={selectedVehicle?.id ?? ""}   
+  vehicleDisplayText={`${selectedVehicle?.licensePlate} - ${selectedVehicle?.brand} ${selectedVehicle?.model}`}
+  defaultAccordNumber="ACC-2026-001"
+  onSubmit={handleSubmitIntervention}
+  onClose={() => setInterventionModalOpen(false)}
+  loading={loading}
+/>
+
+
       </Modal>
 
     </div>
