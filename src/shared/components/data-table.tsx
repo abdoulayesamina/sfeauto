@@ -45,6 +45,7 @@ import {
   ChevronsRightIcon,
   ColumnsIcon,
   GripVerticalIcon,
+  Inbox,
   LoaderIcon,
   MoreVerticalIcon,
   PlusIcon,
@@ -513,9 +514,14 @@ export function DataTable({
                   <TableRow>
                     <TableCell
                       colSpan={columns.length}
-                      className="h-24 text-center"
+                      className="h-32 text-center"
                     >
-                      No results.
+                      <div className="flex flex-col items-center justify-center gap-2 text-gray-500">
+                        <Inbox className="h-8 w-8 text-gray-400" />
+                        <span className="text-sm">
+                          Aucune donnée pour le moment
+                        </span>
+                      </div>
                     </TableCell>
                   </TableRow>
                 )}

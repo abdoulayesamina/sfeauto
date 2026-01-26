@@ -3,10 +3,11 @@
 import { Button } from "@/src/shared/components/ui/button"
 import { Input } from "@/src/shared/components/ui/input"
 import { Label } from "@/src/shared/components/ui/label"
+import { Famille } from "@/src/utils/types/famille"
 
 type Props = {
   mode: "create" | "edit"
-  data: any
+  data: Famille
   onClose: () => void
   onSubmit: () => void
   onChange: (data: any) => void
@@ -25,8 +26,8 @@ export function FamilleForm({
             <Label>Nom</Label>
             <Input
                 className="h-16"
-                value={data.name || ""}
-                onChange={(e) => onChange({ ...data, name: e.target.value })}
+                value={data.fam_name || ""}
+                onChange={(e) => onChange({ ...data, fam_name: e.target.value })}
                 placeholder="Nom de la famille"
             />
             </div>

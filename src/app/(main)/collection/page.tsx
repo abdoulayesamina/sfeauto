@@ -8,29 +8,51 @@ import { useEffect, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/src/shared/components/ui/badge";
 import { CollectionForm } from "./forms/collection-form";
+import { useCollectionApi } from "./shared/useCollection.api";
+import { successAlert,errorAlert } from "@/src/lib/alerts";
+import { Collection } from "@/src/utils/types/collection";
+import { useFamilleApi } from "../famille/shared/useFamille.api";
+import { Famille } from "@/src/utils/types/famille";
 
 export default function CollectionPage() {
+    const { getAllCollections, createCollection, updateCollection, deleteCollection } = useCollectionApi();
+    const {getAllFamilles} = useFamilleApi();
+
     const [loading, setLoading] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const [editOpen, setEditOpen] = useState(false);
     const [formData, setFormData] = useState<any>({});
-    const [collectionsSearch, setCollectionsSearch] = useState<any[]>([]);
-    const [collections, setCollections] = useState<any[]>([]);
-    const [familles, setFamilles] = useState<any[]>([]);
+    const [collectionsSearch, setCollectionsSearch] = useState<Collection[]>([]);
+    const [collections, setCollections] = useState<Collection[]>([]);
+    const [familles, setFamilles] = useState<Famille[]>([]);
+
+    const loadCollections = async () => {
+        try {
+            const data = await getAllCollections();
+            setCollections(data);
+
+            const famillesData = await getAllFamilles();
+            setFamilles(famillesData);
+        }catch (e: any) {
+           throw new Error(e);
+        }
+    }
 
     useEffect(() => {
-        setLoading(true);
-        setTimeout(() => setLoading(false), 1000);
-        setFamilles([
-            { id: 1, name: "Famille A" },
-            { id: 2, name: "Famille B" },
-            { id: 3, name: "Famille C" },
-        ]);
-        setCollections([
-            { id: 1, name: "Collection A", familleId: 1 },
-            { id: 2, name: "Collection B", familleId: 2 },
-            { id: 3, name: "Collection C", familleId: 3 },
-        ]);
+        const init = async () => {
+            setLoading(true);
+            try {
+                await loadCollections();
+            }catch (e: any) {
+                errorAlert("Erreur", e.message);
+                return;
+            } 
+            finally {
+                setLoading(false);
+            }
+        };
+
+        init();
     }, []);
 
     useEffect(() => {
@@ -39,15 +61,15 @@ export default function CollectionPage() {
 
     const columns: ColumnDef<any>[] = [
         {
-            accessorKey: "name",
+            accessorKey: "col_name",
             header: "Nom",
         },
         {
-            accessorKey: "familleId",
+            accessorKey: "col_familleId",
             header: "Famille",
             cell: ({ row }) => {
-                const famille = familles.find(f => f.id === row.original.familleId);
-                return <Badge>{famille ? famille.name : "N/A"}</Badge>;
+                const famille = familles.find(f => f.fam_id === row.original.col_familleId);
+                return <Badge>{famille ? famille.fam_name : "N/A"}</Badge>;
             }
         },
         {
@@ -69,38 +91,57 @@ export default function CollectionPage() {
 
     const handleSearch = (e: string) => {
         const filtered = collections.filter((collection) =>
-            collection.name.toLowerCase().includes(e.toLowerCase())
+            collection.col_name.toLowerCase().includes(e.toLowerCase())
         );
         setCollectionsSearch(filtered);
     }
     const handleCreate = async () => {
-        let newCollections = [...collections, {id: collections.length + 1, name: formData.name, familleId: Number(formData.familleId)}]
-        setCollections(newCollections)
+        debugger
+        let newCollection : Collection = {col_name: formData.name, col_familleId: Number(formData.familleId)};
+
+        try{
+            const res = await createCollection(newCollection)
+            successAlert("Collection créée", "La collection a étée créée avec succès !")
+            setFormData({});
+            setCollections([...collections, res.collection]);
+        }catch(e:any){
+            errorAlert("Erreur", e.message);
+            return;
+        }
+
         setIsOpen(false)
     }
+
     const handleUpdate = async (data: any) => {
         setFormData(data)
         setEditOpen(true)
     }
+
     const handleUpdateSubmit = async () => {
-        debugger;
-        let updated = collections.map(c =>
-            c.id === formData.id
-            ? {
-                ...c,
-                name: formData.name,
-                familleId: Number(formData.familleId),
-                }
-            : c
-        );
-        setCollections(updated)
+        let updated : Collection = {col_id: formData.col_id, col_name: formData.name, col_familleId: Number(formData.familleId)};
+        try{
+            await updateCollection(updated)
+            successAlert("Collection modifiée", "La collection a étée modifiée avec succès !")
+        }catch(e:any){
+            errorAlert("Erreur", e.message);
+            return;
+        }
+        setCollections(collections.map(c=> c.col_id === updated.col_id ? updated : c))
         setFormData({})
         setEditOpen(false)
     }
 
     const handleDelete = async (data: any) => {
         if(!confirm(`Supprimer la collection ${data.name} ?`)) return;
-        let filteredCollections = collections.filter(c=>c.id !== data.id)
+        try{
+            await deleteCollection(data.col_id)
+            successAlert("Collection supprimée", "La collection a étée supprimée avec succès !")
+        }catch(e:any){
+            errorAlert("Erreur", e.message);
+            return;
+        }
+
+        let filteredCollections = collections.filter(c=>c.col_id !== data.col_id)
         setCollections(filteredCollections)
     }
 

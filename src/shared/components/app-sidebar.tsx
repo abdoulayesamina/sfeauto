@@ -12,7 +12,8 @@ import {
   User,
   Layers,
   FolderOpen,
-  Package
+  Package,
+  BadgePercent
 } from "lucide-react"
 
 import { NavDocuments } from "@/src/shared/components/nav-documents"
@@ -66,42 +67,47 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       title: "Clients",
       url: "/clients",
       icon: Briefcase,
-            roles:["ADMIN"],
+      roles:["ADMIN"],
 
     },
     {
       title: "Familles",
       url: "/famille",
       icon: Layers,
-            roles:["ADMIN"],
+      roles:["ADMIN"],
 
     },
     {
       title: "Collections",
       url: "/collection",
       icon: FolderOpen,
-            roles:["ADMIN"],
+      roles:["ADMIN"],
 
     },
     {
       title: "Articles",
       url: "/article",
       icon: Package,
-            roles:["ADMIN"],
-
+      roles:["ADMIN"],
+    },
+    {
+      title: "Remises",
+      url: "/remise",
+      icon: BadgePercent,
+      roles:["ADMIN"],
     },
     {
       title: "Gestionnaire",
       url: "/gestionnaire",
       icon: UserCog,
-            roles:["MANAGER"],
+      roles:["MANAGER"],
 
     },
     {
       title: "Mécanicien",
       url: "/mecanicien",
       icon: Wrench,
-            roles:["MECHANIC"],
+      roles:["MECHANIC"],
 
     },
     {

@@ -5,27 +5,46 @@ import { Modal } from "@/src/shared/components/modal";
 import { Spinner } from "@/src/shared/components/spinner";
 import { Button } from "@/src/shared/components/ui/button";
 import { useEffect, useState } from "react";
-import { ClientForm } from "../clients/form/client-form";
 import { ColumnDef } from "@tanstack/react-table";
-import { Badge } from "@/src/shared/components/ui/badge";
 import { FamilleForm } from "./forms/famille-form";
+import { useFamilleApi } from "./shared/useFamille.api";
+import { Famille } from "@/src/utils/types/famille";
+import { errorAlert, successAlert } from "@/src/lib/alerts";
 
 export default function FamillePage() {
+    const { getAllFamilles, createFamille, updateFamille, deleteFamille } = useFamilleApi();
+
     const [loading, setLoading] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const [editOpen, setEditOpen] = useState(false);
-    const [formData, setFormData] = useState<any>({});
-    const [familleSearch, setfamilleSearch] = useState<any[]>([]);
-    const [familles, setFamilles] = useState<any[]>([]);
+    const [formData, setFormData] = useState<Famille>({fam_name: ""});
+    const [familleSearch, setfamilleSearch] = useState<Famille[]>([]);
+    const [familles, setFamilles] = useState<Famille[]>([]);
+
+    const loadFamilles = async () => {
+        try {
+            const data = await getAllFamilles();
+            setFamilles(data);
+        }catch (e: any) {
+           throw new Error(e);
+        }
+    };
 
     useEffect(() => {
-        setLoading(true);
-        setTimeout(() => setLoading(false), 1000);
-        setFamilles([
-            { id: 1, name: "Famille A" },
-            { id: 2, name: "Famille B" },
-            { id: 3, name: "Famille C" },
-        ]);
+        const init = async () => {
+            setLoading(true);
+            try {
+                await loadFamilles();
+            }
+            catch (e: any) {
+                errorAlert("Erreur", e.message);
+                return;
+            }
+            finally {
+                setLoading(false);
+            }
+        };
+        init();
     }, []);
 
     useEffect(() => {
@@ -34,7 +53,7 @@ export default function FamillePage() {
 
     const columns: ColumnDef<any>[] = [
         {
-            accessorKey: "name",
+            accessorKey: "fam_name",
             header: "Nom",
         },
         {
@@ -42,10 +61,10 @@ export default function FamillePage() {
             cell: ({ row }) => (
             <div className="flex gap-2">
                 <Button variant="outline" onClick={() => handleUpdate(row.original)}>
-                Modifier
+                    Modifier
                 </Button>
                 <Button variant="destructive" onClick={() => handleDelete(row.original)}>
-                Supprimer
+                    Supprimer
                 </Button>
             </div>
             ),
@@ -56,33 +75,63 @@ export default function FamillePage() {
 
     const handleSearch = (e: string) => {
         const filtered = familles.filter((famille) =>
-            famille.name.toLowerCase().includes(e.toLowerCase())
+            famille.fam_name.toLowerCase().includes(e.toLowerCase())
         );
         setfamilleSearch(filtered);
     }
     const handleCreate = async () => {
-        let newFamilles = [...familles, {id: familles.length + 1, name: formData.name}]
-        setFamilles(newFamilles)
+        debugger;
+        let newFamilles : Famille = {fam_name: formData.fam_name};
+        
+        try{
+            const res = await createFamille(newFamilles)
+
+            let newFamillesList = [...familles, res.famille];
+            setFamilles(newFamillesList)
+            successAlert("Famille créée", "La famille a étée créée avec succès !")
+        }catch(e:any){
+            errorAlert("Erreur", e.message);
+            return;
+        }
+        
         setIsOpen(false)
     }
-    const handleUpdate = async (data: any) => {
+    const handleUpdate = async (data: Famille) => {
+        debugger
         setFormData(data)
         setEditOpen(true)
     }
     const handleUpdateSubmit = async () => {
-        let updatedFamilles = familles.map(f=>{
-            if(f.id === formData.id){
-                f.name = formData.name
-            }
-        })
-        setFamilles(updatedFamilles)
-        setFormData({})
+        debugger
+        let updatedFamilles : Famille = {fam_id: formData.fam_id, fam_name: formData.fam_name};
+        let updatedFamillesList = familles.map(f =>
+            f.fam_id === formData.fam_id ? updatedFamilles : f
+        );
+
+        try{
+            await updateFamille(updatedFamilles)
+            successAlert("Famille modifiée", "La famille a étée modifiée avec succès !")
+        }catch(e:any){
+            errorAlert("Erreur", e.message);
+            return;
+        }
+
+        setFamilles(updatedFamillesList)
+        setFormData({fam_name: ""});
         setEditOpen(false)
     }
 
     const handleDelete = async (data: any) => {
-        if(!confirm(`Supprimer la famille ${data.name} ?`)) return;
-        let filteredFamilles = familles.filter(f=>f.id !== data.id)
+        if(!confirm(`Supprimer la famille ${data.fam_name} ?`)) return;
+        try{
+            await deleteFamille(data.fam_id)
+            successAlert("Famille supprimée", "La famille a étée supprimée avec succès !")
+        }catch(e:any){
+            errorAlert("Erreur", e.message);
+            return;
+        }
+
+        let filteredFamilles = familles.filter(f=>f.fam_id !== data.fam_id)
         setFamilles(filteredFamilles)
     }
 

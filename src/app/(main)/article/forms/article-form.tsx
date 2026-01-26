@@ -38,6 +38,16 @@ export function ArticleForm({
             </div>
 
             <div className="mb-4 flex flex-col gap-2 p-2">
+                <Label>Prix</Label>
+                <Input
+                    className="h-16"
+                    value={data.price || ""}
+                    onChange={(e) => onChange({ ...data, price: e.target.value })}
+                    placeholder="Prix de l'article"
+                />
+            </div>
+
+            <div className="mb-4 flex flex-col gap-2 p-2">
                 <Label>Collection</Label>
                 <Select value={String(data.collectionId) || ""} onValueChange={(v) => onChange({ ...data, collectionId: v })}>
                 <SelectTrigger className="w-full !h-16">

@@ -8,45 +8,125 @@ import { useEffect, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/src/shared/components/ui/badge";
 import { ArticleForm } from "./forms/article-form";
+import { useArticleApi } from "./shared/useAtricle.api";
+import { errorAlert, successAlert } from "@/src/lib/alerts";
+import { Article } from "@/src/utils/types/article";
+import { useCollectionApi } from "../collection/shared/useCollection.api";
 
 export default function ArticlesPage() {
+    const { getArticles, createArticle, updateArticle, deleteArticle } = useArticleApi();
+    const {getAllCollections} = useCollectionApi();
+
     const [loading, setLoading] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const [editOpen, setEditOpen] = useState(false);
     const [formData, setFormData] = useState<any>({});
     const [articlesSearch, setArticlesSearch] = useState<any[]>([]);
-    const [articles, setArticles] = useState<any[]>([]);
+    const [articles, setArticles] = useState<Article[]>([]);
     const [collections, setCollections] = useState<any[]>([]);
 
+    const loadArticles = async () => {
+        try {
+            const data = await getArticles();
+            setArticles(data);
+            const CollectionsData = await getAllCollections();
+            setCollections(CollectionsData);
+        } catch (e: any) {
+           throw new Error(e);
+        }
+    }
+
     useEffect(() => {
-        setLoading(true);
-        setTimeout(() => setLoading(false), 1000);
-        setCollections([
-            { id: 1, name: "Collection A", familleId: 1 },
-            { id: 2, name: "Collection B", familleId: 2 },
-            { id: 3, name: "Collection C", familleId: 3 },
-        ]);
-        setArticles([
-            { id: 1, name: "Article A", collectionId: 1 },
-            { id: 2, name: "Article B", collectionId: 2 },
-            { id: 3, name: "Article C", collectionId: 3 },
-        ]);
+        const init = async () => {
+            setLoading(true);
+            try {
+                await loadArticles(); 
+                
+            }catch (e: any) {
+                errorAlert("Erreur", e.message);
+                return;
+            } 
+            finally {
+                setLoading(false);
+            }
+        };
+
+        init();
+        
     }, []);
 
     useEffect(() => {
         setArticlesSearch(articles);
+        console.log("articles : "+JSON.stringify(articles));
+
     },[articles]);
+
+    const handleSearch = (e: string) => {
+        const filtered = articles.filter((article) =>
+            article.art_name.toLowerCase().includes(e.toLowerCase()) || article.art_price.toString().includes(e)
+        );
+        setArticlesSearch(filtered);
+    }
+    const handleCreate = async () => {
+        let newArticles : Article = {art_name: formData.name, art_price: formData.price, art_collectionId: Number(formData.collectionId)};
+        try{
+            await createArticle(newArticles);
+            successAlert("Article créé"," L'article a été créé avec succès.");
+            setArticles([...articles, newArticles]);
+            setFormData({});
+        }catch(e:any){
+            errorAlert("Erreur", e.message);
+        }
+        setIsOpen(false)
+    }
+    const handleUpdate = async (data: any) => {
+        setFormData(data)
+        setEditOpen(true)
+    }
+    const handleUpdateSubmit = async () => {
+        let updated : Article = {art_id: formData.art_id, art_name: formData.name, art_price: formData.price, art_collectionId: Number(formData.collectionId)};
+        try{
+            await updateArticle(updated.art_id ?? 0, updated);
+            successAlert("Article mis à jour"," L'article a été mis à jour avec succès.");
+        }catch(e:any){
+            errorAlert("Erreur", e.message);
+            return;
+        }
+        setArticles(articles.map(a => a.art_id === updated.art_id ? updated : a));
+        setFormData({})
+        setEditOpen(false)
+    }
+    
+    
+    const handleDelete = async (data: Article) => {
+        if(!confirm(`Supprimer l'article ${data.art_name} ?`)) return;
+
+        try{
+            await deleteArticle(data.art_id ?? 0);
+            successAlert("Article supprimé"," L'article a été supprimé avec succès.");
+        }catch(e:any){
+            errorAlert("Erreur", e.message);
+            return;
+        }
+        let filteredArticles = articles.filter(a=>a.art_id !== data.art_id)
+        setArticles(filteredArticles)
+    }
 
     const columns: ColumnDef<any>[] = [
         {
-            accessorKey: "name",
+            accessorKey: "art_name",
             header: "Nom",
         },
         {
-            accessorKey: "collectionId",
+            accessorKey: "art_price",
+            header: "Prix",
+            cell: ({ row }) => <Badge className="bg-green-300 text-black">{row.original.art_price} €</Badge>,
+        },
+        {
+            accessorKey: "art_collectionId",
             header: "Collection",
             cell: ({ row }) => {
-                const collection = collections.find(c => c.id === row.original.collectionId);
+                const collection = collections.find(c => c.id === row.original.art_collectionId);
                 return <Badge>{collection ? collection.name : "N/A"}</Badge>;
             }
         },
@@ -66,44 +146,6 @@ export default function ArticlesPage() {
     ];
 
     const tableColumns = createColumns({columns});
-
-    const handleSearch = (e: string) => {
-        const filtered = articles.filter((article) =>
-            article.name.toLowerCase().includes(e.toLowerCase())
-        );
-        setArticlesSearch(filtered);
-    }
-    const handleCreate = async () => {
-        debugger
-        let newArticles = [...articles, {id: articles.length + 1, name: formData.name, collectionId: Number(formData.collectionId)}]
-        setArticles(newArticles)
-        setIsOpen(false)
-    }
-    const handleUpdate = async (data: any) => {
-        setFormData(data)
-        setEditOpen(true)
-    }
-    const handleUpdateSubmit = async () => {
-        debugger;
-        let updated = articles.map(a =>
-            a.id === formData.id
-            ? {
-                ...a,
-                name: formData.name,
-                collectionId: Number(formData.collectionId),
-                }
-            : a
-        );
-        setArticles(updated)
-        setFormData({})
-        setEditOpen(false)
-    }
-
-    const handleDelete = async (data: any) => {
-        if(!confirm(`Supprimer l'article ${data.name} ?`)) return;
-        let filteredArticles = articles.filter(a=>a.id !== data.id)
-        setArticles(filteredArticles)
-    }
 
     return(
         <div className="p-10">
