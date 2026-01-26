@@ -55,7 +55,7 @@ export function getSasUrlForBlob(blobName: string) {
       containerName,
       blobName,
       permissions: BlobSASPermissions.parse("r"),
-      startsOn: new Date(now.getTime() - 60 * 1000), // tolérance horloge
+      startsOn: new Date(now.getTime() - 60 * 1000), 
       expiresOn,
     },
     credential

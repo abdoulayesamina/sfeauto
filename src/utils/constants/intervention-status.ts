@@ -9,25 +9,21 @@ import { Wrench, Car } from "lucide-react"
  * TERMINEE = "Terminée"
  */
 export const STATUS_UI_MAP: Record<WorkStatus, "ATTENTE_REPARATION" | "ATTENTE_PIECES" | "TERMINEE"> = {
-  CONFIRMED_IN_PLANNING: "ATTENTE_REPARATION", // confirmé mais non commencé
-  FIXING_STARTED: "ATTENTE_REPARATION",       // travail commencé → attente de réparation
-  WAITING_FOR_PARTS: "ATTENTE_PIECES",        // pièces commandées
+  CONFIRMED_IN_PLANNING: "ATTENTE_REPARATION", 
+  FIXING_STARTED: "ATTENTE_REPARATION",     
+  WAITING_FOR_PARTS: "ATTENTE_PIECES",       
   FIXING_FINISHED: "TERMINEE",        
-          // intervention terminée
+       
 }
 
-/**
- * Mapping inverse : du statut UI vers le statut backend (utile pour création)
- */
+
 export const UI_TO_WORKSTATUS: Record<"ATTENTE_REPARATION" | "ATTENTE_PIECES" | "TERMINEE", WorkStatus> = {
   ATTENTE_REPARATION: "FIXING_STARTED",
   ATTENTE_PIECES: "WAITING_FOR_PARTS",
   TERMINEE: "FIXING_FINISHED",
 }
 
-/**
- * Transforme un statut backend en statut UI (pour affichage)
- */
+
 export const toUIStatus = (
   backendStatus?: string
 ): "ATTENTE_REPARATION" | "ATTENTE_PIECES" | "TERMINEE" => {
@@ -35,9 +31,7 @@ export const toUIStatus = (
   return STATUS_UI_MAP[backendStatus as WorkStatus] ?? "ATTENTE_REPARATION"
 }
 
-/**
- * Filtrer les interventions selon le statut UI
- */
+
 export const filterByUIStatus = (
   interventions: any[] | undefined,
   uiStatus: "ALL" | "ATTENTE_REPARATION" | "ATTENTE_PIECES" | "TERMINEE"
@@ -47,9 +41,7 @@ export const filterByUIStatus = (
   return interventions.filter(i => toUIStatus(i.status) === uiStatus)
 }
 
-/**
- * Métadonnées pour affichage badge + couleur + icône
- */
+
 export const getStatusMeta = (
   status: "ATTENTE_REPARATION" | "ATTENTE_PIECES" | "TERMINEE"
 ) => {
@@ -82,9 +74,7 @@ export const getStatusMeta = (
   }
 }
 
-/**
- * Labels pour historique (optionnel pour timeline)
- */
+
 export const HISTORY_LABELS: Record<string, string> = {
   CONFIRMED_IN_PLANNING: "Confirmée et planifiée",
   FIXING_STARTED: "Travail commencé",

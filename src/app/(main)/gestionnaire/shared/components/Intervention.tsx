@@ -29,7 +29,6 @@ export default function IntervDetailGes({ selectedIntervention, onClose }: Props
 
   const history = selectedIntervention?.statusHistory ?? []
 
-  // ✅ Photos hook (GET /invoices/:id/photos)
   const {
     photos,
     loading: photosLoading,
@@ -65,7 +64,6 @@ export default function IntervDetailGes({ selectedIntervention, onClose }: Props
         </p>
       </div>
 
-      {/* VEHICULE INFO */}
       <div className="rounded-xl border p-4 bg-zinc-100">
         <div className="flex items-center gap-2 mb-3">
           <div className="p-3 rounded-lg bg-blue-100 text-blue-700">
@@ -95,14 +93,13 @@ export default function IntervDetailGes({ selectedIntervention, onClose }: Props
             <span className="font-medium">Date d’entrée :</span>{" "}
             {selectedIntervention?.vehicle?.entryDate
               ? new Date(
-                  selectedIntervention.vehicle.entryDate
-                ).toLocaleDateString("fr-FR")
+                selectedIntervention.vehicle.entryDate
+              ).toLocaleDateString("fr-FR")
               : "-"}
           </p>
         </div>
       </div>
 
-      {/* CLIENT & BASE */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="flex items-center gap-4 rounded-xl border p-4">
           <div className="p-2 rounded-lg bg-emerald-100 text-emerald-700">
@@ -129,7 +126,6 @@ export default function IntervDetailGes({ selectedIntervention, onClose }: Props
         </div>
       </div>
 
-      {/* ACCORD & STATUT */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="rounded-xl border p-4 bg-zinc-50">
           <div className="mb-1 flex items-center gap-2">
@@ -143,8 +139,8 @@ export default function IntervDetailGes({ selectedIntervention, onClose }: Props
             Confirmé le{" "}
             {selectedIntervention?.dateOfConfirmation
               ? new Date(
-                  selectedIntervention.dateOfConfirmation
-                ).toLocaleDateString("fr-FR")
+                selectedIntervention.dateOfConfirmation
+              ).toLocaleDateString("fr-FR")
               : "-"}
           </p>
         </div>
@@ -165,14 +161,13 @@ export default function IntervDetailGes({ selectedIntervention, onClose }: Props
             Mis à jour le{" "}
             {selectedIntervention?.statusUpdatedAt
               ? new Date(
-                  selectedIntervention.statusUpdatedAt
-                ).toLocaleString("fr-FR")
+                selectedIntervention.statusUpdatedAt
+              ).toLocaleString("fr-FR")
               : "-"}
           </p>
         </div>
       </div>
 
-      {/* DESCRIPTION TRAVAIL */}
       <div className="rounded-xl border p-4 bg-zinc-50">
         <p className="font-semibold mb-2 flex items-center gap-2">
           <FileText /> Description du travail
@@ -182,7 +177,6 @@ export default function IntervDetailGes({ selectedIntervention, onClose }: Props
         </p>
       </div>
 
-      {/* ✅ PHOTOS */}
       <div className="rounded-xl border p-4 bg-zinc-50">
         <div className="flex items-center justify-between mb-3">
           <p className="font-semibold flex items-center gap-2">
@@ -217,7 +211,6 @@ export default function IntervDetailGes({ selectedIntervention, onClose }: Props
                 className="group relative aspect-square overflow-hidden rounded-lg border bg-white"
                 title="Cliquer pour agrandir"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={p.sasUrl}
                   alt={`Photo ${idx + 1}`}
@@ -231,7 +224,6 @@ export default function IntervDetailGes({ selectedIntervention, onClose }: Props
         )}
       </div>
 
-      {/* ✅ LIGHTBOX */}
       {viewerOpen && (
         <div
           className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
@@ -265,7 +257,7 @@ export default function IntervDetailGes({ selectedIntervention, onClose }: Props
 
               <button
                 type="button"
-                className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 disabled:opacity-40"
+                className="px-3 py-2 mr-20 rounded-lg bg-white/10 hover:bg-white/20 disabled:opacity-40"
                 disabled={activeIndex === photos.length - 1}
                 onClick={() =>
                   setActiveIndex((i) => Math.min(photos.length - 1, i + 1))
@@ -273,10 +265,10 @@ export default function IntervDetailGes({ selectedIntervention, onClose }: Props
               >
                 →
               </button>
+
             </div>
 
             <div className="bg-black flex items-center justify-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={activePhoto}
                 alt="Photo intervention"
@@ -287,7 +279,6 @@ export default function IntervDetailGes({ selectedIntervention, onClose }: Props
         </div>
       )}
 
-      {/* DETAILS COMPLEMENTAIRES */}
       <div className="rounded-xl border p-4 bg-zinc-50 space-y-2">
         <p className="font-semibold mb-2">Détails complémentaires</p>
         <p>
@@ -323,7 +314,6 @@ export default function IntervDetailGes({ selectedIntervention, onClose }: Props
         </p>
       </div>
 
-      {/* HISTORIQUE STATUT */}
       {history.length > 0 && (
         <div className="rounded-xl border p-4 bg-zinc-50">
           <p className="font-semibold mb-2">Historique des statuts</p>
