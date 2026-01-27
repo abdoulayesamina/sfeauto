@@ -9,7 +9,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { FamilleForm } from "./forms/famille-form";
 import { useFamilleApi } from "./shared/useFamille.api";
 import { Famille } from "@/src/utils/types/famille";
-import { errorAlert, successAlert } from "@/src/lib/alerts";
+import { confirmAlert, errorAlert, successAlert } from "@/src/lib/alerts";
 
 export default function FamillePage() {
     const { getAllFamilles, createFamille, updateFamille, deleteFamille } = useFamilleApi();
@@ -20,6 +20,8 @@ export default function FamillePage() {
     const [formData, setFormData] = useState<Famille>({fam_name: ""});
     const [familleSearch, setfamilleSearch] = useState<Famille[]>([]);
     const [familles, setFamilles] = useState<Famille[]>([]);
+    const [loadingFamilles, setLoadingFamilles] = useState(false);
+    const [idToDelete, setIdToDelete] = useState<number | null>(null);
 
     const loadFamilles = async () => {
         try {
@@ -60,11 +62,14 @@ export default function FamillePage() {
             header: "Actions",
             cell: ({ row }) => (
             <div className="flex gap-2">
-                <Button variant="outline" onClick={() => handleUpdate(row.original)}>
+                <Button variant="outline" onClick={() => handleUpdate(row.original)} disabled={idToDelete === row.original.art_id}>
                     Modifier
                 </Button>
-                <Button variant="destructive" onClick={() => handleDelete(row.original)}>
-                    Supprimer
+                <Button variant="destructive" onClick={() => handleDelete(row.original)} disabled={idToDelete === row.original.fam_id}>
+                    <span className="flex items-center gap-2">
+                        {idToDelete === row.original.fam_id ? <Spinner className="size-4" /> : ""}
+                        Supprimer
+                    </span>
                 </Button>
             </div>
             ),
@@ -82,7 +87,7 @@ export default function FamillePage() {
     const handleCreate = async () => {
         debugger;
         let newFamilles : Famille = {fam_name: formData.fam_name};
-        
+        setLoadingFamilles(true);
         try{
             const res = await createFamille(newFamilles)
 
@@ -91,9 +96,11 @@ export default function FamillePage() {
             successAlert("Famille créée", "La famille a étée créée avec succès !")
         }catch(e:any){
             errorAlert("Erreur", e.message);
+            setLoadingFamilles(false);
             return;
         }
-        
+        setFormData({fam_name: ""});
+        setLoadingFamilles(false);
         setIsOpen(false)
     }
     const handleUpdate = async (data: Famille) => {
@@ -107,7 +114,7 @@ export default function FamillePage() {
         let updatedFamillesList = familles.map(f =>
             f.fam_id === formData.fam_id ? updatedFamilles : f
         );
-
+        setLoadingFamilles(true);
         try{
             await updateFamille(updatedFamilles)
             successAlert("Famille modifiée", "La famille a étée modifiée avec succès !")
@@ -117,20 +124,25 @@ export default function FamillePage() {
         }
 
         setFamilles(updatedFamillesList)
+        setLoadingFamilles(false);
         setFormData({fam_name: ""});
         setEditOpen(false)
     }
 
     const handleDelete = async (data: any) => {
-        if(!confirm(`Supprimer la famille ${data.fam_name} ?`)) return;
+        const confirmed = await confirmAlert("Suprimer la famille",`Voulez-vous vraiment supprimer la famille ${data.fam_name} ?`)
+        if (!confirmed) return;
+
+        setIdToDelete(data.fam_id);
         try{
             await deleteFamille(data.fam_id)
             successAlert("Famille supprimée", "La famille a étée supprimée avec succès !")
         }catch(e:any){
             errorAlert("Erreur", e.message);
+            setIdToDelete(null);
             return;
         }
-
+        setIdToDelete(null);
         let filteredFamilles = familles.filter(f=>f.fam_id !== data.fam_id)
         setFamilles(filteredFamilles)
     }
@@ -154,7 +166,11 @@ export default function FamillePage() {
                     mode="create"
                     data={formData}
                     onChange={setFormData}
-                    onClose={() => setIsOpen(false)}
+                    loading={loadingFamilles}
+                    onClose={() => {
+                        setIsOpen(false)
+                        setFormData({fam_name: ""});
+                    }}
                     onSubmit={handleCreate}
                 />
             </Modal>
@@ -165,7 +181,11 @@ export default function FamillePage() {
                     mode="edit"
                     data={formData}
                     onChange={setFormData}
-                    onClose={() => setEditOpen(false)}
+                    loading={loadingFamilles}
+                    onClose={() => {
+                        setFormData({fam_name: ""});
+                        setEditOpen(false)
+                    }}
                     onSubmit={handleUpdateSubmit}
                 />
             </Modal>

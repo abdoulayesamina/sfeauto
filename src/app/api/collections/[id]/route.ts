@@ -4,7 +4,7 @@ import { prisma } from "@/src/lib/prisma";
 import { Collection } from "@/src/utils/types/collection";
 import { NextResponse } from "next/server";
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try{
         const session = await auth();
         if (!session?.user || session.user.role !== 'ADMIN') {
@@ -12,8 +12,9 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
         }
 
         const { col_name, col_familleId } : Collection = await req.json();
+        const id = await params.then(p => Number(p.id));
         const collection = await prisma.te_collection_col.update({
-            where: { col_id: Number(params.id) },
+            where: { col_id: id },
             data: { col_name: col_name, col_familleId: col_familleId }
         });
 
@@ -28,15 +29,16 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try{
         const session = await auth();
         if (!session?.user || session.user.role !== 'ADMIN') {
             return NextResponse.json({ error: 'Accès administrateur requis' }, { status: 403 })
         }
 
+        const id = await params.then(p => Number(p.id));
         await prisma.te_collection_col.delete({
-            where: { col_id: Number(params.id) },
+            where: { col_id: id },
         });
 
         return NextResponse.json({ message: "Collection supprimée avec succès" });

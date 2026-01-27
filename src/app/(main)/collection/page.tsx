@@ -9,7 +9,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/src/shared/components/ui/badge";
 import { CollectionForm } from "./forms/collection-form";
 import { useCollectionApi } from "./shared/useCollection.api";
-import { successAlert,errorAlert } from "@/src/lib/alerts";
+import { successAlert,errorAlert, confirmAlert } from "@/src/lib/alerts";
 import { Collection } from "@/src/utils/types/collection";
 import { useFamilleApi } from "../famille/shared/useFamille.api";
 import { Famille } from "@/src/utils/types/famille";
@@ -19,6 +19,9 @@ export default function CollectionPage() {
     const {getAllFamilles} = useFamilleApi();
 
     const [loading, setLoading] = useState(false);
+    const [loadingCollections, setLoadingCollections] = useState(false);
+    const [idToDelete, setIdToDelete] = useState<number | null>(null);
+
     const [isOpen, setIsOpen] = useState(false);
     const [editOpen, setEditOpen] = useState(false);
     const [formData, setFormData] = useState<any>({});
@@ -76,11 +79,14 @@ export default function CollectionPage() {
             header: "Actions",
             cell: ({ row }) => (
             <div className="flex gap-2">
-                <Button variant="outline" onClick={() => handleUpdate(row.original)}>
-                Modifier
+                <Button variant="outline" onClick={() => handleUpdate(row.original)} disabled={idToDelete === row.original.art_id}>
+                    Modifier
                 </Button>
-                <Button variant="destructive" onClick={() => handleDelete(row.original)}>
-                Supprimer
+                <Button variant="destructive" onClick={() => handleDelete(row.original)} disabled={idToDelete === row.original.col_id}>
+                    <span className="flex items-center gap-2">
+                        {idToDelete === row.original.col_id ? <Spinner className="size-4" /> : ""}
+                        Supprimer
+                    </span>
                 </Button>
             </div>
             ),
@@ -97,7 +103,8 @@ export default function CollectionPage() {
     }
     const handleCreate = async () => {
         debugger
-        let newCollection : Collection = {col_name: formData.name, col_familleId: Number(formData.familleId)};
+        let newCollection : Collection = {col_name: formData.col_name, col_familleId: Number(formData.col_familleId)};
+        setLoadingCollections(true);
 
         try{
             const res = await createCollection(newCollection)
@@ -106,9 +113,12 @@ export default function CollectionPage() {
             setCollections([...collections, res.collection]);
         }catch(e:any){
             errorAlert("Erreur", e.message);
+            setLoadingCollections(false);
             return;
         }
 
+        setLoadingCollections(false);
+        setFormData({});
         setIsOpen(false)
     }
 
@@ -118,29 +128,39 @@ export default function CollectionPage() {
     }
 
     const handleUpdateSubmit = async () => {
-        let updated : Collection = {col_id: formData.col_id, col_name: formData.name, col_familleId: Number(formData.familleId)};
+        let updated : Collection = {col_id: formData.col_id, col_name: formData.col_name, col_familleId: Number(formData.col_familleId)};
+        setLoadingCollections(true);
+
         try{
             await updateCollection(updated)
             successAlert("Collection modifiée", "La collection a étée modifiée avec succès !")
         }catch(e:any){
             errorAlert("Erreur", e.message);
+            setLoadingCollections(false);
             return;
         }
+
         setCollections(collections.map(c=> c.col_id === updated.col_id ? updated : c))
+        setLoadingCollections(false);
         setFormData({})
         setEditOpen(false)
     }
 
     const handleDelete = async (data: any) => {
-        if(!confirm(`Supprimer la collection ${data.name} ?`)) return;
+        const confirmed = await confirmAlert("Suprimer la collection",`Voulez-vous vraiment supprimer la collection ${data.col_name} ?`)
+        if (!confirmed) return;
+        setIdToDelete(data.col_id);
+
         try{
             await deleteCollection(data.col_id)
             successAlert("Collection supprimée", "La collection a étée supprimée avec succès !")
         }catch(e:any){
             errorAlert("Erreur", e.message);
+            setIdToDelete(null);
             return;
         }
 
+        setIdToDelete(null);
         let filteredCollections = collections.filter(c=>c.col_id !== data.col_id)
         setCollections(filteredCollections)
     }
@@ -163,6 +183,7 @@ export default function CollectionPage() {
                 <CollectionForm
                     mode="create"
                     data={formData}
+                    loading={loadingCollections}
                     onChange={setFormData}
                     onClose={() => setIsOpen(false)}
                     onSubmit={handleCreate}
@@ -174,6 +195,7 @@ export default function CollectionPage() {
                 <CollectionForm
                     mode="edit"
                     data={formData}
+                    loading={loadingCollections}
                     onChange={setFormData}
                     onClose={() => setEditOpen(false)}
                     onSubmit={handleUpdateSubmit}

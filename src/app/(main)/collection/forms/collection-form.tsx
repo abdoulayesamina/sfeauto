@@ -12,6 +12,7 @@ import { Famille } from "@/src/utils/types/famille"
 type Props = {
   mode: "create" | "edit"
   data: any
+  loading: boolean
   onClose: () => void
   onSubmit: () => void
   onChange: (data: any) => void
@@ -20,6 +21,7 @@ type Props = {
 export function CollectionForm({
   mode,
   data,
+  loading,
   onClose,
   onSubmit,
   onChange,
@@ -50,15 +52,15 @@ export function CollectionForm({
                 <Label>Nom</Label>
                 <Input
                     className="h-16"
-                    value={data.name || ""}
-                    onChange={(e) => onChange({ ...data, name: e.target.value })}
+                    value={data.col_name || ""}
+                    onChange={(e) => onChange({ ...data, col_name: e.target.value })}
                     placeholder="Nom de la collection"
                 />
             </div>
 
             <div className="mb-4 flex flex-col gap-2 p-2">
                 <Label>Famille</Label>
-                <Select value={String(data.familleId) || ""} onValueChange={(v) => onChange({ ...data, familleId: v })} disabled={loadingFamilles}>
+                <Select value={String(data.col_familleId) || ""} onValueChange={(v) => onChange({ ...data, col_familleId: v })} disabled={loadingFamilles}>
                 <SelectTrigger className="w-full !h-16">
                     {loadingFamilles ? <Spinner /> : ""}
                     <SelectValue placeholder="Sélectionnez une famille" />
@@ -77,8 +79,11 @@ export function CollectionForm({
             <Button type="button" variant="outline" onClick={onClose}>
                 Annuler
             </Button>
-            <Button type="button" onClick={onSubmit}>
-                {mode === "create" ? "Créer" : "Modifier"}
+            <Button type="button" onClick={onSubmit} disabled={loading}>
+                <span className="flex items-center gap-2">
+                    {loading ? <Spinner /> : ""}
+                    {mode === "create" ? "Créer" : "Modifier"}
+                </span>
             </Button>
             </div>
         </form>

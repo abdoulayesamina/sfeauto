@@ -1,5 +1,6 @@
 "use client"
 
+import { Spinner } from "@/src/shared/components/spinner"
 import { Button } from "@/src/shared/components/ui/button"
 import { Input } from "@/src/shared/components/ui/input"
 import { Label } from "@/src/shared/components/ui/label"
@@ -8,6 +9,7 @@ import { Famille } from "@/src/utils/types/famille"
 type Props = {
   mode: "create" | "edit"
   data: Famille
+  loading: boolean
   onClose: () => void
   onSubmit: () => void
   onChange: (data: any) => void
@@ -16,6 +18,7 @@ type Props = {
 export function FamilleForm({
   mode,
   data,
+  loading,
   onClose,
   onSubmit,
   onChange,
@@ -36,8 +39,11 @@ export function FamilleForm({
             <Button type="button" variant="outline" onClick={onClose}>
                 Annuler
             </Button>
-            <Button type="button" onClick={onSubmit}>
-                {mode === "create" ? "Créer" : "Modifier"}
+            <Button type="button" onClick={onSubmit} disabled={loading}>
+                <span className="flex items-center gap-2">
+                    {loading ? <Spinner /> : ""}
+                    {mode === "create" ? "Créer" : "Modifier"}
+                </span>
             </Button>
             </div>
         </form>

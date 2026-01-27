@@ -4,10 +4,16 @@ import { Button } from "@/src/shared/components/ui/button"
 import { Input } from "@/src/shared/components/ui/input"
 import { Label } from "@/src/shared/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/shared/components/ui/select"
+import { useCollectionApi } from "../../collection/shared/useCollection.api"
+import { useEffect, useState } from "react"
+import { Spinner } from "@/src/shared/components/spinner"
+import { Collection } from "@/src/utils/types/collection"
+import { Article } from "@/src/utils/types/article"
 
 type Props = {
   mode: "create" | "edit"
-  data: any
+  data: Article
+  loading: boolean
   onClose: () => void
   onSubmit: () => void
   onChange: (data: any) => void
@@ -16,23 +22,58 @@ type Props = {
 export function ArticleForm({
   mode,
   data,
+  loading,
   onClose,
   onSubmit,
   onChange,
 }: Props) {
-    const Collections = [
-        { id: 1, name: "Collection A" },
-        { id: 2, name: "Collection B" },
-        { id: 3, name: "Collection C" },
-    ];
+    const { getAllCollections } = useCollectionApi();
+    const [loadingCollections, setLoadingCollections] = useState(false);
+    const [collections, setCollections] = useState<Collection[]>([]);
+
+    useEffect(() => {
+        const fetchCollections = async () => {
+            setLoadingCollections(true);
+            try {
+                const collectionsData = await getAllCollections();
+                setCollections(collectionsData);
+            } catch (e: any) {
+                console.error("Error fetching collections:", e.message);
+            } finally {
+                setLoadingCollections(false);
+            }
+        };
+
+        fetchCollections();
+    }, []);
+
+
     return (
         <form>
+
+            <div className="mb-4 flex flex-col gap-2 p-2">
+                <Label>Collection</Label>
+                <Select value={String(data.art_collectionId) || ""} onValueChange={(v) => onChange({ ...data, art_collectionId: v })}>
+                <SelectTrigger className="w-full !h-16">
+                    {loadingCollections ? <Spinner /> : ""}
+                    <SelectValue placeholder="Sélectionnez une collection" />
+                </SelectTrigger>
+                <SelectContent className="z-[2000]">
+                    {collections.map((c) => (
+                        <SelectItem key={c.col_id} value={String(c.col_id)}>
+                            {c.col_name}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+                </Select>
+            </div>
+            
             <div className="mb-4 flex flex-col gap-2 p-2">
                 <Label>Nom</Label>
                 <Input
                     className="h-16"
-                    value={data.name || ""}
-                    onChange={(e) => onChange({ ...data, name: e.target.value })}
+                    value={data.art_name || ""}
+                    onChange={(e) => onChange({ ...data, art_name: e.target.value })}
                     placeholder="Nom de la collection"
                 />
             </div>
@@ -41,34 +82,21 @@ export function ArticleForm({
                 <Label>Prix</Label>
                 <Input
                     className="h-16"
-                    value={data.price || ""}
-                    onChange={(e) => onChange({ ...data, price: e.target.value })}
+                    value={data.art_price || ""}
+                    onChange={(e) => onChange({ ...data, art_price: e.target.value })}
                     placeholder="Prix de l'article"
                 />
-            </div>
-
-            <div className="mb-4 flex flex-col gap-2 p-2">
-                <Label>Collection</Label>
-                <Select value={String(data.collectionId) || ""} onValueChange={(v) => onChange({ ...data, collectionId: v })}>
-                <SelectTrigger className="w-full !h-16">
-                    <SelectValue placeholder="Sélectionnez une collection" />
-                </SelectTrigger>
-                <SelectContent className="z-[2000]">
-                    {Collections.map((c) => (
-                        <SelectItem key={c.id} value={String(c.id)}>
-                            {c.name}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-                </Select>
             </div>
 
             <div className="mt-6 grid grid-cols-2 gap-2">
             <Button type="button" variant="outline" onClick={onClose}>
                 Annuler
             </Button>
-            <Button type="button" onClick={onSubmit}>
-                {mode === "create" ? "Créer" : "Modifier"}
+            <Button type="button" onClick={onSubmit} disabled={loading}>
+                <span className="flex items-center gap-2">
+                    {loading ? <Spinner /> : ""}
+                    {mode === "create" ? "Créer" : "Modifier"}
+                </span>
             </Button>
             </div>
         </form>

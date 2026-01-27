@@ -166,11 +166,24 @@ model te_article_art {
   art_id        Int      @id @default(autoincrement())
   art_name      String
   art_price     Int
-  art_collectionId Int 
+  art_collectionId Int
   collection te_collection_col @relation("Collection_Articles", fields: [art_collectionId], references: [col_id])
+  remises   te_remise_rem? @relation("Article_Remise")
 
   @@index([art_name])
   @@index([art_collectionId])
+}
+
+model te_remise_rem {
+  rem_id Int @id @default(autoincrement())
+  rem_prixremise Int?
+  rem_pourcentage  Int?
+  rem_articleId Int @unique
+  article te_article_art @relation("Article_Remise", fields: [rem_articleId], references: [art_id])
+
+  @@index([rem_prixremise])
+  @@index([rem_pourcentage])
+  @@index([rem_articleId])
 }
 
 enum Role {

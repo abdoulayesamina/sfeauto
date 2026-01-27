@@ -9,21 +9,25 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/src/shared/components/ui/badge";
 import { ArticleForm } from "./forms/article-form";
 import { useArticleApi } from "./shared/useAtricle.api";
-import { errorAlert, successAlert } from "@/src/lib/alerts";
+import { confirmAlert, errorAlert, successAlert } from "@/src/lib/alerts";
 import { Article } from "@/src/utils/types/article";
 import { useCollectionApi } from "../collection/shared/useCollection.api";
+import { Collection } from "@/src/utils/types/collection";
 
 export default function ArticlesPage() {
     const { getArticles, createArticle, updateArticle, deleteArticle } = useArticleApi();
     const {getAllCollections} = useCollectionApi();
 
     const [loading, setLoading] = useState(false);
+    const [loadingArticles, setLoadingArticles] = useState(false);
+
     const [isOpen, setIsOpen] = useState(false);
     const [editOpen, setEditOpen] = useState(false);
-    const [formData, setFormData] = useState<any>({});
-    const [articlesSearch, setArticlesSearch] = useState<any[]>([]);
+    const [formData, setFormData] = useState<Article>({art_name: "", art_price: 0, art_collectionId: 0});
+    const [articlesSearch, setArticlesSearch] = useState<Article[]>([]);
     const [articles, setArticles] = useState<Article[]>([]);
-    const [collections, setCollections] = useState<any[]>([]);
+    const [collections, setCollections] = useState<Collection[]>([]);
+    const [idToDelete, setIdToDelete] = useState<number | null>(null);
 
     const loadArticles = async () => {
         try {
@@ -67,47 +71,67 @@ export default function ArticlesPage() {
         );
         setArticlesSearch(filtered);
     }
+
     const handleCreate = async () => {
-        let newArticles : Article = {art_name: formData.name, art_price: formData.price, art_collectionId: Number(formData.collectionId)};
+        debugger;
+        let newArticles : Article = {art_name: formData.art_name, art_price: formData.art_price, art_collectionId: Number(formData.art_collectionId)};
+        setLoadingArticles(true);
         try{
-            await createArticle(newArticles);
+            const res = await createArticle(newArticles);
             successAlert("Article créé"," L'article a été créé avec succès.");
-            setArticles([...articles, newArticles]);
-            setFormData({});
+            setArticles([...articles, res.article]);
+            setFormData({art_name: "", art_price: 0, art_collectionId: 0});
         }catch(e:any){
+            setLoadingArticles(false);
             errorAlert("Erreur", e.message);
+            return;
         }
+
+        setLoadingArticles(false);
+        setFormData({art_name: "", art_price: 0, art_collectionId: 0});
         setIsOpen(false)
     }
+
     const handleUpdate = async (data: any) => {
         setFormData(data)
         setEditOpen(true)
     }
+
     const handleUpdateSubmit = async () => {
-        let updated : Article = {art_id: formData.art_id, art_name: formData.name, art_price: formData.price, art_collectionId: Number(formData.collectionId)};
+        debugger
+        let updated : Article = {art_id: formData.art_id, art_name: formData.art_name, art_price: formData.art_price, art_collectionId: Number(formData.art_collectionId)};
+        setLoadingArticles(true);
+
         try{
             await updateArticle(updated.art_id ?? 0, updated);
             successAlert("Article mis à jour"," L'article a été mis à jour avec succès.");
         }catch(e:any){
             errorAlert("Erreur", e.message);
+            setLoadingArticles(false);
             return;
         }
         setArticles(articles.map(a => a.art_id === updated.art_id ? updated : a));
-        setFormData({})
+        setFormData({art_name: "", art_price: 0, art_collectionId: 0});
+        setLoadingArticles(false);
         setEditOpen(false)
     }
     
     
     const handleDelete = async (data: Article) => {
-        if(!confirm(`Supprimer l'article ${data.art_name} ?`)) return;
-
+        const confirmed = await confirmAlert("Suprimer l'article",`Voulez-vous vraiment supprimer l'article ${data.art_name} ?`)
+        if (!confirmed) return;
+        
+        setIdToDelete(data.art_id ?? null);
         try{
             await deleteArticle(data.art_id ?? 0);
             successAlert("Article supprimé"," L'article a été supprimé avec succès.");
         }catch(e:any){
             errorAlert("Erreur", e.message);
+            setIdToDelete(null);
             return;
         }
+
+        setIdToDelete(null);
         let filteredArticles = articles.filter(a=>a.art_id !== data.art_id)
         setArticles(filteredArticles)
     }
@@ -126,19 +150,22 @@ export default function ArticlesPage() {
             accessorKey: "art_collectionId",
             header: "Collection",
             cell: ({ row }) => {
-                const collection = collections.find(c => c.id === row.original.art_collectionId);
-                return <Badge>{collection ? collection.name : "N/A"}</Badge>;
+                const collection = collections.find(c => c.col_id === row.original.art_collectionId);
+                return <Badge>{collection ? collection.col_name : "N/A"}</Badge>;
             }
         },
         {
             header: "Actions",
             cell: ({ row }) => (
             <div className="flex gap-2">
-                <Button variant="outline" onClick={() => handleUpdate(row.original)}>
-                Modifier
+                <Button variant="outline" onClick={() => handleUpdate(row.original)} disabled={idToDelete === row.original.art_id}>
+                    Modifier
                 </Button>
-                <Button variant="destructive" onClick={() => handleDelete(row.original)}>
-                Supprimer
+                <Button variant="destructive" onClick={() => handleDelete(row.original)} disabled={idToDelete === row.original.art_id}>
+                    <span className="flex items-center gap-2">
+                        {idToDelete === row.original.art_id ? <Spinner className="size-4" /> : ""}
+                        Supprimer
+                    </span>
                 </Button>
             </div>
             ),
@@ -165,6 +192,7 @@ export default function ArticlesPage() {
                 <ArticleForm
                     mode="create"
                     data={formData}
+                    loading={loadingArticles}
                     onChange={setFormData}
                     onClose={() => setIsOpen(false)}
                     onSubmit={handleCreate}
@@ -176,6 +204,7 @@ export default function ArticlesPage() {
                 <ArticleForm
                     mode="edit"
                     data={formData}
+                    loading={loadingArticles}
                     onChange={setFormData}
                     onClose={() => setEditOpen(false)}
                     onSubmit={handleUpdateSubmit}

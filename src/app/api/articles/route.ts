@@ -37,12 +37,16 @@ export async function POST(req : Request) {
             return NextResponse.json({ error: 'Accès administrateur requis' }, { status: 403 })
         }
 
-        const body : Article = await req.json();
+        const body = await req.json();
+        const art_name = body?.art_name;
+        const art_price = Number(body?.art_price);
+        const art_collectionId = Number(body?.art_collectionId);
+
         const article = await prisma.te_article_art.create({
             data: {
-                art_name: body.art_name,
-                art_price: body.art_price,
-                art_collectionId: body.art_collectionId
+                art_name: art_name,
+                art_price: art_price,
+                art_collectionId: art_collectionId
             }
         });
 

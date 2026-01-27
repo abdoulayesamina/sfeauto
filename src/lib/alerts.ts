@@ -14,7 +14,7 @@ export const confirmAlert = async (title: string, text?: string) => {
     cancelButtonText: "Non",
     customClass: {
       confirmButton: "bg-blue-600 text-white",
-      cancelButton: "bg-gray-200 text-gray-800",
+      cancelButton: "border border-gray-300 bg-none",
     },
   })
   return result.isConfirmed
