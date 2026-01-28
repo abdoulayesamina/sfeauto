@@ -15,6 +15,34 @@ import {
   SelectValue,
 } from "@/src/shared/components/ui/select"
 
+const ENERGY_OPTIONS = ["GAZOLE", "ESSENCE", "HYBRIDE", "ELECTRIQUE", "GPL"] as const
+const GEARBOX_OPTIONS = ["BVM", "BVA"] as const
+const BODY_OPTIONS = [
+  "BERLINE",
+  "SUV",
+  "BREAK",
+  "COUPE",
+  "CABRIOLET",
+  "MONOSPACE",
+  "PICKUP",
+  "UTILITAIRE",
+  "AUTRE",
+] as const
+
+function toISODateTime(dateValue: string) {
+  if (!dateValue) return ""
+  const d = new Date(dateValue) 
+  if (isNaN(d.getTime())) return ""
+  return d.toISOString()
+}
+
+function fromISOToDateInput(iso?: string) {
+  if (!iso) return ""
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return ""
+  return d.toISOString().slice(0, 10)
+}
+
 export function AddVehiculeForm({
   onClose,
   onSubmit,
@@ -37,6 +65,16 @@ export function AddVehiculeForm({
     model: "",
     year: new Date().getFullYear(),
     color: "",
+
+    firstRegistrationDate: undefined,
+    energy: undefined,
+    doorsCount: undefined,
+    bodyType: undefined,
+    realPowerHp: undefined,
+    fiscalPowerCv: undefined,
+    gearboxType: undefined,
+    version: "",
+    registrationCardDate: undefined,
   })
 
   const [clients, setClients] = useState<any[]>([])
@@ -44,17 +82,18 @@ export function AddVehiculeForm({
   const [loadingClients, setLoadingClients] = useState(true)
   const [loadingAgences, setLoadingAgences] = useState(false)
 
-  // Pré-remplir le formulaire en mode create ou edit
   useEffect(() => {
     if (mode === "create" && data?.licensePlate) {
       setVehicule((prev) => ({ ...prev, licensePlate: data.licensePlate }))
     }
     if (mode === "edit" && data) {
-      setVehicule(data)
+      setVehicule({
+        ...data,
+        version: data.version ?? "",
+      })
     }
   }, [data, mode])
 
-  // Charger les clients
   useEffect(() => {
     setLoadingClients(true)
     getClients()
@@ -63,7 +102,7 @@ export function AddVehiculeForm({
       .finally(() => setLoadingClients(false))
   }, [])
 
-  // Charger les agences quand le client change
+  
   useEffect(() => {
     if (!vehicule.clientId) {
       setAgences([])
@@ -112,7 +151,7 @@ export function AddVehiculeForm({
             id="marque"
             placeholder="Renault"
             className="h-16"
-            value={vehicule.brand}
+            value={vehicule.brand || ""}
             onChange={(e) => setVehicule({ ...vehicule, brand: e.target.value })}
           />
         </div>
@@ -122,7 +161,7 @@ export function AddVehiculeForm({
             id="modele"
             placeholder="Megane"
             className="h-16"
-            value={vehicule.model}
+            value={vehicule.model || ""}
             onChange={(e) => setVehicule({ ...vehicule, model: e.target.value })}
           />
         </div>
@@ -137,9 +176,12 @@ export function AddVehiculeForm({
             type="number"
             placeholder="2023"
             className="h-16"
-            value={vehicule.year}
+            value={vehicule.year ?? ""}
             onChange={(e) =>
-              setVehicule({ ...vehicule, year: Number(e.target.value) })
+              setVehicule({
+                ...vehicule,
+                year: e.target.value ? Number(e.target.value) : undefined,
+              })
             }
           />
         </div>
@@ -149,17 +191,185 @@ export function AddVehiculeForm({
             id="couleur"
             placeholder="Gris"
             className="h-16"
-            value={vehicule.color}
+            value={vehicule.color || ""}
+            onChange={(e) => setVehicule({ ...vehicule, color: e.target.value })}
+          />
+        </div>
+      </div>
+
+      {/* 1ère MEC / Date carte grise */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="firstRegistrationDate">1ère MEC</Label>
+          <Input
+            id="firstRegistrationDate"
+            type="date"
+            className="h-16"
+            value={fromISOToDateInput(vehicule.firstRegistrationDate)}
             onChange={(e) =>
-              setVehicule({ ...vehicule, color: e.target.value })
+              setVehicule({
+                ...vehicule,
+                firstRegistrationDate: e.target.value ? toISODateTime(e.target.value) : undefined,
+              })
+            }
+          />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="registrationCardDate">Date carte grise</Label>
+          <Input
+            id="registrationCardDate"
+            type="date"
+            className="h-16"
+            value={fromISOToDateInput(vehicule.registrationCardDate)}
+            onChange={(e) =>
+              setVehicule({
+                ...vehicule,
+                registrationCardDate: e.target.value ? toISODateTime(e.target.value) : undefined,
+              })
             }
           />
         </div>
       </div>
 
+      {/* Energie / Carrosserie */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="flex flex-col gap-2">
+          <Label>Énergie</Label>
+          <Select
+            value={(vehicule.energy as string) || ""}
+            onValueChange={(energy) => setVehicule({ ...vehicule, energy: energy as any })}
+          >
+            <SelectTrigger className="h-16">
+              <SelectValue placeholder="Sélectionnez une énergie" />
+            </SelectTrigger>
+            <SelectContent className="z-[2000]">
+              {ENERGY_OPTIONS.map((opt) => (
+                <SelectItem key={opt} value={opt}>
+                  {opt}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label>Carrosserie</Label>
+          <Select
+            value={(vehicule.bodyType as string) || ""}
+            onValueChange={(bodyType) =>
+              setVehicule({ ...vehicule, bodyType: bodyType as any })
+            }
+          >
+            <SelectTrigger className="h-16">
+              <SelectValue placeholder="Sélectionnez une carrosserie" />
+            </SelectTrigger>
+            <SelectContent className="z-[2000]">
+              {BODY_OPTIONS.map((opt) => (
+                <SelectItem key={opt} value={opt}>
+                  {opt}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Nb Portes / Type de boîte */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="doorsCount">Nb Portes</Label>
+          <Input
+            id="doorsCount"
+            type="number"
+            placeholder="5"
+            className="h-16"
+            value={vehicule.doorsCount ?? ""}
+            onChange={(e) =>
+              setVehicule({
+                ...vehicule,
+                doorsCount: e.target.value ? Number(e.target.value) : undefined,
+              })
+            }
+          />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label>Type de boîte</Label>
+          <Select
+            value={(vehicule.gearboxType as string) || ""}
+            onValueChange={(gearboxType) =>
+              setVehicule({ ...vehicule, gearboxType: gearboxType as any })
+            }
+          >
+            <SelectTrigger className="h-16">
+              <SelectValue placeholder="Sélectionnez un type" />
+            </SelectTrigger>
+            <SelectContent className="z-[2000]">
+              {GEARBOX_OPTIONS.map((opt) => (
+                <SelectItem key={opt} value={opt}>
+                  {opt}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Puissances */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="realPowerHp">Puissance réelle</Label>
+          <Input
+            id="realPowerHp"
+            type="number"
+            placeholder="128"
+            className="h-16"
+            value={vehicule.realPowerHp ?? ""}
+            onChange={(e) =>
+              setVehicule({
+                ...vehicule,
+                realPowerHp: e.target.value ? Number(e.target.value) : undefined,
+              })
+            }
+          />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="fiscalPowerCv">Puissance fiscale</Label>
+          <Input
+            id="fiscalPowerCv"
+            type="number"
+            placeholder="7"
+            className="h-16"
+            value={vehicule.fiscalPowerCv ?? ""}
+            onChange={(e) =>
+              setVehicule({
+                ...vehicule,
+                fiscalPowerCv: e.target.value ? Number(e.target.value) : undefined,
+              })
+            }
+          />
+        </div>
+      </div>
+
+      {/* Version */}
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="version">Version</Label>
+        <Input
+          id="version"
+          placeholder="1.6 CRDI"
+          className="h-16"
+          value={vehicule.version || ""}
+          onChange={(e) => setVehicule({ ...vehicule, version: e.target.value })}
+        />
+      </div>
+
       {/* Client */}
       <div className="flex flex-col gap-2">
-        <Label>Client <span className="text-red-500">*</span></Label>
+        <Label>
+          Client <span className="text-red-500">*</span>
+        </Label>
         <Select
           value={vehicule.clientId || ""}
           onValueChange={(clientId) =>
@@ -181,14 +391,24 @@ export function AddVehiculeForm({
 
       {/* Agence / Base */}
       <div className="flex flex-col gap-2">
-        <Label>Agence <span className="text-red-500">*</span></Label>
+        <Label>
+          Agence <span className="text-red-500">*</span>
+        </Label>
         <Select
           value={vehicule.baseId || ""}
           onValueChange={(baseId) => setVehicule({ ...vehicule, baseId })}
           disabled={!vehicule.clientId || loadingAgences}
         >
           <SelectTrigger className="h-16">
-            <SelectValue placeholder={!vehicule.clientId ? "Sélectionnez un client d'abord" : loadingAgences ? "Chargement..." : "Sélectionnez une agence"} />
+            <SelectValue
+              placeholder={
+                !vehicule.clientId
+                  ? "Sélectionnez un client d'abord"
+                  : loadingAgences
+                  ? "Chargement..."
+                  : "Sélectionnez une agence"
+              }
+            />
           </SelectTrigger>
           <SelectContent className="z-[2000]">
             {agences.map((b) => (
@@ -200,7 +420,6 @@ export function AddVehiculeForm({
         </Select>
       </div>
 
-      {/* Boutons */}
       <div className="flex flex-col sm:flex-row gap-4 justify-end pt-4">
         <Button
           type="button"
