@@ -1,0 +1,11 @@
+-- AlterTable
+ALTER TABLE `vehicle` ADD COLUMN `bodyType` ENUM('BERLINE', 'SUV', 'BREAK', 'COUPE', 'CABRIOLET', 'MONOSPACE', 'PICKUP', 'UTILITAIRE', 'AUTRE') NULL,
+    ADD COLUMN `doorsCount` INTEGER NULL,
+    ADD COLUMN `energy` ENUM('GAZOLE', 'ESSENCE', 'HYBRIDE', 'ELECTRIQUE', 'GPL') NULL,
+    ADD COLUMN `firstRegistrationDate` DATETIME(3) NULL,
+    ADD COLUMN `fiscalPowerCv` INTEGER NULL,
+    ADD COLUMN `gearboxType` ENUM('BVM', 'BVA') NULL,
+    ADD COLUMN `realPowerHp` INTEGER NULL,
+    ADD COLUMN `registrationCardDate` DATETIME(3) NULL,
+    ADD COLUMN `version` VARCHAR(191) NULL,
+    MODIFY `color` VARCHAR(191) NULL DEFAULT 'GRIS';
