@@ -26,11 +26,16 @@ model User {
   @@index([email])
   @@index([role])
 }
+
 model Client {
   id        String    @id @default(cuid())
   name      String
   email     String?
   phone     String?
+  cli_adresseFacturation String?
+  cli_numClient String?
+  cli_tvaIntraCommunautaire String?
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   bases     Base[]
@@ -38,6 +43,9 @@ model Client {
   vehicles  Vehicle[]
   @@index([name])
 }
+
+
+
 model Base {
   id        String    @id @default(cuid())
   location  String
@@ -50,29 +58,88 @@ model Base {
   @@index([clientId])
   @@index([location])
 }
+
+enum VehicleEnergy {
+  GAZOLE
+  ESSENCE
+  HYBRIDE
+  ELECTRIQUE
+  GPL
+}
+
+enum GearboxType {
+  BVM // boîte manuelle
+  BVA // boîte automatique
+}
+
+enum BodyType {
+  BERLINE
+  SUV
+  BREAK
+  COUPE
+  CABRIOLET
+  MONOSPACE
+  PICKUP
+  UTILITAIRE
+  AUTRE
+}
+
+
 model Vehicle {
   id           String    @id @default(cuid())
   licensePlate String    @unique
+
   model        String?
   brand        String?
   year         Int?
-  color        String?
+
+  color        String?   @default("GRIS")
+
+  // 1ère MEC mise en circulation
+  firstRegistrationDate DateTime?
+
+  // Énergie
+  energy       VehicleEnergy?
+
+  //  Portes
+  doorsCount   Int?
+
+  // Carrosserie
+  bodyType     BodyType?
+
+  // Puissance réelle / fiscale
+  realPowerHp      Int?
+  fiscalPowerCv    Int?
+
+  // Type de boîte
+  gearboxType  GearboxType?
+
+  // Version (ex: 1.6 CRDI)
+  version      String?
+
+  // Date carte grise
+  registrationCardDate DateTime?
+
   entryDate    DateTime  @default(now())
   exitDate     DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+
   clientId     String
   baseId       String
   handledById  String?
+
   invoices     Invoice[]
   base         Base      @relation(fields: [baseId], references: [id], onDelete: Cascade)
   client       Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
   handledBy    User?     @relation("VehicleHandler", fields: [handledById], references: [id])
+
   @@index([licensePlate])
   @@index([clientId])
   @@index([baseId])
   @@index([handledById])
 }
+
 model InvoicePhoto {
   id        String  @id @default(cuid())
   invoiceId String

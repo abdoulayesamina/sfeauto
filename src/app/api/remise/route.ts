@@ -35,6 +35,17 @@ export async function POST(req : Request){
         const body : Remise = await req.json();
         const {rem_articleId, rem_pourcentage, rem_prixremise} = body;
 
+        const existing = await prisma.te_remise_rem.findUnique({
+            where: { rem_articleId },
+        });
+
+        if (existing) {
+            return NextResponse.json(
+                { error: "Cet article a déjà une remise" },
+                { status: 409 }
+            );
+        }
+
         const newRemise = await prisma.te_remise_rem.create({
             data: {
                 rem_articleId: rem_articleId,
@@ -45,10 +56,10 @@ export async function POST(req : Request){
 
         return NextResponse.json({remise: newRemise}, {status: 201})
 
-    }catch(e){
+    }catch(e:any){
         logError("Failed to create remise", e);
         return NextResponse.json(
-            { error: "Échec de la création de la remise" },
+            { error: "Échec de la création de la remise"},
             { status: 500 }
         );
     }

@@ -41,7 +41,14 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name } = body
+    const {
+      name,
+      email,
+      phone,
+      cli_adresseFacturation,
+      cli_numClient,
+      cli_tvaIntraCommunautaire,
+    } = body
 
     if (!name?.trim()) {
       return NextResponse.json({ error: 'Nom du client requis' }, { status: 400 })
@@ -62,7 +69,14 @@ export async function POST(request: NextRequest) {
 
     const client = await prisma.client.create({
       data: {
-        name: name.trim()
+        name: name.trim(),
+
+        email: email?.trim() || null,
+        phone: phone?.trim() || null,
+
+        cli_adresseFacturation: cli_adresseFacturation?.trim() || null,
+        cli_numClient: cli_numClient?.trim() || null,
+        cli_tvaIntraCommunautaire: cli_tvaIntraCommunautaire?.trim() || null,
       },
       include: {
         _count: {

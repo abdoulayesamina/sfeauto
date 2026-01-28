@@ -154,6 +154,13 @@ export default function ArticlesPage() {
                 return <Badge>{collection ? collection.col_name : "N/A"}</Badge>;
             }
         },
+        // {
+        //     accessorKey: "art_codeArticle",
+        //     header: "Code article",
+        //     cell: ({ row }) => {
+        //         return <Badge>{row.original.art_codeArticle}</Badge>;
+        //     }
+        // },
         {
             header: "Actions",
             cell: ({ row }) => (

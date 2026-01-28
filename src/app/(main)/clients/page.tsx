@@ -6,12 +6,12 @@ import { useEffect, useState } from "react"
 import { ClientForm } from "./form/client-form"
 import { createColumns, DataTable } from "@/src/shared/components/data-table"
 import { ColumnDef } from "@tanstack/react-table"
-import { Client } from "@/generated/prisma"
 import { Badge } from "@/src/shared/components/ui/badge"
 
 import { useClientApi } from "./shared/useClient.api"
 import { confirmAlert, errorAlert, successAlert } from "@/src/lib/alerts"
 import { Spinner } from "@/src/shared/components/spinner"
+import { Client } from "@/src/utils/types/client"
 
 type ClientWithCount = Client & {
   _count?: {
@@ -110,33 +110,77 @@ export default function ClientPage() {
     }
   }
 
-  const columns: ColumnDef<ClientWithCount>[] = [
+  const columns: ColumnDef<ClientWithCount>[] =  [
     {
       accessorKey: "name",
       header: "Nom",
-    },
-    {
-      header: "Agences",
       cell: ({ row }) => (
-        <Badge variant="secondary">{row.original._count?.bases || 0}</Badge>
+        <div className="font-medium">{row.original.name}</div>
       ),
     },
+
     {
-      header: "Véhicules",
+      accessorKey: "email",
+      header: "Email",
       cell: ({ row }) => (
-        <Badge className="bg-green-200 text-green-900">
-          {row.original._count?.vehicles || 0}
+        <span className="text-muted-foreground">
+          {row.original.email || "—"}
+        </span>
+      ),
+    },
+
+    {
+      accessorKey: "phone",
+      header: "Téléphone",
+      cell: ({ row }) => (
+        <span>{row.original.phone || "—"}</span>
+      ),
+    },
+
+    {
+      accessorKey: "cli_numClient",
+      header: "N° Client",
+      cell: ({ row }) => (
+        <Badge variant="outline">
+          {row.original.cli_numClient || "N/A"}
         </Badge>
       ),
     },
+
+    {
+      header: "Agences",
+      cell: ({ row }) => (
+        <Badge variant="secondary">
+          {row.original._count?.bases ?? 0}
+        </Badge>
+      ),
+    },
+
+    {
+      header: "Véhicules",
+      cell: ({ row }) => (
+        <Badge className="bg-green-100 text-green-800">
+          {row.original._count?.vehicles ?? 0}
+        </Badge>
+      ),
+    },
+
     {
       header: "Actions",
       cell: ({ row }) => (
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => handleEdit(row.original)}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleEdit(row.original)}
+          >
             Modifier
           </Button>
-          <Button variant="destructive" onClick={() => handleDelete(row.original)}>
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={() => handleDelete(row.original)}
+          >
             Supprimer
           </Button>
         </div>

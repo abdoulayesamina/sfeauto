@@ -8,6 +8,10 @@ export const ClientSchema = z.object({
   email: z.string().email().nullable(),
   phone: z.string().nullable(),
 
+  cli_adresseFacturation: z.string().nullable(),
+  cli_numClient: z.string().nullable(),
+  cli_tvaIntraCommunautaire: z.string().nullable(),
+
   createdAt: z.string().datetime().optional(),
   updatedAt: z.string().datetime().optional(),
 
@@ -19,3 +23,5 @@ export const ClientSchema = z.object({
 })
 
 export type Client = z.infer<typeof ClientSchema>
+
+

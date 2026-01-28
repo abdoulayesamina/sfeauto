@@ -3,8 +3,8 @@ import { z } from "zod";
 export const RemiseSchema = z.object({
   rem_id: z.number().optional(),
 
-  rem_prixremise: z.number().optional(),
-  rem_pourcentage: z.number().optional(),
+  rem_prixremise: z.number().nullable(),
+  rem_pourcentage: z.number().nullable(),
 
   rem_articleId: z.number(),
 

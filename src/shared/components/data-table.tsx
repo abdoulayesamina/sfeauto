@@ -384,10 +384,12 @@ export function DataTable({
   data: initialData,
   columnsProps,
   handleSearch,
+  title
 }: {
   data: any[],
   columnsProps?: ColumnDef<any>[],
-  handleSearch?: (e:string)=>void
+  handleSearch?: (e:string)=>void,
+  title?:String
 }) {
   const [data, setData] = React.useState(() => initialData)
 
@@ -459,7 +461,12 @@ export function DataTable({
       defaultValue="outline"
       className="flex w-full flex-col justify-start gap-6"
     >
-      <div className="flex items-center justify-end px-4 lg:px-6">
+      <div className="flex items-center justify-between px-4 lg:px-6">
+        <div>
+          <span className="text-2xl font-bold pl-2">
+            {title ? title : ""}
+          </span>
+        </div>
         <div className="w-full max-w-xl relative">
           <Input className="pr-10" 
             onChange={(e)=> {
@@ -531,13 +538,13 @@ export function DataTable({
         </div>
         <div className="flex items-center justify-between px-4">
           <div className="hidden flex-1 text-sm text-muted-foreground lg:flex">
-            {table.getFilteredSelectedRowModel().rows.length} of{" "}
-            {table.getFilteredRowModel().rows.length} row(s) selected.
+            {table.getFilteredSelectedRowModel().rows.length} sur{" "}
+            {table.getFilteredRowModel().rows.length} ligne(s) selectionnées.
           </div>
           <div className="flex w-full items-center gap-8 lg:w-fit">
             <div className="hidden items-center gap-2 lg:flex">
               <Label htmlFor="rows-per-page" className="text-sm font-medium">
-                Rows per page
+                lignes par page
               </Label>
               <Select
                 value={`${table.getState().pagination.pageSize}`}
@@ -560,7 +567,7 @@ export function DataTable({
               </Select>
             </div>
             <div className="flex w-fit items-center justify-center text-sm font-medium">
-              Page {table.getState().pagination.pageIndex + 1} of{" "}
+              Page {table.getState().pagination.pageIndex + 1} sur{" "}
               {table.getPageCount()}
             </div>
             <div className="ml-auto flex items-center gap-2 lg:ml-0">

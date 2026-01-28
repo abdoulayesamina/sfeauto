@@ -1,4 +1,4 @@
-import { Client } from "@/generated/prisma"
+import { Client } from "@/src/utils/types/client"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL + "/admin/clients"
 
