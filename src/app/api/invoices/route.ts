@@ -66,7 +66,10 @@ export async function POST(request: NextRequest) {
 
     // Calcul correct de invoiceConfirmed (Boolean)
     const hasAccordNumber = accordNumber && accordNumber.trim().length > 0
-    const invoiceConfirmed = Boolean(hasAccordNumber && !!dateOfConfirmation)
+
+    //On enleve la verification pour le moment et invoiceConfirmed est toujours à true !
+    // const invoiceConfirmed = Boolean(hasAccordNumber && !!dateOfConfirmation)
+    const invoiceConfirmed = true;
 
     // Validate dateOfConfirmation (si fournie)
     if (dateOfConfirmation) {

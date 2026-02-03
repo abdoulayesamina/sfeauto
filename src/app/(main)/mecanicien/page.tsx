@@ -11,6 +11,8 @@ import { useInterventions } from "./shared/useinterventions.api"
 import { useClients } from "./shared/useClient.api"
 import InterventionDetail from "./shared/components/intervention-detail"
 import { Modal } from "@/src/shared/components/modal"
+import { Spinner } from "@/src/shared/components/spinner"
+import { errorAlert } from "@/src/lib/alerts"
 
 export const statusStyles: Record<string, string> = {
     EN_COURS: "bg-blue-100 text-blue-700",
@@ -81,10 +83,11 @@ const STATUS_TRANSLATIONS: Record<string, string> = {
 
 
 export default function MecanicienPage() {
-    const [filterStatus, setFilterStatus] = useState<"EN_COURS" | "TERMINEE">("EN_COURS")
+    const [filterStatus, setFilterStatus] = useState<"EN_COURS" | "TERMINEE" | "ATTENTE_PIECES">("EN_COURS")
     const [clientId, setClientId] = useState<string>()
     const [baseId, setBaseId] = useState<string>()
     const [search, setSearch] = useState("")
+    const [interventionId, setInterventionId] = useState<number | null>(0);
 
     const { clients } = useClients()
     const { bases } = useBases(clientId)
@@ -142,6 +145,7 @@ export default function MecanicienPage() {
                 <div className="flex gap-2">
                     <Button onClick={() => setFilterStatus("EN_COURS")} variant={filterStatus === "EN_COURS" ? "default" : "outline"}>En cours</Button>
                     <Button onClick={() => setFilterStatus("TERMINEE")} variant={filterStatus === "TERMINEE" ? "default" : "outline"}>Terminées</Button>
+                    <Button onClick={() => setFilterStatus("ATTENTE_PIECES")} variant={filterStatus === "ATTENTE_PIECES" ? "default" : "outline"}>En attente de pièce</Button>
                 </div>
 
                 {/* Liste */}
@@ -181,10 +185,11 @@ export default function MecanicienPage() {
 
                                 {/* Statut (modifiable) */}
                                 <Select
-                                    defaultValue={uiStatus}
                                     onValueChange={async (val) => {
+                                        setInterventionId(inv.id)
                                         const success = await updateStatus(inv.id, val as any)
-                                        if (!success) return alert(statusError || "Impossible de mettre à jour le statut")
+                                        setInterventionId(null);
+                                        if (!success) return errorAlert("Erreur", statusError || "Impossible de mettre à jour le statut")
 
                                         setInterventions(prev =>
                                             prev.map(item =>
@@ -192,9 +197,10 @@ export default function MecanicienPage() {
                                             )
                                         )
                                     }}
+                                    value={uiStatus}
                                 >
-
-                                    <SelectTrigger className={`w-[180px] ${statusStyles[uiStatus]}`}>
+                                    <SelectTrigger className={`w-[180px] ${statusStyles[uiStatus]}`} disabled={inv.id == interventionId}>
+                                        { inv.id == interventionId ? <Spinner/> : ""}
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>

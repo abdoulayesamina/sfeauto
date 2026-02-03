@@ -258,7 +258,9 @@ enum Role {
   MANAGER
   MECHANIC
   CLIENT
+  SIEGE
 }
+
 enum WorkStatus {
   CONFIRMED_IN_PLANNING
   WAITING_FOR_PARTS

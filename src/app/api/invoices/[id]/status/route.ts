@@ -42,6 +42,7 @@ export async function PATCH(
     const { status: newStatus } = body
 
     if (!newStatus || !Object.values(WorkStatus).includes(newStatus)) {
+      console.error("Dans Valeur de statut invalide")
       return NextResponse.json(
         { error: 'Valeur de statut invalide' },
         { status: 400 }
@@ -64,6 +65,7 @@ export async function PATCH(
     })
 
     if (!invoice) {
+      console.error("Dans !invoice")
       console.log("[PATCH /status] Invoice not found for id:", id)
       return NextResponse.json(
         { error: `Aucune intervention trouvée avec l'id ${id}` },
@@ -72,6 +74,7 @@ export async function PATCH(
     }
 
     if (!invoice.invoiceConfirmed) {
+      console.error("Dans !invoice.invoiceConfirmed")
       return NextResponse.json(
         { error: 'Impossible de modifier le statut d\'une intervention non approuvée' },
         { status: 403 }
@@ -79,6 +82,8 @@ export async function PATCH(
     }
 
     if (!isValidStatusTransition(invoice.status, newStatus)) {
+      console.error("Dans !isValidStatusTransition(invoice.status, newStatus)")
+      console.error(`\n Transition de statut invalide de ${invoice.status} vers ${newStatus}`)
       return NextResponse.json(
         { error: `Transition de statut invalide de ${invoice.status} vers ${newStatus}` },
         { status: 400 }
@@ -128,6 +133,7 @@ export async function PATCH(
     })
 
     if (!updated) {
+      console.error("Dans !update")
       return NextResponse.json(
         { error: 'Intervention non trouvée après mise à jour' },
         { status: 404 }

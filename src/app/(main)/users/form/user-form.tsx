@@ -37,6 +37,7 @@ export function UserForm({
     { id: "MANAGER", name: "Gestionnaire" },
     { id: "MECHANIC", name: "Mécanicien" },
     { id: "CLIENT", name: "Client" },
+    { id: "SIEGE", name: "Siege" },
   ]
 
   const filteredAgences = value.clientId
