@@ -7,13 +7,14 @@ import { NextResponse } from "next/server";
 export async function GET(){
     try{
         const session = await auth();
-        if (!session?.user || session.user.role !== 'ADMIN') {
+        if (!session || (session.user.role !== "MANAGER" && session.user.role !== "ADMIN")) {
             return NextResponse.json({ error: 'Accès administrateur requis' }, { status: 403 })
         }
-
+        
         const articles = await prisma.te_article_art.findMany({
             include: {
-                collection: true
+                collection: true,
+                remises:true
             }
         });
 

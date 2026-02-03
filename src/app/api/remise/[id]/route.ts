@@ -69,3 +69,34 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
         );
     }
 }
+
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await auth();
+
+    if (!session || (session.user.role !== "MANAGER" && session.user.role !== "ADMIN")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const id = await params.then((p) => Number(p.id));
+    if (isNaN(id)) {
+      return NextResponse.json({ error: "ID de remise invalide" }, { status: 400 });
+    }
+
+    const remise = await prisma.te_remise_rem.findUnique({
+      where: { rem_id: id },
+    });
+
+    if (!remise) {
+      return NextResponse.json({ error: "Remise introuvable" }, { status: 404 });
+    }
+
+    return NextResponse.json({ remise });
+  } catch (error) {
+    logError("Failed to fetch remise by id", error);
+    return NextResponse.json(
+      { error: "Échec de la récupération de la remise" },
+      { status: 500 }
+    );
+  }
+}

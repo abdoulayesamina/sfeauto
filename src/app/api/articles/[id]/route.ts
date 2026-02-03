@@ -14,7 +14,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         const body = await req.json();
         const art_name = body?.art_name;
         const art_price = Number(body?.art_price);
-        const art_collectionId = Number(body?.art_collectionId);
+        const art_collectionId = Number(body?.art_collectionId);        
 
         const id = await params.then(p => Number(p.id));
 
@@ -59,5 +59,46 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
 }
 
 
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await auth();
 
+    // Allow both ADMIN and MANAGER to fetch bases
+    if (!session || (session.user.role !== "MANAGER" && session.user.role !== "ADMIN")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const id = await params.then((p) => Number(p.id));
+    if (isNaN(id)) {
+      return NextResponse.json({ error: "ID d'article invalide" }, { status: 400 });
+    }
+
+      const article = await prisma.te_article_art.findMany({
+    orderBy: { art_name: "asc" },
+    select: {
+      art_id: true,
+      art_name: true,
+      art_price: true,
+      remises: {
+        select: {
+          rem_pourcentage: true,
+          rem_prixremise: true,
+        },
+      },
+    },
+  });
+
+    if (!article) {
+      return NextResponse.json({ error: "Article introuvable" }, { status: 404 });
+    }
+
+    return NextResponse.json({ article });
+  } catch (error) {
+    logError("Failed to fetch article by id", error);
+    return NextResponse.json(
+      { error: "Échec de la récupération de l'article" },
+      { status: 500 }
+    );
+  }
+}
 

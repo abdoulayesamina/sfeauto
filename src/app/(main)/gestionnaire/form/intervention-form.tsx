@@ -9,7 +9,7 @@ import { useEffect, useState } from "react"
 type PiecesCommande = "oui" | "non"
 
 interface InterventionFormProps {
-  vehicleId: string // ✅ AJOUT (id réel)
+  vehicleId: string 
   vehicleDisplayText: string
   defaultAccordNumber?: string
   onSubmit?: (data: any) => void
@@ -49,21 +49,17 @@ export function InterventionForm({
     const formData = new FormData(e.currentTarget as HTMLFormElement)
     const data = Object.fromEntries(formData.entries())
 
-    // ✅ On ajoute explicitement ce qui n'est pas dans FormData:
     onSubmit?.({
       ...data,
       vehicleId,
-      piecesCommande, // "oui" | "non"
-      images,         // File[]
+      piecesCommande, 
+      images,         
     })
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8 p-4">
-      {/* ✅ hidden utile si un jour tu veux utiliser FormData direct */}
       <input type="hidden" name="vehicleId" value={vehicleId} />
-
-      {/* Véhicule affichage seulement */}
       <div className="space-y-2">
         <Label>Véhicule</Label>
         <Input
