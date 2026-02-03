@@ -1,11 +1,13 @@
 "use client"
 
 import { Button } from "@/src/shared/components/ui/button"
-import { Eye, PlusCircle, Car, Wrench, User, MapPin } from "lucide-react"
+import { Eye, PlusCircle, FileText, Pencil } from "lucide-react"
 import { useState } from "react"
 import { Modal } from "@/src/shared/components/modal"
 import { toUIStatus, getStatusMeta } from "@/src/utils/constants/intervention-status"
 import IntervDetailGes from "./Intervention"
+import { CreateDevisModal } from "./CreateDevisModal"
+import { EditInterventionModal } from "./EditInterventionModal"
 
 type VehiclePreviewProps = {
   licensePlate: string
@@ -17,8 +19,8 @@ type VehiclePreviewProps = {
   entreeDate: string
   color: string
   invoices: any[]
-  enReparation?:number
-  termine?:number
+  enReparation?: number
+  termine?: number
   onNewIntervention: () => void
 }
 
@@ -34,14 +36,24 @@ export function VehiclePreview({
   invoices,
   onNewIntervention,
 }: VehiclePreviewProps) {
-
   const [filteredStatus, setFilteredStatus] = useState<"EN_COURS" | "TERMINEE">("EN_COURS")
   const [openDetailModal, setOpenDetailModal] = useState(false)
   const [selectedInvoice, setSelectedInvoice] = useState<any>()
 
-  const filteredInvoices = invoices 
-    .map(inv => ({ ...inv, uiStatus: toUIStatus(inv.status) }))
-    .filter(inv =>
+  // ✅ Devis modal state
+  const [openDevisModal, setOpenDevisModal] = useState(false)
+  const [invoiceForDevis, setInvoiceForDevis] = useState<any>(null)
+
+  // ✅ Edit modal state
+  const [openEditModal, setOpenEditModal] = useState(false)
+  const [invoiceForEdit, setInvoiceForEdit] = useState<any>(null)
+
+  // ✅ Local invoices state to reflect updates instantly (sans refetch)
+  const [localInvoices, setLocalInvoices] = useState<any[]>(invoices)
+
+  const filteredInvoices = localInvoices
+    .map((inv) => ({ ...inv, uiStatus: toUIStatus(inv.status) }))
+    .filter((inv) =>
       filteredStatus === "EN_COURS" ? inv.uiStatus !== "TERMINEE" : inv.uiStatus === "TERMINEE"
     )
 
@@ -57,14 +69,25 @@ export function VehiclePreview({
         entryDate: entreeDate,
         client: { name: client },
         base: { location: agence },
-      }
+      },
     })
     setOpenDetailModal(true)
   }
 
+  const handleCreateDevis = (invoice: any) => {
+    setInvoiceForDevis(invoice)
+    setOpenDevisModal(true)
+  }
+
+  const handleEditIntervention = (invoice: any) => {
+      console.log("PHOTOS INVOICE:", invoice?.photos)
+
+    setInvoiceForEdit(invoice)
+    setOpenEditModal(true)
+  }
+
   return (
     <div className="rounded-xl border bg-gradient-to-r from-zinc-50 to-white p-5 shadow-sm flex flex-col gap-4">
-
       {/* VEHICULE INFO */}
       <div className="rounded-xl bg-gradient-to-r from-black to-gray-900 p-6 text-white shadow-lg">
         <h1 className="text-2xl font-bold mb-4">{licensePlate}</h1>
@@ -98,44 +121,82 @@ export function VehiclePreview({
           variant={filteredStatus === "EN_COURS" ? "default" : "outline"}
           onClick={() => setFilteredStatus("EN_COURS")}
         >
-          En cours ({invoices.filter(i => toUIStatus(i.status) !== "TERMINEE").length})
+          En cours ({localInvoices.filter((i) => toUIStatus(i.status) !== "TERMINEE").length})
         </Button>
         <Button
           variant={filteredStatus === "TERMINEE" ? "default" : "outline"}
           onClick={() => setFilteredStatus("TERMINEE")}
         >
-          Terminées ({invoices.filter(i => toUIStatus(i.status) === "TERMINEE").length})
+          Terminées ({localInvoices.filter((i) => toUIStatus(i.status) === "TERMINEE").length})
         </Button>
       </div>
 
       {/* Liste des interventions */}
       <div className="mt-6 space-y-4 p-2 min-h-[350px] max-h-[350px] overflow-auto">
-        {filteredInvoices.map(inv => {
+        {filteredInvoices.map((inv) => {
           const meta = getStatusMeta(inv.uiStatus)
+          const hasDevis = Array.isArray(inv.devis) && inv.devis.length > 0
+
           return (
-            <div key={inv.id} className="rounded-xl border bg-white p-5 shadow-sm hover:shadow-md transition">
-              <div className="flex justify-between items-start">
-                <div>
+            <div
+              key={inv.id}
+              className="rounded-xl border bg-white p-5 shadow-sm hover:shadow-md transition"
+            >
+              <div className="flex justify-between items-start gap-4">
+                <div className="flex-1">
                   <p className="font-semibold text-zinc-800">{inv.workDescription}</p>
-                  <div className="flex gap-4 mt-2 text-sm text-zinc-500">
-                    <span><strong>N° Accord :</strong> {inv.accordNumber}</span>
+
+                  <div className="flex flex-wrap gap-4 mt-2 text-sm text-zinc-500">
+                    <span><strong>N° Accord :</strong> {inv.accordNumber ?? "—"}</span>
                     <span>
-                      Confirmé le : {new Date(inv.dateOfConfirmation).toLocaleDateString()}
+                      Confirmé le : {inv.dateOfConfirmation ? new Date(inv.dateOfConfirmation).toLocaleDateString() : "—"}
                     </span>
                   </div>
 
-                  <button
-                    className="flex items-center gap-2 mt-3 text-blue-600 text-sm font-medium hover:underline"
-                    onClick={() => handleViewDetail(inv)}
-                  >
-                    <Eye size={16} />
-                    Voir tous les détails
-                  </button>
+                  <div className="flex flex-wrap items-center gap-3 mt-4">
+                    <button
+                      className="flex items-center gap-2 text-blue-600 text-sm font-medium hover:underline"
+                      onClick={() => handleViewDetail(inv)}
+                    >
+                      <Eye size={16} />
+                      Voir tous les détails
+                    </button>
+
+                    {/* ✅ Modifier intervention */}
+                    <Button
+                      variant="outline"
+                      className="flex items-center gap-2"
+                      onClick={() => handleEditIntervention(inv)}
+                    >
+                      <Pencil size={16} />
+                      Modifier
+                    </Button>
+
+                    {/* ✅ Créer devis */}
+                    <Button
+                      variant="outline"
+                      className="flex items-center gap-2"
+                      disabled={hasDevis}
+                      title={hasDevis ? "Un devis existe déjà pour cette intervention" : "Créer un devis"}
+                      onClick={() => handleCreateDevis(inv)}
+                    >
+                      <FileText size={16} />
+                      {hasDevis ? "Devis existant" : "Créer devis"}
+                    </Button>
+                  </div>
                 </div>
 
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${meta.bg} ${meta.color}`}>
-                  {meta.label}
-                </span>
+                <div className="flex flex-col items-end gap-2">
+                  {hasDevis && (
+                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
+                      Devis créé
+                    </span>
+                  )}
+
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${meta.bg} ${meta.color}`}>
+                    {meta.label}
+                  </span>
+                </div>
               </div>
             </div>
           )
@@ -160,6 +221,44 @@ export function VehiclePreview({
         )}
       </Modal>
 
+      {/* ✅ Modal édition intervention */}
+      {invoiceForEdit && (
+        <EditInterventionModal    
+          open={openEditModal}
+          onClose={() => setOpenEditModal(false)}
+          invoice={invoiceForEdit}
+          onUpdated={(updated) => {
+            // ✅ update local invoices pour voir les changements immédiatement
+            const updatedInvoice = updated?.invoice ?? updated
+            setLocalInvoices((prev) =>
+              prev.map((x) => (x.id === updatedInvoice.id ? { ...x, ...updatedInvoice } : x))
+            )
+          }}
+        />
+      )}
+
+      {/* ✅ Modal création devis */}
+      {invoiceForDevis && (
+        <CreateDevisModal
+          open={openDevisModal}
+          onClose={() => setOpenDevisModal(false)}
+          invoiceId={invoiceForDevis.id}
+          onCreated={(devis) => {
+            // ✅ marquer l'invoice localement comme ayant un devis
+            const created = devis?.devis ?? devis
+            const dev_id = created?.dev_id
+            const dev_numdevis = created?.dev_numdevis
+
+            setLocalInvoices((prev) =>
+              prev.map((x) =>
+                x.id === invoiceForDevis.id
+                  ? { ...x, devis: [{ dev_id, dev_numdevis }] }
+                  : x
+              )
+            )
+          }}
+        />
+      )}
     </div>
   )
 }

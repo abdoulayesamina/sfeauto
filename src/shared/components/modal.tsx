@@ -9,16 +9,16 @@ import { createPortal } from "react-dom";
 
 
 type ModalProps = {
-  open?: boolean;
-  modalTitle?: string;
-  modalDescription?: string;
-  children: React.ReactNode;
-  onClose: () => void;
-  className?: string 
+    open?: boolean;
+    modalTitle?: string;
+    modalDescription?: string;
+    children: React.ReactNode;
+    onClose: () => void;
+    className?: string
 
 }
 
-export function Modal({open, modalTitle, modalDescription, children, onClose }: ModalProps) {
+export function Modal({ open, modalTitle, modalDescription, children, onClose }: ModalProps) {
 
     useEffect(() => {
         if (open) {
@@ -33,7 +33,7 @@ export function Modal({open, modalTitle, modalDescription, children, onClose }: 
 
     return createPortal(
         <div className="fixed flex items-center justify-center inset-0 z-[1000]">
-        
+
             <div
                 className="absolute inset-0 bg-black/50 backdrop-blur-sm cursor-pointer z-[1000]"
                 onClick={onClose}

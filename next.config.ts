@@ -6,6 +6,14 @@ const nextConfig: NextConfig = {
 
   // Enable React Strict Mode
   reactStrictMode: true,
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "stlateldev2.blob.core.windows.net",
+      },
+    ],
+  },
 
   // Security headers
   async headers() {

@@ -37,10 +37,10 @@ export async function GET(request: NextRequest) {
     const vehicles = await prisma.vehicle.findMany({
       where: search
         ? {
-            licensePlate: {
-              contains: search,
-            },
-          }
+          licensePlate: {
+            contains: search,
+          },
+        }
         : undefined,
       select: {
         id: true,
@@ -81,7 +81,20 @@ export async function GET(request: NextRequest) {
             comments: true,
             createdAt: true,
             updatedAt: true,
+            photos: {
+              select: {
+                id: true,
+                url: true,
+              },
+            },
+
             handledBy: { select: { name: true, email: true } },
+            devis: {
+              where: { dev_supprimee: false },
+              select: { dev_id: true, dev_numdevis: true },
+
+
+            },
           },
           orderBy: { createdAt: "desc" },
         },
@@ -196,12 +209,12 @@ export async function POST(request: NextRequest) {
         color: normalizeOptionalString(color),
 
         firstRegistrationDate: parsedFirstReg,
-        energy: energy ?? null, 
+        energy: energy ?? null,
         doorsCount: parsedDoorsCount,
-        bodyType: bodyType ?? null, 
+        bodyType: bodyType ?? null,
         realPowerHp: parsedRealPowerHp,
         fiscalPowerCv: parsedFiscalPowerCv,
-        gearboxType: gearboxType ?? null, 
+        gearboxType: gearboxType ?? null,
         version: normalizeOptionalString(version),
         registrationCardDate: parsedRegistrationCard,
 

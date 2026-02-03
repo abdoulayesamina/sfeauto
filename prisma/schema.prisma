@@ -23,6 +23,7 @@ model User {
   base            Base?     @relation(fields: [baseId], references: [id])
   client          Client?   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   vehiclesHandled Vehicle[] @relation("VehicleHandler")
+  devisCreated     te_devis_dev[] 
   @@index([email])
   @@index([role])
 }
@@ -41,9 +42,9 @@ model Client {
   bases     Base[]
   users     User[]
   vehicles  Vehicle[]
+  devis     te_devis_dev[]
   @@index([name])
 }
-
 
 
 model Base {
@@ -130,6 +131,8 @@ model Vehicle {
   handledById  String?
 
   invoices     Invoice[]
+  devis        te_devis_dev[]
+
   base         Base      @relation(fields: [baseId], references: [id], onDelete: Cascade)
   client       Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
   handledBy    User?     @relation("VehicleHandler", fields: [handledById], references: [id])
@@ -174,6 +177,7 @@ model Invoice {
   statusHistory      StatusHistory[]
   changeHistory      ChangeHistory[]
   photos             InvoicePhoto[]
+  devis              te_devis_dev[]  
   @@index([accordNumber])
   @@index([vehicleId])
   @@index([status])
@@ -237,6 +241,8 @@ model te_article_art {
   collection te_collection_col @relation("Collection_Articles", fields: [art_collectionId], references: [col_id])
   remises   te_remise_rem? @relation("Article_Remise")
 
+  devisLines te_devisart_dea[]  
+
   @@index([art_name])
   @@index([art_collectionId])
 }
@@ -252,6 +258,77 @@ model te_remise_rem {
   @@index([rem_pourcentage])
   @@index([rem_articleId])
 }
+
+model te_devis_dev {
+  dev_id                 Int       @id @default(autoincrement())
+
+  // --- Liens métier ---
+  dev_cli_id              String
+  dev_veh_id              String
+  dev_invoice_id          String?
+  
+  @@unique([dev_invoice_id])
+   
+  dev_user                String?   // User qui a créé le devis
+
+  client                  Client    @relation(fields: [dev_cli_id], references: [id], onDelete: Cascade)
+  vehicle                 Vehicle   @relation(fields: [dev_veh_id], references: [id], onDelete: Cascade)
+  invoice                 Invoice?  @relation(fields: [dev_invoice_id], references: [id], onDelete: SetNull)
+  user                    User?     @relation(fields: [dev_user], references: [id], onDelete: SetNull)
+
+  // --- Données devis (snapshot / compta) ---
+  dev_adressefacturation  String?   @db.Text
+  dev_numdevis            String    @unique
+
+  dev_datecreation        DateTime  @default(now())
+  // si tu veux séparer heure: tu peux la dériver de dev_datecreation côté UI
+
+  dev_totalht             Decimal   @db.Decimal(14,2)
+  dev_totaltva            Decimal   @db.Decimal(14,2)
+  dev_totalttc            Decimal   @db.Decimal(14,2)
+
+  dev_tva                 Decimal?  @db.Decimal(5,2) // TVA par défaut du devis (si tu en as une)
+  dev_supprimee           Boolean   @default(false)
+
+  // --- Validation: devis validé quand accordNumber est affecté ---
+  dev_accordNumber        String?   @unique
+  dev_dateAccord          DateTime?
+
+  // lignes
+  articles                te_devisart_dea[] @relation("Devis_Articles")
+
+  @@index([dev_cli_id])
+  @@index([dev_veh_id])
+  @@index([dev_invoice_id])
+  @@index([dev_user])
+  @@index([dev_datecreation])
+  @@index([dev_supprimee])
+}
+
+model te_devisart_dea {
+  dea_id                 Int      @id @default(autoincrement())
+
+  dea_dev_id             Int
+  devis                  te_devis_dev @relation("Devis_Articles", fields: [dea_dev_id], references: [dev_id], onDelete: Cascade)
+
+  // référence article (optionnel mais recommandé)
+  dea_art_id              Int?
+  article                 te_article_art? @relation(fields: [dea_art_id], references: [art_id], onDelete: SetNull)
+
+  // snapshot au moment du devis (pro)
+  dea_art_designation     String
+  dea_art_reference       String?
+  dea_prixunitaire        Decimal  @db.Decimal(14,2)
+  dea_quantite            Int
+  dea_tva                 Decimal? @db.Decimal(5,2)   // TVA ligne (peut override dev_tva)
+  dea_pourcentageremise   Int?     // remise appliquée sur la ligne (snapshot)
+
+  dea_prixtotalht         Decimal  @db.Decimal(14,2)  // total HT ligne (après remise)
+
+  @@index([dea_dev_id])
+  @@index([dea_art_id])
+}
+
 
 enum Role {
   ADMIN
