@@ -193,7 +193,7 @@ if (existingDevis) {
 
     const totalTTC = round2(totalHT + totalTVA);
 
-    // 4) Créer devis + lignes en transaction
+    // Création devis + lignes en transaction
     const devNum = await generateDevisNumber();
 
     const result = await prisma.$transaction(async (tx) => {
@@ -227,5 +227,40 @@ if (existingDevis) {
   } catch (error) {
     logError("Failed to create devis from invoice", error);
     return NextResponse.json({ error: "Échec de la création du devis" }, { status: 500 });
+  }
+}
+
+
+
+export async function GET() {
+  try {
+    const session = await auth();
+    if (!session || (session.user.role !== "MANAGER" && session.user.role !== "ADMIN")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const devis = await prisma.te_devis_dev.findMany({
+      where: { dev_supprimee: false },
+      orderBy: { dev_id: "desc" },
+      include: {
+        invoice: {
+          select: {
+            id: true,
+            accordNumber: true,
+            dateOfConfirmation: true,
+            workDescription: true,
+            status: true,
+          },
+        },
+        vehicle: { select: { id: true, licensePlate: true, brand: true, model: true } },
+        client: { select: { id: true, name: true } },
+        articles: true,
+      },
+    });
+
+    return NextResponse.json({ devis });
+  } catch (error) {
+    logError("Failed to list devis", error);
+    return NextResponse.json({ error: "Échec récupération devis" }, { status: 500 });
   }
 }

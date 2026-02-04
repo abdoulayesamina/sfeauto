@@ -26,16 +26,15 @@ function toDateInputValue(d?: string | Date | null) {
   if (!d) return "";
   const date = new Date(d);
   if (isNaN(date.getTime())) return "";
-  return date.toISOString().slice(0, 10); // YYYY-MM-DD
+  return date.toISOString().slice(0, 10); 
 }
 
 export function EditInterventionModal({ open, onClose, invoice, onUpdated }: Props) {
   const { patchInvoice, loading, error } = useInvoiceApi();
 
-  // ✅ Photos existantes (SAS) comme IntervDetailGes
+  // hotos existantes (SAS) comme IntervDetailGes
   const { photos, loading: photosLoading, error: photosError } = useInvoicePhotos(invoice?.id);
 
-  // === champs (même structure création) ===
   const [piecesCommande, setPiecesCommande] = useState<PiecesCommande>("non");
 
   const [workDescription, setWorkDescription] = useState("");
@@ -45,11 +44,9 @@ export function EditInterventionModal({ open, onClose, invoice, onUpdated }: Pro
   const [accordNumber, setAccordNumber] = useState("");
   const [dateOfConfirmation, setDateOfConfirmation] = useState("");
 
-  // ✅ nouvelles images (sélectionnées au moment de l’édition)
   const [imagesBlob, setImagesBlob] = useState<string[]>([]);
   const [images, setImages] = useState<File[]>([]);
 
-  // ✅ pré-remplir quand on ouvre
   useEffect(() => {
     if (!open || !invoice) return;
 
@@ -63,7 +60,6 @@ export function EditInterventionModal({ open, onClose, invoice, onUpdated }: Pro
     setOrdersDetails(invoice.ordersDetails ?? "");
     setComments(invoice.comments ?? "");
 
-    // reset nouvelles photos à chaque ouverture
     setImages([]);
     setImagesBlob([]);
   }, [open, invoice]);
@@ -123,7 +119,6 @@ export function EditInterventionModal({ open, onClose, invoice, onUpdated }: Pro
           />
         </div>
 
-        {/* ✅ Photos EXISTANTES (même rendu que création, mais sans next/image) */}
         <div className="space-y-2">
           <Label>Photos déjà liées</Label>
 
@@ -155,7 +150,6 @@ export function EditInterventionModal({ open, onClose, invoice, onUpdated }: Pro
           )}
         </div>
 
-        {/* ✅ Ajout nouvelles photos (même UI que création) */}
         <div className="flex flex-col space-y-2">
           <Label>Ajouter des photos</Label>
 
@@ -182,7 +176,6 @@ export function EditInterventionModal({ open, onClose, invoice, onUpdated }: Pro
           {imagesBlob.length > 0 ? (
             imagesBlob.map((src, index) => (
               <div className="relative" key={index}>
-                {/* Ici tu peux garder next/image car c’est un blob local */}
                 <Image
                   src={src}
                   alt={`preview-${index}`}

@@ -13,7 +13,9 @@ import {
   Layers,
   FolderOpen,
   Package,
-  BadgePercent
+  BadgePercent,
+  Receipt,
+  FileText
 } from "lucide-react"
 
 import { NavDocuments } from "@/src/shared/components/nav-documents"
@@ -102,6 +104,12 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       icon: UserCog,
       roles:["MANAGER"],
 
+    },
+     {
+      title: "Devis",
+      url: "gestionnaire/devis",
+      icon: Receipt,
+      roles:["MANAGER"],
     },
     {
       title: "Mécanicien",
