@@ -38,13 +38,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       return NextResponse.json({ error: "Devis introuvable" }, { status: 404 });
     }
 
-    // ✅ déjà validé
     if (current.dev_accordNumber) {
       return NextResponse.json({ error: "Devis déjà validé" }, { status: 409 });
     }
 
-    // ✅ OPTIONNEL: empêcher doublons d'accordNumber sur d'autres devis
-    // (recommandé si tu veux que ça soit unique)
     const exists = await prisma.te_devis_dev.findFirst({
       where: { dev_supprimee: false, dev_accordNumber },
       select: { dev_id: true },
