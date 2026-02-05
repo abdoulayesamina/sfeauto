@@ -89,7 +89,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Véhicule/Client introuvable pour cette intervention" }, { status: 400 });
     }
 
-    const artIds = items.map((x: any) => asNumber(x?.art_id)).filter((n) => !isNaN(n));
+    const artIds = items.map((x: any) => asNumber(x?.art_id)).filter((n: number) => !Number.isNaN(n));
     if (artIds.length !== items.length) {
       return NextResponse.json({ error: "art_id invalide dans items" }, { status: 400 });
     }
@@ -193,7 +193,7 @@ if (existingDevis) {
 
     const totalTTC = round2(totalHT + totalTVA);
 
-    // 4) Créer devis + lignes en transaction
+    // Création devis + lignes en transaction
     const devNum = await generateDevisNumber();
 
     const result = await prisma.$transaction(async (tx) => {
@@ -230,43 +230,36 @@ if (existingDevis) {
   }
 }
 
-
 export async function GET() {
   try {
+    const session = await auth();
+    if (!session || (session.user.role !== "MANAGER" && session.user.role !== "ADMIN")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const devis = await prisma.te_devis_dev.findMany({
-      where: {
-        dev_supprimee: false,
-      },
-      orderBy: {
-        dev_datecreation: "desc",
-      },
+      where: { dev_supprimee: false },
+      orderBy: { dev_id: "desc" },
       include: {
-        client: true,
-        vehicle: true,
-        invoice: true,
-        user: true,
-        articles: {
-          include: {
-            article: {
-              include: {
-                collection: true,
-              },
-            },
+        invoice: {
+          select: {
+            id: true,
+            accordNumber: true,
+            dateOfConfirmation: true,
+            workDescription: true,
+            status: true,
           },
         },
+        vehicle: { select: { id: true, licensePlate: true, brand: true, model: true } },
+        client: { select: { id: true, name: true } },
+        articles: true,
       },
     });
 
-    return NextResponse.json(
-      { devis },
-      { status: 200 }
-    );
+    return NextResponse.json({ devis });
   } catch (error) {
-    console.error("GET /api/devis error:", error);
-
-    return NextResponse.json(
-      { error: "Erreur lors de la récupération des devis" },
-      { status: 500 }
-    );
+    logError("Failed to list devis", error);
+    return NextResponse.json({ error: "Échec récupération devis" }, { status: 500 });
   }
+  
 }
