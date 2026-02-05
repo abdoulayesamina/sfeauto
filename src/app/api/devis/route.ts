@@ -89,7 +89,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Véhicule/Client introuvable pour cette intervention" }, { status: 400 });
     }
 
-    const artIds = items.map((x: any) => asNumber(x?.art_id)).filter((n) => !isNaN(n));
+    const artIds = items.map((x: any) => asNumber(x?.art_id)).filter((n: number) => !Number.isNaN(n));
     if (artIds.length !== items.length) {
       return NextResponse.json({ error: "art_id invalide dans items" }, { status: 400 });
     }

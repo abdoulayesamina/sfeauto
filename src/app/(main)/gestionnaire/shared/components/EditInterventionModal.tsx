@@ -30,7 +30,7 @@ function toDateInputValue(d?: string | Date | null) {
 }
 
 export function EditInterventionModal({ open, onClose, invoice, onUpdated }: Props) {
-  const { patchInvoice, loading, error } = useInvoiceApi();
+  const { patchInvoice, loading } = useInvoiceApi();
 
   // hotos existantes (SAS) comme IntervDetailGes
   const { photos, loading: photosLoading, error: photosError } = useInvoicePhotos(invoice?.id);
@@ -266,8 +266,6 @@ export function EditInterventionModal({ open, onClose, invoice, onUpdated }: Pro
         </div>
 
         {photosError && <p className="text-sm text-red-600">{photosError}</p>}
-        {error && <p className="text-sm text-red-600">{error}</p>}
-
         <div className="grid grid-cols-2 gap-2">
           <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
             Annuler

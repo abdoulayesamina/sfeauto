@@ -92,7 +92,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         return NextResponse.json({ error: "items requis (au moins 1 ligne)" }, { status: 400 });
       }
 
-      const artIds = items.map((x: any) => asNumber(x?.art_id)).filter((n) => !isNaN(n));
+      const artIds = items.map((x: any) => asNumber(x?.art_id)).filter((n: number) => !Number.isNaN(n));
       if (artIds.length !== items.length) {
         return NextResponse.json({ error: "art_id invalide" }, { status: 400 });
       }
