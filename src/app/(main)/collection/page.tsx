@@ -102,7 +102,7 @@ export default function CollectionPage() {
         setCollectionsSearch(filtered);
     }
     const handleCreate = async () => {
-        debugger
+         
         let newCollection : Collection = {col_name: formData.col_name, col_familleId: Number(formData.col_familleId)};
         setLoadingCollections(true);
 

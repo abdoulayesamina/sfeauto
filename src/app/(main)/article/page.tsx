@@ -73,7 +73,6 @@ export default function ArticlesPage() {
     }
 
     const handleCreate = async () => {
-        debugger;
         let newArticles : Article = {art_name: formData.art_name, art_price: formData.art_price, art_collectionId: Number(formData.art_collectionId)};
         setLoadingArticles(true);
         try{
@@ -98,7 +97,7 @@ export default function ArticlesPage() {
     }
 
     const handleUpdateSubmit = async () => {
-        debugger
+         
         let updated : Article = {art_id: formData.art_id, art_name: formData.art_name, art_price: formData.art_price, art_collectionId: Number(formData.art_collectionId)};
         setLoadingArticles(true);
 

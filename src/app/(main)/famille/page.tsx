@@ -85,7 +85,6 @@ export default function FamillePage() {
         setfamilleSearch(filtered);
     }
     const handleCreate = async () => {
-        debugger;
         let newFamilles : Famille = {fam_name: formData.fam_name};
         setLoadingFamilles(true);
         try{
@@ -104,12 +103,12 @@ export default function FamillePage() {
         setIsOpen(false)
     }
     const handleUpdate = async (data: Famille) => {
-        debugger
+         
         setFormData(data)
         setEditOpen(true)
     }
     const handleUpdateSubmit = async () => {
-        debugger
+         
         let updatedFamilles : Famille = {fam_id: formData.fam_id, fam_name: formData.fam_name};
         let updatedFamillesList = familles.map(f =>
             f.fam_id === formData.fam_id ? updatedFamilles : f

@@ -163,7 +163,7 @@ export function useDevisApi() {
         setError(msg);
         return { ok: false, data: null, error: msg };
       }
-
+      
       return { ok: true, data, error: null };
     } catch {
       const msg = "Erreur réseau";

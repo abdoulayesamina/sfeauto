@@ -19,24 +19,30 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
 
     useEffect(() => {
         async function loadDevis() {
-        setLoading(true);
-        setError(null);
+             
+            setLoading(true);
+            setError(null);
 
-        try {
-            const data = await getDevisById(devisId);
+            try {
+                const res : any = await getDevisById(devisId);
 
-            if (data && !("ok" in data)) {
-            setDevis(data);
+                if (res.ok && res.data) {
+                    setDevis(res.data.devis);
+                    console.log("Devis data : ", res.data);
+                }
+            } catch {
+                setError("Impossible de charger le devis");
+            } finally {
+                setLoading(false);
             }
-        } catch {
-            setError("Impossible de charger le devis");
-        } finally {
-            setLoading(false);
-        }
         }
 
         if (devisId) loadDevis();
     }, [devisId]);
+
+    useEffect(()=>{
+        console.log("Devis recup : ", devis)
+    },[devis])
 
     if (loading) {
         return <div className="p-6 text-center">Chargement du devis…</div>;
@@ -198,7 +204,7 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
                                         <td className="border border-black">dd</td>
                                         <td className="border border-black">dd</td>
                                         <td className="border border-black">dd</td>
-                                        <td className="border border-black">dd</td>
+                                        <td className="border-y border-black">dd</td>
                                     </tr>
                                 </table>
                             </div>
