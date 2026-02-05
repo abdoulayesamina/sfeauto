@@ -8,6 +8,7 @@ import { toUIStatus, getStatusMeta } from "@/src/utils/constants/intervention-st
 import IntervDetailGes from "./Intervention"
 import { CreateDevisModal } from "./CreateDevisModal"
 import { EditInterventionModal } from "./EditInterventionModal"
+import { DevisApercu } from "./devisApercu"
 
 type VehiclePreviewProps = {
   licensePlate: string
@@ -43,6 +44,9 @@ export function VehiclePreview({
   // ✅ Devis modal state
   const [openDevisModal, setOpenDevisModal] = useState(false)
   const [invoiceForDevis, setInvoiceForDevis] = useState<any>(null)
+
+  const [openApercu,setOpenApercu] = useState(false);
+  const [targetDevisIdForApercu, setTargetDevisIdForApercu ] = useState<any>(null);
 
   // ✅ Edit modal state
   const [openEditModal, setOpenEditModal] = useState(false)
@@ -84,6 +88,11 @@ export function VehiclePreview({
 
     setInvoiceForEdit(invoice)
     setOpenEditModal(true)
+  }
+
+  const handleViewDevisApercu = (devis:any) =>{
+    setOpenApercu(true)
+    setTargetDevisIdForApercu(devis.dev_id);
   }
 
   return (
@@ -142,60 +151,80 @@ export function VehiclePreview({
               key={inv.id}
               className="rounded-xl border bg-white p-5 shadow-sm hover:shadow-md transition"
             >
-              <div className="flex justify-between items-start gap-4">
+              <div>
                 <div className="flex-1">
-                  <p className="font-semibold text-zinc-800">{inv.workDescription}</p>
+                  <div className="flex flex-col-reverse lg:flex-row justify-between items-start gap-4">
 
-                  <div className="flex flex-wrap gap-4 mt-2 text-sm text-zinc-500">
-                    <span><strong>N° Accord :</strong> {inv.accordNumber ?? "—"}</span>
-                    <span>
-                      Confirmé le : {inv.dateOfConfirmation ? new Date(inv.dateOfConfirmation).toLocaleDateString() : "—"}
-                    </span>
+                    <div>
+                      <p className="font-semibold text-zinc-800">{inv.workDescription}</p>
+                      <div className="flex flex-wrap gap-4 mt-2 text-sm text-zinc-500">
+                        <span><strong>N° Accord :</strong> {inv.accordNumber ?? "—"}</span>
+                        <span>
+                          Confirmé le : {inv.dateOfConfirmation ? new Date(inv.dateOfConfirmation).toLocaleDateString() : "—"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2 w-full lg:w-auto flex-wrap">
+                      {hasDevis && (
+                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
+                          Devis créé
+                        </span>
+                      )}
+
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${meta.bg} ${meta.color}`}>
+                        {meta.label}
+                      </span>
+                    </div>
+
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-3 mt-4">
-                    <button
-                      className="flex items-center gap-2 text-blue-600 text-sm font-medium hover:underline"
-                      onClick={() => handleViewDetail(inv)}
-                    >
-                      <Eye size={16} />
-                      Voir tous les détails
-                    </button>
+                  <div className="flex flex-wrap items-center justify-between gap-3 mt-4">
 
-                    {/* ✅ Modifier intervention */}
-                    <Button
-                      variant="outline"
-                      className="flex items-center gap-2"
-                      onClick={() => handleEditIntervention(inv)}
-                    >
-                      <Pencil size={16} />
-                      Modifier
-                    </Button>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <button
+                        className="flex items-center gap-2 text-blue-600 text-sm font-medium hover:underline"
+                        onClick={() => handleViewDetail(inv)}
+                      >
+                        <Eye size={16} />
+                        Voir tous les détails
+                      </button>
 
-                    {/* ✅ Créer devis */}
-                    <Button
-                      variant="outline"
-                      className="flex items-center gap-2"
-                      disabled={hasDevis}
-                      title={hasDevis ? "Un devis existe déjà pour cette intervention" : "Créer un devis"}
-                      onClick={() => handleCreateDevis(inv)}
-                    >
-                      <FileText size={16} />
-                      {hasDevis ? "Devis existant" : "Créer devis"}
-                    </Button>
+                      {/* ✅ Modifier intervention */}
+                      <Button
+                        variant="outline"
+                        className="flex items-center gap-2"
+                        onClick={() => handleEditIntervention(inv)}
+                      >
+                        <Pencil size={16} />
+                        Modifier
+                      </Button>
+
+                      {/* ✅ Créer devis */}
+                      <Button
+                        variant="outline"
+                        className="flex items-center gap-2"
+                        disabled={hasDevis}
+                        title={hasDevis ? "Un devis existe déjà pour cette intervention" : "Créer un devis"}
+                        onClick={() => handleCreateDevis(inv)}
+                      >
+                        <FileText size={16} />
+                        {hasDevis ? "Devis existant" : "Créer devis"}
+                      </Button>
+                    </div>
+
+                    <div>
+                      <Button
+                        variant="outline"
+                        className={`flex items-center gap-2 ${hasDevis ? "" : "hidden"}`}
+                        onClick={()=>handleViewDevisApercu(inv.devis[0])}
+                      >
+                        <Eye size={16} />
+                        aperçu du devis
+                      </Button>
+                    </div>
+
                   </div>
-                </div>
-
-                <div className="flex flex-col items-end gap-2">
-                  {hasDevis && (
-                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
-                      Devis créé
-                    </span>
-                  )}
-
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${meta.bg} ${meta.color}`}>
-                    {meta.label}
-                  </span>
                 </div>
               </div>
             </div>
@@ -259,6 +288,11 @@ export function VehiclePreview({
           }}
         />
       )}
+
+
+      <Modal open={openApercu} onClose={()=>setOpenApercu(false)} modalDescription="Aperçu du devis">
+        <DevisApercu devisId={targetDevisIdForApercu} onClose={()=>setOpenApercu(false)} />
+      </Modal>
     </div>
   )
 }

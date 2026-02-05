@@ -92,8 +92,6 @@ export async function GET(request: NextRequest) {
             devis: {
               where: { dev_supprimee: false },
               select: { dev_id: true, dev_numdevis: true },
-
-
             },
           },
           orderBy: { createdAt: "desc" },

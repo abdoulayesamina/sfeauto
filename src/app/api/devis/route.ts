@@ -229,3 +229,44 @@ if (existingDevis) {
     return NextResponse.json({ error: "Échec de la création du devis" }, { status: 500 });
   }
 }
+
+
+export async function GET() {
+  try {
+    const devis = await prisma.te_devis_dev.findMany({
+      where: {
+        dev_supprimee: false,
+      },
+      orderBy: {
+        dev_datecreation: "desc",
+      },
+      include: {
+        client: true,
+        vehicle: true,
+        invoice: true,
+        user: true,
+        articles: {
+          include: {
+            article: {
+              include: {
+                collection: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return NextResponse.json(
+      { devis },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("GET /api/devis error:", error);
+
+    return NextResponse.json(
+      { error: "Erreur lors de la récupération des devis" },
+      { status: 500 }
+    );
+  }
+}
