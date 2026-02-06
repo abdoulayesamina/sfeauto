@@ -12,6 +12,8 @@ import { errorAlert } from "@/src/lib/alerts";
 import { useDevisApi } from "../shared/hooks/useDevisApi.api";
 import { EditDevisModal } from "../shared/components/EditDevisModal";
 import { ValidateDevisModal } from "../shared/components/ValidateDevisModal";
+import { Modal } from "@/src/shared/components/modal";
+import { DevisApercu } from "../shared/components/devisApercu";
 
 function formatDate(d?: string | Date | null) {
   if (!d) return "—";
@@ -38,6 +40,14 @@ export default function DevisPage() {
 
   const [validateOpen, setValidateOpen] = useState(false);
   const [devisToValidate, setDevisToValidate] = useState<any>(null);
+
+  const [openApercu,setOpenApercu] = useState(false);
+  const [targetDevisIdForApercu, setTargetDevisIdForApercu ] = useState<any>(null);
+
+  const handleViewDevisApercu = (devis:any) =>{
+    setOpenApercu(true)
+    setTargetDevisIdForApercu(devis.dev_id);
+  }
 
   const load = async () => {
     setLoading(true);
@@ -191,7 +201,7 @@ export default function DevisPage() {
               </Button>
             )}
 
-            <Button variant="outline" disabled>
+            <Button variant="outline" onClick={()=>handleViewDevisApercu(d)}>
               <span className="flex items-center gap-2">
                 <Eye size={16} />
                 Voir
@@ -252,6 +262,10 @@ export default function DevisPage() {
           }}
         />
       )}
+
+      <Modal open={openApercu} onClose={()=>setOpenApercu(false)} modalDescription="Aperçu du devis">
+        <DevisApercu devisId={targetDevisIdForApercu} onClose={()=>setOpenApercu(false)} />
+      </Modal>
     </div>
   );
 }

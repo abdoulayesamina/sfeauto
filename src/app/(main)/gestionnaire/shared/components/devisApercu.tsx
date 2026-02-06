@@ -17,6 +17,10 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    function imprimerDiv(): void {
+        window.print();
+    }
+
     useEffect(() => {
         async function loadDevis() {
              
@@ -57,7 +61,7 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
     return (
         <div className="max-w-[900px]">
             {devis ? 
-                <div className="bg-white text-sm text-gray-800 p-6 w-full max-w-5xl mx-auto">
+                <div id="imprime" className="print:block bg-white text-sm text-gray-800 p-6 w-full max-w-5xl mx-auto">
                     {/* ===== EN-TÊTE ===== */}
                     <div className="flex flex-col mb-6">
                         {/* Garage */}
@@ -99,11 +103,11 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
 
                         <div className="border flex flex-col p-1">
                             <div className="grid grid-cols-2 gap-2">
-                                <p>Client : 4110047</p>
-                                <p>TVA intra : ...</p>
+                                <p>Client : {devis?.client?.cli_numClient ?? "..."}</p>
+                                <p>TVA intra : {devis?.client?.cli_tvaIntraCommunautaire ?? "..."}</p>
                             </div>
                             <div className="grid grid-cols-2 gap-2">
-                                <p>Règlement : À réception de facture</p>
+                                <p>Règlement : —</p>
                                 <p>Échéance : —</p>
                             </div>
                         </div>
@@ -174,9 +178,9 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
                     <div className="border-x p-1 text-[12px] border-x-[2px] border-gray-400">
                         Le garage vous remercie de votre confiance
                     </div>
-
+                    
                     {/* ===== TOTAUX =====*/}
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-[250px_1fr] gap-2">
                         <div className="flex flex-col">
                             <div className="grid grid-cols-3 text-[12px] bg-[#000033] text-white">
                                 <div className=" text-center">Libellé</div>
@@ -185,13 +189,13 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
                             </div>
                             <table className="border-collapse w-full flex-1">
                                 <tr>
-                                    <td className="border border-black">dd</td>
-                                    <td className="border border-black">dd</td>
-                                    <td className="border border-black">dd</td>
+                                    <td className="border border-black">......</td>
+                                    <td className="border border-black">......</td>
+                                    <td className="border border-black">......</td>
                                 </tr>
                             </table>
                         </div>
-                        <div className="grid grid-cols-[1fr_200px]">
+                        <div className="grid grid-cols-[1fr_130px]">
                             <div>
                                 <div className="grid grid-cols-4 text-[12px] bg-[#000033] text-white">
                                     <div className=" text-center">T</div>
@@ -201,10 +205,10 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
                                 </div>
                                 <table className="border-collapse w-full min-h-[80px]">
                                     <tr>
-                                        <td className="border border-black">dd</td>
-                                        <td className="border border-black">dd</td>
-                                        <td className="border border-black">dd</td>
-                                        <td className="border-y border-black">dd</td>
+                                        <td className="border border-black">......</td>
+                                        <td className="border border-black">{devis.dev_totalht}</td>
+                                        <td className="border border-black">{devis.dev_tva}</td>
+                                        <td className="border-y border-black">{devis.dev_totaltva}</td>
                                     </tr>
                                 </table>
                             </div>
@@ -224,11 +228,14 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
                             </div>
                         </div>
                     </div>
-                    <div className="text-sm">
+                    <div className="text-sm mt-2 text-[11px]">
                         Lorem ipsum dolor, sit amet consectetur adipisicing elit. Dolores doloremque officia autem atque eius. Maxime quidem at quis nemo odit, eligendi doloremque aut, facere repudiandae neque voluptatum laborum sequi fugit.
                     </div>
-                    <div className="mt-6">
-                        <Button onClick={()=>{onClose(); setDevis(null)}} className="w-full p-4 text-lg">Fermer</Button>
+                    <div className="mt-6 border-t pt-4 flex justify-end no-print">
+                        <div className="flex gap-2 w-full max-w-[50%]">
+                            <Button variant={"outline"} onClick={()=>imprimerDiv()} className="w-full p-4 text-lg " >Imprimer</Button>
+                            <Button onClick={()=>{onClose(); setDevis(null)}} className="w-full p-4 text-lg ">Fermer</Button>
+                        </div>
                     </div>
                 </div>
                 : <div className="border shadow p-6 italic text-gray-500 text-sm">Pas de devis</div>

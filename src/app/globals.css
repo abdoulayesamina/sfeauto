@@ -91,3 +91,32 @@
   }
 }
 
+@media print {
+    body * {
+        visibility: hidden;
+    }
+
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+    
+    #imprime,
+    #imprime * {
+        visibility: visible;
+    }
+    
+    #imprime {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+    
+    /* Cache les boutons lors de l'impression */
+    button,
+    .no-print {
+        display: none !important;
+    }
+}
