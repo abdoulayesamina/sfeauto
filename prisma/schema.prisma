@@ -7,12 +7,16 @@ datasource db {
   provider = "mysql"
 }
 
+//////////////////////
+// CATALOGUE
+//////////////////////
+
 model famille_fam {
   fam_id      Int              @id @default(autoincrement())
   fam_name    String
   collections collection_col[] @relation("Famille_Collections")
 
-  @@index([fam_name], map: "te_famille_fam_fam_name_idx")
+  @@index([fam_name])
 }
 
 model collection_col {
@@ -20,10 +24,10 @@ model collection_col {
   col_name      String
   col_familleId Int
   articles      article_art[] @relation("Collection_Articles")
-  col_famille   famille_fam   @relation("Famille_Collections", fields: [col_familleId], references: [fam_id], map: "collection_col_col_familleId_fkey")
+  col_famille   famille_fam   @relation("Famille_Collections", fields: [col_familleId], references: [fam_id])
 
-  @@index([col_familleId], map: "te_collection_col_col_familleId_idx")
-  @@index([col_name], map: "te_collection_col_col_name_idx")
+  @@index([col_name])
+  @@index([col_familleId])
 }
 
 model article_art {
@@ -31,47 +35,53 @@ model article_art {
   art_name         String
   art_price        Int
   art_collectionId Int
-  collection       collection_col    @relation("Collection_Articles", fields: [art_collectionId], references: [col_id], map: "article_art_art_collectionId_fkey")
+  collection       collection_col    @relation("Collection_Articles", fields: [art_collectionId], references: [col_id])
   remises          remise_rem?       @relation("Article_Remise")
   devisLines       te_devisart_dea[]
 
-  @@index([art_collectionId], map: "te_article_art_art_collectionId_idx")
-  @@index([art_name], map: "te_article_art_art_name_idx")
+  @@index([art_name])
+  @@index([art_collectionId])
 }
 
 model remise_rem {
   rem_id          Int         @id @default(autoincrement())
   rem_prixremise  Int?
   rem_pourcentage Int?
-  rem_articleId   Int         @unique(map: "te_remise_rem_rem_articleId_key")
-  article         article_art @relation("Article_Remise", fields: [rem_articleId], references: [art_id], map: "remise_rem_rem_articleId_fkey")
+  rem_articleId   Int         @unique
+  article         article_art @relation("Article_Remise", fields: [rem_articleId], references: [art_id])
 
-  @@index([rem_articleId], map: "te_remise_rem_rem_articleId_idx")
-  @@index([rem_pourcentage], map: "te_remise_rem_rem_pourcentage_idx")
-  @@index([rem_prixremise], map: "te_remise_rem_rem_prixremise_idx")
+  @@index([rem_prixremise])
+  @@index([rem_pourcentage])
+  @@index([rem_articleId])
 }
 
+//////////////////////
+// DEVIS
+//////////////////////
+
 model te_devis_dev {
-  dev_id                 Int               @id @default(autoincrement())
+  dev_id                 Int       @id @default(autoincrement())
   dev_cli_id             String
   dev_veh_id             String
-  dev_invoice_id         String?           @unique
+  dev_invoice_id         String?   @unique
   dev_user               String?
-  dev_adressefacturation String?           @db.Text
-  dev_numdevis           String            @unique
-  dev_datecreation       DateTime          @default(now())
-  dev_totalht            Decimal           @db.Decimal(14, 2)
-  dev_totaltva           Decimal           @db.Decimal(14, 2)
-  dev_totalttc           Decimal           @db.Decimal(14, 2)
-  dev_tva                Decimal?          @db.Decimal(5, 2)
-  dev_supprimee          Boolean           @default(false)
-  dev_accordNumber       String?           @unique
+  dev_adressefacturation String?   @db.Text
+  dev_numdevis           String    @unique
+  dev_datecreation       DateTime  @default(now())
+  dev_totalht            Decimal   @db.Decimal(14, 2)
+  dev_totaltva           Decimal   @db.Decimal(14, 2)
+  dev_totalttc           Decimal   @db.Decimal(14, 2)
+  dev_tva                Decimal?  @db.Decimal(5, 2)
+  dev_supprimee          Boolean   @default(false)
+  dev_accordNumber       String?   @unique
   dev_dateAccord         DateTime?
-  client                 client            @relation(fields: [dev_cli_id], references: [id], onDelete: Cascade)
-  invoice                invoice?          @relation(fields: [dev_invoice_id], references: [id])
-  user                   user?             @relation(fields: [dev_user], references: [id])
-  vehicle                vehicle           @relation(fields: [dev_veh_id], references: [id], onDelete: Cascade)
-  articles               te_devisart_dea[] @relation("Devis_Articles")
+
+  client  client   @relation(fields: [dev_cli_id], references: [id], onDelete: Cascade)
+  vehicle vehicle  @relation(fields: [dev_veh_id], references: [id], onDelete: Cascade)
+  invoice invoice? @relation(fields: [dev_invoice_id], references: [id])
+  user    user?    @relation(fields: [dev_user], references: [id])
+
+  articles te_devisart_dea[] @relation("Devis_Articles")
 
   @@index([dev_cli_id])
   @@index([dev_veh_id])
@@ -82,39 +92,176 @@ model te_devis_dev {
 }
 
 model te_devisart_dea {
-  dea_id                Int          @id @default(autoincrement())
+  dea_id                Int      @id @default(autoincrement())
   dea_dev_id            Int
   dea_art_id            Int?
   dea_art_designation   String
   dea_art_reference     String?
-  dea_prixunitaire      Decimal      @db.Decimal(14, 2)
+  dea_prixunitaire      Decimal  @db.Decimal(14, 2)
   dea_quantite          Int
-  dea_tva               Decimal?     @db.Decimal(5, 2)
+  dea_tva               Decimal? @db.Decimal(5, 2)
   dea_pourcentageremise Int?
-  dea_prixtotalht       Decimal      @db.Decimal(14, 2)
-  article               article_art? @relation(fields: [dea_art_id], references: [art_id])
-  devis                 te_devis_dev @relation("Devis_Articles", fields: [dea_dev_id], references: [dev_id], onDelete: Cascade)
+  dea_prixtotalht       Decimal  @db.Decimal(14, 2)
+
+  devis   te_devis_dev @relation("Devis_Articles", fields: [dea_dev_id], references: [dev_id], onDelete: Cascade)
+  article article_art? @relation(fields: [dea_art_id], references: [art_id])
 
   @@index([dea_dev_id])
   @@index([dea_art_id])
 }
 
-model base {
-  id        String    @id
-  location  String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime
-  clientId  String
-  client    client    @relation(fields: [clientId], references: [id], onDelete: Cascade, map: "Base_clientId_fkey")
-  user      user[]
-  vehicle   vehicle[]
+//////////////////////
+// CORE METIER
+//////////////////////
 
-  @@index([clientId], map: "Base_clientId_idx")
-  @@index([location], map: "Base_location_idx")
+model client {
+  id                        String   @id @default(cuid())
+  name                      String
+  email                     String?
+  phone                     String?
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+  cli_adresseFacturation    String?
+  cli_numClient             String?
+  cli_tvaIntraCommunautaire String?
+
+  bases    base[]
+  vehicles vehicle[]
+  users    user[]
+  devis    te_devis_dev[]
+
+  @@index([name])
+}
+
+model base {
+  id        String   @id @default(cuid())
+  location  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  clientId  String
+
+  client   client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  vehicles vehicle[]
+  users    user[]
+
+  @@index([clientId])
+  @@index([location])
+}
+
+model vehicle {
+  id                    String               @id @default(cuid())
+  licensePlate          String               @unique
+  brand                 String?
+  model                 String?
+  year                  Int?
+  color                 String?              @default("GRIS")
+  firstRegistrationDate DateTime?
+  energy                vehicle_energy?
+  doorsCount            Int?
+  bodyType              vehicle_bodyType?
+  realPowerHp           Int?
+  fiscalPowerCv         Int?
+  gearboxType           vehicle_gearboxType?
+  version               String?
+  registrationCardDate  DateTime?
+
+  entryDate DateTime  @default(now())
+  exitDate  DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  clientId    String
+  baseId      String
+  handledById String?
+
+  client    client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  base      base   @relation(fields: [baseId], references: [id], onDelete: Cascade)
+  handledBy user?  @relation("VehicleHandler", fields: [handledById], references: [id])
+
+  invoices invoice[]      @relation("VehicleInvoices")
+  devis    te_devis_dev[]
+
+  @@index([licensePlate])
+  @@index([clientId])
+  @@index([baseId])
+  @@index([handledById])
+}
+
+//////////////////////
+// FACTURES
+//////////////////////
+
+model invoice {
+  id                 String         @id @default(cuid())
+  accordNumber       String?        @unique
+  dateOfConfirmation DateTime?
+  invoiceConfirmed   Boolean        @default(false)
+  status             invoice_status @default(CONFIRMED_IN_PLANNING)
+  statusUpdatedAt    DateTime       @default(now())
+  workDescription    String?
+  didOrderParts      Boolean        @default(false)
+  ordersDetails      String?
+  comments           String?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  vehicleId   String
+  handledById String?
+
+  vehicle   vehicle @relation("VehicleInvoices", fields: [vehicleId], references: [id], onDelete: Cascade)
+  handledBy user?   @relation("InvoiceHandler", fields: [handledById], references: [id])
+
+  photos  invoicephoto[]
+  history statushistory[]
+  changes changehistory[]
+  devis   te_devis_dev?
+
+  @@index([accordNumber])
+  @@index([vehicleId])
+  @@index([handledById])
+  @@index([invoiceConfirmed])
+  @@index([status])
+}
+
+model invoicephoto {
+  id           String   @id @default(cuid())
+  invoiceId    String
+  blobName     String   @unique
+  url          String
+  contentType  String?
+  size         Int?
+  createdAt    DateTime @default(now())
+  uploadedById String?
+
+  invoice    invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  uploadedBy user?   @relation(fields: [uploadedById], references: [id])
+
+  @@index([invoiceId])
+  @@index([createdAt])
+}
+
+//////////////////////
+// HISTORIQUE
+//////////////////////
+
+model statushistory {
+  id             String                       @id @default(cuid())
+  previousStatus statushistory_previousStatus
+  newStatus      statushistory_newStatus
+  changedAt      DateTime                     @default(now())
+  invoiceId      String
+  changedById    String
+
+  invoice invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  user    user    @relation(fields: [changedById], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@index([changedById])
+  @@index([changedAt])
 }
 
 model changehistory {
-  id         String   @id
+  id         String   @id @default(cuid())
   invoiceId  String
   changedBy  String
   changedAt  DateTime @default(now())
@@ -122,168 +269,48 @@ model changehistory {
   oldValue   String?
   newValue   String?
   changeType String
-  user       user     @relation(fields: [changedBy], references: [id], map: "ChangeHistory_changedBy_fkey")
-  invoice    invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade, map: "ChangeHistory_invoiceId_fkey")
 
-  @@index([changedAt], map: "ChangeHistory_changedAt_idx")
-  @@index([changedBy], map: "ChangeHistory_changedBy_fkey")
-  @@index([invoiceId], map: "ChangeHistory_invoiceId_idx")
+  invoice invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  user    user    @relation(fields: [changedBy], references: [id])
+
+  @@index([invoiceId])
+  @@index([changedAt])
 }
 
-model client {
-  id                        String         @id
-  name                      String
-  email                     String?
-  phone                     String?
-  createdAt                 DateTime       @default(now())
-  updatedAt                 DateTime
-  cli_adresseFacturation    String?
-  cli_numClient             String?
-  cli_tvaIntraCommunautaire String?
-  base                      base[]
-  devis                     te_devis_dev[]
-  user                      user[]
-  vehicle                   vehicle[]
-
-  @@index([name], map: "Client_name_idx")
-}
-
-model invoice {
-  id                 String          @id
-  accordNumber       String?         @unique(map: "Invoice_accordNumber_key")
-  dateOfConfirmation DateTime?
-  invoiceConfirmed   Boolean         @default(false)
-  status             invoice_status  @default(CONFIRMED_IN_PLANNING)
-  statusUpdatedAt    DateTime        @default(now())
-  workDescription    String?
-  didOrderParts      Boolean         @default(false)
-  ordersDetails      String?
-  comments           String?
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime
-  vehicleId          String
-  handledById        String?
-  changehistory      changehistory[]
-  user               user?           @relation(fields: [handledById], references: [id], map: "Invoice_handledById_fkey")
-  vehicle            vehicle         @relation(fields: [vehicleId], references: [id], onDelete: Cascade, map: "Invoice_vehicleId_fkey")
-  invoicephoto       invoicephoto[]
-  statushistory      statushistory[]
-  devis              te_devis_dev?
-
-  @@index([accordNumber], map: "Invoice_accordNumber_idx")
-  @@index([handledById], map: "Invoice_handledById_idx")
-  @@index([invoiceConfirmed], map: "Invoice_invoiceConfirmed_idx")
-  @@index([invoiceConfirmed, status, createdAt], map: "Invoice_invoiceConfirmed_status_createdAt_idx")
-  @@index([status], map: "Invoice_status_idx")
-  @@index([vehicleId], map: "Invoice_vehicleId_idx")
-}
-
-model invoicephoto {
-  id           String   @id
-  invoiceId    String
-  blobName     String   @unique(map: "InvoicePhoto_blobName_key")
-  url          String
-  contentType  String?
-  size         Int?
-  createdAt    DateTime @default(now())
-  uploadedById String?
-  invoice      invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade, map: "InvoicePhoto_invoiceId_fkey")
-  user         user?    @relation(fields: [uploadedById], references: [id], map: "InvoicePhoto_uploadedById_fkey")
-
-  @@index([createdAt], map: "InvoicePhoto_createdAt_idx")
-  @@index([invoiceId], map: "InvoicePhoto_invoiceId_idx")
-  @@index([uploadedById], map: "InvoicePhoto_uploadedById_fkey")
-}
-
-model statushistory {
-  id             String                       @id
-  previousStatus statushistory_previousStatus
-  newStatus      statushistory_newStatus
-  changedAt      DateTime                     @default(now())
-  invoiceId      String
-  changedById    String
-  user           user                         @relation(fields: [changedById], references: [id], onDelete: Cascade, map: "StatusHistory_changedById_fkey")
-  invoice        invoice                      @relation(fields: [invoiceId], references: [id], onDelete: Cascade, map: "StatusHistory_invoiceId_fkey")
-
-  @@index([changedAt], map: "StatusHistory_changedAt_idx")
-  @@index([changedById], map: "StatusHistory_changedById_idx")
-  @@index([invoiceId], map: "StatusHistory_invoiceId_idx")
-}
+//////////////////////
+// USERS
+//////////////////////
 
 model user {
-  id              String          @id
-  email           String          @unique(map: "User_email_key")
+  id              String    @id @default(cuid())
+  email           String    @unique
   name            String
   role            user_role
   password        String
-  isSystemAccount Boolean         @default(false)
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime
-  clientId        String?
-  baseId          String?
-  changehistory   changehistory[]
-  invoice         invoice[]
-  invoicephoto    invoicephoto[]
-  statushistory   statushistory[]
+  isSystemAccount Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  clientId String?
+  baseId   String?
+
+  client client? @relation(fields: [clientId], references: [id])
+  base   base?   @relation(fields: [baseId], references: [id])
+
+  invoicesHandled invoice[]       @relation("InvoiceHandler")
+  vehiclesHandled vehicle[]       @relation("VehicleHandler")
+  uploadedPhotos  invoicephoto[]
+  statusChanges   statushistory[]
+  changeHistory   changehistory[]
   devisCreated    te_devis_dev[]
-  base            base?           @relation(fields: [baseId], references: [id], map: "User_baseId_fkey")
-  client          client?         @relation(fields: [clientId], references: [id], onDelete: Cascade, map: "User_clientId_fkey")
-  vehicle         vehicle[]
 
-  @@index([baseId], map: "User_baseId_fkey")
-  @@index([clientId], map: "User_clientId_fkey")
-  @@index([email], map: "User_email_idx")
-  @@index([role], map: "User_role_idx")
+  @@index([email])
+  @@index([role])
 }
 
-model vehicle {
-  id                    String               @id
-  licensePlate          String               @unique(map: "Vehicle_licensePlate_key")
-  model                 String?
-  brand                 String?
-  year                  Int?
-  color                 String?              @default("GRIS")
-  entryDate             DateTime             @default(now())
-  exitDate              DateTime?
-  createdAt             DateTime             @default(now())
-  updatedAt             DateTime
-  clientId              String
-  baseId                String
-  handledById           String?
-  bodyType              vehicle_bodyType?
-  doorsCount            Int?
-  energy                vehicle_energy?
-  firstRegistrationDate DateTime?
-  fiscalPowerCv         Int?
-  gearboxType           vehicle_gearboxType?
-  realPowerHp           Int?
-  registrationCardDate  DateTime?
-  version               String?
-  invoice               invoice[]
-  devis                 te_devis_dev[]
-  base                  base                 @relation(fields: [baseId], references: [id], onDelete: Cascade, map: "Vehicle_baseId_fkey")
-  client                client               @relation(fields: [clientId], references: [id], onDelete: Cascade, map: "Vehicle_clientId_fkey")
-  user                  user?                @relation(fields: [handledById], references: [id], map: "Vehicle_handledById_fkey")
-
-  @@index([baseId], map: "Vehicle_baseId_idx")
-  @@index([clientId], map: "Vehicle_clientId_idx")
-  @@index([handledById], map: "Vehicle_handledById_idx")
-  @@index([licensePlate], map: "Vehicle_licensePlate_idx")
-}
-
-enum statushistory_previousStatus {
-  CONFIRMED_IN_PLANNING
-  WAITING_FOR_PARTS
-  FIXING_STARTED
-  FIXING_FINISHED
-}
-
-enum statushistory_newStatus {
-  CONFIRMED_IN_PLANNING
-  WAITING_FOR_PARTS
-  FIXING_STARTED
-  FIXING_FINISHED
-}
+//////////////////////
+// ENUMS
+//////////////////////
 
 enum user_role {
   ADMIN
@@ -324,4 +351,18 @@ enum vehicle_energy {
 enum vehicle_gearboxType {
   BVM
   BVA
+}
+
+enum statushistory_previousStatus {
+  CONFIRMED_IN_PLANNING
+  WAITING_FOR_PARTS
+  FIXING_STARTED
+  FIXING_FINISHED
+}
+
+enum statushistory_newStatus {
+  CONFIRMED_IN_PLANNING
+  WAITING_FOR_PARTS
+  FIXING_STARTED
+  FIXING_FINISHED
 }
