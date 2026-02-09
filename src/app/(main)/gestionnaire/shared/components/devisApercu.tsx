@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useDevisApi } from "../hooks/useDevisApi.api";
+import { useDevisApi } from "../../../devis/shared/hooks/useDevisApi.api";
 import { Button } from "@/src/shared/components/ui/button";
 import { Devis } from "@/src/utils/types/devis";
 import { Article } from "@/src/utils/types/article";

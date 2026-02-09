@@ -9,11 +9,11 @@ import { Badge } from "@/src/shared/components/ui/badge";
 import { Pencil, Eye, CheckCircle, Lock } from "lucide-react";
 import { errorAlert } from "@/src/lib/alerts";
 
-import { useDevisApi } from "../shared/hooks/useDevisApi.api";
-import { EditDevisModal } from "../shared/components/EditDevisModal";
-import { ValidateDevisModal } from "../shared/components/ValidateDevisModal";
+import { useDevisApi } from "./shared/hooks/useDevisApi.api";
+import { EditDevisModal } from "../gestionnaire/shared/components/EditDevisModal";
+import { ValidateDevisModal } from "../gestionnaire/shared/components/ValidateDevisModal";
 import { Modal } from "@/src/shared/components/modal";
-import { DevisApercu } from "../shared/components/devisApercu";
+import { DevisApercu } from "../gestionnaire/shared/components/devisApercu";
 
 function formatDate(d?: string | Date | null) {
   if (!d) return "—";
