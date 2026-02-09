@@ -22,26 +22,44 @@ function normalizeOptionalString(value: unknown): string | null {
   return s.length ? s : null;
 }
 
-// GET /api/vehicles - List all vehicles or search by license plate
+// ============================
+// GET /api/vehicles
+// ============================
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
 
-    if (!session || session.user.role !== "MANAGER") {
+    // ✅ Autorisé: MANAGER et AGENCE
+    if (!session?.user || !["MANAGER", "AGENCE"].includes(session.user.role)) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    }
+
+    // ✅ Pour AGENCE, baseId obligatoire
+    if (session.user.role === "AGENCE" && !session.user.baseId) {
+      return NextResponse.json(
+        { error: "Compte agence sans base associée" },
+        { status: 400 }
+      );
     }
 
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search");
 
+    // 🔒 Filtre base pour AGENCE
+    const baseFilter =
+      session.user.role === "AGENCE"
+        ? { baseId: session.user.baseId }
+        : {};
+
     const vehicles = await prisma.vehicle.findMany({
-      where: search
-        ? {
-          licensePlate: {
-            contains: search,
-          },
-        }
-        : undefined,
+      where: {
+        ...baseFilter,
+        ...(search
+          ? {
+              licensePlate: { contains: search },
+            }
+          : {}),
+      },
       select: {
         id: true,
         licensePlate: true,
@@ -67,6 +85,7 @@ export async function GET(request: NextRequest) {
 
         client: { select: { id: true, name: true } },
         base: { select: { id: true, location: true, clientId: true } },
+
         invoices: {
           select: {
             id: true,
@@ -81,13 +100,7 @@ export async function GET(request: NextRequest) {
             comments: true,
             createdAt: true,
             updatedAt: true,
-            photos: {
-              select: {
-                id: true,
-                url: true,
-              },
-            },
-
+            photos: { select: { id: true, url: true } },
             handledBy: { select: { name: true, email: true } },
             devis: {
               where: { dev_supprimee: false },
@@ -101,7 +114,8 @@ export async function GET(request: NextRequest) {
       take: search ? 10 : 100,
     });
 
-    return NextResponse.json(vehicles);
+    // ⚠️ Ton front attend souvent { vehicles }
+    return NextResponse.json({ vehicles });
   } catch (error) {
     logError("Failed to fetch vehicles", error);
     return NextResponse.json(
@@ -111,13 +125,24 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/vehicles - Create a new vehicle
+// ============================
+// POST /api/vehicles
+// ============================
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
 
-    if (!session || session.user.role !== "MANAGER") {
+    // ✅ Autorisé: MANAGER et AGENCE
+    if (!session?.user || !["MANAGER", "AGENCE"].includes(session.user.role)) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    }
+
+    // ✅ Pour AGENCE, baseId obligatoire
+    if (session.user.role === "AGENCE" && !session.user.baseId) {
+      return NextResponse.json(
+        { error: "Compte agence sans base associée" },
+        { status: 400 }
+      );
     }
 
     const body = await request.json();
@@ -144,16 +169,41 @@ export async function POST(request: NextRequest) {
       registrationCardDate,
     } = body;
 
-    if (!String(licensePlate ?? "").trim() || !String(clientId ?? "").trim() || !String(baseId ?? "").trim()) {
-      return NextResponse.json(
-        { error: "Immatriculation, client et agence requis" },
-        { status: 400 }
-      );
+    if (!String(licensePlate ?? "").trim()) {
+      return NextResponse.json({ error: "Immatriculation requise" }, { status: 400 });
+    }
+
+    // 🔒 Si AGENCE: on FORCE clientId/baseId depuis la session
+    let finalBaseId: string | null = baseId ? String(baseId) : null;
+    let finalClientId: string | null = clientId ? String(clientId) : null;
+
+    if (session.user.role === "AGENCE") {
+      finalBaseId = session.user.baseId!;
+      const base = await prisma.base.findUnique({
+        where: { id: finalBaseId },
+        select: { clientId: true },
+      });
+
+      if (!base) {
+        return NextResponse.json({ error: "Base agence introuvable" }, { status: 400 });
+      }
+
+      finalClientId = base.clientId; // ✅ cohérent
+    }
+
+    // Pour MANAGER: clientId/baseId obligatoires
+    if (session.user.role === "MANAGER") {
+      if (!String(finalClientId ?? "").trim() || !String(finalBaseId ?? "").trim()) {
+        return NextResponse.json(
+          { error: "Immatriculation, client et agence requis" },
+          { status: 400 }
+        );
+      }
     }
 
     if (year !== undefined && year !== null && year !== "") {
-      const parsedYear = parseOptionalInt(year);
-      if (!parsedYear || parsedYear < 1900 || parsedYear > 2100) {
+      const parsedYearCheck = parseOptionalInt(year);
+      if (!parsedYearCheck || parsedYearCheck < 1900 || parsedYearCheck > 2100) {
         return NextResponse.json(
           { error: "L'année doit être un nombre valide entre 1900 et 2100" },
           { status: 400 }
@@ -161,19 +211,23 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const base = await prisma.base.findUnique({
-      where: { id: String(baseId) },
-      select: { id: true, clientId: true },
-    });
+    // Vérifier la base si fournie
+    if (finalBaseId) {
+      const base = await prisma.base.findUnique({
+        where: { id: String(finalBaseId) },
+        select: { id: true, clientId: true },
+      });
 
-    if (!base) {
-      return NextResponse.json({ error: "Agence invalide" }, { status: 400 });
-    }
-    if (base.clientId !== String(clientId)) {
-      return NextResponse.json(
-        { error: "Cette agence n'appartient pas au client sélectionné" },
-        { status: 400 }
-      );
+      if (!base) {
+        return NextResponse.json({ error: "Agence invalide" }, { status: 400 });
+      }
+
+      if (finalClientId && base.clientId !== String(finalClientId)) {
+        return NextResponse.json(
+          { error: "Cette agence n'appartient pas au client sélectionné" },
+          { status: 400 }
+        );
+      }
     }
 
     const parsedYear = parseOptionalInt(year);
@@ -216,8 +270,9 @@ export async function POST(request: NextRequest) {
         version: normalizeOptionalString(version),
         registrationCardDate: parsedRegistrationCard,
 
-        clientId: String(clientId),
-        baseId: String(baseId),
+        // ✅ si MANAGER: vient du body, si AGENCE: forcé par session
+        clientId: finalClientId!,
+        baseId: finalBaseId!,
 
         entryDate: entryDate ? new Date(entryDate) : new Date(),
         exitDate: exitDate ? new Date(exitDate) : null,

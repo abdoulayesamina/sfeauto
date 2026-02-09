@@ -22,6 +22,7 @@ export default function GestionnairePage() {
   const { getVehicles, searchVehicles, createVehicle } = useManageApi()
   const { getClients } = useClientApi()
   const { getAgences } = useAgenceApi()
+  const { createIntervention } = useInterventionApi()
 
   const [vehicles, setVehicles] = useState<Vehicule[]>([])
   const [clients, setClients] = useState<any[]>([])
@@ -39,25 +40,38 @@ export default function GestionnairePage() {
   const [clientId, setClientId] = useState<string>()
   const [agenceId, setAgenceId] = useState<string>()
   const [statut, setStatut] = useState<string>()
-  const [interventionModalOpen, setInterventionModalOpen] = useState(false);
-  const { createIntervention } = useInterventionApi()
+
+  const [interventionModalOpen, setInterventionModalOpen] = useState(false)
+
+  // Helpers: sécuriser les retours API
+  const normalizeVehicles = (v: any): Vehicule[] => {
+    if (Array.isArray(v)) return v
+    if (Array.isArray(v?.vehicles)) return v.vehicles
+    return []
+  }
+
+  const normalizeArray = <T,>(x: any): T[] => {
+    return Array.isArray(x) ? x : []
+  }
 
   // Chargement initial
   useEffect(() => {
     loadAll()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const loadAll = async () => {
     try {
       setLoading(true)
       const [v, c, a] = await Promise.all([
-        getVehicles({ includeInvoices: true }), // récupérer les invoices réelles
+        getVehicles({ includeInvoices: true }),
         getClients(),
         getAgences(),
       ])
-      setVehicles(v)
-      setClients(c || [])
-      setAgences(a || [])
+
+      setVehicles(normalizeVehicles(v))
+      setClients(normalizeArray(c))
+      setAgences(normalizeArray(a))
     } catch (e: any) {
       errorAlert("Erreur", e.message)
     } finally {
@@ -68,16 +82,18 @@ export default function GestionnairePage() {
   // Recherche
   const handleSearch = async () => {
     if (!search.trim()) {
-      loadAll()
+      await loadAll()
       setVehiculeNotFound(false)
       return
     }
 
     try {
       const data = await searchVehicles(search)
-      setVehicles(data)
-      setVehiculeNotFound(data.length === 0)
-      if (data.length === 0) setPreFillLicensePlate(search)
+      const vv = normalizeVehicles(data)
+
+      setVehicles(vv)
+      setVehiculeNotFound(vv.length === 0)
+      if (vv.length === 0) setPreFillLicensePlate(search)
     } catch (e: any) {
       errorAlert("Recherche", e.message)
     }
@@ -90,7 +106,7 @@ export default function GestionnairePage() {
       successAlert("Véhicule créé")
       setOpenCreateVehiculeModal(false)
       setVehiculeNotFound(false)
-      loadAll()
+      await loadAll()
     } catch (e: any) {
       errorAlert("Erreur", e.message)
     }
@@ -98,7 +114,9 @@ export default function GestionnairePage() {
 
   // Filtrage véhicules selon client, agence, statut
   const filteredVehicles = useMemo(() => {
-    return vehicles.filter(v => {
+    const list = Array.isArray(vehicles) ? vehicles : []
+
+    return list.filter((v) => {
       if (clientId && v.client?.id !== clientId) return false
       if (agenceId && v.base?.id !== agenceId) return false
 
@@ -106,7 +124,6 @@ export default function GestionnairePage() {
         if (statut === "SANS_INTERVENTION") {
           if (v.invoices && v.invoices.length > 0) return false
         } else {
-          // vérifier le dernier invoice pour le statut
           const lastInvoice = v.invoices?.[v.invoices.length - 1]
           if (!lastInvoice) return false
           if (lastInvoice.status !== statut) return false
@@ -118,31 +135,33 @@ export default function GestionnairePage() {
   }, [vehicles, clientId, agenceId, statut])
 
   const filteredAgences = useMemo(() => {
-    if (clientId) return agences.filter(a => a.clientId === clientId)
-    return agences
+    const list = Array.isArray(agences) ? agences : []
+    if (clientId) return list.filter((a) => a.clientId === clientId)
+    return list
   }, [agences, clientId])
-  
-const handleSubmitIntervention = async (data: any) => {
-  await createIntervention({
-    vehicleId: selectedVehicle?.id ?? "",
-    accordNumber: data.numeroAccord,
-    dateOfConfirmation: data.dateConfirmation,
-    workDescription: data.descriptionTravaux,
-    didOrderParts: data.piecesCommande === "oui",
-    ordersDetails: data.detailsCommande || null,
-    comments: data.commentaires || null,
-    images: data.images || [],
-  })
 
-  await loadAll();
-  setInterventionModalOpen(false)
-}
+  const handleSubmitIntervention = async (data: any) => {
+    try {
+      await createIntervention({
+        vehicleId: selectedVehicle?.id ?? "",
+        accordNumber: data.numeroAccord,
+        dateOfConfirmation: data.dateConfirmation,
+        workDescription: data.descriptionTravaux,
+        didOrderParts: data.piecesCommande === "oui",
+        ordersDetails: data.detailsCommande || null,
+        comments: data.commentaires || null,
+        images: data.images || [],
+      })
 
+      await loadAll()
+      setInterventionModalOpen(false)
+      successAlert("Intervention créée")
+    } catch (e: any) {
+      errorAlert("Intervention", e.message)
+    }
+  }
 
-
-
-
-  const handleNewInterventionFromVehiculePreview = ()=>{    
+  const handleNewInterventionFromVehiculePreview = () => {
     setInterventionModalOpen(true)
   }
 
@@ -152,11 +171,7 @@ const handleSubmitIntervention = async (data: any) => {
         <h1 className="font-bold text-2xl">Page Gestionnaire</h1>
 
         {/* Barre de recherche */}
-        <VehicleSearchBar
-          value={search}
-          onChange={setSearch}
-          onSearch={handleSearch}
-        />
+        <VehicleSearchBar value={search} onChange={setSearch} onSearch={handleSearch} />
 
         {!vehiculeNotFound ? (
           <>
@@ -196,9 +211,11 @@ const handleSubmitIntervention = async (data: any) => {
             {/* STATS */}
             <VehicleStats
               total={filteredVehicles.length}
-              enCours={filteredVehicles.filter(v => v.invoices?.some(i => i.status !== "FIXING_FINISHED")).length}
-              termine={filteredVehicles.filter(v => v.invoices?.some(i => i.status === "FIXING_FINISHED")).length}
-              sansIntervention={filteredVehicles.filter(v => !v.invoices || v.invoices.length === 0).length}
+              enCours={
+                filteredVehicles.filter((v) => v.invoices?.some((i) => i.status !== "FIXING_FINISHED")).length
+              }
+              termine={filteredVehicles.filter((v) => v.invoices?.some((i) => i.status === "FIXING_FINISHED")).length}
+              sansIntervention={filteredVehicles.filter((v) => !v.invoices || v.invoices.length === 0).length}
             />
 
             {/* LISTE VEHICULES */}
@@ -239,11 +256,7 @@ const handleSubmitIntervention = async (data: any) => {
       </Modal>
 
       {/* MODAL APERCU VEHICULE */}
-      <Modal
-        open={apercuVehiculeOpen}
-        onClose={() => setApercuVehiculeOpen(false)}
-        modalTitle="Aperçu véhicule"
-      >
+      <Modal open={apercuVehiculeOpen} onClose={() => setApercuVehiculeOpen(false)} modalTitle="Aperçu véhicule">
         {selectedVehicle && (
           <VehiclePreview
             licensePlate={selectedVehicle.licensePlate}
@@ -254,7 +267,7 @@ const handleSubmitIntervention = async (data: any) => {
             agence={selectedVehicle.base?.location ?? ""}
             entreeDate={selectedVehicle.entryDate ?? ""}
             color={selectedVehicle.color ?? ""}
-            invoices={selectedVehicle.invoices ?? []} 
+            invoices={selectedVehicle.invoices ?? []}
             enReparation={1}
             termine={0}
             onNewIntervention={handleNewInterventionFromVehiculePreview}
@@ -262,9 +275,14 @@ const handleSubmitIntervention = async (data: any) => {
         )}
       </Modal>
 
-      <Modal open={interventionModalOpen} onClose={() => setInterventionModalOpen(false)} modalTitle="Créer une intervention">
+      {/* MODAL CREATION INTERVENTION */}
+      <Modal
+        open={interventionModalOpen}
+        onClose={() => setInterventionModalOpen(false)}
+        modalTitle="Créer une intervention"
+      >
         <InterventionForm
-          vehicleId={selectedVehicle?.id ?? ""}   
+          vehicleId={selectedVehicle?.id ?? ""}
           vehicleDisplayText={`${selectedVehicle?.licensePlate} - ${selectedVehicle?.brand} ${selectedVehicle?.model}`}
           defaultAccordNumber="ACC-2026-001"
           onSubmit={handleSubmitIntervention}
@@ -272,7 +290,6 @@ const handleSubmitIntervention = async (data: any) => {
           loading={loading}
         />
       </Modal>
-
     </div>
   )
 }

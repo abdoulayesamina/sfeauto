@@ -262,35 +262,31 @@ model te_remise_rem {
 model te_devis_dev {
   dev_id                 Int       @id @default(autoincrement())
 
-  // --- Liens métier ---
   dev_cli_id              String
   dev_veh_id              String
   dev_invoice_id          String?
   
   @@unique([dev_invoice_id])
    
-  dev_user                String?   // User qui a créé le devis
+  dev_user                String?   
 
   client                  Client    @relation(fields: [dev_cli_id], references: [id], onDelete: Cascade)
   vehicle                 Vehicle   @relation(fields: [dev_veh_id], references: [id], onDelete: Cascade)
   invoice                 Invoice?  @relation(fields: [dev_invoice_id], references: [id], onDelete: SetNull)
   user                    User?     @relation(fields: [dev_user], references: [id], onDelete: SetNull)
 
-  // --- Données devis (snapshot / compta) ---
   dev_adressefacturation  String?   @db.Text
   dev_numdevis            String    @unique
 
   dev_datecreation        DateTime  @default(now())
-  // si tu veux séparer heure: tu peux la dériver de dev_datecreation côté UI
 
   dev_totalht             Decimal   @db.Decimal(14,2)
   dev_totaltva            Decimal   @db.Decimal(14,2)
   dev_totalttc            Decimal   @db.Decimal(14,2)
 
-  dev_tva                 Decimal?  @db.Decimal(5,2) // TVA par défaut du devis (si tu en as une)
+  dev_tva                 Decimal?  @db.Decimal(5,2) 
   dev_supprimee           Boolean   @default(false)
 
-  // --- Validation: devis validé quand accordNumber est affecté ---
   dev_accordNumber        String?   @unique
   dev_dateAccord          DateTime?
 
@@ -320,10 +316,10 @@ model te_devisart_dea {
   dea_art_reference       String?
   dea_prixunitaire        Decimal  @db.Decimal(14,2)
   dea_quantite            Int
-  dea_tva                 Decimal? @db.Decimal(5,2)   // TVA ligne (peut override dev_tva)
-  dea_pourcentageremise   Int?     // remise appliquée sur la ligne (snapshot)
+  dea_tva                 Decimal? @db.Decimal(5,2)   
+  dea_pourcentageremise   Int?    
 
-  dea_prixtotalht         Decimal  @db.Decimal(14,2)  // total HT ligne (après remise)
+  dea_prixtotalht         Decimal  @db.Decimal(14,2) 
 
   @@index([dea_dev_id])
   @@index([dea_art_id])
@@ -336,6 +332,7 @@ enum Role {
   MECHANIC
   CLIENT
   SIEGE
+  AGENCE
 }
 
 enum WorkStatus {

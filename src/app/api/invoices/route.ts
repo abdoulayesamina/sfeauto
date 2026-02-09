@@ -199,13 +199,11 @@ export async function POST(request: NextRequest) {
         return { invoice, photos: createdPhotos }
       })
 
-      // ✅ Response: invoice + photos[]
       return NextResponse.json(
         { ...result.invoice, photos: result.photos },
         { status: 201 }
       )
     } catch (err: any) {
-      // Compensation: supprimer les blobs déjà uploadés si rollback / erreur
       try {
         await Promise.all(
           uploadedBlobNames.map(async (blobName) => {

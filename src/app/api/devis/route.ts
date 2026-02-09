@@ -67,7 +67,7 @@ export async function POST(req: Request) {
     }
     if (devTvaDefault != null && (isNaN(devTvaDefault) || devTvaDefault < 0)) {
       return NextResponse.json({ error: "dev_tva invalide" }, { status: 400 });
-    }
+      }
 
     const invoice = await prisma.invoice.findUnique({
       where: { id: invoiceId },

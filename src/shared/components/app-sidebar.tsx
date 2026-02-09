@@ -118,11 +118,20 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       roles:["MECHANIC"],
 
     },
+
     {
       title: "Client",
       url: "/client",
       icon: User,
       roles:["CLIENT"],
+    },
+
+    {
+      title: "Agence",
+      url: "/agenceClient",
+      icon: Wrench,
+      roles:["AGENCE"],
+
     },
   ]
 

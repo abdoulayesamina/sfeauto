@@ -10,7 +10,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/src/shared/components/ui/select"
-import { useEffect, useState } from "react"
 import { User } from "@/src/utils/types/user"
 
 type UserFormProps = {
@@ -37,8 +36,11 @@ export function UserForm({
     { id: "MANAGER", name: "Gestionnaire" },
     { id: "MECHANIC", name: "Mécanicien" },
     { id: "CLIENT", name: "Client" },
-    { id: "SIEGE", name: "Siege" },
-  ]
+    { id: "SIEGE", name: "Siège" },
+    { id: "AGENCE", name: "Agence" },
+  ] as const
+
+  const needsClientAndBase = value.role === "CLIENT" || value.role === "AGENCE"
 
   const filteredAgences = value.clientId
     ? agences.filter((a) => a.clientId === value.clientId)
@@ -89,7 +91,18 @@ export function UserForm({
         <Label>Rôle</Label>
         <Select
           value={value.role || ""}
-          onValueChange={(role) => onChange({ ...value, role })}
+          onValueChange={(role) => {
+            // Quand on change de rôle, on reset les champs qui ne s'appliquent plus
+            const next: Partial<User> = { ...value, role }
+
+            const willNeed = role === "CLIENT" || role === "AGENCE"
+            if (!willNeed) {
+              next.clientId = null
+              next.baseId = null
+            }
+
+            onChange(next)
+          }}
         >
           <SelectTrigger className="h-12">
             <SelectValue placeholder="Sélectionnez un rôle" />
@@ -104,13 +117,20 @@ export function UserForm({
         </Select>
       </div>
 
-      {value.role === "CLIENT" && (
+      {/* CLIENT + AGENCE: choisir client + base */}
+      {needsClientAndBase && (
         <>
           <div>
             <Label>Client</Label>
             <Select
               value={value.clientId || ""}
-              onValueChange={(clientId) => onChange({ ...value, clientId, baseId: "" })}
+              onValueChange={(clientId) =>
+                onChange({
+                  ...value,
+                  clientId,
+                  baseId: null, // reset base quand client change
+                })
+              }
             >
               <SelectTrigger className="h-12">
                 <SelectValue placeholder="Sélectionnez un client" />
@@ -133,7 +153,13 @@ export function UserForm({
               disabled={!value.clientId}
             >
               <SelectTrigger className="h-12">
-                <SelectValue placeholder="Sélectionnez une agence" />
+                <SelectValue
+                  placeholder={
+                    value.clientId
+                      ? "Sélectionnez une agence"
+                      : "Choisissez d'abord un client"
+                  }
+                />
               </SelectTrigger>
               <SelectContent className="z-[2000]">
                 {filteredAgences.map((a) => (
@@ -143,6 +169,13 @@ export function UserForm({
                 ))}
               </SelectContent>
             </Select>
+
+            {/* Message d'aide spécifique */}
+            {value.role === "AGENCE" && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Pour un compte <b>Agence</b>, l’agence (base) doit être sélectionnée.
+              </p>
+            )}
           </div>
         </>
       )}
@@ -151,7 +184,15 @@ export function UserForm({
         <Button type="button" variant="outline" onClick={onClose}>
           Annuler
         </Button>
-        <Button type="submit">{mode === "create" ? "Créer" : "Modifier"}</Button>
+        <Button
+          type="submit"
+          disabled={
+            // Petit guard UI: si AGENCE => base obligatoire
+            value.role === "AGENCE" && (!value.clientId || !value.baseId)
+          }
+        >
+          {mode === "create" ? "Créer" : "Modifier"}
+        </Button>
       </div>
     </form>
   )
