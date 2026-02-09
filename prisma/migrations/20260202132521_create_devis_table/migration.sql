@@ -61,4 +61,4 @@ ALTER TABLE `te_devis_dev` ADD CONSTRAINT `te_devis_dev_dev_user_fkey` FOREIGN K
 ALTER TABLE `te_devisart_dea` ADD CONSTRAINT `te_devisart_dea_dea_dev_id_fkey` FOREIGN KEY (`dea_dev_id`) REFERENCES `te_devis_dev`(`dev_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `te_devisart_dea` ADD CONSTRAINT `te_devisart_dea_dea_art_id_fkey` FOREIGN KEY (`dea_art_id`) REFERENCES `te_article_art`(`art_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `te_devisart_dea` ADD CONSTRAINT `te_devisart_dea_dea_art_id_fkey` FOREIGN KEY (`dea_art_id`) REFERENCES `article_art`(`art_id`) ON DELETE SET NULL ON UPDATE CASCADE;

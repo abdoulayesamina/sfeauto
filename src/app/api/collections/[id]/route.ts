@@ -13,7 +13,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
         const { col_name, col_familleId } : Collection = await req.json();
         const id = await params.then(p => Number(p.id));
-        const collection = await prisma.te_collection_col.update({
+        const collection = await prisma.collection_col.update({
             where: { col_id: id },
             data: { col_name: col_name, col_familleId: col_familleId }
         });
@@ -37,7 +37,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
         }
 
         const id = await params.then(p => Number(p.id));
-        await prisma.te_collection_col.delete({
+        await prisma.collection_col.delete({
             where: { col_id: id },
         });
 

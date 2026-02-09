@@ -17,7 +17,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ articleI
     }
 
     // ✅ chercher la remise via rem_articleId (unique)
-    const remise = await prisma.te_remise_rem.findUnique({
+    const remise = await prisma.remise_rem.findUnique({
       where: { rem_articleId: articleId },
     });
 

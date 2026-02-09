@@ -11,7 +11,7 @@ export async function GET(){
             return NextResponse.json({ error: 'Accès administrateur requis' }, { status: 403 })
         }
         
-        const articles = await prisma.te_article_art.findMany({
+        const articles = await prisma.article_art.findMany({
             include: {
                 collection: true,
                 remises:true
@@ -43,7 +43,7 @@ export async function POST(req : Request) {
         const art_price = Number(body?.art_price);
         const art_collectionId = Number(body?.art_collectionId);
 
-        const article = await prisma.te_article_art.create({
+        const article = await prisma.article_art.create({
             data: {
                 art_name: art_name,
                 art_price: art_price,

@@ -2,78 +2,306 @@ generator client {
   provider = "prisma-client-js"
   output   = "../generated/prisma"
 }
+
 datasource db {
   provider = "mysql"
 }
-model User {
-  id                    String          @id @default(cuid())
-  email                 String          @unique
-  name                  String
-  role                  Role
-  password              String
-  isSystemAccount       Boolean         @default(false)
-  createdAt             DateTime        @default(now())
-  updatedAt             DateTime        @updatedAt
-  clientId              String?
-  baseId                String?
-  invoicesHandled       Invoice[]       @relation("InvoiceHandler")
-  statusChanges         StatusHistory[] @relation("StatusChanger")
-  changeHistory         ChangeHistory[] @relation("ChangeHistoryUser")
-  uploadedInvoicePhotos InvoicePhoto[]  @relation("InvoicePhotoUploader")
-  base            Base?     @relation(fields: [baseId], references: [id])
-  client          Client?   @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  vehiclesHandled Vehicle[] @relation("VehicleHandler")
-  devisCreated     te_devis_dev[] 
-  @@index([email])
-  @@index([role])
+
+model famille_fam {
+  fam_id      Int              @id @default(autoincrement())
+  fam_name    String
+  collections collection_col[] @relation("Famille_Collections")
+
+  @@index([fam_name], map: "te_famille_fam_fam_name_idx")
 }
 
-model Client {
-  id        String    @id @default(cuid())
-  name      String
-  email     String?
-  phone     String?
-  cli_adresseFacturation String?
-  cli_numClient String?
-  cli_tvaIntraCommunautaire String?
+model collection_col {
+  col_id        Int           @id @default(autoincrement())
+  col_name      String
+  col_familleId Int
+  articles      article_art[] @relation("Collection_Articles")
+  col_famille   famille_fam   @relation("Famille_Collections", fields: [col_familleId], references: [fam_id], map: "collection_col_col_familleId_fkey")
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  bases     Base[]
-  users     User[]
-  vehicles  Vehicle[]
-  devis     te_devis_dev[]
-  @@index([name])
+  @@index([col_familleId], map: "te_collection_col_col_familleId_idx")
+  @@index([col_name], map: "te_collection_col_col_name_idx")
 }
 
+model article_art {
+  art_id           Int               @id @default(autoincrement())
+  art_name         String
+  art_price        Int
+  art_collectionId Int
+  collection       collection_col    @relation("Collection_Articles", fields: [art_collectionId], references: [col_id], map: "article_art_art_collectionId_fkey")
+  remises          remise_rem?       @relation("Article_Remise")
+  devisLines       te_devisart_dea[]
 
-model Base {
-  id        String    @id @default(cuid())
+  @@index([art_collectionId], map: "te_article_art_art_collectionId_idx")
+  @@index([art_name], map: "te_article_art_art_name_idx")
+}
+
+model remise_rem {
+  rem_id          Int         @id @default(autoincrement())
+  rem_prixremise  Int?
+  rem_pourcentage Int?
+  rem_articleId   Int         @unique(map: "te_remise_rem_rem_articleId_key")
+  article         article_art @relation("Article_Remise", fields: [rem_articleId], references: [art_id], map: "remise_rem_rem_articleId_fkey")
+
+  @@index([rem_articleId], map: "te_remise_rem_rem_articleId_idx")
+  @@index([rem_pourcentage], map: "te_remise_rem_rem_pourcentage_idx")
+  @@index([rem_prixremise], map: "te_remise_rem_rem_prixremise_idx")
+}
+
+model te_devis_dev {
+  dev_id                 Int               @id @default(autoincrement())
+  dev_cli_id             String
+  dev_veh_id             String
+  dev_invoice_id         String?           @unique
+  dev_user               String?
+  dev_adressefacturation String?           @db.Text
+  dev_numdevis           String            @unique
+  dev_datecreation       DateTime          @default(now())
+  dev_totalht            Decimal           @db.Decimal(14, 2)
+  dev_totaltva           Decimal           @db.Decimal(14, 2)
+  dev_totalttc           Decimal           @db.Decimal(14, 2)
+  dev_tva                Decimal?          @db.Decimal(5, 2)
+  dev_supprimee          Boolean           @default(false)
+  dev_accordNumber       String?           @unique
+  dev_dateAccord         DateTime?
+  client                 client            @relation(fields: [dev_cli_id], references: [id], onDelete: Cascade)
+  invoice                invoice?          @relation(fields: [dev_invoice_id], references: [id])
+  user                   user?             @relation(fields: [dev_user], references: [id])
+  vehicle                vehicle           @relation(fields: [dev_veh_id], references: [id], onDelete: Cascade)
+  articles               te_devisart_dea[] @relation("Devis_Articles")
+
+  @@index([dev_cli_id])
+  @@index([dev_veh_id])
+  @@index([dev_invoice_id])
+  @@index([dev_user])
+  @@index([dev_datecreation])
+  @@index([dev_supprimee])
+}
+
+model te_devisart_dea {
+  dea_id                Int          @id @default(autoincrement())
+  dea_dev_id            Int
+  dea_art_id            Int?
+  dea_art_designation   String
+  dea_art_reference     String?
+  dea_prixunitaire      Decimal      @db.Decimal(14, 2)
+  dea_quantite          Int
+  dea_tva               Decimal?     @db.Decimal(5, 2)
+  dea_pourcentageremise Int?
+  dea_prixtotalht       Decimal      @db.Decimal(14, 2)
+  article               article_art? @relation(fields: [dea_art_id], references: [art_id])
+  devis                 te_devis_dev @relation("Devis_Articles", fields: [dea_dev_id], references: [dev_id], onDelete: Cascade)
+
+  @@index([dea_dev_id])
+  @@index([dea_art_id])
+}
+
+model base {
+  id        String    @id
   location  String
   createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  updatedAt DateTime
   clientId  String
-  client    Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  users     User[]
-  vehicles  Vehicle[]
-  @@index([clientId])
-  @@index([location])
+  client    client    @relation(fields: [clientId], references: [id], onDelete: Cascade, map: "Base_clientId_fkey")
+  user      user[]
+  vehicle   vehicle[]
+
+  @@index([clientId], map: "Base_clientId_idx")
+  @@index([location], map: "Base_location_idx")
 }
 
-enum VehicleEnergy {
-  GAZOLE
-  ESSENCE
-  HYBRIDE
-  ELECTRIQUE
-  GPL
+model changehistory {
+  id         String   @id
+  invoiceId  String
+  changedBy  String
+  changedAt  DateTime @default(now())
+  fieldName  String
+  oldValue   String?
+  newValue   String?
+  changeType String
+  user       user     @relation(fields: [changedBy], references: [id], map: "ChangeHistory_changedBy_fkey")
+  invoice    invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade, map: "ChangeHistory_invoiceId_fkey")
+
+  @@index([changedAt], map: "ChangeHistory_changedAt_idx")
+  @@index([changedBy], map: "ChangeHistory_changedBy_fkey")
+  @@index([invoiceId], map: "ChangeHistory_invoiceId_idx")
 }
 
-enum GearboxType {
-  BVM // boîte manuelle
-  BVA // boîte automatique
+model client {
+  id                        String         @id
+  name                      String
+  email                     String?
+  phone                     String?
+  createdAt                 DateTime       @default(now())
+  updatedAt                 DateTime
+  cli_adresseFacturation    String?
+  cli_numClient             String?
+  cli_tvaIntraCommunautaire String?
+  base                      base[]
+  devis                     te_devis_dev[]
+  user                      user[]
+  vehicle                   vehicle[]
+
+  @@index([name], map: "Client_name_idx")
 }
 
-enum BodyType {
+model invoice {
+  id                 String          @id
+  accordNumber       String?         @unique(map: "Invoice_accordNumber_key")
+  dateOfConfirmation DateTime?
+  invoiceConfirmed   Boolean         @default(false)
+  status             invoice_status  @default(CONFIRMED_IN_PLANNING)
+  statusUpdatedAt    DateTime        @default(now())
+  workDescription    String?
+  didOrderParts      Boolean         @default(false)
+  ordersDetails      String?
+  comments           String?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime
+  vehicleId          String
+  handledById        String?
+  changehistory      changehistory[]
+  user               user?           @relation(fields: [handledById], references: [id], map: "Invoice_handledById_fkey")
+  vehicle            vehicle         @relation(fields: [vehicleId], references: [id], onDelete: Cascade, map: "Invoice_vehicleId_fkey")
+  invoicephoto       invoicephoto[]
+  statushistory      statushistory[]
+  devis              te_devis_dev?
+
+  @@index([accordNumber], map: "Invoice_accordNumber_idx")
+  @@index([handledById], map: "Invoice_handledById_idx")
+  @@index([invoiceConfirmed], map: "Invoice_invoiceConfirmed_idx")
+  @@index([invoiceConfirmed, status, createdAt], map: "Invoice_invoiceConfirmed_status_createdAt_idx")
+  @@index([status], map: "Invoice_status_idx")
+  @@index([vehicleId], map: "Invoice_vehicleId_idx")
+}
+
+model invoicephoto {
+  id           String   @id
+  invoiceId    String
+  blobName     String   @unique(map: "InvoicePhoto_blobName_key")
+  url          String
+  contentType  String?
+  size         Int?
+  createdAt    DateTime @default(now())
+  uploadedById String?
+  invoice      invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade, map: "InvoicePhoto_invoiceId_fkey")
+  user         user?    @relation(fields: [uploadedById], references: [id], map: "InvoicePhoto_uploadedById_fkey")
+
+  @@index([createdAt], map: "InvoicePhoto_createdAt_idx")
+  @@index([invoiceId], map: "InvoicePhoto_invoiceId_idx")
+  @@index([uploadedById], map: "InvoicePhoto_uploadedById_fkey")
+}
+
+model statushistory {
+  id             String                       @id
+  previousStatus statushistory_previousStatus
+  newStatus      statushistory_newStatus
+  changedAt      DateTime                     @default(now())
+  invoiceId      String
+  changedById    String
+  user           user                         @relation(fields: [changedById], references: [id], onDelete: Cascade, map: "StatusHistory_changedById_fkey")
+  invoice        invoice                      @relation(fields: [invoiceId], references: [id], onDelete: Cascade, map: "StatusHistory_invoiceId_fkey")
+
+  @@index([changedAt], map: "StatusHistory_changedAt_idx")
+  @@index([changedById], map: "StatusHistory_changedById_idx")
+  @@index([invoiceId], map: "StatusHistory_invoiceId_idx")
+}
+
+model user {
+  id              String          @id
+  email           String          @unique(map: "User_email_key")
+  name            String
+  role            user_role
+  password        String
+  isSystemAccount Boolean         @default(false)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime
+  clientId        String?
+  baseId          String?
+  changehistory   changehistory[]
+  invoice         invoice[]
+  invoicephoto    invoicephoto[]
+  statushistory   statushistory[]
+  devisCreated    te_devis_dev[]
+  base            base?           @relation(fields: [baseId], references: [id], map: "User_baseId_fkey")
+  client          client?         @relation(fields: [clientId], references: [id], onDelete: Cascade, map: "User_clientId_fkey")
+  vehicle         vehicle[]
+
+  @@index([baseId], map: "User_baseId_fkey")
+  @@index([clientId], map: "User_clientId_fkey")
+  @@index([email], map: "User_email_idx")
+  @@index([role], map: "User_role_idx")
+}
+
+model vehicle {
+  id                    String               @id
+  licensePlate          String               @unique(map: "Vehicle_licensePlate_key")
+  model                 String?
+  brand                 String?
+  year                  Int?
+  color                 String?              @default("GRIS")
+  entryDate             DateTime             @default(now())
+  exitDate              DateTime?
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime
+  clientId              String
+  baseId                String
+  handledById           String?
+  bodyType              vehicle_bodyType?
+  doorsCount            Int?
+  energy                vehicle_energy?
+  firstRegistrationDate DateTime?
+  fiscalPowerCv         Int?
+  gearboxType           vehicle_gearboxType?
+  realPowerHp           Int?
+  registrationCardDate  DateTime?
+  version               String?
+  invoice               invoice[]
+  devis                 te_devis_dev[]
+  base                  base                 @relation(fields: [baseId], references: [id], onDelete: Cascade, map: "Vehicle_baseId_fkey")
+  client                client               @relation(fields: [clientId], references: [id], onDelete: Cascade, map: "Vehicle_clientId_fkey")
+  user                  user?                @relation(fields: [handledById], references: [id], map: "Vehicle_handledById_fkey")
+
+  @@index([baseId], map: "Vehicle_baseId_idx")
+  @@index([clientId], map: "Vehicle_clientId_idx")
+  @@index([handledById], map: "Vehicle_handledById_idx")
+  @@index([licensePlate], map: "Vehicle_licensePlate_idx")
+}
+
+enum statushistory_previousStatus {
+  CONFIRMED_IN_PLANNING
+  WAITING_FOR_PARTS
+  FIXING_STARTED
+  FIXING_FINISHED
+}
+
+enum statushistory_newStatus {
+  CONFIRMED_IN_PLANNING
+  WAITING_FOR_PARTS
+  FIXING_STARTED
+  FIXING_FINISHED
+}
+
+enum user_role {
+  ADMIN
+  MANAGER
+  MECHANIC
+  CLIENT
+  SIEGE
+  AGENCE
+}
+
+enum invoice_status {
+  CONFIRMED_IN_PLANNING
+  WAITING_FOR_PARTS
+  FIXING_STARTED
+  FIXING_FINISHED
+}
+
+enum vehicle_bodyType {
   BERLINE
   SUV
   BREAK
@@ -85,262 +313,15 @@ enum BodyType {
   AUTRE
 }
 
-
-model Vehicle {
-  id           String    @id @default(cuid())
-  licensePlate String    @unique
-
-  model        String?
-  brand        String?
-  year         Int?
-
-  color        String?   @default("GRIS")
-
-  // 1ère MEC mise en circulation
-  firstRegistrationDate DateTime?
-
-  // Énergie
-  energy       VehicleEnergy?
-
-  //  Portes
-  doorsCount   Int?
-
-  // Carrosserie
-  bodyType     BodyType?
-
-  // Puissance réelle / fiscale
-  realPowerHp      Int?
-  fiscalPowerCv    Int?
-
-  // Type de boîte
-  gearboxType  GearboxType?
-
-  // Version (ex: 1.6 CRDI)
-  version      String?
-
-  // Date carte grise
-  registrationCardDate DateTime?
-
-  entryDate    DateTime  @default(now())
-  exitDate     DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-
-  clientId     String
-  baseId       String
-  handledById  String?
-
-  invoices     Invoice[]
-  devis        te_devis_dev[]
-
-  base         Base      @relation(fields: [baseId], references: [id], onDelete: Cascade)
-  client       Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  handledBy    User?     @relation("VehicleHandler", fields: [handledById], references: [id])
-
-  @@index([licensePlate])
-  @@index([clientId])
-  @@index([baseId])
-  @@index([handledById])
+enum vehicle_energy {
+  GAZOLE
+  ESSENCE
+  HYBRIDE
+  ELECTRIQUE
+  GPL
 }
 
-model InvoicePhoto {
-  id        String  @id @default(cuid())
-  invoiceId String
-  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  blobName    String   @unique
-  url         String
-  contentType String?
-  size        Int?
-  createdAt   DateTime @default(now())
-  uploadedById String?
-  uploadedBy   User?   @relation("InvoicePhotoUploader", fields: [uploadedById], references: [id])
-  @@index([invoiceId])
-  @@index([createdAt])
-}
-model Invoice {
-  id                 String          @id @default(cuid())
-  accordNumber       String?         @unique
-  dateOfConfirmation DateTime?
-  invoiceConfirmed   Boolean         @default(false)
-  status             WorkStatus      @default(CONFIRMED_IN_PLANNING)
-  statusUpdatedAt    DateTime        @default(now())
-  workDescription    String?
-  didOrderParts      Boolean         @default(false)
-  ordersDetails      String?
-  comments           String?
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
-  vehicleId          String
-  handledById        String?
-  handledBy          User?           @relation("InvoiceHandler", fields: [handledById], references: [id])
-  vehicle            Vehicle         @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
-  statusHistory      StatusHistory[]
-  changeHistory      ChangeHistory[]
-  photos             InvoicePhoto[]
-  devis              te_devis_dev[]  
-  @@index([accordNumber])
-  @@index([vehicleId])
-  @@index([status])
-  @@index([invoiceConfirmed])
-  @@index([handledById])
-  @@index([invoiceConfirmed, status, createdAt])
-}
-model StatusHistory {
-  id             String     @id @default(cuid())
-  previousStatus WorkStatus
-  newStatus      WorkStatus
-  changedAt      DateTime   @default(now())
-  invoiceId      String
-  changedById    String
-  changedBy      User       @relation("StatusChanger", fields: [changedById], references: [id], onDelete: Cascade)
-  invoice        Invoice    @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  @@index([invoiceId])
-  @@index([changedById])
-  @@index([changedAt])
-}
-model ChangeHistory {
-  id         String   @id @default(cuid())
-  invoiceId  String
-  invoice    Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  changedBy  String
-  user       User     @relation("ChangeHistoryUser", fields: [changedBy], references: [id])
-  changedAt  DateTime @default(now())
-  fieldName  String
-  oldValue   String?
-  newValue   String?
-  changeType String
-  @@index([invoiceId])
-  @@index([changedAt])
-}
-
-model te_famille_fam {
-  fam_id          Int          @id @default(autoincrement())
-  fam_name        String
-  collections te_collection_col[] @relation("Famille_Collections")
-
-  @@index([fam_name])
-}
-
-model te_collection_col {
-  col_id        Int      @id @default(autoincrement())
-  col_name      String
-  col_familleId Int
-  col_famille   te_famille_fam  @relation("Famille_Collections", fields: [col_familleId], references: [fam_id])
-
-  articles  te_article_art[] @relation("Collection_Articles")
-
-  @@index([col_name])
-  @@index([col_familleId])
-}
-
-model te_article_art {
-  art_id        Int      @id @default(autoincrement())
-  art_name      String
-  art_price     Int
-  art_collectionId Int
-  collection te_collection_col @relation("Collection_Articles", fields: [art_collectionId], references: [col_id])
-  remises   te_remise_rem? @relation("Article_Remise")
-
-  devisLines te_devisart_dea[]  
-
-  @@index([art_name])
-  @@index([art_collectionId])
-}
-
-model te_remise_rem {
-  rem_id Int @id @default(autoincrement())
-  rem_prixremise Int?
-  rem_pourcentage  Int?
-  rem_articleId Int @unique
-  article te_article_art @relation("Article_Remise", fields: [rem_articleId], references: [art_id])
-
-  @@index([rem_prixremise])
-  @@index([rem_pourcentage])
-  @@index([rem_articleId])
-}
-
-model te_devis_dev {
-  dev_id                 Int       @id @default(autoincrement())
-
-  // --- Liens métier ---
-  dev_cli_id              String
-  dev_veh_id              String
-  dev_invoice_id          String?
-  
-  @@unique([dev_invoice_id])
-   
-  dev_user                String?   // User qui a créé le devis
-
-  client                  Client    @relation(fields: [dev_cli_id], references: [id], onDelete: Cascade)
-  vehicle                 Vehicle   @relation(fields: [dev_veh_id], references: [id], onDelete: Cascade)
-  invoice                 Invoice?  @relation(fields: [dev_invoice_id], references: [id], onDelete: SetNull)
-  user                    User?     @relation(fields: [dev_user], references: [id], onDelete: SetNull)
-
-  // --- Données devis (snapshot / compta) ---
-  dev_adressefacturation  String?   @db.Text
-  dev_numdevis            String    @unique
-
-  dev_datecreation        DateTime  @default(now())
-  // si tu veux séparer heure: tu peux la dériver de dev_datecreation côté UI
-
-  dev_totalht             Decimal   @db.Decimal(14,2)
-  dev_totaltva            Decimal   @db.Decimal(14,2)
-  dev_totalttc            Decimal   @db.Decimal(14,2)
-
-  dev_tva                 Decimal?  @db.Decimal(5,2) // TVA par défaut du devis (si tu en as une)
-  dev_supprimee           Boolean   @default(false)
-
-  // --- Validation: devis validé quand accordNumber est affecté ---
-  dev_accordNumber        String?   @unique
-  dev_dateAccord          DateTime?
-
-  // lignes
-  articles                te_devisart_dea[] @relation("Devis_Articles")
-
-  @@index([dev_cli_id])
-  @@index([dev_veh_id])
-  @@index([dev_invoice_id])
-  @@index([dev_user])
-  @@index([dev_datecreation])
-  @@index([dev_supprimee])
-}
-
-model te_devisart_dea {
-  dea_id                 Int      @id @default(autoincrement())
-
-  dea_dev_id             Int
-  devis                  te_devis_dev @relation("Devis_Articles", fields: [dea_dev_id], references: [dev_id], onDelete: Cascade)
-
-  // référence article (optionnel mais recommandé)
-  dea_art_id              Int?
-  article                 te_article_art? @relation(fields: [dea_art_id], references: [art_id], onDelete: SetNull)
-
-  // snapshot au moment du devis (pro)
-  dea_art_designation     String
-  dea_art_reference       String?
-  dea_prixunitaire        Decimal  @db.Decimal(14,2)
-  dea_quantite            Int
-  dea_tva                 Decimal? @db.Decimal(5,2)   // TVA ligne (peut override dev_tva)
-  dea_pourcentageremise   Int?     // remise appliquée sur la ligne (snapshot)
-
-  dea_prixtotalht         Decimal  @db.Decimal(14,2)  // total HT ligne (après remise)
-
-  @@index([dea_dev_id])
-  @@index([dea_art_id])
-}
-
-
-enum Role {
-  ADMIN
-  MANAGER
-  MECHANIC
-  CLIENT
-  SIEGE
-}
-
-enum WorkStatus {
-  CONFIRMED_IN_PLANNING
-  WAITING_FOR_PARTS
-  FIXING_STARTED
-  FIXING_FINISHED
+enum vehicle_gearboxType {
+  BVM
+  BVA
 }

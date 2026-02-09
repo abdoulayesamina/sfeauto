@@ -104,7 +104,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         return NextResponse.json({ error: "art_id invalide" }, { status: 400 });
       }
 
-      const articles = await prisma.te_article_art.findMany({
+      const articles = await prisma.article_art.findMany({
         where: { art_id: { in: artIds } },
         include: { remises: true },
       });

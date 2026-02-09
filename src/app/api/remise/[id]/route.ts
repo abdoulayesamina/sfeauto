@@ -21,7 +21,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         const body = await req.json();
         const {rem_articleId, rem_pourcentage, rem_prixremise} = body;
 
-        const remiseExist = await prisma.te_remise_rem.findUnique({
+        const remiseExist = await prisma.remise_rem.findUnique({
             where: { rem_id: id }
         });
 
@@ -32,7 +32,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         );
         }
 
-        const remise = await prisma.te_remise_rem.update({
+        const remise = await prisma.remise_rem.update({
             where: { rem_id: id },
             data: {rem_articleId, rem_pourcentage, rem_prixremise}
         });
@@ -55,7 +55,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
         }
         const id = await params.then(p => Number(p.id));
 
-        await prisma.te_remise_rem.delete({
+        await prisma.remise_rem.delete({
             where: { rem_id: id },
         });
 
@@ -83,7 +83,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       return NextResponse.json({ error: "ID de remise invalide" }, { status: 400 });
     }
 
-    const remise = await prisma.te_remise_rem.findUnique({
+    const remise = await prisma.remise_rem.findUnique({
       where: { rem_id: id },
     });
 
