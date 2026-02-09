@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
         })
 
         // 2) Historique de changement
-        await tx.changeHistory.create({
+        await tx.changehistory.create({
           data: {
             invoiceId: invoice.id,
             changedBy: session.user.id,
@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
 
         // 3) Historique de status si pièces commandées
         if (invoiceConfirmed && didOrderParts) {
-          await tx.statusHistory.create({
+          await tx.statushistory.create({
             data: {
               invoiceId: invoice.id,
               previousStatus: "CONFIRMED_IN_PLANNING",
@@ -179,7 +179,7 @@ export async function POST(request: NextRequest) {
 
           uploadedBlobNames.push(blobName)
 
-          const row = await tx.invoicePhoto.create({
+          const row = await tx.invoicephoto.create({
             data: {
               invoiceId: invoice.id,
               blobName,
