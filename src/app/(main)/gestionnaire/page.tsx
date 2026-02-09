@@ -57,7 +57,7 @@ export default function GestionnairePage() {
   // Chargement initial
   useEffect(() => {
     loadAll()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [])
 
   const loadAll = async () => {
