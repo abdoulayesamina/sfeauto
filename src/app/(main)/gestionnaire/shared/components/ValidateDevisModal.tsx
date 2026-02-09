@@ -7,7 +7,7 @@ import { Input } from "@/src/shared/components/ui/input";
 import { Label } from "@/src/shared/components/ui/label";
 import { Spinner } from "@/src/shared/components/spinner";
 import { successAlert, errorAlert } from "@/src/lib/alerts";
-import { useDevisApi } from "../hooks/useDevisApi.api";
+import { useDevisApi } from "../../../devis/shared/hooks/useDevisApi.api";
 
 type Props = {
   open: boolean;

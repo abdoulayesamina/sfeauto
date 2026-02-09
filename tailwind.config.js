@@ -69,5 +69,15 @@ module.exports = {
   		}
   	}
   },
-  plugins: [require("tailwindcss-animate"),  require('@tailwindcss/container-queries'),],
+  plugins: [require("tailwindcss-animate"),  require('@tailwindcss/container-queries'),
+	function({ addUtilities }) {
+      addUtilities({
+        '.print-exact': {
+          '-webkit-print-color-adjust': 'exact',
+          'print-color-adjust': 'exact',
+          'color-adjust': 'exact',
+        },
+      })
+    },
+  ],
 }

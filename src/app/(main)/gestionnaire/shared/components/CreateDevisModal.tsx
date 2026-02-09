@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/src/shared/components/ui/button";
 import { Modal } from "@/src/shared/components/modal";
-import { useDevisApi } from "../hooks/useDevisApi.api";
+import { useDevisApi } from "../../../devis/shared/hooks/useDevisApi.api";
 
 type ArticleRow = {
   art_id: number;

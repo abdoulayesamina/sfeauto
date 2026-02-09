@@ -37,7 +37,7 @@ type AppSidebarProps = {
     name: string
     email: string
     avatar: string
-    role:"ADMIN" |"MANAGER"|"MECHANIC"|"CLIENT"
+    role:"ADMIN" |"MANAGER"|"MECHANIC"|"CLIENT"|"SIEGE"
   },
     variant?: "inset" | "sidebar"
 
@@ -107,9 +107,9 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
     },
      {
       title: "Devis",
-      url: "gestionnaire/devis",
+      url: "/devis",
       icon: Receipt,
-      roles:["MANAGER"],
+      roles:["MANAGER","ADMIN"],
     },
     {
       title: "Mécanicien",
