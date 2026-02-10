@@ -7,6 +7,8 @@ import { Label } from "@/src/shared/components/ui/label"
 import { Button } from "@/src/shared/components/ui/button"
 import { useAgenceApi } from "@/src/shared/hooks/useAgence.api"
 import { useClientApi } from "@/src/shared/hooks/useClient.api"
+import { BrandSelect } from "@/src/shared/components/ui/BrandSelect"
+import { ModelSelect } from "@/src/shared/components/ui/ModelSelect"
 import {
   Select,
   SelectContent,
@@ -61,8 +63,8 @@ export function AddVehiculeForm({
     baseId: "",
     clientId: "",
     licensePlate: "",
-    brand: "",
-    model: "",
+    brandId: undefined,
+    modelId: undefined,
     year: new Date().getFullYear(),
     color: "",
 
@@ -147,23 +149,43 @@ export function AddVehiculeForm({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div className="flex flex-col gap-2">
           <Label htmlFor="marque">Marque</Label>
-          <Input
+          {/* <Input
             id="marque"
             placeholder="Renault"
             className="h-16"
             value={vehicule.brand || ""}
             onChange={(e) => setVehicule({ ...vehicule, brand: e.target.value })}
+          /> */}
+          <BrandSelect
+            value={vehicule.brandId ?? null}
+            onChange={(brandId) =>
+              setVehicule({
+                ...vehicule,
+                brandId,
+                modelId: null, // reset modèle
+              })
+            }
           />
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="modele">Modèle</Label>
-          <Input
+          {/* <Input
             id="modele"
             placeholder="Megane"
             className="h-16"
             value={vehicule.model || ""}
             onChange={(e) => setVehicule({ ...vehicule, model: e.target.value })}
-          />
+          /> */}
+          <ModelSelect
+              brandId={vehicule.brandId ?? null}
+              value={vehicule.modelId ?? null}
+              onChange={(modelId) =>
+                setVehicule({
+                  ...vehicule,
+                  modelId,
+                })
+              }
+            />
         </div>
       </div>
 

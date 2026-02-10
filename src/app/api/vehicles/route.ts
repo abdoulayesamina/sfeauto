@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { logError } from "@/src/lib/logger";
 import { prisma } from "@/src/lib/prisma";
+import { tr } from "zod/v4/locales";
 
 // Helpers
 function parseOptionalInt(value: unknown): number | null {
@@ -46,8 +47,9 @@ export async function GET(request: NextRequest) {
       select: {
         id: true,
         licensePlate: true,
-        brand: true,
-        model: true,
+        brandId: true,
+        modelId: true,
+
         year: true,
         color: true,
 
@@ -125,8 +127,8 @@ export async function POST(request: NextRequest) {
 
     const {
       licensePlate,
-      model,
-      brand,
+      brandId,
+      modelId,
       year,
       color,
       clientId,
@@ -202,8 +204,8 @@ export async function POST(request: NextRequest) {
     const vehicle = await prisma.vehicle.create({
       data: {
         licensePlate: String(licensePlate).trim(),
-        model: normalizeOptionalString(model),
-        brand: normalizeOptionalString(brand),
+        brandId: brandId || null,
+        modelId: modelId || null,
         year: parsedYear,
         color: normalizeOptionalString(color),
 

@@ -151,8 +151,8 @@ model base {
 model vehicle {
   id                    String               @id @default(cuid())
   licensePlate          String               @unique
-  brand                 String?
-  model                 String?
+  // brand                 String?
+  // model                 String?
   year                  Int?
   color                 String?              @default("GRIS")
   firstRegistrationDate DateTime?
@@ -173,6 +173,12 @@ model vehicle {
   clientId    String
   baseId      String
   handledById String?
+
+  brandId String?
+  modelId String?
+
+  brand brand? @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  model model? @relation(fields: [modelId], references: [id], onDelete: SetNull)
 
   client    client @relation(fields: [clientId], references: [id], onDelete: Cascade)
   base      base   @relation(fields: [baseId], references: [id], onDelete: Cascade)
@@ -365,4 +371,27 @@ enum statushistory_newStatus {
   WAITING_FOR_PARTS
   FIXING_STARTED
   FIXING_FINISHED
+}
+
+model brand {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  models   model[]
+  vehicles vehicle[]
+}
+
+model model {
+  id        String   @id @default(cuid())
+  name      String
+  brandId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  brand    brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  vehicles vehicle[]
+
+  @@unique([name, brandId])
 }
