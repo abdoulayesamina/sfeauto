@@ -124,6 +124,14 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       icon: User,
       roles:["CLIENT"],
     },
+
+    {
+      title: "Marques & Modèles",
+      url: "/brands",
+      icon: FileText, 
+      roles: ["ADMIN"],
+    },
+
   ]
 
   // const documents = [
