@@ -12,7 +12,7 @@ export async function GET() {
             return NextResponse.json({ error: 'Accès administrateur requis' }, { status: 403 })
         }
 
-        const collections = await prisma.te_collection_col.findMany({
+        const collections = await prisma.collection_col.findMany({
             include: {
                 articles: true
             }
@@ -40,7 +40,7 @@ export async function POST(req : Request) {
 
         const body : Collection = await req.json();
         const { col_name, col_familleId } = body;
-        const collection = await prisma.te_collection_col.create({
+        const collection = await prisma.collection_col.create({
             data: {
                 col_name: col_name,
                 col_familleId: col_familleId

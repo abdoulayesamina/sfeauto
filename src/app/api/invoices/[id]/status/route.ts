@@ -60,7 +60,8 @@ export async function PATCH(
           }
         },
         handledBy: { select: { id: true, name: true } },
-        statusHistory: { include: { changedBy: { select: { name: true } } }, orderBy: { changedAt: 'asc' } }
+        history: { include: { user: { select: { name: true } } }, orderBy: { changedAt: 'asc' } }
+        // history: { include: { changedBy: { select: { name: true } } }, orderBy: { changedAt: 'asc' } }
       }
     })
 
@@ -95,7 +96,7 @@ export async function PATCH(
     // Transaction rapide
     await prisma.$transaction(async (tx) => {
       if (statusChanged) {
-        await tx.statusHistory.create({
+        await tx.statushistory.create({
           data: {
             invoiceId: id,
             previousStatus: invoice.status,
@@ -125,8 +126,8 @@ export async function PATCH(
           }
         },
         handledBy: { select: { id: true, name: true, email: true } },
-        statusHistory: {
-          include: { changedBy: { select: { name: true } } },
+        history: {
+          // include: { changedBy: { select: { name: true } } },
           orderBy: { changedAt: 'asc' }
         }
       }
@@ -154,20 +155,20 @@ export async function PATCH(
       vehicle: {
         id: updated.vehicle.id,
         licensePlate: updated.vehicle.licensePlate,
-        brand: updated.vehicle.brand,
-        model: updated.vehicle.model,
+        brand: updated.vehicle.brandId,
+        model: updated.vehicle.modelId,
         year: updated.vehicle.year,
         color: updated.vehicle.color,
         client: updated.vehicle.client,
         base: updated.vehicle.base
       },
       handledBy: updated.handledBy,
-      statusHistory: updated.statusHistory.map(h => ({
+      statusHistory: updated.history.map(h => ({
         id: h.id,
         previousStatus: h.previousStatus,
         newStatus: h.newStatus,
         changedAt: h.changedAt.toISOString(),
-        changedBy: h.changedBy
+        changedBy: h.changedById
       }))
     }
 

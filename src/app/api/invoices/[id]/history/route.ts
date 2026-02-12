@@ -30,7 +30,7 @@ export async function GET(
     }
 
     // Historique
-    const history = await prisma.changeHistory.findMany({
+    const history = await prisma.changehistory.findMany({
       where: { invoiceId: id },
       include: {
         user: { select: { name: true, email: true } },

@@ -18,7 +18,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
         const id = await params.then(p => Number(p.id));
 
-        const article = await prisma.te_article_art.update({
+        const article = await prisma.article_art.update({
             where: { art_id: id },
             data: { art_name: art_name, art_price: art_price, art_collectionId: art_collectionId }
         });
@@ -43,7 +43,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
         }
 
         const id = await params.then(p => Number(p.id));
-        prisma.te_article_art.delete({
+        prisma.article_art.delete({
             where: { art_id: id },
         });
 
@@ -73,7 +73,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       return NextResponse.json({ error: "ID d'article invalide" }, { status: 400 });
     }
 
-      const article = await prisma.te_article_art.findMany({
+      const article = await prisma.article_art.findMany({
     orderBy: { art_name: "asc" },
     select: {
       art_id: true,

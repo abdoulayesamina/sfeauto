@@ -41,7 +41,7 @@ export async function PUT(
     }
 
     // Role validation
-    const validRoles = ['ADMIN', 'MANAGER', 'MECHANIC', 'CLIENT','SIEGE'];
+    const validRoles = ['ADMIN', 'MANAGER', 'MECHANIC', 'CLIENT','SIEGE', 'AGENCE'];
     if (!validRoles.includes(role)) {
       return NextResponse.json({ error: 'Rôle invalide' }, { status: 400 });
     }

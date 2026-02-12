@@ -9,7 +9,7 @@ declare module 'next-auth' {
       id: string
       email: string
       name: string
-      role: 'ADMIN' | 'MANAGER' | 'MECHANIC' | 'CLIENT' | 'SIEGE'
+      role: 'ADMIN' | 'MANAGER' | 'MECHANIC' | 'CLIENT' | 'SIEGE' | 'AGENCE'
       clientId: string | null
       baseId: string | null
     }
@@ -19,7 +19,7 @@ declare module 'next-auth' {
     id: string
     email: string
     name: string
-    role: 'ADMIN' | 'MANAGER' | 'MECHANIC' | 'CLIENT' | 'SIEGE'
+    role: 'ADMIN' | 'MANAGER' | 'MECHANIC' | 'CLIENT' | 'SIEGE' | 'AGENCE'
     clientId: string | null
     baseId: string | null
   }
@@ -28,7 +28,7 @@ declare module 'next-auth' {
 declare module 'next-auth/jwt' {
   interface JWT {
     id: string
-    role: 'ADMIN' | 'MANAGER' | 'MECHANIC' | 'CLIENT' | 'SIEGE'
+    role: 'ADMIN' | 'MANAGER' | 'MECHANIC' | 'CLIENT' | 'SIEGE' | 'AGENCE'
     clientId: string | null
     baseId: string | null
   }

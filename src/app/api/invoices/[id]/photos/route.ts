@@ -30,7 +30,7 @@ export async function GET(
       return NextResponse.json({ error: "Intervention introuvable" }, { status: 404 })
     }
 
-    const photos = await prisma.invoicePhoto.findMany({
+    const photos = await prisma.invoicephoto.findMany({
       where: { invoiceId },
       orderBy: { createdAt: "desc" },
       select: {

@@ -37,7 +37,7 @@ type AppSidebarProps = {
     name: string
     email: string
     avatar: string
-    role:"ADMIN" |"MANAGER"|"MECHANIC"|"CLIENT"|"SIEGE"
+    role:"ADMIN" |"MANAGER"|"MECHANIC"|"CLIENT"|"SIEGE"| 'AGENCE'
   },
     variant?: "inset" | "sidebar"
 
@@ -133,6 +133,13 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       roles:["AGENCE"],
 
     },
+    {
+      title: "Marques & Modèles",
+      url: "/brands",
+      icon: FileText, 
+      roles: ["ADMIN"],
+    },
+
   ]
 
   // const documents = [

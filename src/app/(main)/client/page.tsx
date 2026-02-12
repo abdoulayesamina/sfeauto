@@ -170,8 +170,7 @@ export default function ClientPage() {
               filteredVehicles.map((v) => (
                 <InterventionCard
                   key={v.id}
-                  // ✅ On passe un objet "intervention" qui contient vehicle
-                  // Ton InterventionCard calcule les badges via vehicle.invoices (parfait)
+                 
                   intervention={{ vehicle: v }}
                   onViewInterventions={() => handleViewInterventions(v)}
                   onViewDetails={() => handleViewDetailsFromVehicle(v)}

@@ -11,7 +11,7 @@ export async function GET(){
             return NextResponse.json({ error: 'Accès interdit' }, { status: 403 })
         }
     
-        const remises = await prisma.te_remise_rem.findMany();
+        const remises = await prisma.remise_rem.findMany();
 
         return NextResponse.json({remises});
 
@@ -35,7 +35,7 @@ export async function POST(req : Request){
         const body : Remise = await req.json();
         const {rem_articleId, rem_pourcentage, rem_prixremise} = body;
 
-        const existing = await prisma.te_remise_rem.findUnique({
+        const existing = await prisma.remise_rem.findUnique({
             where: { rem_articleId },
         });
 
@@ -46,7 +46,7 @@ export async function POST(req : Request){
             );
         }
 
-        const newRemise = await prisma.te_remise_rem.create({
+        const newRemise = await prisma.remise_rem.create({
             data: {
                 rem_articleId: rem_articleId,
                 rem_pourcentage: rem_pourcentage,
