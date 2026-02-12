@@ -131,9 +131,10 @@ export default function AgencePage() {
         (filterStatus === "ATTENTE_PIECES" && row.counts.ATTENTE_PIECES > 0) ||
         (filterStatus === "TERMINEE" && row.counts.TERMINEE > 0)
 
-      const plate = (v.licensePlate || "").toLowerCase()
-      const brand = (v.brand || "").toLowerCase()
-      const model = (v.model || "").toLowerCase()
+      const plate = String(v.licensePlate || "").toLowerCase()
+      const brand = String(v.brand ?? "").toLowerCase()
+
+      const model = String(v.model || "").toLowerCase()
 
       const searchMatch = !q || plate.includes(q) || brand.includes(q) || model.includes(q)
 
