@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    // ✅ Pour AGENCE, baseId obligatoire
+      // ✅ Pour AGENCE, baseId obligatoire
     if (session.user.role === "AGENCE" && !session.user.baseId) {
       return NextResponse.json(
         { error: "Compte agence sans base associée" },
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search");
 
-    // 🔒 Filtre base pour AGENCE
+    // Filtre base pour AGENCE
     const baseFilter =
       session.user.role === "AGENCE"
         ? { baseId: session.user.baseId }

@@ -23,7 +23,10 @@ function asBool(v: FormDataEntryValue | null): boolean {
 export async function POST(request: NextRequest) {
   try {
     const session = await auth()
-    if (!session || session.user.role !== "MANAGER") {
+
+    // ✅ Autoriser MANAGER + AGENCE (et ADMIN si tu veux)
+    const role = session?.user?.role
+    if (!session || !["MANAGER", "AGENCE", "ADMIN"].includes(role as string)) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
     }
 
@@ -47,29 +50,37 @@ export async function POST(request: NextRequest) {
 
     const files = (form.getAll("photos") as File[]) ?? []
 
-    console.log("[API /invoices] multipart=true")
-    console.log("[API /invoices] vehicleId:", vehicleId)
-    console.log("[API /invoices] accordNumber:", accordNumber)
-    console.log("[API /invoices] dateOfConfirmation:", dateOfConfirmation)
-    console.log("[API /invoices] didOrderParts:", didOrderParts)
-    console.log("[API /invoices] files count:", files.length)
-    console.log("[API /invoices] session.user.id:", session.user?.id)
-    
-
     // Validate required fields
     if (!vehicleId) {
-      return NextResponse.json(
-        { error: "L'identifiant du véhicule est requis" },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "L'identifiant du véhicule est requis" }, { status: 400 })
+    }
+
+    // ✅ Vérifier que le véhicule existe + récupérer sa base
+    const vehicle = await prisma.vehicle.findUnique({
+      where: { id: vehicleId },
+      select: { id: true, baseId: true },
+    })
+
+    if (!vehicle) {
+      return NextResponse.json({ error: "Véhicule invalide" }, { status: 400 })
+    }
+
+    // ✅ Sécurité AGENCE : ne peut créer que pour SA base
+    if (role === "AGENCE") {
+      const userBaseId = session.user.baseId // supposé présent sur session.user
+      if (!userBaseId) {
+        return NextResponse.json({ error: "Compte agence sans baseId" }, { status: 403 })
+      }
+      if (vehicle.baseId !== userBaseId) {
+        return NextResponse.json({ error: "Vous ne pouvez pas créer d’intervention pour une autre agence" }, { status: 403 })
+      }
     }
 
     // Calcul correct de invoiceConfirmed (Boolean)
     const hasAccordNumber = accordNumber && accordNumber.trim().length > 0
 
-    //On enleve la verification pour le moment et invoiceConfirmed est toujours à true !
-    // const invoiceConfirmed = Boolean(hasAccordNumber && !!dateOfConfirmation)
-    const invoiceConfirmed = true;
+    // Pour le moment tu forces true
+    const invoiceConfirmed = true
 
     // Validate dateOfConfirmation (si fournie)
     if (dateOfConfirmation) {
@@ -77,10 +88,7 @@ export async function POST(request: NextRequest) {
       const today = new Date()
       today.setHours(23, 59, 59, 999)
       if (confirmationDate > today) {
-        return NextResponse.json(
-          { error: "La date de confirmation ne peut pas être dans le futur" },
-          { status: 400 }
-        )
+        return NextResponse.json({ error: "La date de confirmation ne peut pas être dans le futur" }, { status: 400 })
       }
     }
 
@@ -88,23 +96,16 @@ export async function POST(request: NextRequest) {
     for (const f of files) {
       if (!(f instanceof File)) continue
       if (!f.type?.startsWith(ALLOWED_PREFIX)) {
-        return NextResponse.json(
-          { error: `Type non supporté: ${f.type || "unknown"}` },
-          { status: 400 }
-        )
+        return NextResponse.json({ error: `Type non supporté: ${f.type || "unknown"}` }, { status: 400 })
       }
       if (f.size > MAX_FILE_SIZE) {
-        return NextResponse.json(
-          { error: `Fichier trop lourd: ${f.name}` },
-          { status: 400 }
-        )
+        return NextResponse.json({ error: `Fichier trop lourd: ${f.name}` }, { status: 400 })
       }
     }
 
     const container = getContainerClient()
     await container.createIfNotExists()
 
-    // Pour cleanup si échec
     const uploadedBlobNames: string[] = []
 
     try {
@@ -116,10 +117,7 @@ export async function POST(request: NextRequest) {
             accordNumber: hasAccordNumber ? (accordNumber as string) : null,
             dateOfConfirmation: dateOfConfirmation ? new Date(dateOfConfirmation) : null,
             invoiceConfirmed,
-            status:
-              invoiceConfirmed && didOrderParts
-                ? "WAITING_FOR_PARTS"
-                : "CONFIRMED_IN_PLANNING",
+            status: invoiceConfirmed && didOrderParts ? "WAITING_FOR_PARTS" : "CONFIRMED_IN_PLANNING",
             workDescription,
             didOrderParts: didOrderParts || false,
             ordersDetails,
@@ -128,7 +126,7 @@ export async function POST(request: NextRequest) {
           },
           include: {
             vehicle: { include: { client: true, base: true } },
-            handledBy: { select: { name: true, email: true } },
+            handledBy: { select: { id: true, name: true, email: true } },
           },
         })
 
@@ -199,11 +197,9 @@ export async function POST(request: NextRequest) {
         return { invoice, photos: createdPhotos }
       })
 
-      return NextResponse.json(
-        { ...result.invoice, photos: result.photos },
-        { status: 201 }
-      )
+      return NextResponse.json({ ...result.invoice, photos: result.photos }, { status: 201 })
     } catch (err: any) {
+      // cleanup azure blobs
       try {
         await Promise.all(
           uploadedBlobNames.map(async (blobName) => {
@@ -223,9 +219,6 @@ export async function POST(request: NextRequest) {
     }
 
     logError("Failed to create invoice", error)
-    return NextResponse.json(
-      { error: "Échec de la création de l'intervention : " },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Échec de la création de l'intervention" }, { status: 500 })
   }
 }

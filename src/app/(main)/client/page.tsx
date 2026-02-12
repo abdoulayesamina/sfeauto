@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { User } from "lucide-react"
+
 import { VehicleStats } from "../gestionnaire/shared/components/vehicule-stats"
 import { Modal } from "@/src/shared/components/modal"
 import InterventionDetailClient from "./components/detailsInterv"
@@ -11,6 +12,9 @@ import SearchFilters from "./components/SearchFilters"
 import InterventionCard from "./components/InterventionCard"
 import VehicleInterventionsModal from "./components/VehicleInterventionsModal"
 import EmptyState from "./components/EmptyState"
+import { toUIStatus } from "@/src/utils/constants/intervention-status"
+
+type UIStatus = "ALL" | "ATTENTE_REPARATION" | "TERMINEE" | "ATTENTE_PIECES"
 
 export default function ClientPage() {
   const { getVehicules } = useVehiculesApi()
@@ -18,7 +22,8 @@ export default function ClientPage() {
   const [vehicles, setVehicles] = useState<any[]>([])
   const [interventionsVehicule, setInterventionVehicule] = useState<any[]>([])
   const [vehiculeSelect, setVehiculeSelect] = useState<any>(null)
-  const [filterStatus, setFilterStatus] = useState<"ALL" | "ATTENTE_REPARATION" | "TERMINEE" | "ATTENTE_PIECES">("ALL")
+
+  const [filterStatus, setFilterStatus] = useState<UIStatus>("ALL")
   const [openInterventionModal, setOpenInterventionModal] = useState(false)
   const [openDetailModal, setOpenDetailModal] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
@@ -29,7 +34,7 @@ export default function ClientPage() {
       try {
         setIsLoading(true)
         const data = await getVehicules()
-        setVehicles(data.vehicles)
+        setVehicles(Array.isArray(data?.vehicles) ? data.vehicles : [])
       } catch (err: any) {
         console.error("Erreur récupération véhicules :", err.message)
       } finally {
@@ -37,6 +42,7 @@ export default function ClientPage() {
       }
     }
     fetchVehicules()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handleViewInterventions = (v: any) => {
@@ -45,50 +51,68 @@ export default function ClientPage() {
     setOpenInterventionModal(true)
   }
 
-  const handleViewDetails = (intervention: any, vehicle?: any) => {
-    setInterventionVehicule([{ ...intervention, vehicle }])
+  // ✅ détail complet = on ouvre une intervention (dernière par défaut)
+  const handleViewDetailsFromVehicle = (v: any) => {
+    const invoices: Invoice[] = Array.isArray(v.invoices) ? v.invoices : []
+    if (!invoices.length) return
+
+    const last = invoices[invoices.length - 1] // ✅ dernière intervention
+    setVehiculeSelect(v)
+    setInterventionVehicule([{ ...last, vehicle: v }]) // pattern identique à ton ClientPage
     setOpenDetailModal(true)
   }
 
-  const filteredInterventions = vehicles
-    .flatMap(v => 
-      Array.isArray(v.invoices) 
-        ? v.invoices.map((i: Invoice) => ({ ...i, vehicle: v }))
-        : []
-    )
-    .filter(inv => {
-      const { toUIStatus } = require("@/src/utils/constants/intervention-status")
-      const statusMatch = filterStatus === "ALL" || toUIStatus(inv.status) === filterStatus
-      
-      const searchMatch = searchQuery === "" || 
-        inv.vehicle.licensePlate.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        inv.vehicle.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        inv.accordNumber?.toLowerCase().includes(searchQuery.toLowerCase())
-      
-      return statusMatch && searchMatch
-    })
+  // ✅ 1 card = 1 véhicule (plus de flatMap)
+  const filteredVehicles = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
 
-  const stats = {
-    total: vehicles.length,
-    enCours: vehicles.filter(v => 
-      Array.isArray(v.invoices) && 
-      v.invoices.some((i: Invoice) => {
-        const { toUIStatus } = require("@/src/utils/constants/intervention-status")
-        return toUIStatus(i.status) === "ATTENTE_REPARATION"
+    return (Array.isArray(vehicles) ? vehicles : [])
+      .map((v) => ({
+        ...v,
+        invoices: Array.isArray(v.invoices) ? v.invoices : [],
+      }))
+      .filter((v) => {
+        // filtre texte
+        const plate = String(v.licensePlate ?? "").toLowerCase()
+        const brand = String(v.brand ?? "").toLowerCase()
+        const model = String(v.model ?? "").toLowerCase()
+
+        const searchMatch =
+          !q || plate.includes(q) || brand.includes(q) || model.includes(q)
+
+        // filtre statut (match si au moins 1 invoice correspond)
+        let statusMatch = true
+        if (filterStatus !== "ALL") {
+          statusMatch = v.invoices.some((i: Invoice) => toUIStatus(i.status) === filterStatus)
+        }
+
+        return searchMatch && statusMatch
       })
-    ).length,
-    termine: vehicles.filter(v => 
-      Array.isArray(v.invoices) && 
-      v.invoices.every((i: Invoice) => {
-        const { toUIStatus } = require("@/src/utils/constants/intervention-status")
-        return toUIStatus(i.status) === "TERMINEE"
-      }) && 
-      v.invoices.length > 0
-    ).length,
-    sansIntervention: vehicles.filter(v => 
-      !Array.isArray(v.invoices) || v.invoices.length === 0
-    ).length,
-  }
+  }, [vehicles, searchQuery, filterStatus])
+
+  // ✅ Stats (comme toi, OK)
+  const stats = useMemo(() => {
+    const total = vehicles.length
+
+    const enCours = vehicles.filter(
+      (v) =>
+        Array.isArray(v.invoices) &&
+        v.invoices.some((i: Invoice) => toUIStatus(i.status) === "ATTENTE_REPARATION")
+    ).length
+
+    const termine = vehicles.filter(
+      (v) =>
+        Array.isArray(v.invoices) &&
+        v.invoices.length > 0 &&
+        v.invoices.every((i: Invoice) => toUIStatus(i.status) === "TERMINEE")
+    ).length
+
+    const sansIntervention = vehicles.filter(
+      (v) => !Array.isArray(v.invoices) || v.invoices.length === 0
+    ).length
+
+    return { total, enCours, termine, sansIntervention }
+  }, [vehicles])
 
   if (isLoading) {
     return (
@@ -96,7 +120,7 @@ export default function ClientPage() {
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-center h-96">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto" />
               <p className="mt-4 text-gray-600">Chargement des interventions...</p>
             </div>
           </div>
@@ -139,16 +163,18 @@ export default function ClientPage() {
           />
         </div>
 
-        {/* Liste des interventions */}
+        {/* Liste : 1 card par véhicule */}
         {!openInterventionModal ? (
           <div className="space-y-4">
-            {filteredInterventions.length > 0 ? (
-              filteredInterventions.map((intervention) => (
+            {filteredVehicles.length > 0 ? (
+              filteredVehicles.map((v) => (
                 <InterventionCard
-                  key={intervention.id}
-                  intervention={intervention}
-                  onViewInterventions={() => handleViewInterventions(intervention.vehicle)}
-                  onViewDetails={() => handleViewDetails(intervention, intervention.vehicle)}
+                  key={v.id}
+                  // ✅ On passe un objet "intervention" qui contient vehicle
+                  // Ton InterventionCard calcule les badges via vehicle.invoices (parfait)
+                  intervention={{ vehicle: v }}
+                  onViewInterventions={() => handleViewInterventions(v)}
+                  onViewDetails={() => handleViewDetailsFromVehicle(v)}
                 />
               ))
             ) : (
@@ -161,7 +187,13 @@ export default function ClientPage() {
             interventions={interventionsVehicule}
             filterStatus={filterStatus}
             onClose={() => setOpenInterventionModal(false)}
-            onViewDetails={handleViewDetails}
+            // si ton modal appelle onViewDetails(intervention, vehicle)
+            onViewDetails={(intervention: any, vehicle?: any) => {
+              const v = vehicle ?? vehiculeSelect
+              setVehiculeSelect(v)
+              setInterventionVehicule([{ ...intervention, vehicle: v }])
+              setOpenDetailModal(true)
+            }}
           />
         )}
 
@@ -172,7 +204,7 @@ export default function ClientPage() {
           modalDescription="Détail complet de l'intervention"
           className="max-w-4xl"
         >
-          {interventionsVehicule[0] && (
+          {vehiculeSelect && (
             <InterventionDetailClient
               selectedVehicle={vehiculeSelect}
               onClose={() => setOpenDetailModal(false)}

@@ -1,136 +1,152 @@
-import { Card, CardContent } from "@/src/shared/components/ui/card"
-import { Button } from "@/src/shared/components/ui/button"
-import { Badge } from "@/src/shared/components/ui/badge"
-import { Car, Calendar, Eye, ChevronRight } from "lucide-react"
-import { getStatusMeta, toUIStatus } from "@/src/utils/constants/intervention-status"
-import InterventionStatusBadge from "./InterventionStatusBadge"
+"use client"
 
-interface InterventionCardProps {
+import { Button } from "@/src/shared/components/ui/button"
+import { toUIStatus } from "@/src/utils/constants/intervention-status"
+
+type UIStatus = "ATTENTE_REPARATION" | "ATTENTE_PIECES" | "TERMINEE"
+
+type Props = {
   intervention: any
   onViewInterventions: () => void
   onViewDetails: () => void
+  hideVehicleActions?: boolean
 }
 
-// Fonction de débogage pour voir les statuts réels
-const debugStatus = (backendStatus: string) => {
-  console.log("Statut backend:", backendStatus)
-  const uiStatus = toUIStatus(backendStatus)
-  console.log("Statut UI:", uiStatus)
-  return uiStatus
+function safeLower(v: any) {
+  return String(v ?? "").toLowerCase()
+}
+
+function computeCounts(intervention: any) {
+  // 1) si counts est fourni par AgencePage
+  if (intervention?.counts) {
+    return {
+      ATTENTE_REPARATION: Number(intervention.counts.ATTENTE_REPARATION ?? 0),
+      ATTENTE_PIECES: Number(intervention.counts.ATTENTE_PIECES ?? 0),
+      TERMINEE: Number(intervention.counts.TERMINEE ?? 0),
+    }
+  }
+
+  // 2) sinon calculer depuis vehicle.invoices
+  const invoices = Array.isArray(intervention?.vehicle?.invoices)
+    ? intervention.vehicle.invoices
+    : []
+
+  let ar = 0,
+    ap = 0,
+    t = 0
+
+  for (const inv of invoices) {
+    const ui = toUIStatus(inv.status)
+    if (ui === "ATTENTE_REPARATION") ar++
+    else if (ui === "ATTENTE_PIECES") ap++
+    else if (ui === "TERMINEE") t++
+  }
+
+  return { ATTENTE_REPARATION: ar, ATTENTE_PIECES: ap, TERMINEE: t }
+}
+
+function Badge({
+  label,
+  variant,
+}: {
+  label: string
+  variant: "blue" | "orange" | "green"
+}) {
+  const cls =
+    variant === "blue"
+      ? "bg-blue-100 text-blue-700"
+      : variant === "orange"
+      ? "bg-orange-100 text-orange-700"
+      : "bg-emerald-100 text-emerald-700"
+
+  return (
+    <span className={`px-3 py-1 rounded-full text-sm font-medium ${cls}`}>
+      {label}
+    </span>
+  )
 }
 
 export default function InterventionCard({
   intervention,
   onViewInterventions,
   onViewDetails,
-}: InterventionCardProps) {
-  // Ajout d'un log pour déboguer
-  console.log("Intervention complète:", {
-    id: intervention.id,
-    status: intervention.status,
-    accordNumber: intervention.accordNumber
-  })
+  hideVehicleActions,
+}: Props) {
+  const v = intervention?.vehicle ?? {}
+  const counts = computeCounts(intervention)
 
-  const status = toUIStatus(intervention.status)
-  // OU utilisez la fonction de débogage :
-  // const status = debugStatus(intervention.status)
-  
-  const statusMeta = getStatusMeta(status)
-  const StatusIcon = statusMeta.icon
+  const totalInterventions =
+    counts.ATTENTE_REPARATION + counts.ATTENTE_PIECES + counts.TERMINEE
 
-  // Si le statut montre "En attente de réparation" mais devrait être "Terminée"
-  // vérifiez directement le statut backend
-  const isFinished = intervention.status === "FIXING_FINISHED"
-  const isTerminee = status === "TERMINEE"
+  // affichage fallback si jamais brand/model null
+  const brandModel = `${v?.brand ?? ""} ${v?.model ?? ""}`.trim()
 
   return (
-    <Card 
-      className="group overflow-hidden border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all duration-300 rounded-2xl cursor-pointer"
-      onClick={onViewInterventions}
-    >
-      <CardContent className="p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-          {/* Informations véhicule - 4 colonnes */}
-          <div className="lg:col-span-4">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-blue-50 text-blue-600 flex-shrink-0">
-                <Car size={24} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <p className="font-bold text-lg truncate">{intervention.vehicle.licensePlate}</p>
-                  <Badge variant="outline" className="text-xs">
-                    {intervention.vehicle.brand}
-                  </Badge>
-                </div>
-                <p className="text-sm text-gray-600 truncate">
-                  {intervention.vehicle.model} • {intervention.vehicle.year}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  {intervention.vehicle.color}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Informations intervention - 3 colonnes */}
-          <div className="lg:col-span-3">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-gray-50 text-gray-600 flex-shrink-0">
-                <Calendar size={24} />
-              </div>
-              <div>
-                <p className="font-medium text-sm mb-1">Début d'intervention</p>
-                <p className="text-sm text-gray-500">
-                  {new Date(intervention.createdAt).toLocaleDateString('fr-FR', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric'
-                  })}
-                </p>
-                {intervention.accordNumber && (
-                  <p className="text-xs text-gray-400 mt-1">
-                    Accord : {intervention.accordNumber}
-                  </p>
-                )}
-                
-              </div>
-            </div>
-          </div>
-
-          {/* Statut - 2 colonnes */}
-          <div className="lg:col-span-2">
-            {/* Solution temporaire si toUIStatus ne fonctionne pas */}
-            {intervention.status === "FIXING_FINISHED" ? (
-              <div className="flex items-center gap-2 px-4 py-2 rounded-full border bg-green-100 text-green-700 border-green-200 w-fit">
-                <div className="w-2 h-2 rounded-full bg-green-500" />
-                <span className="font-medium">Terminée</span>
-              </div>
-            ) : (
-              <InterventionStatusBadge status={status} showIcon />
+    <div className="bg-white border rounded-2xl p-5 shadow-sm">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        {/* LEFT */}
+        <div className="min-w-0">
+          <div className="flex items-center gap-3 flex-wrap">
+            <h3 className="text-lg font-bold text-gray-900 truncate">
+              {v?.licensePlate || "—"}
+            </h3>
+            {brandModel && (
+              <p className="text-gray-500 text-sm truncate">{brandModel}</p>
+            )}
+            {v?.year != null && (
+              <p className="text-gray-400 text-sm">· {v.year}</p>
             )}
           </div>
 
-          {/* Actions - 3 colonnes */}
-          <div className="lg:col-span-3 flex justify-end">
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                className="gap-2 rounded-lg border-gray-300 group-hover:border-blue-500 group-hover:text-blue-600 transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onViewInterventions()
-                }}
-              >
-                <Eye size={16} />
-                Voir véhicule
-                <ChevronRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-              </Button>
-             
-            </div>
+          <div className="mt-1 text-sm text-gray-500 flex flex-wrap gap-2">
+            <span>{v?.client?.name || "—"}</span>
+            <span>•</span>
+            <span>{v?.base?.location || "—"}</span>
+            {v?.entryDate && (
+              <>
+                <span>•</span>
+                <span>
+                  Entrée :{" "}
+                  {new Date(v.entryDate).toLocaleDateString("fr-FR")}
+                </span>
+              </>
+            )}
+          </div>
+
+          <div className="mt-3 flex items-center gap-2 flex-wrap">
+            {counts.ATTENTE_REPARATION > 0 && (
+              <Badge
+                variant="blue"
+                label={`${counts.ATTENTE_REPARATION} En attente de réparation`}
+              />
+            )}
+            {counts.ATTENTE_PIECES > 0 && (
+              <Badge
+                variant="orange"
+                label={`${counts.ATTENTE_PIECES} En attente de pièces`}
+              />
+            )}
+            {counts.TERMINEE > 0 && (
+              <Badge variant="green" label={`${counts.TERMINEE} Terminée`} />
+            )}
+            {totalInterventions === 0 && (
+              <span className="text-sm text-gray-400 italic">
+                Aucune intervention
+              </span>
+            )}
           </div>
         </div>
-      </CardContent>
-    </Card>
+
+        {/* RIGHT actions */}
+        {!hideVehicleActions && (
+          <div className="flex items-center gap-2 justify-end">
+            <Button variant="outline" onClick={onViewDetails}>
+              Voir détail complet
+            </Button>
+            <Button onClick={onViewInterventions}>Voir interventions</Button>
+          </div>
+        )}
+      </div>
+    </div>
   )
 }

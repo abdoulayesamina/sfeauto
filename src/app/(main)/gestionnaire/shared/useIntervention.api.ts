@@ -11,7 +11,6 @@ export function useInterventionApi() {
     try {
       const images: File[] = payload.images || []
 
-      // ✅ construire FormData
       const fd = new FormData()
       fd.append("vehicleId", payload.vehicleId)
       fd.append("accordNumber", payload.accordNumber ?? "")
@@ -20,22 +19,17 @@ export function useInterventionApi() {
       fd.append("didOrderParts", String(Boolean(payload.didOrderParts)))
       fd.append("ordersDetails", payload.ordersDetails ?? "")
       fd.append("comments", payload.comments ?? "")
-console.log("FormData keys:")
-for (const [k, v] of fd.entries()) {
-  console.log(k, v)
-}
 
-      // ✅ ajouter les photos multiples
       for (const f of images) fd.append("photos", f)
-
-      console.log("[InterventionApi] multipart submit -> photos:", images.length)
 
       const res = await fetch(API_URL, {
         method: "POST",
-        body: fd, // IMPORTANT: pas de Content-Type manuel
+        body: fd,
+        credentials: "include", // ✅ IMPORTANT
       })
 
       const result = await res.json()
+
       if (!res.ok) {
         errorAlert("Erreur création intervention", result.error || "Erreur inconnue")
         throw new Error(result.error || "Erreur inconnue")
