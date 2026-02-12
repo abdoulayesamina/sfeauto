@@ -91,9 +91,9 @@ export function UserForm({
         <Label>Rôle</Label>
         <Select
           value={value.role || ""}
-          onValueChange={(role) => {
+          onValueChange={(role : "CLIENT" | "AGENCE") => {
             // Quand on change de rôle, on reset les champs qui ne s'appliquent plus
-            const next: Partial<User> = { ...value, role }
+            const next: Partial<User> = { ...value, role}
 
             const willNeed = role === "CLIENT" || role === "AGENCE"
             if (!willNeed) {
