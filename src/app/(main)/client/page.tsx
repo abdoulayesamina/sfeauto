@@ -30,6 +30,7 @@ export default function ClientPage() {
         setIsLoading(true)
         const data = await getVehicules()
         setVehicles(data.vehicles)
+        
       } catch (err: any) {
         console.error("Erreur récupération véhicules :", err.message)
       } finally {
@@ -62,7 +63,7 @@ export default function ClientPage() {
       
       const searchMatch = searchQuery === "" || 
         inv.vehicle.licensePlate.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        inv.vehicle.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        String(inv.vehicle.brand).toLowerCase().includes(searchQuery.toLowerCase()) ||
         inv.accordNumber?.toLowerCase().includes(searchQuery.toLowerCase())
       
       return statusMatch && searchMatch

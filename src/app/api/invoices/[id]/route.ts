@@ -127,7 +127,7 @@ export async function PATCH(request: NextRequest, context: Ctx) {
     });
 
     if (changeHistoryEntries.length > 0) {
-      await prisma.changeHistory.createMany({ data: changeHistoryEntries });
+      await prisma.changehistory.createMany({ data: changeHistoryEntries });
     }
 
     return NextResponse.json({

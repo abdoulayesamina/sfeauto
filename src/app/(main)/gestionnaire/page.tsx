@@ -31,7 +31,7 @@ export default function GestionnairePage() {
   const [vehiculeNotFound, setVehiculeNotFound] = useState(false)
   const [openCreateVehiculeModal, setOpenCreateVehiculeModal] = useState(false)
   const [apercuVehiculeOpen, setApercuVehiculeOpen] = useState(false)
-  const [selectedVehicle, setSelectedVehicle] = useState<Vehicule | null>(null)
+  const [selectedVehicle, setSelectedVehicle] = useState<any | null>(null)
 
   const [filterByAllVehicule, setFilterByAllVehicule] = useState(true)
   const [search, setSearch] = useState("")

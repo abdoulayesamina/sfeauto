@@ -37,7 +37,7 @@ type AppSidebarProps = {
     name: string
     email: string
     avatar: string
-    role:"ADMIN" |"MANAGER"|"MECHANIC"|"CLIENT"|"SIEGE"
+    role:"ADMIN" |"MANAGER"|"MECHANIC"|"CLIENT"|"SIEGE"| 'AGENCE'
   },
     variant?: "inset" | "sidebar"
 

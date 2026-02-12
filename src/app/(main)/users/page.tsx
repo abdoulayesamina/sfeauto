@@ -40,7 +40,6 @@ export default function UsersPage() {
   }, [users])
 
   const loadUsers = async () => {
-    debugger
     setLoading(true)
     try {
       const data = await getUsers()

@@ -124,8 +124,10 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
                         <div className="mb-6 grid grid-cols-2 gap-4">
                             <div>
                                 <p><span className="font-semibold">Immatriculation :</span> {devis.vehicle?.licensePlate}</p>
-                                <p><span className="font-semibold">Marque :</span> {devis.vehicle?.brand}</p>
-                                <p><span className="font-semibold">Modèle :</span> {devis.vehicle?.model}</p>
+                                {/* <p><span className="font-semibold">Marque :</span> {devis.vehicle?.brand}</p>
+                                <p><span className="font-semibold">Modèle :</span> {devis.vehicle?.model}</p> */}
+                                <p><span className="font-semibold">Marque :</span> </p>
+                                <p><span className="font-semibold">Modèle :</span> </p>
                             </div>
 
                             <div>
@@ -197,13 +199,13 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
                         </div>
                         <div className="grid grid-cols-[1fr_130px]">
                             <div>
-                                <div className="grid grid-cols-4 text-[12px] bg-[#000033] text-white">
-                                    <div className=" text-center">T</div>
-                                    <div className=" text-center">Base H.T</div>
-                                    <div className=" text-center">Tva</div>
-                                    <div className=" text-center">Mt.Tva</div>
-                                </div>
                                 <table className="border-collapse w-full min-h-[80px]">
+                                    <tr className="bg-[#000033] text-[12px] text-white">
+                                        <th className="border border-black">T</th>
+                                        <th className="border border-black">Base H.T</th>
+                                        <th className="border border-black">Tva</th>
+                                        <th className="border border-black">Mt.Tva</th>
+                                    </tr>
                                     <tr>
                                         <td className="border border-black">......</td>
                                         <td className="border border-black">{devis.dev_totalht}</td>
@@ -213,7 +215,27 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
                                 </table>
                             </div>
                             <div>
-                                <div className="flex flex-col">
+                                <table className="w-full border border-black">
+                                    <tr>
+                                        <th className="bg-[#000033] text-white text-center text-[12px] p-[9.5px]">Total HT</th>
+                                    </tr>
+                                    <tr>
+                                        <td className="p-[9.5px]">{devis.dev_totalht} €</td>
+                                    </tr>
+                                    <tr>
+                                        <th className="bg-[#000033] text-white text-center text-[12px] p-[9.5px]">TVA</th>
+                                    </tr>
+                                    <tr>
+                                        <td className="p-[9.5px]">{devis.dev_totaltva} €</td>
+                                    </tr>
+                                    <tr>
+                                        <th className="bg-[#000033] text-white text-center text-[12px] p-[9.5px]">NET À PAYER TTC</th>
+                                    </tr>
+                                    <tr>
+                                        <td className="p-[9.5px]">{devis.dev_totalttc} €</td>
+                                    </tr>
+                                </table>
+                                {/* <div className="flex flex-col">
                                     <span className="bg-[#000033] text-white text-center">Total HT</span>
                                     <span className="text-end p-2 border border-black">{devis.dev_totalht} €</span>
                                 </div>
@@ -224,7 +246,7 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
                                 <div className="flex flex-col">
                                     <span className="bg-[#000033] text-white text-center">NET À PAYER TTC</span>
                                     <span className="text-center font-bold p-2 border border-black">{devis.dev_totalttc} €</span>
-                                </div>
+                                </div> */}
                             </div>
                         </div>
                     </div>

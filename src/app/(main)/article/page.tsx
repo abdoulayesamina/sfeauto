@@ -13,10 +13,13 @@ import { confirmAlert, errorAlert, successAlert } from "@/src/lib/alerts";
 import { Article } from "@/src/utils/types/article";
 import { useCollectionApi } from "../collection/shared/useCollection.api";
 import { Collection } from "@/src/utils/types/collection";
+import { useFamilleApi } from "../famille/shared/useFamille.api";
+import { Famille } from "@/src/utils/types/famille";
 
 export default function ArticlesPage() {
     const { getArticles, createArticle, updateArticle, deleteArticle } = useArticleApi();
     const {getAllCollections} = useCollectionApi();
+    const {getAllFamilles} = useFamilleApi();
 
     const [loading, setLoading] = useState(false);
     const [loadingArticles, setLoadingArticles] = useState(false);
@@ -27,6 +30,8 @@ export default function ArticlesPage() {
     const [articlesSearch, setArticlesSearch] = useState<Article[]>([]);
     const [articles, setArticles] = useState<Article[]>([]);
     const [collections, setCollections] = useState<Collection[]>([]);
+    const [familles, setFammilles] = useState<Famille[]>([]);
+
     const [idToDelete, setIdToDelete] = useState<number | null>(null);
 
     const loadArticles = async () => {
@@ -35,6 +40,8 @@ export default function ArticlesPage() {
             setArticles(data);
             const CollectionsData = await getAllCollections();
             setCollections(CollectionsData);
+            const FamillesData = await getAllFamilles();
+            setFammilles(FamillesData);
         } catch (e: any) {
            throw new Error(e);
         }
@@ -151,6 +158,13 @@ export default function ArticlesPage() {
             cell: ({ row }) => {
                 const collection = collections.find(c => c.col_id === row.original.art_collectionId);
                 return <Badge>{collection ? collection.col_name : "N/A"}</Badge>;
+            }
+        },
+        {
+            header: "Fammille",
+            cell: ({ row }) => {
+                const famille = familles.find(f => f.fam_id === collections.find(c => c.col_id === row.original.art_collectionId)?.col_familleId);
+                return <Badge>{famille ? famille.fam_name : "N/A"}</Badge>;
             }
         },
         // {

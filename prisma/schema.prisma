@@ -395,3 +395,11 @@ model model {
 
   @@unique([name, brandId])
 }
+
+
+enum WorkStatus {
+  CONFIRMED_IN_PLANNING
+  WAITING_FOR_PARTS
+  FIXING_STARTED
+  FIXING_FINISHED
+}

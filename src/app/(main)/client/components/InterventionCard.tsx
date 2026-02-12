@@ -25,11 +25,11 @@ export default function InterventionCard({
   onViewDetails,
 }: InterventionCardProps) {
   // Ajout d'un log pour déboguer
-  console.log("Intervention complète:", {
-    id: intervention.id,
-    status: intervention.status,
-    accordNumber: intervention.accordNumber
-  })
+  // console.log("Intervention complète:", {
+  //   id: intervention.id,
+  //   status: intervention.status,
+  //   accordNumber: intervention.accordNumber
+  // })
 
   const status = toUIStatus(intervention.status)
   // OU utilisez la fonction de débogage :

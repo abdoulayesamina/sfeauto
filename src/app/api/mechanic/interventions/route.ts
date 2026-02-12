@@ -70,9 +70,9 @@ export async function GET(request: NextRequest) {
         handledBy: {
           select: { name: true, email: true }
         },
-        statusHistory: {
+        history: {
           include: {
-            changedBy: {
+            user: {
               select: { name: true }
             }
           },
@@ -104,20 +104,20 @@ export async function GET(request: NextRequest) {
       vehicle: {
         id: inv.vehicle.id,
         licensePlate: inv.vehicle.licensePlate,
-        brand: inv.vehicle.brand,
-        model: inv.vehicle.model,
+        brand: inv.vehicle.brandId,
+        model: inv.vehicle.modelId,
         year: inv.vehicle.year,
         color: inv.vehicle.color,
         client: inv.vehicle.client,
         base: inv.vehicle.base
       },
       handledBy: inv.handledBy,
-      statusHistory: inv.statusHistory.map(h => ({
+      statusHistory: inv.history.map(h => ({
         id: h.id,
         previousStatus: h.previousStatus,
         newStatus: h.newStatus,
         changedAt: h.changedAt.toISOString(),
-        changedBy: h.changedBy
+        changedBy: h.changedById
       }))
     }))
 

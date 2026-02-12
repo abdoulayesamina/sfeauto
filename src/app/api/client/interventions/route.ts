@@ -76,8 +76,8 @@ export async function GET(request: NextRequest) {
       vehicle: {
         id: inv.vehicle.id,
         licensePlate: inv.vehicle.licensePlate,
-        brand: inv.vehicle.brand,
-        model: inv.vehicle.model,
+        brandId: inv.vehicle.brandId,
+        modelId: inv.vehicle.modelId,
         year: inv.vehicle.year,
         color: inv.vehicle.color,
         client: inv.vehicle.client,

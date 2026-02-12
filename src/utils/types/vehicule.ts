@@ -29,6 +29,8 @@ export const VehiculeSchema = z.object({
   licensePlate: z.string().min(1, "Immatriculation obligatoire"),
   brandId: z.string().nullable().optional(),
   modelId: z.string().nullable().optional(),
+  brand: z.string().nullable().optional(),
+  model: z.string().nullable().optional(),
 
 
   year: z
