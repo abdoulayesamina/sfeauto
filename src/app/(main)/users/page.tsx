@@ -12,6 +12,7 @@ import { useClientApi } from "../clients/shared/useClient.api"
 import { confirmAlert, errorAlert, successAlert } from "@/src/lib/alerts"
 import { useAgenceApi } from "../agence/shared/useAgence.api"
 import { Spinner } from "@/src/shared/components/spinner"
+import { toast } from "sonner"
 
 export default function UsersPage() {
   const { getUsers, createUser, updateUser, deleteUser } = useUserApi()
@@ -45,7 +46,7 @@ export default function UsersPage() {
       const data = await getUsers()
       setUsers(data)
     } catch (e: any) {
-      errorAlert("Erreur", e.message)
+      toast.error("Erreur", e.message)
     }
     setLoading(false)
   }
@@ -55,7 +56,7 @@ export default function UsersPage() {
       const data = await getUsers()
       setUsers(data)
     } catch (e: any) {
-      errorAlert("Erreur", e.message)
+      toast.error("Erreur", e.message)
     }
   }
 
@@ -64,7 +65,7 @@ export default function UsersPage() {
       const data = await getClients()
       setClients(data.map((c) => ({ id: c.id, name: c.name })))
     } catch (e: any) {
-      errorAlert("Erreur", e.message)
+      toast.error("Erreur", e.message)
     }
   }
 
@@ -73,19 +74,19 @@ export default function UsersPage() {
       const data = await getAgences()
       setAgences(data.map((a) => ({ id: a.id, location: a.location, clientId: a.clientId })))
     } catch (e: any) {
-      errorAlert("Erreur", e.message)
+      toast.error("Erreur", e.message)
     }
   }
 
   const handleCreate = async () => {
     try {
       await createUser(formData)
-      successAlert("Utilisateur créé")
+      toast.success("Utilisateur créé")
       setIsOpen(false)
       setFormData({})
       loadUsersWithoutSpin()
     } catch (e: any) {
-      errorAlert("Erreur", e.message)
+      toast.error("Erreur", e.message)
     }
   }
 
@@ -109,13 +110,13 @@ export default function UsersPage() {
 
     try {
       await updateUser(userToEdit.id, payload)
-      successAlert("Utilisateur mis à jour")
+      toast.success("Utilisateur mis à jour")
       setEditOpen(false)
       setUserToEdit(null)
       setFormData({})
       loadUsersWithoutSpin()
     } catch (e: any) {
-      errorAlert("Erreur", e.message)
+      toast.error("Erreur", e.message)
     }
   }
 
@@ -128,10 +129,12 @@ export default function UsersPage() {
 
     try {
       await deleteUser(user.id)
-      successAlert("Utilisateur supprimé", `"${user.name}" a été supprimé avec succès.`)
+      toast.success("Utilisateur supprimé", {
+        description: `"${user.name}" a été supprimé avec succès.`,
+      })
       setUsers((prev) => prev.filter((u) => u.id !== user.id))
     } catch (err: any) {
-      errorAlert("Erreur", err.message || "Impossible de supprimer l'utilisateur")
+      toast.error("Erreur", err.message || "Impossible de supprimer l'utilisateur")
     }
   }
 

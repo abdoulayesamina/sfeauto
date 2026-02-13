@@ -24,6 +24,7 @@ import { Remise } from "@/src/utils/types/remise";
 import { log } from "console";
 import { useRemiseApi } from "./shared/hooks/useRemise.api";
 import { RemiseDataTable } from "./shared/components/remise-datatable";
+import { toast } from "sonner";
 
 export default function RemisePage() {
 
@@ -111,7 +112,7 @@ export default function RemisePage() {
             setApplyRemiseLoading(true);
             const res = await createRemise(remise);
             setApplyRemiseLoading(false);
-            successAlert("Succès", "Rémise appliquée avec succès.");
+            toast.success("Succès",{description: "Rémise appliquée avec succès."});
 
             setRefreshDataTable(r=>r+1)
             setArticleIdSelected(null)
@@ -121,7 +122,7 @@ export default function RemisePage() {
             setFamilleIdSelected(null)
             
         }catch(e : any){
-            errorAlert("Erreur de création", `${e.error||e.message||"Erreur lors de la création de remise"}`)
+            toast.error("Erreur de création", {description:`${e.error||e.message||"Erreur lors de la création de remise"}`})
             setApplyRemiseLoading(false);
             return;
         }
@@ -148,11 +149,11 @@ export default function RemisePage() {
             console.log("Modification : ", remise);
             const res = await updateRemise(remise);
             setApplyRemiseLoading(false);
-            successAlert("Succès", "Rémise modifié avec succès.");
+            toast.success("Succès", {description:" Rémise modifié avec succès."});
             setRefreshDataTable(r=>r+1)
             cancelEdit()
         }catch(e : any){
-            errorAlert("Erreur de modification", `${e.error||e.message||"Erreur lors de la modification de remise"}`)
+            toast.error("Erreur de modification", {description:`${e.error||e.message||"Erreur lors de la modification de remise"}`})
             setApplyRemiseLoading(false);
             return;
         }
@@ -171,11 +172,9 @@ export default function RemisePage() {
         <div className="shadow bg-white rounded-lg m-3">
             <div className="p-10 mx-4 mt-2">
                 <div className="flex mb-2 p-6 gap-4 items-center">
-                    <div className="p-2 rounded-lg bg-blue-100 text-blue-700">
-                        <BadgePercent />
-                    </div>
                     <h2 className="font-bold text-2xl">Gestion des Remises</h2>
                 </div>
+                
                 <div className="rounded-lg grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
                     <div>
                         <Label>Famille</Label>

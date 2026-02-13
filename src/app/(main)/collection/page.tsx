@@ -13,6 +13,7 @@ import { successAlert,errorAlert, confirmAlert } from "@/src/lib/alerts";
 import { Collection } from "@/src/utils/types/collection";
 import { useFamilleApi } from "../famille/shared/useFamille.api";
 import { Famille } from "@/src/utils/types/famille";
+import { toast } from "sonner";
 
 export default function CollectionPage() {
     const { getAllCollections, createCollection, updateCollection, deleteCollection } = useCollectionApi();
@@ -47,7 +48,7 @@ export default function CollectionPage() {
             try {
                 await loadCollections();
             }catch (e: any) {
-                errorAlert("Erreur", e.message);
+                toast.error("Erreur", e.message);
                 return;
             } 
             finally {
@@ -108,11 +109,11 @@ export default function CollectionPage() {
 
         try{
             const res = await createCollection(newCollection)
-            successAlert("Collection créée", "La collection a étée créée avec succès !")
+            toast.success( "La collection a étée créée avec succès !")
             setFormData({});
             setCollections([...collections, res.collection]);
         }catch(e:any){
-            errorAlert("Erreur", e.message);
+            toast.error("Erreur", e.message);
             setLoadingCollections(false);
             return;
         }
@@ -133,9 +134,9 @@ export default function CollectionPage() {
 
         try{
             await updateCollection(updated)
-            successAlert("Collection modifiée", "La collection a étée modifiée avec succès !")
+            toast.success("La collection a étée modifiée avec succès !")
         }catch(e:any){
-            errorAlert("Erreur", e.message);
+            toast.error("Erreur", e.message);
             setLoadingCollections(false);
             return;
         }
@@ -153,9 +154,9 @@ export default function CollectionPage() {
 
         try{
             await deleteCollection(data.col_id)
-            successAlert("Collection supprimée", "La collection a étée supprimée avec succès !")
+            toast.success("La collection a étée supprimée avec succès !")
         }catch(e:any){
-            errorAlert("Erreur", e.message);
+            toast.error("Erreur", e.message);
             setIdToDelete(null);
             return;
         }

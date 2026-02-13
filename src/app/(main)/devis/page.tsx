@@ -14,6 +14,7 @@ import { EditDevisModal } from "../gestionnaire/shared/components/EditDevisModal
 import { ValidateDevisModal } from "../gestionnaire/shared/components/ValidateDevisModal";
 import { Modal } from "@/src/shared/components/modal";
 import { DevisApercu } from "../gestionnaire/shared/components/devisApercu";
+import { toast } from "sonner";
 
 function formatDate(d?: string | Date | null) {
   if (!d) return "—";
@@ -59,7 +60,7 @@ export default function DevisPage() {
       setRows(list);
       setRowsSearch(list);
     } catch (e: any) {
-      errorAlert("Erreur", e.message);
+      toast.error("Erreur", e.message);
     } finally {
       setLoading(false);
     }
@@ -70,7 +71,6 @@ export default function DevisPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ✅ Recherche (comme tes autres pages)
   const handleSearch = (q: string) => {
     const s = q.toLowerCase().trim();
 
@@ -102,7 +102,6 @@ export default function DevisPage() {
     setRowsSearch(filtered);
   };
 
-  // ✅ Colonnes (ColumnDef) -> createColumns -> DataTable
   const columns: ColumnDef<any>[] = [
     {
       accessorKey: "dev_numdevis",

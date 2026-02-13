@@ -51,18 +51,16 @@ export default function ClientPage() {
     setOpenInterventionModal(true)
   }
 
-  // ✅ détail complet = on ouvre une intervention (dernière par défaut)
   const handleViewDetailsFromVehicle = (v: any) => {
     const invoices: Invoice[] = Array.isArray(v.invoices) ? v.invoices : []
     if (!invoices.length) return
 
-    const last = invoices[invoices.length - 1] // ✅ dernière intervention
+    const last = invoices[invoices.length - 1]
     setVehiculeSelect(v)
-    setInterventionVehicule([{ ...last, vehicle: v }]) // pattern identique à ton ClientPage
+    setInterventionVehicule([{ ...last, vehicle: v }]) 
     setOpenDetailModal(true)
   }
 
-  // ✅ 1 card = 1 véhicule (plus de flatMap)
   const filteredVehicles = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
 
@@ -90,7 +88,6 @@ export default function ClientPage() {
       })
   }, [vehicles, searchQuery, filterStatus])
 
-  // ✅ Stats (comme toi, OK)
   const stats = useMemo(() => {
     const total = vehicles.length
 

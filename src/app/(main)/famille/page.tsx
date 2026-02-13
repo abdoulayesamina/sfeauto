@@ -10,6 +10,7 @@ import { FamilleForm } from "./forms/famille-form";
 import { useFamilleApi } from "./shared/useFamille.api";
 import { Famille } from "@/src/utils/types/famille";
 import { confirmAlert, errorAlert, successAlert } from "@/src/lib/alerts";
+import { toast } from "sonner";
 
 export default function FamillePage() {
     const { getAllFamilles, createFamille, updateFamille, deleteFamille } = useFamilleApi();
@@ -39,7 +40,7 @@ export default function FamillePage() {
                 await loadFamilles();
             }
             catch (e: any) {
-                errorAlert("Erreur", e.message);
+                toast.error("Erreur", e.message);
                 return;
             }
             finally {
