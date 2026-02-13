@@ -32,6 +32,7 @@ model collection_col {
 
 model article_art {
   art_id           Int               @id @default(autoincrement())
+  art_reference    String            @db.VarChar(100)
   art_name         String
   art_price        Int
   art_collectionId Int
@@ -396,10 +397,9 @@ model model {
   @@unique([name, brandId])
 }
 
-
 enum WorkStatus {
-  CONFIRMED_IN_PLANNING
-  WAITING_FOR_PARTS
-  FIXING_STARTED
-  FIXING_FINISHED
+  CONFIRMED_IN_PLANNING
+  WAITING_FOR_PARTS
+  FIXING_STARTED
+  FIXING_FINISHED
 }

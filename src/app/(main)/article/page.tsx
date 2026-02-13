@@ -26,7 +26,7 @@ export default function ArticlesPage() {
 
     const [isOpen, setIsOpen] = useState(false);
     const [editOpen, setEditOpen] = useState(false);
-    const [formData, setFormData] = useState<Article>({art_name: "", art_price: 0, art_collectionId: 0});
+    const [formData, setFormData] = useState<Article>({art_reference: "", art_name: "", art_price: 0, art_collectionId: 0});
     const [articlesSearch, setArticlesSearch] = useState<Article[]>([]);
     const [articles, setArticles] = useState<Article[]>([]);
     const [collections, setCollections] = useState<Collection[]>([]);
@@ -74,19 +74,19 @@ export default function ArticlesPage() {
 
     const handleSearch = (e: string) => {
         const filtered = articles.filter((article) =>
-            article.art_name.toLowerCase().includes(e.toLowerCase()) || article.art_price.toString().includes(e)
+           article.art_reference.toLowerCase().includes(e.toLowerCase()) || article.art_name.toLowerCase().includes(e.toLowerCase()) || article.art_price.toString().includes(e)
         );
         setArticlesSearch(filtered);
     }
 
     const handleCreate = async () => {
-        let newArticles : Article = {art_name: formData.art_name, art_price: formData.art_price, art_collectionId: Number(formData.art_collectionId)};
+        let newArticles : Article = {art_reference: formData.art_reference, art_name: formData.art_name, art_price: formData.art_price, art_collectionId: Number(formData.art_collectionId)};
         setLoadingArticles(true);
         try{
             const res = await createArticle(newArticles);
             successAlert("Article créé"," L'article a été créé avec succès.");
             setArticles([...articles, res.article]);
-            setFormData({art_name: "", art_price: 0, art_collectionId: 0});
+            setFormData({art_reference: "", art_name: "", art_price: 0, art_collectionId: 0});
         }catch(e:any){
             setLoadingArticles(false);
             errorAlert("Erreur", e.message);
@@ -94,7 +94,7 @@ export default function ArticlesPage() {
         }
 
         setLoadingArticles(false);
-        setFormData({art_name: "", art_price: 0, art_collectionId: 0});
+        setFormData({art_reference: "", art_name: "", art_price: 0, art_collectionId: 0});
         setIsOpen(false)
     }
 
@@ -105,7 +105,7 @@ export default function ArticlesPage() {
 
     const handleUpdateSubmit = async () => {
          
-        let updated : Article = {art_id: formData.art_id, art_name: formData.art_name, art_price: formData.art_price, art_collectionId: Number(formData.art_collectionId)};
+        let updated : Article = {art_id: formData.art_id, art_reference: formData.art_reference, art_name: formData.art_name, art_price: formData.art_price, art_collectionId: Number(formData.art_collectionId)};
         setLoadingArticles(true);
 
         try{
@@ -117,7 +117,7 @@ export default function ArticlesPage() {
             return;
         }
         setArticles(articles.map(a => a.art_id === updated.art_id ? updated : a));
-        setFormData({art_name: "", art_price: 0, art_collectionId: 0});
+        setFormData({art_reference: "", art_name: "", art_price: 0, art_collectionId: 0});
         setLoadingArticles(false);
         setEditOpen(false)
     }
@@ -143,6 +143,16 @@ export default function ArticlesPage() {
     }
 
     const columns: ColumnDef<any>[] = [
+        {
+        accessorKey: "art_reference",
+        header: "Référence",
+        cell: ({ row }) => (
+            <Badge variant="secondary">
+                {row.original.art_reference || "—"}
+            </Badge>
+        ),
+        },
+
         {
             accessorKey: "art_name",
             header: "Nom",
