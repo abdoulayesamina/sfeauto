@@ -5,7 +5,7 @@ import { Input } from "@/src/shared/components/ui/input"
 import { Label } from "@/src/shared/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/shared/components/ui/select"
 import { useFamilleApi } from "../../famille/shared/useFamille.api"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Spinner } from "@/src/shared/components/spinner"
 import { Famille } from "@/src/utils/types/famille"
 
@@ -30,6 +30,13 @@ export function CollectionForm({
     const [loadingFamilles, setLoadingFamilles] = useState(false);
     const [familles, setFamilles] = useState<Famille[]>([]);
 
+    const inputRef = useRef<HTMLInputElement>(null);
+    useEffect(() => {
+    if (mode === "edit") {
+        inputRef.current?.focus();
+    }
+    }, [mode]);
+
     useEffect(() => {
         const fetchFamilles = async () => {
             setLoadingFamilles(true);
@@ -48,20 +55,11 @@ export function CollectionForm({
 
     return (
         <form>
-            <div className="mb-4 flex flex-col gap-2 p-2">
-                <Label>Nom</Label>
-                <Input
-                    className="h-16"
-                    value={data.col_name || ""}
-                    onChange={(e) => onChange({ ...data, col_name: e.target.value })}
-                    placeholder="Nom de la collection"
-                />
-            </div>
 
             <div className="mb-4 flex flex-col gap-2 p-2">
                 <Label>Famille</Label>
                 <Select value={String(data.col_familleId) || ""} onValueChange={(v) => onChange({ ...data, col_familleId: v })} disabled={loadingFamilles}>
-                <SelectTrigger className="w-full !h-16">
+                <SelectTrigger className="w-full !h-12">
                     {loadingFamilles ? <Spinner /> : ""}
                     <SelectValue placeholder="Sélectionnez une famille" />
                 </SelectTrigger>
@@ -73,6 +71,17 @@ export function CollectionForm({
                     ))}
                 </SelectContent>
                 </Select>
+            </div>
+
+            <div className="mb-4 flex flex-col gap-2 p-2">
+                <Label>Nom</Label>
+                <Input
+                    ref={inputRef}
+                    className="h-12"
+                    value={data.col_name || ""}
+                    onChange={(e) => onChange({ ...data, col_name: e.target.value })}
+                    placeholder="Nom de la collection"
+                />
             </div>
 
             <div className="mt-6 grid grid-cols-2 gap-2">

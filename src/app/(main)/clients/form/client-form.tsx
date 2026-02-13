@@ -5,6 +5,7 @@ import { Input } from "@/src/shared/components/ui/input"
 import { Label } from "@/src/shared/components/ui/label"
 import { Textarea } from "@/src/shared/components/ui/textarea"
 import { Client } from "@/src/utils/types/client"
+import { useEffect, useRef } from "react"
 
 type Props = {
   mode: "create" | "edit"
@@ -21,12 +22,22 @@ export function ClientForm({
   onSubmit,
   onChange,
 }: Props) {
+
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+  if (mode === "edit") {
+      inputRef.current?.focus();
+  }
+  }, [mode]);
+
   return (
     <form className="space-y-6">
       <div className="grid grid-cols-1 gap-4">
         <div>
           <Label>Nom du client</Label>
           <Input
+            ref={inputRef}
             className="h-12"
             value={data.name || ""}
             onChange={(e) => onChange({ ...data, name: e.target.value })}
@@ -53,7 +64,7 @@ export function ClientForm({
             className="h-12"
             value={data.phone || ""}
             onChange={(e) => onChange({ ...data, phone: e.target.value })}
-            placeholder="+223 xx xx xx xx"
+            placeholder="+33 x xx xx xx xx"
           />
         </div>
       </div>

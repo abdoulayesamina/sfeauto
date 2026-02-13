@@ -5,7 +5,7 @@ import { Input } from "@/src/shared/components/ui/input"
 import { Label } from "@/src/shared/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/shared/components/ui/select"
 import { useCollectionApi } from "../../collection/shared/useCollection.api"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Spinner } from "@/src/shared/components/spinner"
 import { Collection } from "@/src/utils/types/collection"
 import { Article } from "@/src/utils/types/article"
@@ -31,6 +31,13 @@ export function ArticleForm({
     const [loadingCollections, setLoadingCollections] = useState(false);
     const [collections, setCollections] = useState<Collection[]>([]);
 
+    const inputRef = useRef<HTMLInputElement>(null);
+    useEffect(() => {
+    if (mode === "edit") {
+        inputRef.current?.focus();
+    }
+    }, [mode]);
+
     useEffect(() => {
         const fetchCollections = async () => {
             setLoadingCollections(true);
@@ -54,7 +61,7 @@ export function ArticleForm({
             <div className="mb-4 flex flex-col gap-2 p-2">
                 <Label>Collection</Label>
                 <Select value={String(data.art_collectionId) || ""} onValueChange={(v) => onChange({ ...data, art_collectionId: v })}>
-                <SelectTrigger className="w-full !h-16">
+                <SelectTrigger className="w-full !h-12">
                     {loadingCollections ? <Spinner /> : ""}
                     <SelectValue placeholder="Sélectionnez une collection" />
                 </SelectTrigger>
@@ -71,17 +78,18 @@ export function ArticleForm({
             <div className="mb-4 flex flex-col gap-2 p-2">
                 <Label>Nom</Label>
                 <Input
-                    className="h-16"
+                    ref={inputRef}
+                    className="h-12"
                     value={data.art_name || ""}
                     onChange={(e) => onChange({ ...data, art_name: e.target.value })}
-                    placeholder="Nom de la collection"
+                    placeholder="Nom de l'article"
                 />
             </div>
 
             <div className="mb-4 flex flex-col gap-2 p-2">
                 <Label>Prix</Label>
                 <Input
-                    className="h-16"
+                    className="h-12"
                     value={data.art_price || ""}
                     onChange={(e) => onChange({ ...data, art_price: e.target.value })}
                     placeholder="Prix de l'article"

@@ -5,6 +5,7 @@ import { Input } from "@/src/shared/components/ui/input"
 import { Label } from "@/src/shared/components/ui/label"
 import { Button } from "@/src/shared/components/ui/button"
 import { Agence } from "@/src/utils/types/agence"
+import { useEffect, useRef } from "react"
 
 type Props = {
   mode: "create" | "edit"
@@ -21,12 +22,19 @@ export function AgenceForm({ mode, data, clients, onClose, onSubmit, onChange }:
     onSubmit()
   }
 
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+  if (mode === "edit") {
+      inputRef.current?.focus();
+  }
+  }, [mode]);
+
   return (
     <form onSubmit={handleSubmit}>
       <div className="mb-4 flex flex-col gap-2">
         <Label>Client</Label>
         <Select value={data.clientId || ""} onValueChange={(v) => onChange({ ...data, clientId: v })}>
-          <SelectTrigger className="w-full !h-16">
+          <SelectTrigger className="w-full !h-12">
             <SelectValue placeholder="Sélectionnez un client" />
           </SelectTrigger>
           <SelectContent className="z-[2000]">
@@ -42,7 +50,8 @@ export function AgenceForm({ mode, data, clients, onClose, onSubmit, onChange }:
       <div className="mb-4 flex flex-col gap-2">
         <Label>Emplacement</Label>
         <Input
-          className="h-16"
+          ref={inputRef}
+          className="h-12"
           value={data.location || ""}
           onChange={(e) => onChange({ ...data, location: e.target.value })}
           placeholder="Emplacement"

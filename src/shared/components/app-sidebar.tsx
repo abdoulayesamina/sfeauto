@@ -31,6 +31,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/src/shared/components/ui/sidebar"
+import Image from "next/image"
 
 type AppSidebarProps = {
   user: {
@@ -167,7 +168,7 @@ const filteredNav = navMain.filter(item =>
               className="data-[slot=sidebar-menu-button]:!p-1.5 "
             >
               <span>
-                <ArrowUpCircleIcon className="h-5 w-5" />
+                <Image alt="LOGO-sfe-auto" src={"/sfe-auto-logo2.png"} width={70} height={70} />
                 <span className="text-base font-semibold">SFE Auto</span>
               </span>
             </SidebarMenuButton>
