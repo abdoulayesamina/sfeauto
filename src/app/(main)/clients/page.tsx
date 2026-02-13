@@ -12,6 +12,7 @@ import { useClientApi } from "./shared/useClient.api"
 import { confirmAlert, errorAlert, successAlert } from "@/src/lib/alerts"
 import { Spinner } from "@/src/shared/components/spinner"
 import { Client } from "@/src/utils/types/client"
+import { toast } from "sonner"
 
 type ClientWithCount = Client & {
   _count?: {
@@ -47,7 +48,7 @@ export default function ClientPage() {
       const data = await getClients()
       setClients(data)
     } catch (e: any) {
-      errorAlert("Erreur", e.message)
+      toast.error("Erreur", e.message)
     }
     setLoading(false)
   }
@@ -57,19 +58,19 @@ export default function ClientPage() {
       const data = await getClients()
       setClients(data)
     } catch (e: any) {
-      errorAlert("Erreur", e.message)
+      toast.error("Erreur", e.message)
     }
   }
 
   const handleCreate = async () => {
     try {
       await createClient(formData)
-      successAlert("Client créé")
+      toast.success("Client créé")
       setIsOpen(false)
       setFormData({})
       loadClientsWithoutSpin()
     } catch (e: any) {
-      errorAlert("Erreur", e.message)
+      toast.error("Erreur", e.message)
     }
   }
 
@@ -84,13 +85,13 @@ export default function ClientPage() {
 
     try {
       await updateClient(clientToEdit.id, formData)
-      successAlert("Client mis à jour")
+      toast.success("Client mis à jour")
       setEditOpen(false)
       setClientToEdit(null)
       setFormData({})
       loadClientsWithoutSpin()
     } catch (e: any) {
-      errorAlert("Erreur", e.message)
+      toast.error("Erreur", e.message)
     }
   }
 
@@ -103,10 +104,10 @@ export default function ClientPage() {
 
     try {
       await deleteClient(client.id)
-      successAlert("Client supprimé")
+      toast.success("Client supprimé")
       setClients((prev) => prev.filter((c) => c.id !== client.id))
     } catch (e: any) {
-      errorAlert("Suppression impossible", e.message)
+      toast.error("Suppression impossible", e.message)
     }
   }
 

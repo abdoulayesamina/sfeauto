@@ -15,6 +15,9 @@ import { useCollectionApi } from "../collection/shared/useCollection.api";
 import { Collection } from "@/src/utils/types/collection";
 import { useFamilleApi } from "../famille/shared/useFamille.api";
 import { Famille } from "@/src/utils/types/famille";
+import { toast } from "sonner";
+import { error } from "node:console";
+import { Description } from "@radix-ui/react-dialog";
 
 export default function ArticlesPage() {
     const { getArticles, createArticle, updateArticle, deleteArticle } = useArticleApi();
@@ -54,7 +57,7 @@ export default function ArticlesPage() {
                 await loadArticles(); 
                 
             }catch (e: any) {
-                errorAlert("Erreur", e.message);
+                toast.error("Erreur", e.message);
                 return;
             } 
             finally {
@@ -84,12 +87,14 @@ export default function ArticlesPage() {
         setLoadingArticles(true);
         try{
             const res = await createArticle(newArticles);
-            successAlert("Article créé"," L'article a été créé avec succès.");
+            toast.success("Article créé",
+                {description:" L'article a été créé avec succès."}
+            );
             setArticles([...articles, res.article]);
             setFormData({art_name: "", art_price: 0, art_collectionId: 0});
         }catch(e:any){
             setLoadingArticles(false);
-            errorAlert("Erreur", e.message);
+            toast.error("Erreur", e.message);
             return;
         }
 
@@ -110,7 +115,9 @@ export default function ArticlesPage() {
 
         try{
             await updateArticle(updated.art_id ?? 0, updated);
-            successAlert("Article mis à jour"," L'article a été mis à jour avec succès.");
+            toast.success("Article mis à jour",
+                {description:" L'article a été mis à jour avec succès."}
+            );
         }catch(e:any){
             errorAlert("Erreur", e.message);
             setLoadingArticles(false);
@@ -130,9 +137,9 @@ export default function ArticlesPage() {
         setIdToDelete(data.art_id ?? null);
         try{
             await deleteArticle(data.art_id ?? 0);
-            successAlert("Article supprimé"," L'article a été supprimé avec succès.");
+            toast.success("Article supprimé",{description:" L'article a été supprimé avec succès."});
         }catch(e:any){
-            errorAlert("Erreur", e.message);
+            toast.error("Erreur", e.message);
             setIdToDelete(null);
             return;
         }
@@ -161,7 +168,7 @@ export default function ArticlesPage() {
             }
         },
         {
-            header: "Fammille",
+            header: "Famille",
             cell: ({ row }) => {
                 const famille = familles.find(f => f.fam_id === collections.find(c => c.col_id === row.original.art_collectionId)?.col_familleId);
                 return <Badge>{famille ? famille.fam_name : "N/A"}</Badge>;

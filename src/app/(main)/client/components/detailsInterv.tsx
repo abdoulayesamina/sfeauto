@@ -36,16 +36,15 @@ type Props = {
 
 // --- mapping pour les statuts ---
 const STATUS_UI_MAP: Record<string, { label: string; color: string; bg: string; icon: any }> = {
-  CONFIRMED_IN_PLANNING: { label: "EN_COURS", color: "text-blue-600", bg: "bg-blue-100", icon: Car },
-  FIXING_STARTED: { label: "EN_COURS", color: "text-blue-600", bg: "bg-blue-100", icon: Car },
-  WAITING_FOR_PARTS: { label: "ATTENTE_PIECES", color: "text-orange-600", bg: "bg-orange-100", icon: Wrench },
+  CONFIRMED_IN_PLANNING: { label: "EN COURS", color: "text-blue-600", bg: "bg-blue-100", icon: Car },
+  FIXING_STARTED: { label: "EN COURS", color: "text-blue-600", bg: "bg-blue-100", icon: Car },
+  WAITING_FOR_PARTS: { label: "ATTENTE PIECES", color: "text-orange-600", bg: "bg-orange-100", icon: Wrench },
   FIXING_FINISHED: { label: "TERMINEE", color: "text-emerald-600", bg: "bg-emerald-100", icon: Car },
 }
 
 export default function InterventionDetailClient({ selectedVehicle, onClose }: Props) {
   if (!selectedVehicle || !selectedVehicle.invoices?.length) return null
 
-  // --- on prend la première intervention pour l'affichage
   const selectedIntervention = {
     ...selectedVehicle.invoices[0],
     vehicle: {

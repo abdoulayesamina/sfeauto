@@ -17,6 +17,7 @@ import { VehiclePreview } from "./shared/components/vehicle-apercu"
 import { errorAlert, successAlert } from "@/src/lib/alerts"
 import { useInterventionApi } from "./shared/useIntervention.api"
 import { InterventionForm } from "./form/intervention-form"
+import { toast } from "sonner"
 
 export default function GestionnairePage() {
   const { getVehicles, searchVehicles, createVehicle } = useManageApi()
@@ -43,7 +44,6 @@ export default function GestionnairePage() {
 
   const [interventionModalOpen, setInterventionModalOpen] = useState(false)
 
-  // Helpers: sécuriser les retours API
   const normalizeVehicles = (v: any): Vehicule[] => {
     if (Array.isArray(v)) return v
     if (Array.isArray(v?.vehicles)) return v.vehicles
@@ -54,7 +54,6 @@ export default function GestionnairePage() {
     return Array.isArray(x) ? x : []
   }
 
-  // Chargement initial
   useEffect(() => {
     loadAll()
     
@@ -73,7 +72,7 @@ export default function GestionnairePage() {
       setClients(normalizeArray(c))
       setAgences(normalizeArray(a))
     } catch (e: any) {
-      errorAlert("Erreur", e.message)
+      toast.error("Erreur", e.message)
     } finally {
       setLoading(false)
     }
@@ -95,24 +94,22 @@ export default function GestionnairePage() {
       setVehiculeNotFound(vv.length === 0)
       if (vv.length === 0) setPreFillLicensePlate(search)
     } catch (e: any) {
-      errorAlert("Recherche", e.message)
+      toast.error("Recherche", e.message)
     }
   }
 
-  // Création véhicule
   const handleCreateVehicle = async (data: Partial<Vehicule>) => {
     try {
       await createVehicle(data)
-      successAlert("Véhicule créé")
+      toast.success("Véhicule créé")
       setOpenCreateVehiculeModal(false)
       setVehiculeNotFound(false)
       await loadAll()
     } catch (e: any) {
-      errorAlert("Erreur", e.message)
+      toast.error("Erreur", e.message)
     }
   }
 
-  // Filtrage véhicules selon client, agence, statut
   const filteredVehicles = useMemo(() => {
     const list = Array.isArray(vehicles) ? vehicles : []
 
@@ -155,9 +152,9 @@ export default function GestionnairePage() {
 
       await loadAll()
       setInterventionModalOpen(false)
-      successAlert("Intervention créée")
+      toast.success("Intervention créée")
     } catch (e: any) {
-      errorAlert("Intervention", e.message)
+      toast.error("Intervention", e.message)
     }
   }
 
