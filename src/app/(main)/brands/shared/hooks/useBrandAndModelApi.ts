@@ -1,4 +1,5 @@
-import { Brand, Model } from "../../page";
+import { Brand } from "@/src/utils/types/brand";
+import { Model } from "@/src/utils/types/model";
 
 export function useBrandAndModelApi() {
 

@@ -1,5 +1,6 @@
-import { Brand, Model } from "../../page";
+import { Brand } from "@/src/utils/types/brand";
 import { useBrandAndModelApi } from "./useBrandAndModelApi"
+import { Model } from "@/src/utils/types/model";
 
 const {getBrandById, getModelById} = useBrandAndModelApi();
 
