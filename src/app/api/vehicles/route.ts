@@ -67,10 +67,9 @@ export async function GET(request: NextRequest) {
         licensePlate: true,
         brandId: true,
         modelId: true,
-
+        
         year: true,
         color: true,
-
         firstRegistrationDate: true,
         energy: true,
         doorsCount: true,
@@ -88,6 +87,20 @@ export async function GET(request: NextRequest) {
 
         client: { select: { id: true, name: true } },
         base: { select: { id: true, location: true, clientId: true } },
+
+        brand: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        
+        model: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
 
         invoices: {
           select: {

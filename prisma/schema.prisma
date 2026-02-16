@@ -61,35 +61,35 @@ model remise_rem {
 //////////////////////
 
 model te_devis_dev {
-  dev_id                 Int       @id @default(autoincrement())
-  dev_cli_id             String
-  dev_veh_id             String
-  dev_invoice_id         String?   @unique
-  dev_user               String?
-  dev_adressefacturation String?   @db.Text
-  dev_numdevis           String    @unique
-  dev_datecreation       DateTime  @default(now())
-  dev_totalht            Decimal   @db.Decimal(14, 2)
-  dev_totaltva           Decimal   @db.Decimal(14, 2)
-  dev_totalttc           Decimal   @db.Decimal(14, 2)
-  dev_tva                Decimal?  @db.Decimal(5, 2)
-  dev_supprimee          Boolean   @default(false)
-  dev_accordNumber       String?   @unique
-  dev_dateAccord         DateTime?
+    dev_id                 Int       @id @default(autoincrement())
+    dev_cli_id             String
+    dev_veh_id             String
+    dev_invoice_id         String?   @unique
+    dev_user               String?
+    dev_adressefacturation String?   @db.Text
+    dev_numdevis           String    @unique
+    dev_datecreation       DateTime  @default(now())
+    dev_totalht            Decimal   @db.Decimal(14, 2)
+    dev_totaltva           Decimal   @db.Decimal(14, 2)
+    dev_totalttc           Decimal   @db.Decimal(14, 2)
+    dev_tva                Decimal?  @db.Decimal(5, 2)
+    dev_supprimee          Boolean   @default(false)
+    dev_accordNumber       String?   @unique
+    dev_dateAccord         DateTime?
 
-  client  client   @relation(fields: [dev_cli_id], references: [id], onDelete: Cascade)
-  vehicle vehicle  @relation(fields: [dev_veh_id], references: [id], onDelete: Cascade)
-  invoice invoice? @relation(fields: [dev_invoice_id], references: [id])
-  user    user?    @relation(fields: [dev_user], references: [id])
+    client  client   @relation(fields: [dev_cli_id], references: [id], onDelete: Cascade)
+    vehicle vehicle  @relation(fields: [dev_veh_id], references: [id], onDelete: Cascade)
+    invoice invoice? @relation(fields: [dev_invoice_id], references: [id])
+    user    user?    @relation(fields: [dev_user], references: [id])
 
-  articles te_devisart_dea[] @relation("Devis_Articles")
+    articles te_devisart_dea[] @relation("Devis_Articles")
 
-  @@index([dev_cli_id])
-  @@index([dev_veh_id])
-  @@index([dev_invoice_id])
-  @@index([dev_user])
-  @@index([dev_datecreation])
-  @@index([dev_supprimee])
+    @@index([dev_cli_id])
+    @@index([dev_veh_id])
+    @@index([dev_invoice_id])
+    @@index([dev_user])
+    @@index([dev_datecreation])
+    @@index([dev_supprimee])
 }
 
 model te_devisart_dea {

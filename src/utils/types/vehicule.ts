@@ -29,9 +29,16 @@ export const VehiculeSchema = z.object({
   licensePlate: z.string().min(1, "Immatriculation obligatoire"),
   brandId: z.string().nullable().optional(),
   modelId: z.string().nullable().optional(),
-  brand: z.string().nullable().optional(),
-  model: z.string().nullable().optional(),
 
+  brand: z.object({
+    id: z.string(),
+    name: z.string()
+  }).optional(),
+
+  model:z.object({
+    id: z.string(),
+    name: z.string()
+  }).optional(),
 
   year: z
     .coerce
@@ -72,6 +79,8 @@ export const VehiculeSchema = z.object({
       location: z.string(),
     })
     .optional(),
+
+    
 
   invoices: z.array(InvoiceSchema).optional(),
 });
