@@ -157,7 +157,8 @@ export default function MecanicienPage() {
                         return (
                             <div key={inv.id} className="border rounded-xl p-5 flex flex-col gap-4 lg:flex-row lg:items-center hover:shadow-md transition">
                                 <div className="flex items-start gap-3 flex-1">
-                                    <Car className="text-gray-400 mt-1" />
+                                    {/* <Car className="text-gray-400 mt-1" /> */}
+                                    <Car size={18} className="text-gray-400 mt-1 shrink-0" />
                                     <div>
                                         <p className="font-bold">{inv.vehicle.licensePlate}</p>
                                         <p className="text-sm text-gray-500">{inv.vehicle.brand} {inv.vehicle.model}</p>
@@ -165,7 +166,8 @@ export default function MecanicienPage() {
                                 </div>
 
                                 <div className="flex items-start gap-3 flex-1">
-                                    <Calendar className="text-gray-400 mt-1" />
+                                    {/* <Calendar className="text-gray-400 mt-1" /> */}
+                                    <Calendar size={18} className="text-gray-400 mt-1 shrink-0" />
                                     <div>
                                         <p className="font-medium">{inv.accordNumber || "—"}</p>
                                         <p className="text-sm text-gray-500">{inv.createdAt.slice(0, 10)}</p>
@@ -173,7 +175,8 @@ export default function MecanicienPage() {
                                 </div>
 
                                 <div className="flex items-start gap-3 flex-1">
-                                    <User className="text-gray-400 mt-1" />
+                                    {/* <User className="text-gray-400 mt-1" /> */}
+                                    <User size={18} className="text-gray-400 mt-1 shrink-0" />
                                     <div>
                                         <p className="font-medium">{inv.vehicle.client.name}</p>
                                         <p className="text-sm text-gray-500 flex items-center gap-1">

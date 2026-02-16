@@ -40,7 +40,7 @@ export async function POST(req: Request) {
 
     const model = await prisma.model.create({
       data: {
-        id: randomUUID(), // 🔥 obligatoire
+        id: randomUUID(),
         name,
         brandId,
       },

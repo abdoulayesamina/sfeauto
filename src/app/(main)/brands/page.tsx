@@ -1,302 +1,188 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/src/shared/components/ui/button"
-import { Input } from "@/src/shared/components/ui/input"
-
-type Brand = {
-  id: string
-  name: string
-}
-
-type Model = {
-  id: string
-  name: string
-  brandId: string
-}
+import { Brand } from "@/src/utils/types/brand"
+import { useBrandsApi } from "./shared/useBrands.api"
+import { confirmAlert } from "@/src/lib/alerts"
+import { createColumns, DataTable } from "@/src/shared/components/data-table"
+import { ColumnDef } from "@tanstack/react-table"
+import { Spinner } from "@/src/shared/components/spinner"
+import { Modal } from "@/src/shared/components/modal"
+import { BrandForm } from "./forms/brand-form"
+import { toast } from "sonner"
 
 export default function BrandsPage() {
+  const { getBrands, createBrand: apiCreateBrand, updateBrand: apiUpdateBrand, deleteBrand: apiDeleteBrand } = useBrandsApi()
+
+  // Data State
   const [brands, setBrands] = useState<Brand[]>([])
-  const [models, setModels] = useState<Model[]>([])
-  const [selectedBrandId, setSelectedBrandId] = useState<string | null>(null)
+  const [filteredBrands, setFilteredBrands] = useState<Brand[]>([])
 
-  const [newBrand, setNewBrand] = useState("")
-  const [newModel, setNewModel] = useState("")
+  // Loading State
+  const [loadingBrands, setLoadingBrands] = useState(false)
+  const [interactionLoading, setInteractionLoading] = useState(false)
+  const [idToDelete, setIdToDelete] = useState<string | null>(null)
 
-  const [brandSearch, setBrandSearch] = useState("")
-  const [modelSearch, setModelSearch] = useState("")
-
-  const [deleteTarget, setDeleteTarget] = useState<{
-    type: "brand" | "model"
-    id: string
-  } | null>(null)
+  // Modals & Forms State
+  const [isBrandModalOpen, setIsBrandModalOpen] = useState(false)
+  const [isEditBrandOpen, setIsEditBrandOpen] = useState(false)
+  const [brandFormData, setBrandFormData] = useState<Partial<Brand>>({})
 
   // ================= LOAD =================
 
   const loadBrands = async () => {
-    const res = await fetch("/api/brands")
-    setBrands(await res.json())
-  }
-
-  const loadModels = async (brandId: string) => {
-    const res = await fetch(`/api/models?brandId=${brandId}`)
-    setModels(await res.json())
+    setLoadingBrands(true)
+    try {
+      const data = await getBrands()
+      setBrands(data)
+      setFilteredBrands(data)
+    } catch (e: any) {
+      toast.error(e.message)
+    } finally {
+      setLoadingBrands(false)
+    }
   }
 
   useEffect(() => {
     loadBrands()
   }, [])
 
-  useEffect(() => {
-    if (selectedBrandId) loadModels(selectedBrandId)
-    else setModels([])
-  }, [selectedBrandId])
-
   // ================= FILTER =================
 
-  const filteredBrands = useMemo(
-    () =>
-      brands.filter((b) =>
-        b.name.toLowerCase().includes(brandSearch.toLowerCase())
-      ),
-    [brands, brandSearch]
-  )
+  const handleBrandSearch = (query: string) => {
+    const filtered = brands.filter(b => b.name.toLowerCase().includes(query.toLowerCase()))
+    setFilteredBrands(filtered)
+  }
 
-  const filteredModels = useMemo(
-    () =>
-      models.filter((m) =>
-        m.name.toLowerCase().includes(modelSearch.toLowerCase())
-      ),
-    [models, modelSearch]
-  )
+  // ================= HANDLERS: BRANDS =================
 
-  // ================= CREATE =================
+  const openCreateBrand = () => {
+    setBrandFormData({})
+    setIsBrandModalOpen(true)
+  }
 
-  const createBrand = async () => {
-    if (!newBrand.trim()) return
-    const res = await fetch("/api/brands", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newBrand }),
-    })
-    if (res.ok) {
-      setNewBrand("")
+  const openEditBrand = (brand: Brand) => {
+    setBrandFormData(brand)
+    setIsEditBrandOpen(true)
+  }
+
+  const handleCreateBrand = async () => {
+    if (!brandFormData.name?.trim()) return
+    setInteractionLoading(true)
+    try {
+      await apiCreateBrand(brandFormData.name)
+      toast.success("Marque ajoutée")
+      setIsBrandModalOpen(false)
       loadBrands()
+    } catch (e: any) {
+      toast.error(e.message)
+    } finally {
+      setInteractionLoading(false)
     }
   }
 
-  const createModel = async () => {
-    if (!newModel.trim() || !selectedBrandId) return
-    const res = await fetch("/api/models", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newModel, brandId: selectedBrandId }),
-    })
-    if (res.ok) {
-      setNewModel("")
-      loadModels(selectedBrandId)
+  const handleUpdateBrand = async () => {
+    if (!brandFormData.id || !brandFormData.name?.trim()) return
+    setInteractionLoading(true)
+    try {
+      await apiUpdateBrand(brandFormData.id, brandFormData.name)
+      toast.success("Marque modifiée")
+      setIsEditBrandOpen(false)
+      loadBrands()
+    } catch (e: any) {
+      toast.error(e.message)
+    } finally {
+      setInteractionLoading(false)
     }
   }
 
-  // ================= DELETE =================
+  const handleDeleteBrand = async (brand: Brand) => {
+    const confirmed = await confirmAlert("Supprimer la marque", `Voulez-vous vraiment supprimer ${brand.name} ?`)
+    if (!confirmed) return
 
- const confirmDelete = async () => {
-  if (!deleteTarget) return
-
-  const url =
-    deleteTarget.type === "brand"
-      ? `/api/brands/${deleteTarget.id}`
-      : `/api/models/${deleteTarget.id}`
-
-  const res = await fetch(url, { method: "DELETE" })
-
-  if (!res.ok) {
-    const data = await res.json()
-    alert(data.error || "Erreur lors de la suppression")
-    return
+    setIdToDelete(brand.id)
+    setInteractionLoading(true)
+    try {
+      await apiDeleteBrand(brand.id)
+      toast.success("Marque supprimée")
+      loadBrands()
+    } catch (e: any) {
+      toast.error(e.message)
+    } finally {
+      setInteractionLoading(false)
+      setIdToDelete(null)
+    }
   }
 
-  // Si OK on refresh
-  if (deleteTarget.type === "brand") {
-    if (deleteTarget.id === selectedBrandId)
-      setSelectedBrandId(null)
-    loadBrands()
-  } else {
-    loadModels(selectedBrandId!)
-  }
+  // ================= COLUMNS =================
 
-  setDeleteTarget(null)
-}
+  const brandColumnsRaw: ColumnDef<Brand>[] = [
+    {
+      accessorKey: "name",
+      header: "Nom",
+    },
+    {
+      header: "Actions",
+      cell: ({ row }) => (
+        <div className="flex gap-2 justify-end">
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); openEditBrand(row.original) }}>Modifier</Button>
+          <Button variant="destructive" size="sm" onClick={(e) => { e.stopPropagation(); handleDeleteBrand(row.original) }} disabled={interactionLoading && idToDelete === row.original.id}>
+            {interactionLoading && idToDelete === row.original.id ? <Spinner className="size-4" /> : "Supprimer"}
+          </Button>
+        </div>
+      )
+    }
+  ]
+
+  const brandColumns = createColumns({ columns: brandColumnsRaw })
 
   // ================= UI =================
 
   return (
-    <div className="text-sm grid grid-cols-1 lg:grid-cols-2 gap-10">
+    <div className="space-y-10 p-10">
 
       {/* ===== MARQUES ===== */}
-      <div className="space-y-4">
-        <h1 className="text-base font-semibold">Marques</h1>
+      <div>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-3xl font-bold">Gestion des Marques</h2>
+          <Button onClick={openCreateBrand}>Ajouter une marque</Button>
+        </div>
 
-        <Input
-          className="h-9 text-sm"
-          placeholder="Rechercher..."
-          value={brandSearch}
-          onChange={(e) => setBrandSearch(e.target.value)}
-        />
-
-        <div className="flex gap-2">
-          <Input
-            className="h-9 text-sm"
-            placeholder="Nouvelle marque"
-            value={newBrand}
-            onChange={(e) => setNewBrand(e.target.value)}
+        {loadingBrands ? (
+          <div className="flex justify-center p-10"><Spinner /></div>
+        ) : (
+          <DataTable
+            data={filteredBrands}
+            columnsProps={brandColumns}
+            handleSearch={handleBrandSearch}
+            title="Liste des marques"
           />
-          <Button size="sm" onClick={createBrand}>
-            Ajouter
-          </Button>
-        </div>
-
-        <div className="border rounded-md divide-y max-h-[400px] overflow-auto">
-          {filteredBrands.map((b) => (
-            <div
-              key={b.id}
-              className={`flex justify-between items-center px-3 py-2 ${
-                selectedBrandId === b.id ? "bg-muted" : ""
-              }`}
-              onClick={() => setSelectedBrandId(b.id)}
-            >
-              <span className="cursor-pointer">{b.name}</span>
-
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-xs"
-                >
-                  Modifier
-                </Button>
-
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  className="text-xs"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setDeleteTarget({ type: "brand", id: b.id })
-                  }}
-                >
-                  Supprimer
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ===== MODELES ===== */}
-      <div className="space-y-4">
-        <h1 className="text-base font-semibold">Modèles</h1>
-
-        {!selectedBrandId && (
-          <p className="text-muted-foreground text-xs">
-            Sélectionnez une marque
-          </p>
-        )}
-
-        {selectedBrandId && (
-          <>
-            <Input
-              className="h-9 text-sm"
-              placeholder="Rechercher..."
-              value={modelSearch}
-              onChange={(e) => setModelSearch(e.target.value)}
-            />
-
-            <div className="flex gap-2">
-              <Input
-                className="h-9 text-sm"
-                placeholder="Nouveau modèle"
-                value={newModel}
-                onChange={(e) => setNewModel(e.target.value)}
-              />
-              <Button size="sm" onClick={createModel}>
-                Ajouter
-              </Button>
-            </div>
-
-            <div className="border rounded-md divide-y max-h-[400px] overflow-auto">
-              {filteredModels.map((m) => (
-                <div
-                  key={m.id}
-                  className="flex justify-between items-center px-3 py-2"
-                >
-                  <span>{m.name}</span>
-
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" className="text-xs">
-                      Modifier
-                    </Button>
-
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      className="text-xs"
-                      onClick={() =>
-                        setDeleteTarget({ type: "model", id: m.id })
-                      }
-                    >
-                      Supprimer
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </>
         )}
       </div>
 
-      {/* ===== MODAL CONFIRMATION ===== */}
-      {deleteTarget && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl w-[420px] p-8 text-center space-y-6 shadow-xl">
+      {/* ===== MODALS BRANDS ===== */}
+      <Modal open={isBrandModalOpen} modalTitle="Nouvelle marque" onClose={() => setIsBrandModalOpen(false)}>
+        <BrandForm
+          mode="create"
+          data={brandFormData}
+          loading={interactionLoading}
+          onChange={setBrandFormData}
+          onClose={() => setIsBrandModalOpen(false)}
+          onSubmit={handleCreateBrand}
+        />
+      </Modal>
 
-            {/* Icône */}
-            <div className="flex justify-center">
-              <div className="w-20 h-20 rounded-full border-4 border-orange-300 flex items-center justify-center">
-                <span className="text-orange-400 text-4xl font-bold">!</span>
-              </div>
-            </div>
-
-            {/* Titre */}
-            <h2 className="text-2xl font-semibold text-gray-700">
-              Supprimer{" "}
-              {deleteTarget.type === "brand" ? "la marque" : "le modèle"}
-            </h2>
-
-            {/* Texte */}
-            <p className="text-gray-500">
-              Voulez-vous vraiment supprimer cet élément ?
-            </p>
-
-            {/* Boutons */}
-            <div className="flex justify-center gap-4 pt-4">
-              <Button
-                className="bg-purple-600 hover:bg-purple-700 text-white px-6"
-                onClick={confirmDelete}
-              >
-                Oui
-              </Button>
-
-              <Button
-                className="bg-gray-500 hover:bg-gray-600 text-white px-6"
-                onClick={() => setDeleteTarget(null)}
-              >
-                Non
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal open={isEditBrandOpen} modalTitle="Modifier marque" onClose={() => setIsEditBrandOpen(false)}>
+        <BrandForm
+          mode="edit"
+          data={brandFormData}
+          loading={interactionLoading}
+          onChange={setBrandFormData}
+          onClose={() => setIsEditBrandOpen(false)}
+          onSubmit={handleUpdateBrand}
+        />
+      </Modal>
     </div>
   )
 }
