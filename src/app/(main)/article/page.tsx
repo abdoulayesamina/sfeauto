@@ -243,7 +243,7 @@ export default function ArticlesPage() {
                     data={formData}
                     loading={loadingArticles}
                     onChange={setFormData}
-                    onClose={() => {setEditOpen(false); setFormData({art_name: "", art_price: 0, art_collectionId: 0})}}
+                    onClose={() => {setEditOpen(false); setFormData({art_reference: "", art_name: "", art_price: 0, art_collectionId: 0})}}
                     onSubmit={handleUpdateSubmit}
                 />
             </Modal>

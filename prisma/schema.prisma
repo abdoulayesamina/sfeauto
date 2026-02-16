@@ -46,8 +46,8 @@ model article_art {
 
 model remise_rem {
   rem_id          Int         @id @default(autoincrement())
-  rem_prixremise  Int?
-  rem_pourcentage Int?
+  rem_prixremise  Decimal?
+  rem_pourcentage Decimal?
   rem_articleId   Int         @unique
   article         article_art @relation("Article_Remise", fields: [rem_articleId], references: [art_id])
 
