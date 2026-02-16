@@ -65,6 +65,8 @@ export function VehicleItem({
 
   // Quand le vehicle change, on resynchronise le state local
   useEffect(() => {
+    console.log("Le VHCL : ",vehicle);
+    
     setLocalInterventions(vehicle?.invoices ?? [])
   }, [vehicle?.id])
 
@@ -129,7 +131,7 @@ export function VehicleItem({
               {vehicle.licensePlate}
             </span>
             <span className="text-gray-500">
-              {vehicle.brand} {vehicle.model} · {vehicle.year}
+              {vehicle.brand?.name} {vehicle.model?.name} · {vehicle.year}
             </span>
           </div>
 

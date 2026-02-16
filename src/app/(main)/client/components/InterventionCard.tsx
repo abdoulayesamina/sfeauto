@@ -2,6 +2,8 @@
 
 import { Button } from "@/src/shared/components/ui/button"
 import { toUIStatus } from "@/src/utils/constants/intervention-status"
+import { useEffect, useState } from "react"
+import { getBrandNameById, getModelNameById } from "../../brands/shared/hooks/GetBrandOrModelName"
 
 type UIStatus = "ATTENTE_REPARATION" | "ATTENTE_PIECES" | "TERMINEE"
 
@@ -55,13 +57,35 @@ export default function InterventionCard({
   onViewDetails,
   hideVehicleActions,
   hideDetailsButton,
-}: Props) {
+}: Props) {  
   const v = intervention?.vehicle ?? {}
   const counts = computeCounts(intervention)
 
-  const totalInterventions = counts.ATTENTE_REPARATION + counts.ATTENTE_PIECES + counts.TERMINEE
+  const totalInterventions =
+  counts.ATTENTE_REPARATION + counts.ATTENTE_PIECES + counts.TERMINEE
 
-  const brandModel = `${v?.brand ?? ""} ${v?.model ?? ""}`.trim()
+  // affichage fallback si jamais brand/model null
+  const [brandModel,setBrandModel] = useState("");
+
+  useEffect(() => {    
+    if (!v?.brandId && !v?.modelId) {
+      setBrandModel(""); 
+      return;
+    }
+
+    const getNames = async () => {
+      try {
+        const brandName = v.brandId ? await getBrandNameById(v.brandId) : "";
+        const modelName = v.modelId ? await getModelNameById(v.modelId) : "";
+        setBrandModel(`${brandName} ${modelName}`.trim());
+      } catch (err) {
+        setBrandModel("..."); 
+      }
+    };
+
+    getNames();
+    
+  }, [v.brandId, v.modelId]);
 
   return (
     <div className="bg-white border rounded-2xl p-5 shadow-sm">

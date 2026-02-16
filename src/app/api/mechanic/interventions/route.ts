@@ -56,6 +56,7 @@ export async function GET(request: NextRequest) {
 
     const interventions = await prisma.invoice.findMany({
       where: whereClause,
+
       include: {
         vehicle: {
           include: {
@@ -64,7 +65,9 @@ export async function GET(request: NextRequest) {
             },
             base: {
               select: { id: true, location: true }
-            }
+            },
+            brand:{select:{name:true}},
+            model:{select:{name:true}},
           }
         },
         handledBy: {
@@ -104,8 +107,8 @@ export async function GET(request: NextRequest) {
       vehicle: {
         id: inv.vehicle.id,
         licensePlate: inv.vehicle.licensePlate,
-        brand: inv.vehicle.brandId,
-        model: inv.vehicle.modelId,
+        brand: inv.vehicle.brand?.name,
+        model: inv.vehicle.model?.name,
         year: inv.vehicle.year,
         color: inv.vehicle.color,
         client: inv.vehicle.client,

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/src/shared/components/ui/button"
 import { Input } from "@/src/shared/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/shared/components/ui/select"
@@ -101,6 +101,10 @@ export default function MecanicienPage() {
     const [open, setOpen] = useState(false)
     const [selectedIntervention, setSelectedIntervention] = useState<any>(null)
     const filteredInterventions = interventions.filter(inv => STATUS_UI_MAP[inv.status] === filterStatus)
+
+    useEffect(()=>{
+        console.log("Intervention VV : ",interventions);
+    },[interventions])
 
     return (
         <div className="bg-zinc-50 min-h-screen p-4 sm:p-8">

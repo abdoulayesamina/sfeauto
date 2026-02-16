@@ -3,133 +3,103 @@
 import { useEffect, useMemo, useState } from "react"
 import { Button } from "@/src/shared/components/ui/button"
 import { Input } from "@/src/shared/components/ui/input"
+import { useBrandAndModelApi } from "./shared/hooks/useBrandAndModelApi"
+import { toast } from "sonner"
 
-type Brand = {
+export type Brand = {
   id: string
   name: string
 }
 
-type Model = {
+export type Model = {
   id: string
   name: string
   brandId: string
 }
 
 export default function BrandsPage() {
-  const [brands, setBrands] = useState<Brand[]>([])
-  const [models, setModels] = useState<Model[]>([])
-  const [selectedBrandId, setSelectedBrandId] = useState<string | null>(null)
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [models, setModels] = useState<Model[]>([]);
+  const [selectedBrandId, setSelectedBrandId] = useState<string | null>(null);
 
-  const [newBrand, setNewBrand] = useState("")
-  const [newModel, setNewModel] = useState("")
+  const [newBrand, setNewBrand] = useState("");
+  const [newModel, setNewModel] = useState("");
 
-  const [brandSearch, setBrandSearch] = useState("")
-  const [modelSearch, setModelSearch] = useState("")
+  const [brandSearch, setBrandSearch] = useState("");
+  const [modelSearch, setModelSearch] = useState("");
 
-  const [deleteTarget, setDeleteTarget] = useState<{
-    type: "brand" | "model"
-    id: string
-  } | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<{ type: "brand" | "model"; id: string } | null>(null);
+
+  const {
+    getAllBrands,
+    getModelsByBrand,
+    createBrand: apiCreateBrand,
+    createModel: apiCreateModel,
+    deleteBrand: apiDeleteBrand,
+    deleteModel: apiDeleteModel,
+  } = useBrandAndModelApi();
 
   // ================= LOAD =================
+  const loadBrands = async () => setBrands(await getAllBrands());
+  const loadModels = async (brandId: string) => setModels(await getModelsByBrand(brandId));
 
-  const loadBrands = async () => {
-    const res = await fetch("/api/brands")
-    setBrands(await res.json())
-  }
-
-  const loadModels = async (brandId: string) => {
-    const res = await fetch(`/api/models?brandId=${brandId}`)
-    setModels(await res.json())
-  }
-
+  useEffect(() => { loadBrands(); }, []);
   useEffect(() => {
-    loadBrands()
-  }, [])
-
-  useEffect(() => {
-    if (selectedBrandId) loadModels(selectedBrandId)
-    else setModels([])
-  }, [selectedBrandId])
+    if (selectedBrandId) loadModels(selectedBrandId);
+    else setModels([]);
+  }, [selectedBrandId]);
 
   // ================= FILTER =================
-
   const filteredBrands = useMemo(
-    () =>
-      brands.filter((b) =>
-        b.name.toLowerCase().includes(brandSearch.toLowerCase())
-      ),
+    () => brands.filter(b => b.name.toLowerCase().includes(brandSearch.toLowerCase())),
     [brands, brandSearch]
-  )
-
+  );
   const filteredModels = useMemo(
-    () =>
-      models.filter((m) =>
-        m.name.toLowerCase().includes(modelSearch.toLowerCase())
-      ),
+    () => models.filter(m => m.name.toLowerCase().includes(modelSearch.toLowerCase())),
     [models, modelSearch]
-  )
+  );
 
   // ================= CREATE =================
-
   const createBrand = async () => {
-    if (!newBrand.trim()) return
-    const res = await fetch("/api/brands", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newBrand }),
-    })
-    if (res.ok) {
-      setNewBrand("")
-      loadBrands()
+    try {
+      await apiCreateBrand(newBrand);
+      setNewBrand("");
+      loadBrands();
+    } catch (err: any) {
+      toast.error(err.message);
     }
-  }
+  };
 
   const createModel = async () => {
-    if (!newModel.trim() || !selectedBrandId) return
-    const res = await fetch("/api/models", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newModel, brandId: selectedBrandId }),
-    })
-    if (res.ok) {
-      setNewModel("")
-      loadModels(selectedBrandId)
+    if (!selectedBrandId) return;
+    try {
+      await apiCreateModel(newModel, selectedBrandId);
+      setNewModel("");
+      loadModels(selectedBrandId);
+    } catch (err: any) {
+      toast.error(err.message);
     }
-  }
+  };
 
   // ================= DELETE =================
-
- const confirmDelete = async () => {
-  if (!deleteTarget) return
-
-  const url =
-    deleteTarget.type === "brand"
-      ? `/api/brands/${deleteTarget.id}`
-      : `/api/models/${deleteTarget.id}`
-
-  const res = await fetch(url, { method: "DELETE" })
-
-  if (!res.ok) {
-    const data = await res.json()
-    alert(data.error || "Erreur lors de la suppression")
-    return
-  }
-
-  // Si OK on refresh
-  if (deleteTarget.type === "brand") {
-    if (deleteTarget.id === selectedBrandId)
-      setSelectedBrandId(null)
-    loadBrands()
-  } else {
-    loadModels(selectedBrandId!)
-  }
-
-  setDeleteTarget(null)
-}
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      if (deleteTarget.type === "brand") {
+        await apiDeleteBrand(deleteTarget.id);
+        if (deleteTarget.id === selectedBrandId) setSelectedBrandId(null);
+        loadBrands();
+      } else {
+        await apiDeleteModel(deleteTarget.id);
+        loadModels(selectedBrandId!);
+      }
+      setDeleteTarget(null);
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
 
   // ================= UI =================
-
   return (
     <div className="text-sm grid grid-cols-1 lg:grid-cols-2 gap-10">
 
