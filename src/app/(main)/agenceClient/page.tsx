@@ -65,14 +65,7 @@ export default function AgencePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  /**
-   * ✅ 1) Regrouper par véhicule
-   * On crée une "card" par véhicule avec :
-   * - vehicle (infos véhicule)
-   * - invoices (toutes interventions du véhicule)
-   * - counts (compteurs statut UI)
-   * - lastInvoice (pour compat InterventionCard si besoin)
-   */
+
   const vehicleCards = useMemo(() => {
     const map = new Map<string, { vehicle: any; invoices: any[]; counts: Counts; lastInvoice: any | null }>()
 
@@ -92,7 +85,7 @@ export default function AgencePage() {
       const row = map.get(v.id)!
       row.invoices.push(inv)
 
-      // last invoice by createdAt
+
       if (!row.lastInvoice) {
         row.lastInvoice = inv
       } else {
@@ -101,30 +94,25 @@ export default function AgencePage() {
         if (b > a) row.lastInvoice = inv
       }
 
-      // counts UI
       const ui = toUIStatus(inv.status)
       if (ui === "ATTENTE_REPARATION") row.counts.ATTENTE_REPARATION += 1
       if (ui === "ATTENTE_PIECES") row.counts.ATTENTE_PIECES += 1
       if (ui === "TERMINEE") row.counts.TERMINEE += 1
     }
 
-    // convert to array + inject invoices in vehicle for UI components
     return Array.from(map.values()).map((x) => ({
       ...x,
-      vehicle: { ...x.vehicle, invoices: x.invoices }, // 🔥 important: InterventionCard peut compter dessus
+      vehicle: { ...x.vehicle, invoices: x.invoices },
     }))
   }, [interventions])
 
-  /**
-   * ✅ 2) Filtrer (1 card par véhicule)
-   */
+  
   const filteredVehicles = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
 
     return vehicleCards.filter((row) => {
       const v = row.vehicle || {}
 
-      // filtre status : véhicule qui possède au moins 1 intervention dans ce statut
       const statusMatch =
         filterStatus === "ALL" ||
         (filterStatus === "ATTENTE_REPARATION" && row.counts.ATTENTE_REPARATION > 0) ||
@@ -142,9 +130,7 @@ export default function AgencePage() {
     })
   }, [vehicleCards, filterStatus, searchQuery])
 
-  /**
-   * ✅ 3) Stats globales (sur les interventions)
-   */
+
   const stats = useMemo(() => {
     const total = interventions.length
     const enCours = interventions.filter((i) => toUIStatus(i.status) === "ATTENTE_REPARATION").length
@@ -153,9 +139,7 @@ export default function AgencePage() {
     return { total, enCours, termine, attentePieces }
   }, [interventions])
 
-  /**
-   * ✅ ouvrir modal interventions d'un véhicule
-   */
+  
   const handleViewInterventions = (vehicleRow: any) => {
     const v = vehicleRow?.vehicle ?? vehicleRow
     setVehiculeSelect(v)
@@ -169,9 +153,7 @@ export default function AgencePage() {
     setOpenVehicleModal(true)
   }
 
-  /**
-   * ✅ détails intervention
-   */
+
   const handleViewDetails = (intervention: any, vehicle?: any) => {
     const v = vehicle ?? intervention?.vehicle ?? null
     setVehiculeSelect(v)
@@ -179,9 +161,7 @@ export default function AgencePage() {
     setOpenDetailModal(true)
   }
 
-  /**
-   * ✅ création intervention depuis agence
-   */
+ 
   const handleCreateIntervention = async (data: any) => {
     if (!vehiculeSelect?.id) return
 

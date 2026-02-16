@@ -92,7 +92,6 @@ export function UserForm({
         <Select
           value={value.role || ""}
           onValueChange={(role) => {
-            // Quand on change de rôle, on reset les champs qui ne s'appliquent plus
             const next: Partial<User> = { ...value, role }
 
             const willNeed = role === "CLIENT" || role === "AGENCE"
@@ -128,7 +127,7 @@ export function UserForm({
                 onChange({
                   ...value,
                   clientId,
-                  baseId: null, // reset base quand client change
+                  baseId: null, 
                 })
               }
             >
