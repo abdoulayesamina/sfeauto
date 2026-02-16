@@ -18,6 +18,7 @@ import { errorAlert, successAlert } from "@/src/lib/alerts"
 import { useInterventionApi } from "./shared/useIntervention.api"
 import { InterventionForm } from "./form/intervention-form"
 import { toast } from "sonner"
+import { getBrandNameById, getModelNameById } from "../brands/shared/hooks/GetBrandOrModelName"
 
 export default function GestionnairePage() {
   const { getVehicles, searchVehicles, createVehicle } = useManageApi()
@@ -162,6 +163,26 @@ export default function GestionnairePage() {
     setInterventionModalOpen(true)
   }
 
+  const [brandName, setBrandName] = useState<string>("");
+  const [modelName, setModelName] = useState<string>("");
+
+  useEffect(() => {
+    setBrandName("");
+    setModelName("");
+    if (selectedVehicle?.brandId) {
+      getBrandNameById(selectedVehicle.brandId).then(name => setBrandName(name));
+    } else {
+      setBrandName("...");
+    }
+
+    if (selectedVehicle?.modelId) {
+      getModelNameById(selectedVehicle.modelId).then(name => setModelName(name));
+    } else {
+      setModelName("...");
+    }
+
+  }, [selectedVehicle]);
+
   return (
     <div className="h-full py-4 px-12 bg-zinc-50">
       <div className="bg-white min-h-full rounded-lg p-4">
@@ -221,7 +242,7 @@ export default function GestionnairePage() {
               vehicles={filteredVehicles}
               clients={clients}
               agences={filteredAgences}
-              onSelect={(v) => {
+              onSelect={(v) => {                
                 setSelectedVehicle(v)
                 setApercuVehiculeOpen(true)
               }}
@@ -257,8 +278,8 @@ export default function GestionnairePage() {
         {selectedVehicle && (
           <VehiclePreview
             licensePlate={selectedVehicle.licensePlate}
-            brand={selectedVehicle.brand ?? ""}
-            model={selectedVehicle.model ?? ""}
+            brand={brandName ?? ""}
+            model={modelName ?? ""}
             year={selectedVehicle.year ?? 0}
             client={selectedVehicle.client?.name ?? ""}
             agence={selectedVehicle.base?.location ?? ""}

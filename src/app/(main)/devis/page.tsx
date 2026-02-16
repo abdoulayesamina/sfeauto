@@ -57,6 +57,7 @@ export default function DevisPage() {
       if (!res.ok) throw new Error(res.error || "Erreur chargement devis");
 
       const list = res.data?.devis ?? [];
+
       setRows(list);
       setRowsSearch(list);
     } catch (e: any) {
@@ -119,7 +120,7 @@ export default function DevisPage() {
       cell: ({ row }) => {
         const v = row.original?.vehicle;
         if (!v) return "—";
-        const brandModel = `${v.brand ?? ""} ${v.model ?? ""}`.trim();
+        const brandModel = `${v.brand?.name ?? ""} ${v.model?.name ?? ""}`.trim();
         return (
           <span>
             <span className="font-medium">{v.licensePlate}</span>

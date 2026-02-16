@@ -138,7 +138,6 @@ export default function BrandsPage() {
   const brandColumns = createColumns({ columns: brandColumnsRaw })
 
   // ================= UI =================
-
   return (
     <div className="space-y-10 p-10">
 
