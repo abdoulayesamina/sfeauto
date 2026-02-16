@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   try {
     const brand = await prisma.brand.create({
       data: {
-        id: randomUUID(), // 🔥 obligatoire car pas de default dans Prisma
+        id: randomUUID(),
         name,
       },
     })

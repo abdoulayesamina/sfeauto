@@ -81,10 +81,31 @@ export default function ClientPage() {
           !q || plate.includes(q) || brand.includes(q) || model.includes(q)
 
         // filtre statut (match si au moins 1 invoice correspond)
+        // let statusMatch = true
+        // if (filterStatus !== "ALL") {
+        //   statusMatch = v.invoices.some((i: Invoice) => toUIStatus(i.status) === filterStatus)
+        // }
+
         let statusMatch = true
-        if (filterStatus !== "ALL") {
-          statusMatch = v.invoices.some((i: Invoice) => toUIStatus(i.status) === filterStatus)
+
+        if (filterStatus === "ATTENTE_REPARATION") {
+          statusMatch =
+            v.invoices.length > 0 &&
+            v.invoices.some((i: Invoice) => toUIStatus(i.status) === "ATTENTE_REPARATION")
         }
+
+        if (filterStatus === "ATTENTE_PIECES") {
+          statusMatch =
+            v.invoices.length > 0 &&
+            v.invoices.some((i: Invoice) => toUIStatus(i.status) === "ATTENTE_PIECES")
+        }
+
+        if (filterStatus === "TERMINEE") {
+          statusMatch =
+            v.invoices.length > 0 &&
+            v.invoices.every((i: Invoice) => toUIStatus(i.status) === "TERMINEE")
+        }
+
 
         return searchMatch && statusMatch
       })
