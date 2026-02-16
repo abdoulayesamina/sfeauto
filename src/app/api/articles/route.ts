@@ -39,12 +39,14 @@ export async function POST(req : Request) {
         }
 
         const body = await req.json();
+        const art_reference = body?.art_reference;
         const art_name = body?.art_name;
         const art_price = Number(body?.art_price);
         const art_collectionId = Number(body?.art_collectionId);
 
         const article = await prisma.article_art.create({
             data: {
+                art_reference: art_reference,
                 art_name: art_name,
                 art_price: art_price,
                 art_collectionId: art_collectionId

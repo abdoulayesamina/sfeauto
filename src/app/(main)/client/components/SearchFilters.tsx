@@ -30,7 +30,7 @@ export default function SearchFilters({
         <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
         <Input
           placeholder="Rechercher une plaque, une marque ou un numéro d'accord..."
-          className="pl-12 h-14 text-lg border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="pl-12 h-12 text-lg border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
         />

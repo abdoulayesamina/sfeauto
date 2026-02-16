@@ -10,14 +10,10 @@ type Props = {
   onViewInterventions: () => void
   onViewDetails: () => void
   hideVehicleActions?: boolean
-}
-
-function safeLower(v: any) {
-  return String(v ?? "").toLowerCase()
+  hideDetailsButton?: boolean
 }
 
 function computeCounts(intervention: any) {
-  // 1) si counts est fourni par AgencePage
   if (intervention?.counts) {
     return {
       ATTENTE_REPARATION: Number(intervention.counts.ATTENTE_REPARATION ?? 0),
@@ -26,10 +22,7 @@ function computeCounts(intervention: any) {
     }
   }
 
-  // 2) sinon calculer depuis vehicle.invoices
-  const invoices = Array.isArray(intervention?.vehicle?.invoices)
-    ? intervention.vehicle.invoices
-    : []
+  const invoices = Array.isArray(intervention?.vehicle?.invoices) ? intervention.vehicle.invoices : []
 
   let ar = 0,
     ap = 0,
@@ -45,13 +38,7 @@ function computeCounts(intervention: any) {
   return { ATTENTE_REPARATION: ar, ATTENTE_PIECES: ap, TERMINEE: t }
 }
 
-function Badge({
-  label,
-  variant,
-}: {
-  label: string
-  variant: "blue" | "orange" | "green"
-}) {
+function Badge({ label, variant }: { label: string; variant: "blue" | "orange" | "green" }) {
   const cls =
     variant === "blue"
       ? "bg-blue-100 text-blue-700"
@@ -59,11 +46,7 @@ function Badge({
       ? "bg-orange-100 text-orange-700"
       : "bg-emerald-100 text-emerald-700"
 
-  return (
-    <span className={`px-3 py-1 rounded-full text-sm font-medium ${cls}`}>
-      {label}
-    </span>
-  )
+  return <span className={`px-3 py-1 rounded-full text-sm font-medium ${cls}`}>{label}</span>
 }
 
 export default function InterventionCard({
@@ -71,31 +54,23 @@ export default function InterventionCard({
   onViewInterventions,
   onViewDetails,
   hideVehicleActions,
+  hideDetailsButton,
 }: Props) {
   const v = intervention?.vehicle ?? {}
   const counts = computeCounts(intervention)
 
-  const totalInterventions =
-    counts.ATTENTE_REPARATION + counts.ATTENTE_PIECES + counts.TERMINEE
+  const totalInterventions = counts.ATTENTE_REPARATION + counts.ATTENTE_PIECES + counts.TERMINEE
 
-  // affichage fallback si jamais brand/model null
   const brandModel = `${v?.brand ?? ""} ${v?.model ?? ""}`.trim()
 
   return (
     <div className="bg-white border rounded-2xl p-5 shadow-sm">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        {/* LEFT */}
         <div className="min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
-            <h3 className="text-lg font-bold text-gray-900 truncate">
-              {v?.licensePlate || "—"}
-            </h3>
-            {brandModel && (
-              <p className="text-gray-500 text-sm truncate">{brandModel}</p>
-            )}
-            {v?.year != null && (
-              <p className="text-gray-400 text-sm">· {v.year}</p>
-            )}
+            <h3 className="text-lg font-bold text-gray-900 truncate">{v?.licensePlate || "—"}</h3>
+            {brandModel && <p className="text-gray-500 text-sm truncate">{brandModel}</p>}
+            {v?.year != null && <p className="text-gray-400 text-sm">· {v.year}</p>}
           </div>
 
           <div className="mt-1 text-sm text-gray-500 flex flex-wrap gap-2">
@@ -105,44 +80,30 @@ export default function InterventionCard({
             {v?.entryDate && (
               <>
                 <span>•</span>
-                <span>
-                  Entrée :{" "}
-                  {new Date(v.entryDate).toLocaleDateString("fr-FR")}
-                </span>
+                <span>Entrée : {new Date(v.entryDate).toLocaleDateString("fr-FR")}</span>
               </>
             )}
           </div>
 
           <div className="mt-3 flex items-center gap-2 flex-wrap">
             {counts.ATTENTE_REPARATION > 0 && (
-              <Badge
-                variant="blue"
-                label={`${counts.ATTENTE_REPARATION} En attente de réparation`}
-              />
+              <Badge variant="blue" label={`${counts.ATTENTE_REPARATION} En attente de réparation`} />
             )}
             {counts.ATTENTE_PIECES > 0 && (
-              <Badge
-                variant="orange"
-                label={`${counts.ATTENTE_PIECES} En attente de pièces`}
-              />
+              <Badge variant="orange" label={`${counts.ATTENTE_PIECES} En attente de pièces`} />
             )}
-            {counts.TERMINEE > 0 && (
-              <Badge variant="green" label={`${counts.TERMINEE} Terminée`} />
-            )}
-            {totalInterventions === 0 && (
-              <span className="text-sm text-gray-400 italic">
-                Aucune intervention
-              </span>
-            )}
+            {counts.TERMINEE > 0 && <Badge variant="green" label={`${counts.TERMINEE} Terminée`} />}
+            {totalInterventions === 0 && <span className="text-sm text-gray-400 italic">Aucune intervention</span>}
           </div>
         </div>
 
-        {/* RIGHT actions */}
         {!hideVehicleActions && (
           <div className="flex items-center gap-2 justify-end">
-            <Button variant="outline" onClick={onViewDetails}>
-              Voir détail complet
-            </Button>
+            {!hideDetailsButton && (
+              <Button variant="outline" onClick={onViewDetails}>
+                Voir détail complet
+              </Button>
+            )}
             <Button onClick={onViewInterventions}>Voir interventions</Button>
           </div>
         )}

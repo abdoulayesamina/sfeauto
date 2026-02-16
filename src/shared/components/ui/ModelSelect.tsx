@@ -64,7 +64,7 @@ export function ModelSelect({
           }
         }}
       >
-        <SelectTrigger className="h-16">
+        <SelectTrigger className="h-12">
           <SelectValue placeholder="Sélectionner un modèle" />
         </SelectTrigger>
         <SelectContent className="z-[9999]">

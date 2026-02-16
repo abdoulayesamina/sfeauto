@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     // Filtre base pour AGENCE
     const baseFilter =
       session.user.role === "AGENCE"
-        ? { baseId: session.user.baseId }
+        ? { baseId: session.user.baseId ?? "" }
         : {};
 
     const vehicles = await prisma.vehicle.findMany({

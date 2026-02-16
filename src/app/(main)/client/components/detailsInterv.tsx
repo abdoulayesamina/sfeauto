@@ -12,21 +12,22 @@ type Invoice = {
   accordNumber: string
   dateOfConfirmation: string
   createdAt: string
+  statusUpdatedAt?: string
 }
 
 type Vehicle = {
   id: string
-  licensePlate: string
-  brand: string
-  model: string
-  year: number
-  color: string
-  client: { id: string; name: string }
-  base: { id: string; location: string; clientId: string }
+  licensePlate: any
+  brand: any
+  model: any
+  year: any
+  color: any
+  client: any
+  base: any
   invoices: Invoice[]
-  createdAt: string
-  updatedAt: string
-  handledBy?: { name: string; email?: string }
+  createdAt: any
+  updatedAt: any
+  handledBy?: any
 }
 
 type Props = {
@@ -34,7 +35,6 @@ type Props = {
   onClose: () => void
 }
 
-// --- mapping pour les statuts ---
 const STATUS_UI_MAP: Record<string, { label: string; color: string; bg: string; icon: any }> = {
   CONFIRMED_IN_PLANNING: { label: "EN COURS", color: "text-blue-600", bg: "bg-blue-100", icon: Car },
   FIXING_STARTED: { label: "EN COURS", color: "text-blue-600", bg: "bg-blue-100", icon: Car },
@@ -42,11 +42,38 @@ const STATUS_UI_MAP: Record<string, { label: string; color: string; bg: string; 
   FIXING_FINISHED: { label: "TERMINEE", color: "text-emerald-600", bg: "bg-emerald-100", icon: Car },
 }
 
+const displayValue = (v: any): string => {
+  if (v === null || v === undefined) return "-"
+  if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") return String(v)
+
+  if (typeof v === "object") {
+    if (v?.name) return String(v.name)
+    if (v?.label) return String(v.label)
+    if (v?.title) return String(v.title)
+
+    // Si on reçoit { location: {...} }
+    if (v?.location) return displayValue(v.location)
+
+    return "-"
+  }
+
+  return "-"
+}
+
+const formatDate = (d: any) => {
+  if (!d) return "-"
+  const dt = new Date(d)
+  if (Number.isNaN(dt.getTime())) return "-"
+  return dt.toLocaleDateString("fr-FR")
+}
+
 export default function InterventionDetailClient({ selectedVehicle, onClose }: Props) {
   if (!selectedVehicle || !selectedVehicle.invoices?.length) return null
 
+  const firstInvoice = selectedVehicle.invoices[0]
+
   const selectedIntervention = {
-    ...selectedVehicle.invoices[0],
+    ...firstInvoice,
     vehicle: {
       licensePlate: selectedVehicle.licensePlate,
       brand: selectedVehicle.brand,
@@ -58,19 +85,27 @@ export default function InterventionDetailClient({ selectedVehicle, onClose }: P
     },
   }
 
-  const getStatusMeta = (status: string) => STATUS_UI_MAP[status] || { label: status, color: "", bg: "", icon: Car }
+  const getStatusMeta = (status: string) =>
+    STATUS_UI_MAP[status] || { label: status, color: "", bg: "", icon: Car }
+
+  const plate = displayValue(selectedIntervention.vehicle.licensePlate)
+  const brand = displayValue(selectedIntervention.vehicle.brand)
+  const model = displayValue(selectedIntervention.vehicle.model)
+  const year = displayValue(selectedIntervention.vehicle.year)
+  const color = displayValue(selectedIntervention.vehicle.color)
+
+  const clientName = displayValue(selectedIntervention.vehicle.client?.name ?? selectedIntervention.vehicle.client)
+
+  const baseLocation = displayValue(selectedIntervention.vehicle.base?.location)
+
+  const statusMeta = getStatusMeta(selectedIntervention.status)
 
   return (
     <div className="space-y-6 md:w-[600px]">
-
       {/* HEADER */}
       <div className="border-b bg-black/90 rounded-xl p-6 text-white pb-4">
-        <h2 className="text-xl font-bold">
-          Intervention – {selectedIntervention.vehicle.licensePlate}
-        </h2>
-        <p className="text-sm text-gray-500">
-          Accord N° {selectedIntervention.accordNumber}
-        </p>
+        <h2 className="text-xl font-bold">Intervention – {plate}</h2>
+        <p className="text-sm text-gray-500">Accord N° {displayValue(selectedIntervention.accordNumber)}</p>
       </div>
 
       {/* VEHICULE */}
@@ -83,10 +118,18 @@ export default function InterventionDetailClient({ selectedVehicle, onClose }: P
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-          <p><span className="font-medium">Immatriculation :</span> {selectedIntervention.vehicle.licensePlate}</p>
-          <p><span className="font-medium">Modèle :</span> {selectedIntervention.vehicle.brand} {selectedIntervention.vehicle.model}</p>
-          <p><span className="font-medium">Année :</span> {selectedIntervention.vehicle.year}</p>
-          <p><span className="font-medium">Couleur :</span> {selectedIntervention.vehicle.color}</p>
+          <p>
+            <span className="font-medium">Immatriculation :</span> {plate}
+          </p>
+          <p>
+            <span className="font-medium">Modèle :</span> {brand} {model}
+          </p>
+          <p>
+            <span className="font-medium">Année :</span> {year}
+          </p>
+          <p>
+            <span className="font-medium">Couleur :</span> {color}
+          </p>
         </div>
       </div>
 
@@ -97,7 +140,7 @@ export default function InterventionDetailClient({ selectedVehicle, onClose }: P
             <User />
           </div>
           <div>
-            <p className="font-semibold">{selectedIntervention.vehicle.client.name}</p>
+            <p className="font-semibold">{clientName}</p>
             <p className="text-sm text-gray-500">Client</p>
           </div>
         </div>
@@ -107,7 +150,7 @@ export default function InterventionDetailClient({ selectedVehicle, onClose }: P
             <MapPin />
           </div>
           <div>
-            <p className="font-semibold">{selectedIntervention.vehicle.base.location}</p>
+            <p className="font-semibold">{baseLocation}</p>
             <p className="text-sm text-gray-500">Base</p>
           </div>
         </div>
@@ -124,49 +167,48 @@ export default function InterventionDetailClient({ selectedVehicle, onClose }: P
             <p className="font-semibold">Accord client</p>
           </div>
 
-          <p className="text-sm">{selectedIntervention.accordNumber}</p>
+          <p className="text-sm">{displayValue(selectedIntervention.accordNumber)}</p>
           <p className="text-xs text-gray-500 mt-1">
-            Confirmé le {new Date(selectedIntervention.dateOfConfirmation).toLocaleDateString("fr-FR")}
+            Confirmé le {formatDate(selectedIntervention.dateOfConfirmation)}
           </p>
         </div>
 
         {/* Statut actuel */}
-        <div className={`rounded-xl border p-4 ${getStatusMeta(selectedIntervention.status).bg}`}>
+        <div className={`rounded-xl border p-4 ${statusMeta.bg}`}>
           <div className="flex items-center gap-3 mb-1">
-            <div className={`p-2 rounded-lg bg-white ${getStatusMeta(selectedIntervention.status).color}`}>
-              {React.createElement(getStatusMeta(selectedIntervention.status).icon, { size: 20 })}
+            <div className={`p-2 rounded-lg bg-white ${statusMeta.color}`}>
+              {React.createElement(statusMeta.icon, { size: 20 })}
             </div>
             <p className="text-sm text-gray-500">Statut actuel</p>
           </div>
-          <p className={`text-lg font-semibold ${getStatusMeta(selectedIntervention.status).color}`}>
-            {getStatusMeta(selectedIntervention.status).label}
-          </p>
-          <p className="text-xs text-gray-500 mt-1">
-  Mis à jour le{" "}
-  {selectedIntervention.dateOfConfirmation
-    ? new Date(selectedIntervention.dateOfConfirmation).toLocaleDateString("fr-FR")
-    : "-"}
-</p>
 
+          <p className={`text-lg font-semibold ${statusMeta.color}`}>{statusMeta.label}</p>
+
+          <p className="text-xs text-gray-500 mt-1">
+            Mis à jour le {formatDate((selectedIntervention as any).statusUpdatedAt || selectedIntervention.createdAt)}
+          </p>
         </div>
       </div>
 
       {/* Description du travail */}
       <div className="rounded-xl border p-4 bg-zinc-50">
         <p className="font-semibold mb-2">Description du travail</p>
-        <p className="text-gray-600 text-sm">{selectedIntervention.workDescription || "Aucune description fournie"}</p>
+        <p className="text-gray-600 text-sm">
+          {displayValue(selectedIntervention.workDescription) || "Aucune description fournie"}
+        </p>
       </div>
 
       {/* Informations */}
       <div className="rounded-xl border p-4 bg-zinc-50">
         <p className="font-semibold mb-2">Informations</p>
-        <p className="text-sm">
-          Créé le {new Date(selectedVehicle.createdAt).toLocaleDateString("fr-FR")}
-        </p>
+        <p className="text-sm">Créé le {formatDate(selectedVehicle.createdAt)}</p>
+
         {selectedVehicle.handledBy && (
           <p className="text-sm mt-1">
-            Géré par <span className="font-medium">{selectedVehicle.handledBy.name}</span>{" "}
-            <span className="text-gray-500">({selectedVehicle.handledBy.email})</span>
+            Géré par <span className="font-medium">{displayValue(selectedVehicle.handledBy?.name)}</span>{" "}
+            <span className="text-gray-500">
+              ({displayValue(selectedVehicle.handledBy?.email)})
+            </span>
           </p>
         )}
       </div>

@@ -34,15 +34,13 @@ export default function AgencePage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [isLoading, setIsLoading] = useState(true)
 
-  // Modal interventions par véhicule
   const [openVehicleModal, setOpenVehicleModal] = useState(false)
   const [vehiculeSelect, setVehiculeSelect] = useState<any>(null)
   const [interventionsVehicule, setInterventionsVehicule] = useState<any[]>([])
 
-  // Modal détail intervention
   const [openDetailModal, setOpenDetailModal] = useState(false)
+  const [detailIntervention, setDetailIntervention] = useState<any>(null)
 
-  // Modal création intervention (AGENCE)
   const [openCreateIntervention, setOpenCreateIntervention] = useState(false)
 
   const reloadInterventions = async () => {
@@ -62,12 +60,13 @@ export default function AgencePage() {
       }
     }
     fetchInterventions()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-
   const vehicleCards = useMemo(() => {
-    const map = new Map<string, { vehicle: any; invoices: any[]; counts: Counts; lastInvoice: any | null }>()
+    const map = new Map<
+      string,
+      { vehicle: any; invoices: any[]; counts: Counts; lastInvoice: any | null }
+    >()
 
     for (const inv of interventions) {
       const v = inv?.vehicle
@@ -84,7 +83,6 @@ export default function AgencePage() {
 
       const row = map.get(v.id)!
       row.invoices.push(inv)
-
 
       if (!row.lastInvoice) {
         row.lastInvoice = inv
@@ -106,7 +104,6 @@ export default function AgencePage() {
     }))
   }, [interventions])
 
-  
   const filteredVehicles = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
 
@@ -121,7 +118,6 @@ export default function AgencePage() {
 
       const plate = String(v.licensePlate || "").toLowerCase()
       const brand = String(v.brand ?? "").toLowerCase()
-
       const model = String(v.model || "").toLowerCase()
 
       const searchMatch = !q || plate.includes(q) || brand.includes(q) || model.includes(q)
@@ -129,7 +125,6 @@ export default function AgencePage() {
       return statusMatch && searchMatch
     })
   }, [vehicleCards, filterStatus, searchQuery])
-
 
   const stats = useMemo(() => {
     const total = interventions.length
@@ -139,12 +134,10 @@ export default function AgencePage() {
     return { total, enCours, termine, attentePieces }
   }, [interventions])
 
-  
   const handleViewInterventions = (vehicleRow: any) => {
     const v = vehicleRow?.vehicle ?? vehicleRow
     setVehiculeSelect(v)
 
-    // toutes les interventions de ce véhicule
     const list = interventions
       .filter((inv) => inv?.vehicle?.id === v?.id)
       .map((inv) => ({ ...inv, vehicle: v }))
@@ -153,15 +146,13 @@ export default function AgencePage() {
     setOpenVehicleModal(true)
   }
 
-
   const handleViewDetails = (intervention: any, vehicle?: any) => {
-    const v = vehicle ?? intervention?.vehicle ?? null
+    const v = vehicle ?? intervention?.vehicle ?? vehiculeSelect ?? null
     setVehiculeSelect(v)
-    setInterventionsVehicule([{ ...intervention, vehicle: v }]) // crucial pour detailsInterv
+    setDetailIntervention({ ...intervention, vehicle: v })
     setOpenDetailModal(true)
   }
 
- 
   const handleCreateIntervention = async (data: any) => {
     if (!vehiculeSelect?.id) return
 
@@ -178,7 +169,6 @@ export default function AgencePage() {
 
     await reloadInterventions()
 
-    // refresh aussi le modal véhicule courant
     if (vehiculeSelect?.id) {
       const list = interventions
         .filter((inv) => inv?.vehicle?.id === vehiculeSelect?.id)
@@ -204,27 +194,28 @@ export default function AgencePage() {
     )
   }
 
-  // compatible InterventionDetailClient
   const vehicleForDetails =
-    vehiculeSelect && interventionsVehicule.length
+    vehiculeSelect && detailIntervention
       ? {
           ...vehiculeSelect,
-          invoices: interventionsVehicule.map((inv) => ({
-            id: inv.id,
-            status: inv.status,
-            invoiceConfirmed: inv.invoiceConfirmed,
-            workDescription: inv.workDescription,
-            accordNumber: inv.accordNumber,
-            dateOfConfirmation: inv.dateOfConfirmation,
-            createdAt: inv.createdAt,
-          })),
+          invoices: [
+            {
+              id: detailIntervention.id,
+              status: detailIntervention.status,
+              invoiceConfirmed: detailIntervention.invoiceConfirmed,
+              workDescription: detailIntervention.workDescription,
+              accordNumber: detailIntervention.accordNumber,
+              dateOfConfirmation: detailIntervention.dateOfConfirmation,
+              createdAt: detailIntervention.createdAt,
+              statusUpdatedAt: detailIntervention.statusUpdatedAt,
+            },
+          ],
         }
       : null
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-2">
             <div className="p-3 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 text-white shadow-lg">
@@ -244,7 +235,6 @@ export default function AgencePage() {
           onFilterChange={setFilterStatus}
         />
 
-        {/* Stats globales */}
         <div className="mb-8 grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="rounded-xl bg-white border p-4">
             <div className="text-sm text-gray-500">Total interventions</div>
@@ -264,17 +254,13 @@ export default function AgencePage() {
           </div>
         </div>
 
-        {/* Liste véhicules (1 card par véhicule) */}
         {!openVehicleModal ? (
           <div className="space-y-4">
             {filteredVehicles.length > 0 ? (
               filteredVehicles.map((row) => {
-                // on passe une "intervention" représentative,
-                // mais avec vehicle.invoices = toutes les interventions
                 const representative = row.lastInvoice || row.invoices[0] || null
                 if (!representative) return null
 
-                // counts accessible si tu veux l'utiliser dans InterventionCard
                 const interventionForCard = {
                   ...representative,
                   vehicle: row.vehicle,
@@ -287,6 +273,8 @@ export default function AgencePage() {
                     intervention={interventionForCard}
                     onViewInterventions={() => handleViewInterventions(row)}
                     onViewDetails={() => handleViewDetails(representative, row.vehicle)}
+                    hideDetailsButton={true}
+
                   />
                 )
               })
@@ -297,37 +285,39 @@ export default function AgencePage() {
         ) : (
           <div className="space-y-4">
             <div className="flex justify-end">
-              <Button onClick={() => setOpenCreateIntervention(true)}>
-                + Nouvelle intervention
-              </Button>
+              <Button onClick={() => setOpenCreateIntervention(true)}>+ Nouvelle intervention</Button>
             </div>
 
             <VehicleInterventionsModal
-              vehicle={vehiculeSelect}
+              vehicle={vehiculeSelect}  
               interventions={interventionsVehicule}
               filterStatus={filterStatus}
               onClose={() => setOpenVehicleModal(false)}
-              onViewDetails={handleViewDetails}
+              onViewDetails={(inv) => handleViewDetails(inv, vehiculeSelect)}
             />
           </div>
         )}
 
-        {/* Modal détail */}
         <Modal
           open={openDetailModal}
-          onClose={() => setOpenDetailModal(false)}
+          onClose={() => {
+            setOpenDetailModal(false)
+            setDetailIntervention(null)
+          }}
           modalDescription="Détail complet de l'intervention"
           className="max-w-4xl"
         >
           {vehicleForDetails && (
             <InterventionDetailClient
               selectedVehicle={vehicleForDetails}
-              onClose={() => setOpenDetailModal(false)}
+              onClose={() => {
+                setOpenDetailModal(false)
+                setDetailIntervention(null)
+              }}
             />
           )}
         </Modal>
 
-        {/* Modal création intervention */}
         <Modal
           open={openCreateIntervention}
           onClose={() => setOpenCreateIntervention(false)}
@@ -336,7 +326,9 @@ export default function AgencePage() {
           {vehiculeSelect && (
             <InterventionForm
               vehicleId={vehiculeSelect.id}
-              vehicleDisplayText={`${vehiculeSelect.licensePlate} - ${vehiculeSelect.brand ?? ""} ${vehiculeSelect.model ?? ""}`}
+              vehicleDisplayText={`${vehiculeSelect.licensePlate} - ${vehiculeSelect.brand ?? ""} ${
+                vehiculeSelect.model ?? ""
+              }`}
               defaultAccordNumber="ACC-2026-001"
               onSubmit={handleCreateIntervention}
               onClose={() => setOpenCreateIntervention(false)}

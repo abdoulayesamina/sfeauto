@@ -37,7 +37,7 @@ export function VehicleFilters({
           onChange({ clientId: value === "all" ? undefined : value })
         }
       >
-        <SelectTrigger className="h-14">
+        <SelectTrigger className="h-12">
           <SelectValue placeholder="Filtrer par client" />
         </SelectTrigger>
         <SelectContent>
@@ -56,7 +56,7 @@ export function VehicleFilters({
     onChange({ agenceId: value === "all" ? undefined : value })
   }
 >
-  <SelectTrigger className="h-14">
+  <SelectTrigger className="h-12">
     <SelectValue placeholder="Filtrer par agence" />
   </SelectTrigger>
   <SelectContent>
@@ -76,7 +76,7 @@ export function VehicleFilters({
           onChange({ statut: value === "all" ? undefined : value })
         }
       >
-        <SelectTrigger className="h-14">
+        <SelectTrigger className="h-12">
           <SelectValue placeholder="Statut du véhicule" />
         </SelectTrigger>
         <SelectContent>

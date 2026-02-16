@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/src/shared/components/ui/select"
 import { User } from "@/src/utils/types/user"
+import { useEffect, useRef } from "react"
 
 type UserFormProps = {
   value: Partial<User>
@@ -41,10 +42,16 @@ export function UserForm({
   ] as const
 
   const needsClientAndBase = value.role === "CLIENT" || value.role === "AGENCE"
-
   const filteredAgences = value.clientId
-    ? agences.filter((a) => a.clientId === value.clientId)
-    : []
+  ? agences.filter((a) => a.clientId === value.clientId)
+  : []
+
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (mode === "edit") {
+      inputRef.current?.focus();
+    }
+  }, [mode]);
 
   return (
     <form
@@ -57,6 +64,7 @@ export function UserForm({
       <div>
         <Label>Nom</Label>
         <Input
+          ref={inputRef}
           className="h-12"
           value={value.name || ""}
           onChange={(e) => onChange({ ...value, name: e.target.value })}
@@ -91,8 +99,10 @@ export function UserForm({
         <Label>Rôle</Label>
         <Select
           value={value.role || ""}
-          onValueChange={(role) => {
-            const next: Partial<User> = { ...value, role }
+
+          onValueChange={(role : "CLIENT" | "AGENCE") => {
+
+            const next: Partial<User> = { ...value, role}
 
             const willNeed = role === "CLIENT" || role === "AGENCE"
             if (!willNeed) {

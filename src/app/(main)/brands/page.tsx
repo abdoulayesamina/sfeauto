@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { Button } from "@/src/shared/components/ui/button"
 import { Input } from "@/src/shared/components/ui/input"
-import { Trash2, Pencil } from "lucide-react"
 
 type Brand = {
   id: string
@@ -27,9 +26,10 @@ export default function BrandsPage() {
   const [brandSearch, setBrandSearch] = useState("")
   const [modelSearch, setModelSearch] = useState("")
 
-  const [editingBrandId, setEditingBrandId] = useState<string | null>(null)
-  const [editingModelId, setEditingModelId] = useState<string | null>(null)
-  const [editValue, setEditValue] = useState("")
+  const [deleteTarget, setDeleteTarget] = useState<{
+    type: "brand" | "model"
+    id: string
+  } | null>(null)
 
   // ================= LOAD =================
 
@@ -82,7 +82,7 @@ export default function BrandsPage() {
     if (res.ok) {
       setNewBrand("")
       loadBrands()
-    } else alert((await res.json()).error)
+    }
   }
 
   const createModel = async () => {
@@ -95,127 +95,98 @@ export default function BrandsPage() {
     if (res.ok) {
       setNewModel("")
       loadModels(selectedBrandId)
-    } else alert((await res.json()).error)
-  }
-
-  // ================= UPDATE =================
-
-  const updateBrand = async (id: string) => {
-    const res = await fetch(`/api/brands/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: editValue }),
-    })
-
-    if (!res.ok) {
-      alert((await res.json()).error)
-      return
     }
-
-    setEditingBrandId(null)
-    setEditValue("")
-    loadBrands()
-  }
-
-  const updateModel = async (id: string) => {
-    const res = await fetch(`/api/models/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: editValue }),
-    })
-
-    if (!res.ok) {
-      alert((await res.json()).error)
-      return
-    }
-
-    setEditingModelId(null)
-    setEditValue("")
-    loadModels(selectedBrandId!)
   }
 
   // ================= DELETE =================
 
-  const deleteBrand = async (id: string) => {
-    if (!confirm("Supprimer cette marque ?")) return
-    const res = await fetch(`/api/brands/${id}`, { method: "DELETE" })
-    if (!res.ok) {
-      alert((await res.json()).error)
-      return
-    }
-    if (id === selectedBrandId) setSelectedBrandId(null)
-    loadBrands()
+ const confirmDelete = async () => {
+  if (!deleteTarget) return
+
+  const url =
+    deleteTarget.type === "brand"
+      ? `/api/brands/${deleteTarget.id}`
+      : `/api/models/${deleteTarget.id}`
+
+  const res = await fetch(url, { method: "DELETE" })
+
+  if (!res.ok) {
+    const data = await res.json()
+    alert(data.error || "Erreur lors de la suppression")
+    return
   }
 
-  const deleteModel = async (id: string) => {
-    if (!confirm("Supprimer ce modèle ?")) return
-    const res = await fetch(`/api/models/${id}`, { method: "DELETE" })
-    if (!res.ok) {
-      alert((await res.json()).error)
-      return
-    }
+  // Si OK on refresh
+  if (deleteTarget.type === "brand") {
+    if (deleteTarget.id === selectedBrandId)
+      setSelectedBrandId(null)
+    loadBrands()
+  } else {
     loadModels(selectedBrandId!)
   }
+
+  setDeleteTarget(null)
+}
 
   // ================= UI =================
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div className="text-sm grid grid-cols-1 lg:grid-cols-2 gap-10">
+
       {/* ===== MARQUES ===== */}
       <div className="space-y-4">
-        <h1 className="text-xl font-semibold">Marques</h1>
+        <h1 className="text-base font-semibold">Marques</h1>
 
         <Input
-          placeholder="Rechercher une marque..."
+          className="h-9 text-sm"
+          placeholder="Rechercher..."
           value={brandSearch}
           onChange={(e) => setBrandSearch(e.target.value)}
         />
 
         <div className="flex gap-2">
           <Input
+            className="h-9 text-sm"
             placeholder="Nouvelle marque"
             value={newBrand}
             onChange={(e) => setNewBrand(e.target.value)}
           />
-          <Button onClick={createBrand}>Ajouter</Button>
+          <Button size="sm" onClick={createBrand}>
+            Ajouter
+          </Button>
         </div>
 
         <div className="border rounded-md divide-y max-h-[400px] overflow-auto">
           {filteredBrands.map((b) => (
             <div
               key={b.id}
-              className={`flex justify-between items-center p-3 cursor-pointer ${
+              className={`flex justify-between items-center px-3 py-2 ${
                 selectedBrandId === b.id ? "bg-muted" : ""
               }`}
               onClick={() => setSelectedBrandId(b.id)}
             >
-              {editingBrandId === b.id ? (
-                <Input
-                  value={editValue}
-                  onChange={(e) => setEditValue(e.target.value)}
-                  onBlur={() => updateBrand(b.id)}
-                  autoFocus
-                />
-              ) : (
-                <span>{b.name}</span>
-              )}
+              <span className="cursor-pointer">{b.name}</span>
 
               <div className="flex gap-2">
-                <Pencil
-                  className="h-4 w-4 text-blue-500 hover:text-blue-700"
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-xs"
+                >
+                  Modifier
+                </Button>
+
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  className="text-xs"
                   onClick={(e) => {
                     e.stopPropagation()
-                    setEditingBrandId(b.id)
-                    setEditValue(b.name)
+                    setDeleteTarget({ type: "brand", id: b.id })
                   }}
-                />
-                <Trash2
-                  className="h-4 w-4 text-red-500 hover:text-red-700"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    deleteBrand(b.id)
-                  }}
-                />
+                >
+                  Supprimer
+                </Button>
               </div>
             </div>
           ))}
@@ -224,10 +195,10 @@ export default function BrandsPage() {
 
       {/* ===== MODELES ===== */}
       <div className="space-y-4">
-        <h1 className="text-xl font-semibold">Modèles</h1>
+        <h1 className="text-base font-semibold">Modèles</h1>
 
         {!selectedBrandId && (
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             Sélectionnez une marque
           </p>
         )}
@@ -235,49 +206,47 @@ export default function BrandsPage() {
         {selectedBrandId && (
           <>
             <Input
-              placeholder="Rechercher un modèle..."
+              className="h-9 text-sm"
+              placeholder="Rechercher..."
               value={modelSearch}
               onChange={(e) => setModelSearch(e.target.value)}
             />
 
             <div className="flex gap-2">
               <Input
+                className="h-9 text-sm"
                 placeholder="Nouveau modèle"
                 value={newModel}
                 onChange={(e) => setNewModel(e.target.value)}
               />
-              <Button onClick={createModel}>Ajouter</Button>
+              <Button size="sm" onClick={createModel}>
+                Ajouter
+              </Button>
             </div>
 
             <div className="border rounded-md divide-y max-h-[400px] overflow-auto">
               {filteredModels.map((m) => (
                 <div
                   key={m.id}
-                  className="flex justify-between items-center p-3"
+                  className="flex justify-between items-center px-3 py-2"
                 >
-                  {editingModelId === m.id ? (
-                    <Input
-                      value={editValue}
-                      onChange={(e) => setEditValue(e.target.value)}
-                      onBlur={() => updateModel(m.id)}
-                      autoFocus
-                    />
-                  ) : (
-                    <span>{m.name}</span>
-                  )}
+                  <span>{m.name}</span>
 
                   <div className="flex gap-2">
-                    <Pencil
-                      className="h-4 w-4 text-blue-500 hover:text-blue-700"
-                      onClick={() => {
-                        setEditingModelId(m.id)
-                        setEditValue(m.name)
-                      }}
-                    />
-                    <Trash2
-                      className="h-4 w-4 text-red-500 hover:text-red-700"
-                      onClick={() => deleteModel(m.id)}
-                    />
+                    <Button size="sm" variant="outline" className="text-xs">
+                      Modifier
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="text-xs"
+                      onClick={() =>
+                        setDeleteTarget({ type: "model", id: m.id })
+                      }
+                    >
+                      Supprimer
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -285,6 +254,49 @@ export default function BrandsPage() {
           </>
         )}
       </div>
+
+      {/* ===== MODAL CONFIRMATION ===== */}
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl w-[420px] p-8 text-center space-y-6 shadow-xl">
+
+            {/* Icône */}
+            <div className="flex justify-center">
+              <div className="w-20 h-20 rounded-full border-4 border-orange-300 flex items-center justify-center">
+                <span className="text-orange-400 text-4xl font-bold">!</span>
+              </div>
+            </div>
+
+            {/* Titre */}
+            <h2 className="text-2xl font-semibold text-gray-700">
+              Supprimer{" "}
+              {deleteTarget.type === "brand" ? "la marque" : "le modèle"}
+            </h2>
+
+            {/* Texte */}
+            <p className="text-gray-500">
+              Voulez-vous vraiment supprimer cet élément ?
+            </p>
+
+            {/* Boutons */}
+            <div className="flex justify-center gap-4 pt-4">
+              <Button
+                className="bg-purple-600 hover:bg-purple-700 text-white px-6"
+                onClick={confirmDelete}
+              >
+                Oui
+              </Button>
+
+              <Button
+                className="bg-gray-500 hover:bg-gray-600 text-white px-6"
+                onClick={() => setDeleteTarget(null)}
+              >
+                Non
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
