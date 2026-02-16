@@ -2,6 +2,7 @@ import z from "zod";
 
 export const ArticleSchema = z.object({
   art_id: z.number().optional(),
+  art_reference: z.string(),
   art_name: z.string(),
   art_price: z.number(),
   art_collectionId: z.number(),

@@ -13,6 +13,7 @@ import { Modal } from "@/src/shared/components/modal";
 import { InvoicePatchPayload, useInvoiceApi } from "../hooks/useInvoiceApi.api";
 import { useInvoicePhotos } from "../hooks/useInvoicePhotos.api";
 
+
 type PiecesCommande = "oui" | "non";
 
 type Props = {
@@ -33,7 +34,10 @@ export function EditInterventionModal({ open, onClose, invoice, onUpdated }: Pro
   const { patchInvoice, loading } = useInvoiceApi();
 
   // hotos existantes (SAS) comme IntervDetailGes
-  const { photos, loading: photosLoading, error: photosError } = useInvoicePhotos(invoice?.id);
+  // const { photos, loading: photosLoading, error: photosError } = useInvoicePhotos(invoice?.id);
+  const { photos, loading: photosLoading, error: photosError, refetch } =
+  useInvoicePhotos(invoice?.id);
+
 
   const [piecesCommande, setPiecesCommande] = useState<PiecesCommande>("non");
 
@@ -62,7 +66,18 @@ export function EditInterventionModal({ open, onClose, invoice, onUpdated }: Pro
 
     setImages([]);
     setImagesBlob([]);
+   
+
   }, [open, invoice]);
+
+  // Amadou
+
+  useEffect(() => {
+  if (open && invoice?.id) {
+    refetch()
+  }
+}, [open, invoice?.id])
+
 
   const canSave = useMemo(() => Boolean(invoice?.id), [invoice?.id]);
 
@@ -77,26 +92,47 @@ export function EditInterventionModal({ open, onClose, invoice, onUpdated }: Pro
   };
 
   async function handleSave(e?: React.FormEvent) {
-    e?.preventDefault();
-    if (!invoice?.id) return;
+  e?.preventDefault();
+  if (!invoice?.id) return;
 
-    const didOrderParts = piecesCommande === "oui";
+  const didOrderParts = piecesCommande === "oui";
 
-    const payload: InvoicePatchPayload = {
-      workDescription: workDescription.trim() || null,
-      accordNumber: accordNumber.trim() || null,
-      dateOfConfirmation: dateOfConfirmation ? new Date(dateOfConfirmation).toISOString() : null,
-      didOrderParts,
-      ordersDetails: didOrderParts ? (ordersDetails.trim() || null) : null,
-      comments: comments.trim() || null,
-    };
+  const payload: InvoicePatchPayload = {
+    workDescription: workDescription.trim() || null,
+    accordNumber: accordNumber.trim() || null,
+    dateOfConfirmation: dateOfConfirmation
+      ? new Date(dateOfConfirmation).toISOString()
+      : null,
+    didOrderParts,
+    ordersDetails: didOrderParts ? (ordersDetails.trim() || null) : null,
+    comments: comments.trim() || null,
+  };
 
-    const res = await patchInvoice(invoice.id, payload);
-    if (res.ok) {
-      onUpdated?.(res.data?.invoice ?? res.data);
-      onClose();
-    }
+  const res = await patchInvoice(invoice.id, payload);
+
+  if (!res.ok) return;
+
+  // 🔥 UPLOAD PHOTOS SI PRESENTES
+  if (images.length > 0) {
+    const formData = new FormData();
+
+    images.forEach((file) => {
+      formData.append("files", file);
+    });
+
+    await fetch(
+      `/api/invoices/${invoice.id}/photos`,
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
   }
+
+  onUpdated?.(res.data?.invoice ?? res.data);
+  onClose();
+}
+
 
   return (
     <Modal open={open} onClose={onClose} modalDescription="Modifier l’intervention" >
@@ -131,20 +167,34 @@ export function EditInterventionModal({ open, onClose, invoice, onUpdated }: Pro
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {photos.map((p: any, index: number) => (
-                <button
-                  type="button"
-                  key={p.id ?? index}
-                  className="relative"
-                  onClick={() => window.open(p.sasUrl, "_blank")}
-                  title="Ouvrir"
-                >
-                  <img
-                    src={p.sasUrl}
-                    alt={`photo-${index}`}
-                    className="w-full h-32 object-cover rounded-lg border"
-                    loading="lazy"
-                  />
-                </button>
+                 <div key={p.id} className="relative group">
+                    <img
+                      src={p.sasUrl}
+                      alt={`photo-${index}`}
+                      className="w-full h-32 object-cover rounded-lg border"
+                      loading="lazy"
+                    />
+
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white text-xs px-2 py-1 opacity-0 group-hover:opacity-100 transition"
+                      onClick={async (e) => {
+                        e.stopPropagation()
+
+                        await fetch(
+                          `${process.env.NEXT_PUBLIC_API_URL}/photos/${p.id}`,
+                          {
+                            method: "DELETE",
+                          }
+                        )
+
+                        await refetch()
+                      }}
+                    >
+                      ✕
+                    </Button>
+                  </div>
               ))}
             </div>
           )}
