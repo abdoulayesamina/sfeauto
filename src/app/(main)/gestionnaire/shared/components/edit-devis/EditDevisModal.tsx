@@ -1,35 +1,77 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/src/shared/components/ui/button";
 import { Modal } from "@/src/shared/components/modal";
-import { useDevisApi } from "../../../devis/shared/hooks/useDevisApi.api";
+import { useDevisApi } from "../../../../devis/shared/hooks/useDevisApi.api.ts";
 
-import { useArticles } from "../hooks/useArticles";
-import { calcTotals, LineRow } from "@/src/utils/devisPricing";
-import { DevisLineRow } from "./edit-devis/DevisLineRow";
-import { TotalsCard } from "./edit-devis/TotalsCard.tsx";
-
+import { ArticleRow, calcTotals, LineRow } from "@/src/utils/devisPricing";
+import { TotalsCard } from "./TotalsCard.tsx";
+import { VehicleSummaryCard } from "./VehicleSummaryCard.tsx";
+import { DevisLineRow } from "./DevisLineRow.tsx";
 
 type Props = {
   open: boolean;
   onClose: () => void;
-  invoiceId: string;
-  onCreated?: (devis: any) => void;
+  devis: any;
+  onUpdated?: (devis: any) => void;
 };
 
-export function CreateDevisModal({ open, onClose, invoiceId, onCreated }: Props) {
-  const { createDevis, loading, error } = useDevisApi();
-  const { articles, fetching } = useArticles(open);
+export function EditDevisModal({ open, onClose, devis, onUpdated }: Props) {
+  const { patchDevis, loading, error } = useDevisApi();
 
+  const [articles, setArticles] = useState<ArticleRow[]>([]);
+  const [fetching, setFetching] = useState(false);
   const [devTva, setDevTva] = useState<number>(20);
   const [lines, setLines] = useState<LineRow[]>([{ art_id: 0, quantite: 1, reference: "" }]);
 
+  useEffect(() => {
+    if (!open) return;
+    let alive = true;
+
+    (async () => {
+      setFetching(true);
+      try {
+        const res = await fetch("/api/articles");
+        const data = await res.json();
+        if (!alive) return;
+        setArticles(Array.isArray(data?.articles) ? data.articles : []);
+      } catch {
+        if (!alive) return;
+        setArticles([]);
+      } finally {
+        if (!alive) return;
+        setFetching(false);
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || !devis) return;
+
+    setDevTva(Number(devis?.dev_tva ?? 20));
+
+    const existing = Array.isArray(devis?.articles) ? devis.articles : [];
+    setLines(
+      existing.length
+        ? existing.map((a: any) => ({
+            art_id: Number(a.dea_art_id ?? 0),
+            quantite: Number(a.dea_quantite ?? 1),
+            reference: String(a.dea_art_reference ?? ""),
+          }))
+        : [{ art_id: 0, quantite: 1, reference: "" }]
+    );
+  }, [open, devis]);
+
   const canSubmit = useMemo(() => {
-    if (!invoiceId) return false;
+    if (!devis?.dev_id) return false;
     if (!lines.length) return false;
     return lines.every((l) => l.art_id > 0 && l.quantite > 0);
-  }, [invoiceId, lines]);
+  }, [devis?.dev_id, lines]);
 
   const { totalHT, totalTTC } = useMemo(() => {
     return calcTotals(lines, articles, devTva);
@@ -40,11 +82,10 @@ export function CreateDevisModal({ open, onClose, invoiceId, onCreated }: Props)
   const updateLine = (idx: number, patch: Partial<LineRow>) =>
     setLines((p) => p.map((l, i) => (i === idx ? { ...l, ...patch } : l)));
 
-  async function handleCreate() {
+  async function handleSave() {
     if (!canSubmit) return;
 
     const payload = {
-      invoiceId,
       dev_tva: devTva,
       items: lines.map((l) => ({
         art_id: l.art_id,
@@ -53,23 +94,25 @@ export function CreateDevisModal({ open, onClose, invoiceId, onCreated }: Props)
       })),
     };
 
-    const res = await createDevis(payload as any);
+    const res = await patchDevis(Number(devis.dev_id), payload as any);
     if (res?.ok) {
-      onCreated?.(res.data?.devis ?? res.data);
+      onUpdated?.(res.data?.devis ?? res.data);
       onClose();
     }
   }
 
   return (
-    <Modal open={open} onClose={onClose} modalDescription="Créer un devis">
+    <Modal open={open} onClose={onClose} modalDescription="Modifier le devis">
       <div className="space-y-4 w-[95vw] max-w-[820px]">
+        <VehicleSummaryCard devis={devis} />
+
         {fetching ? (
           <p className="text-sm text-zinc-500">Chargement des articles...</p>
         ) : (
           <>
             <div className="grid grid-cols-12 gap-3 items-end">
               <div className="col-span-12 md:col-span-4 space-y-1">
-              
+                
               </div>
 
               <div className="col-span-12 md:col-span-8 flex md:justify-end">
@@ -101,8 +144,8 @@ export function CreateDevisModal({ open, onClose, invoiceId, onCreated }: Props)
               <Button variant="outline" onClick={onClose} disabled={loading}>
                 Annuler
               </Button>
-              <Button onClick={handleCreate} disabled={!canSubmit || loading}>
-                {loading ? "Création..." : "Créer le devis"}
+              <Button onClick={handleSave} disabled={!canSubmit || loading}>
+                {loading ? "Enregistrement..." : "Enregistrer"}
               </Button>
             </div>
           </>
