@@ -81,16 +81,31 @@ export function EditInterventionModal({ open, onClose, invoice, onUpdated }: Pro
 
   const canSave = useMemo(() => Boolean(invoice?.id), [invoice?.id]);
 
+  // const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   if (!e.target.files) return;
+
+  //   const files = Array.from(e.target.files);
+  //   setImages(files);
+
+  //   const previews = files.map((file) => URL.createObjectURL(file));
+  //   setImagesBlob(previews);
+  // };
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files) return;
+  if (!e.target.files) return
 
-    const files = Array.from(e.target.files);
-    setImages(files);
+  const files = Array.from(e.target.files)
 
-    const previews = files.map((file) => URL.createObjectURL(file));
-    setImagesBlob(previews);
-  };
+  // 🔥 Ajouter au lieu de remplacer
+  setImages(prev => [...prev, ...files])
 
+  const previews = files.map(file => URL.createObjectURL(file))
+  setImagesBlob(prev => [...prev, ...previews])
+
+  // Important : reset l'input pour pouvoir re-sélectionner la même image
+  e.target.value = ""
+}
+
+  
   async function handleSave(e?: React.FormEvent) {
   e?.preventDefault();
   if (!invoice?.id) return;
