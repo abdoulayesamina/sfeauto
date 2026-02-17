@@ -32,9 +32,7 @@ export function CollectionForm({
 
     const inputRef = useRef<HTMLInputElement>(null);
     useEffect(() => {
-    if (mode === "edit") {
         inputRef.current?.focus();
-    }
     }, [mode]);
 
     useEffect(() => {

@@ -65,8 +65,6 @@ export function VehicleItem({
 
   // Quand le vehicle change, on resynchronise le state local
   useEffect(() => {
-    console.log("Le VHCL : ",vehicle);
-    
     setLocalInterventions(vehicle?.invoices ?? [])
   }, [vehicle?.id])
 
@@ -193,7 +191,7 @@ export function VehicleItem({
       >
         <InterventionForm
           vehicleId={vehicle.id ?? ""}
-          vehicleDisplayText={`${vehicle.licensePlate} - ${vehicle.brand} ${vehicle.model}`}
+          vehicleDisplayText={`${vehicle.licensePlate} - ${vehicle.brand?.name} ${vehicle.model?.name}`}
           defaultAccordNumber="ACC-2026-001"
           onSubmit={handleSubmitIntervention}
           onClose={() => setInterventionModalOpen(false)}

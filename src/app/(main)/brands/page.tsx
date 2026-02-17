@@ -125,7 +125,7 @@ export default function BrandsPage() {
     {
       header: "Actions",
       cell: ({ row }) => (
-        <div className="flex gap-2 justify-end">
+        <div className="flex gap-2 ">
           <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); openEditBrand(row.original) }}>Modifier</Button>
           <Button variant="destructive" size="sm" onClick={(e) => { e.stopPropagation(); handleDeleteBrand(row.original) }} disabled={interactionLoading && idToDelete === row.original.id}>
             {interactionLoading && idToDelete === row.original.id ? <Spinner className="size-4" /> : "Supprimer"}

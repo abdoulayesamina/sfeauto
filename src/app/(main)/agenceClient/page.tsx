@@ -326,8 +326,8 @@ export default function AgencePage() {
           {vehiculeSelect && (
             <InterventionForm
               vehicleId={vehiculeSelect.id}
-              vehicleDisplayText={`${vehiculeSelect.licensePlate} - ${vehiculeSelect.brand ?? ""} ${
-                vehiculeSelect.model ?? ""
+              vehicleDisplayText={`${vehiculeSelect.licensePlate} - ${vehiculeSelect.brand?.name ?? ""} ${
+                vehiculeSelect.model?.name ?? ""
               }`}
               defaultAccordNumber="ACC-2026-001"
               onSubmit={handleCreateIntervention}

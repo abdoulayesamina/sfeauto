@@ -7,6 +7,7 @@ import { Spinner } from "@/src/shared/components/spinner"
 import { Model } from "@/src/utils/types/model"
 import { Brand } from "@/src/utils/types/brand"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/shared/components/ui/select"
+import { useEffect, useRef } from "react"
 
 type Props = {
     mode: "create" | "edit"
@@ -27,6 +28,12 @@ export function ModelForm({
     onSubmit,
     onChange,
 }: Props) {
+
+    const inputRef = useRef<HTMLInputElement>(null);
+    useEffect(() => {
+        inputRef.current?.focus();
+    }, [mode]);
+
     return (
         <form>
             <div className="mb-4 flex flex-col gap-2 p-2">
@@ -52,6 +59,7 @@ export function ModelForm({
             <div className="mb-4 flex flex-col gap-2 p-2">
                 <Label>Nom du modèle</Label>
                 <Input
+                    ref={inputRef}
                     className="h-12"
                     value={data.name || ""}
                     onChange={(e) => onChange({ ...data, name: e.target.value })}

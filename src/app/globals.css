@@ -92,6 +92,14 @@
 }
 
 @media print {
+
+    @page {
+        size: A4 portrait;
+        margin: 0;
+    }
+
+    
+
     body * {
         visibility: hidden;
     }
@@ -111,7 +119,9 @@
         position: absolute;
         left: 0;
         top: 0;
-        width: 100%;
+        /* background-color: rgb(236, 164, 164) !important; */
+        height: 100vh;
+        
     }
     
     /* Cache les boutons lors de l'impression */

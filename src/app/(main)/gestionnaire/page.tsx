@@ -301,7 +301,7 @@ export default function GestionnairePage() {
       >
         <InterventionForm
           vehicleId={selectedVehicle?.id ?? ""}
-          vehicleDisplayText={`${selectedVehicle?.licensePlate} - ${selectedVehicle?.brand} ${selectedVehicle?.model}`}
+          vehicleDisplayText={`${selectedVehicle?.licensePlate} - ${selectedVehicle?.brand?.name ?? ""} ${selectedVehicle?.model?.name ?? ""}`}
           defaultAccordNumber="ACC-2026-001"
           onSubmit={handleSubmitIntervention}
           onClose={() => setInterventionModalOpen(false)}

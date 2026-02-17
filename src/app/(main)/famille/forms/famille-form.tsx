@@ -27,9 +27,7 @@ export function FamilleForm({
 
     const inputRef = useRef<HTMLInputElement>(null);
     useEffect(() => {
-    if (mode === "edit") {
         inputRef.current?.focus();
-    }
     }, [mode]);
 
     return (

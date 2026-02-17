@@ -164,7 +164,7 @@ export default function ModelsPage() {
         {
             header: "Actions",
             cell: ({ row }) => (
-                <div className="flex gap-2 justify-end">
+                <div className="flex gap-2 justify-start">
                     <Button variant="outline" size="sm" onClick={() => openEditModel(row.original)}>Modifier</Button>
                     <Button variant="destructive" size="sm" onClick={() => handleDeleteModel(row.original)} disabled={interactionLoading && idToDelete === row.original.id}>
                         {interactionLoading && idToDelete === row.original.id ? <Spinner className="size-4" /> : "Supprimer"}

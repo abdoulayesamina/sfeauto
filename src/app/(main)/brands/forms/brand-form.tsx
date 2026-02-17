@@ -5,6 +5,7 @@ import { Input } from "@/src/shared/components/ui/input"
 import { Label } from "@/src/shared/components/ui/label"
 import { Spinner } from "@/src/shared/components/spinner"
 import { Brand } from "@/src/utils/types/brand"
+import { useEffect, useRef } from "react"
 
 type Props = {
     mode: "create" | "edit"
@@ -23,11 +24,18 @@ export function BrandForm({
     onSubmit,
     onChange,
 }: Props) {
+
+    const inputRef = useRef<HTMLInputElement>(null);
+    useEffect(() => {
+        inputRef.current?.focus();
+    }, [mode]);
+    
     return (
         <form>
             <div className="mb-4 flex flex-col gap-2 p-2">
                 <Label>Nom de la marque</Label>
                 <Input
+                    ref={inputRef}
                     className="h-12"
                     value={data.name || ""}
                     onChange={(e) => onChange({ ...data, name: e.target.value })}

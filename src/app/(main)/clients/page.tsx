@@ -28,6 +28,9 @@ export default function ClientPage() {
   const [clientSearch, setClientSearch] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
 
+  const [clientsLoading, setClientsLoading] = useState(false)
+  const [idToDelete, setIdToDelete] = useState<string | null>(null);
+
   const [isOpen, setIsOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
 
@@ -64,6 +67,7 @@ export default function ClientPage() {
 
   const handleCreate = async () => {
     try {
+      setClientsLoading(true)
       await createClient(formData)
       toast.success("Client créé")
       setIsOpen(false)
@@ -71,6 +75,8 @@ export default function ClientPage() {
       loadClientsWithoutSpin()
     } catch (e: any) {
       toast.error("Erreur", e.message)
+    } finally {
+      setClientsLoading(false)
     }
   }
 
@@ -84,6 +90,7 @@ export default function ClientPage() {
     if (!clientToEdit) return
 
     try {
+      setClientsLoading(true)
       await updateClient(clientToEdit.id, formData)
       toast.success("Client mis à jour")
       setEditOpen(false)
@@ -92,6 +99,8 @@ export default function ClientPage() {
       loadClientsWithoutSpin()
     } catch (e: any) {
       toast.error("Erreur", e.message)
+    }finally {
+      setClientsLoading(false)
     }
   }
 
@@ -103,11 +112,14 @@ export default function ClientPage() {
     if (!confirmed) return
 
     try {
+      setIdToDelete(client.id);
       await deleteClient(client.id)
       toast.success("Client supprimé")
       setClients((prev) => prev.filter((c) => c.id !== client.id))
     } catch (e: any) {
       toast.error("Suppression impossible", e.message)
+    }finally {
+      setIdToDelete(null);
     }
   }
 
@@ -181,8 +193,12 @@ export default function ClientPage() {
             size="sm"
             variant="destructive"
             onClick={() => handleDelete(row.original)}
+            disabled={idToDelete === row.original.id}
           >
-            Supprimer
+            <span className="flex items-center gap-2">
+              {idToDelete === row.original.id ? <Spinner className="size-4" /> : ""}
+              Supprimer
+            </span>
           </Button>
         </div>
       ),
@@ -224,8 +240,9 @@ export default function ClientPage() {
         <ClientForm
           mode="create"
           data={formData}
+          loading={clientsLoading}
           onChange={setFormData}
-          onClose={() => setIsOpen(false)}
+          onClose={() => {setIsOpen(false); setFormData({})}}
           onSubmit={handleCreate}
         />
       </Modal>
@@ -235,8 +252,9 @@ export default function ClientPage() {
         <ClientForm
           mode="edit"
           data={formData}
+          loading={clientsLoading}
           onChange={setFormData}
-          onClose={() => setEditOpen(false)}
+          onClose={() => {setEditOpen(false); setFormData({})}}
           onSubmit={handleUpdate}
         />
       </Modal>
