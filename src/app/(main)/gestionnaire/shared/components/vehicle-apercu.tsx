@@ -1,29 +1,29 @@
-"use client"
+"use client";
 
-import { Button } from "@/src/shared/components/ui/button"
-import { Eye, PlusCircle, FileText, Pencil } from "lucide-react"
-import { useState } from "react"
-import { Modal } from "@/src/shared/components/modal"
-import { toUIStatus, getStatusMeta } from "@/src/utils/constants/intervention-status"
-import IntervDetailGes from "./Intervention"
-import { CreateDevisModal } from "./CreateDevisModal"
-import { EditInterventionModal } from "./EditInterventionModal"
-import { DevisApercu } from "./devisApercu"
+import { Button } from "@/src/shared/components/ui/button";
+import { Eye, PlusCircle, FileText, Pencil } from "lucide-react";
+import { useState } from "react";
+import { Modal } from "@/src/shared/components/modal";
+import { toUIStatus, getStatusMeta } from "@/src/utils/constants/intervention-status";
+import IntervDetailGes from "./Intervention";
+import { CreateDevisModal } from "./CreateDevisModal";
+import { EditInterventionModal } from "./EditInterventionModal";
+import { DevisApercu } from "./devisApercu";
 
 type VehiclePreviewProps = {
-  licensePlate: string
-  brand: string
-  model: string
-  year: number
-  client: string
-  agence: string
-  entreeDate: string
-  color: string
-  invoices: any[]
-  enReparation?: number
-  termine?: number
-  onNewIntervention: () => void
-}
+  licensePlate: string;
+  brand: string;
+  model: string;
+  year: number;
+  client: string;
+  agence: string;
+  entreeDate: string;
+  color: string;
+  invoices: any[];
+  enReparation?: number;
+  termine?: number;
+  onNewIntervention: () => void;
+};
 
 export function VehiclePreview({
   licensePlate,
@@ -37,29 +37,24 @@ export function VehiclePreview({
   invoices,
   onNewIntervention,
 }: VehiclePreviewProps) {
-  const [filteredStatus, setFilteredStatus] = useState<"EN_COURS" | "TERMINEE">("EN_COURS")
-  const [openDetailModal, setOpenDetailModal] = useState(false)
-  const [selectedInvoice, setSelectedInvoice] = useState<any>()
+  const [filteredStatus, setFilteredStatus] = useState<"EN_COURS" | "TERMINEE">("EN_COURS");
+  const [openDetailModal, setOpenDetailModal] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<any>();
 
-  // ✅ Devis modal state
-  const [openDevisModal, setOpenDevisModal] = useState(false)
-  const [invoiceForDevis, setInvoiceForDevis] = useState<any>(null)
+  const [openDevisModal, setOpenDevisModal] = useState(false);
+  const [invoiceForDevis, setInvoiceForDevis] = useState<any>(null);
 
-  const [openApercu,setOpenApercu] = useState(false);
-  const [targetDevisIdForApercu, setTargetDevisIdForApercu ] = useState<any>(null);
+  const [openApercu, setOpenApercu] = useState(false);
+  const [targetDevisIdForApercu, setTargetDevisIdForApercu] = useState<any>(null);
 
-  // ✅ Edit modal state
-  const [openEditModal, setOpenEditModal] = useState(false)
-  const [invoiceForEdit, setInvoiceForEdit] = useState<any>(null)
+  const [openEditModal, setOpenEditModal] = useState(false);
+  const [invoiceForEdit, setInvoiceForEdit] = useState<any>(null);
 
-  // ✅ Local invoices state to reflect updates instantly (sans refetch)
-  const [localInvoices, setLocalInvoices] = useState<any[]>(invoices)
+  const [localInvoices, setLocalInvoices] = useState<any[]>(invoices);
 
   const filteredInvoices = localInvoices
     .map((inv) => ({ ...inv, uiStatus: toUIStatus(inv.status) }))
-    .filter((inv) =>
-      filteredStatus === "EN_COURS" ? inv.uiStatus !== "TERMINEE" : inv.uiStatus === "TERMINEE"
-    )
+    .filter((inv) => (filteredStatus === "EN_COURS" ? inv.uiStatus !== "TERMINEE" : inv.uiStatus === "TERMINEE"));
 
   const handleViewDetail = (invoice: any) => {
     setSelectedInvoice({
@@ -74,40 +69,36 @@ export function VehiclePreview({
         client: { name: client },
         base: { location: agence },
       },
-    })
-    setOpenDetailModal(true)
-  }
+    });
+    setOpenDetailModal(true);
+  };
 
   const handleCreateDevis = (invoice: any) => {
-    setInvoiceForDevis(invoice)
-    setOpenDevisModal(true)
-  }
+    setInvoiceForDevis(invoice);
+    setOpenDevisModal(true);
+  };
 
   const handleEditIntervention = (invoice: any) => {
-      console.log("PHOTOS INVOICE:", invoice?.photos)
-
-    setInvoiceForEdit(invoice)
-    setOpenEditModal(true)
-  }
-
-  const handleViewDevisApercu = (devis:any) =>{
-    setOpenApercu(true)
-    setTargetDevisIdForApercu(devis.dev_id);
-  }
+    setInvoiceForEdit(invoice);
+    setOpenEditModal(true);
+  };
 
   return (
     <div className="rounded-xl border bg-gradient-to-r from-zinc-50 to-white p-5 shadow-sm flex flex-col gap-4">
-      {/* VEHICULE INFO */}
       <div className="rounded-xl bg-gradient-to-r from-black to-gray-900 p-6 text-white shadow-lg">
         <h1 className="text-2xl font-bold mb-4">{licensePlate}</h1>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
           <div>
             <p className="text-white/70">Véhicule</p>
-            <p className="font-semibold">{brand} {model}</p>
+            <p className="font-semibold">
+              {brand} {model}
+            </p>
           </div>
           <div>
             <p className="text-white/70">Année & Couleur</p>
-            <p className="font-semibold">{year} • {color}</p>
+            <p className="font-semibold">
+              {year} • {color}
+            </p>
           </div>
           <div>
             <p className="text-white/70">Client</p>
@@ -124,115 +115,96 @@ export function VehiclePreview({
         </div>
       </div>
 
-      {/* Boutons filtrage statut */}
       <div className="flex gap-3 mt-6">
-        <Button
-          variant={filteredStatus === "EN_COURS" ? "default" : "outline"}
-          onClick={() => setFilteredStatus("EN_COURS")}
-        >
+        <Button variant={filteredStatus === "EN_COURS" ? "default" : "outline"} onClick={() => setFilteredStatus("EN_COURS")}>
           En cours ({localInvoices.filter((i) => toUIStatus(i.status) !== "TERMINEE").length})
         </Button>
-        <Button
-          variant={filteredStatus === "TERMINEE" ? "default" : "outline"}
-          onClick={() => setFilteredStatus("TERMINEE")}
-        >
+        <Button variant={filteredStatus === "TERMINEE" ? "default" : "outline"} onClick={() => setFilteredStatus("TERMINEE")}>
           Terminées ({localInvoices.filter((i) => toUIStatus(i.status) === "TERMINEE").length})
         </Button>
       </div>
 
-      {/* Liste des interventions */}
       <div className="mt-6 space-y-4 p-2 min-h-[350px] max-h-[350px] overflow-auto">
         {filteredInvoices.map((inv) => {
-          const meta = getStatusMeta(inv.uiStatus)
-          const hasDevis = Array.isArray(inv.devis) && inv.devis.length > 0
+          const meta = getStatusMeta(inv.uiStatus);
+          const hasDevis = Boolean(inv?.devis?.dev_id);
+          const devisId = inv?.devis?.dev_id ?? null;
 
           return (
-            <div
-              key={inv.id}
-              className="rounded-xl border bg-white p-5 shadow-sm hover:shadow-md transition"
-            >
-              <div>
-                <div className="flex-1">
-                  <div className="flex flex-col-reverse lg:flex-row justify-between items-start gap-4">
-
-                    <div>
-                      <p className="font-semibold text-zinc-800">{inv.workDescription}</p>
-                      <div className="flex flex-wrap gap-4 mt-2 text-sm text-zinc-500">
-                        <span><strong>N° Accord :</strong> {inv.accordNumber ?? "—"}</span>
-                        <span>
-                          Confirmé le : {inv.dateOfConfirmation ? new Date(inv.dateOfConfirmation).toLocaleDateString() : "—"}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-end gap-2 w-full lg:w-auto flex-wrap">
-                      {hasDevis && (
-                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
-                          Devis créé
-                        </span>
-                      )}
-
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${meta.bg} ${meta.color}`}>
-                        {meta.label}
-                      </span>
-                    </div>
-
-                  </div>
-
-                  <div className="flex flex-wrap items-center justify-between gap-3 mt-4">
-
-                    <div className="flex flex-wrap items-center gap-3">
-                      <button
-                        className="flex items-center gap-2 text-blue-600 text-sm font-medium hover:underline"
-                        onClick={() => handleViewDetail(inv)}
-                      >
-                        <Eye size={16} />
-                        Voir tous les détails
-                      </button>
-
-                      {/* ✅ Modifier intervention */}
-                      <Button
-                        variant="outline"
-                        className="flex items-center gap-2"
-                        onClick={() => handleEditIntervention(inv)}
-                      >
-                        <Pencil size={16} />
-                        Modifier
-                      </Button>
-
-                      {/* ✅ Créer devis */}
-                      <Button
-                        variant="outline"
-                        className="flex items-center gap-2"
-                        disabled={hasDevis}
-                        title={hasDevis ? "Un devis existe déjà pour cette intervention" : "Créer un devis"}
-                        onClick={() => handleCreateDevis(inv)}
-                      >
-                        <FileText size={16} />
-                        {hasDevis ? "Devis existant" : "Créer devis"}
-                      </Button>
-                    </div>
-
-                    <div>
-                      <Button
-                        variant="outline"
-                        className={`flex items-center gap-2 ${hasDevis ? "" : "hidden"}`}
-                        onClick={()=>handleViewDevisApercu(inv.devis[0])}
-                      >
-                        <Eye size={16} />
-                        aperçu du devis
-                      </Button>
-                    </div>
-
+            <div key={inv.id} className="rounded-xl border bg-white p-5 shadow-sm hover:shadow-md transition">
+              <div className="flex flex-col-reverse lg:flex-row justify-between items-start gap-4">
+                <div>
+                  <p className="font-semibold text-zinc-800">{inv.workDescription}</p>
+                  <div className="flex flex-wrap gap-4 mt-2 text-sm text-zinc-500">
+                    <span>
+                      <strong>N° Accord :</strong> {inv.accordNumber ?? "—"}
+                    </span>
+                    <span>
+                      Confirmé le :{" "}
+                      {inv.dateOfConfirmation ? new Date(inv.dateOfConfirmation).toLocaleDateString() : "—"}
+                    </span>
                   </div>
                 </div>
+
+                <div className="flex items-center justify-end gap-2 w-full lg:w-auto flex-wrap">
+                  {hasDevis && (
+                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
+                      Devis créé
+                    </span>
+                  )}
+
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${meta.bg} ${meta.color}`}>
+                    {meta.label}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-3 mt-4">
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    className="flex items-center gap-2 text-blue-600 text-sm font-medium hover:underline"
+                    onClick={() => handleViewDetail(inv)}
+                  >
+                    <Eye size={16} />
+                    Voir tous les détails
+                  </button>
+
+                  <Button variant="outline" className="flex items-center gap-2" onClick={() => handleEditIntervention(inv)}>
+                    <Pencil size={16} />
+                    Modifier
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="flex items-center gap-2"
+                    disabled={hasDevis}
+                    title={hasDevis ? "Un devis existe déjà pour cette intervention" : "Créer un devis"}
+                    onClick={() => handleCreateDevis(inv)}
+                  >
+                    <FileText size={16} />
+                    {hasDevis ? "Devis existant" : "Créer devis"}
+                  </Button>
+                </div>
+
+                {hasDevis && (
+                  <Button
+                    variant="outline"
+                    className="flex items-center gap-2"
+                    onClick={() => {
+                      setOpenApercu(true);
+                      setTargetDevisIdForApercu(devisId);
+                    }}
+                  >
+                    <Eye size={16} />
+                    aperçu du devis
+                  </Button>
+                )}
               </div>
             </div>
-          )
+          );
         })}
       </div>
 
-      {/* Nouvelle intervention */}
       <div className="flex justify-center pt-2">
         <Button className="flex items-center gap-2 w-full h-[50px]" onClick={onNewIntervention}>
           <PlusCircle size={18} />
@@ -240,63 +212,47 @@ export function VehiclePreview({
         </Button>
       </div>
 
-      {/* Modal détails */}
       <Modal open={openDetailModal} onClose={() => setOpenDetailModal(false)} modalDescription="Détail de l'intervention">
-        {selectedInvoice && (
-          <IntervDetailGes
-            selectedIntervention={selectedInvoice}
-            onClose={() => setOpenDetailModal(false)}
-          />
-        )}
+        {selectedInvoice && <IntervDetailGes selectedIntervention={selectedInvoice} onClose={() => setOpenDetailModal(false)} />}
       </Modal>
 
-      {/* ✅ Modal édition intervention */}
       {invoiceForEdit && (
-        <EditInterventionModal    
+        <EditInterventionModal
           open={openEditModal}
           onClose={() => setOpenEditModal(false)}
           invoice={invoiceForEdit}
           onUpdated={(updated) => {
-            // ✅ update local invoices pour voir les changements immédiatement
-            const updatedInvoice = updated?.invoice ?? updated
-            setLocalInvoices((prev) =>
-              prev.map((x) => (x.id === updatedInvoice.id ? { ...x, ...updatedInvoice } : x))
-            )
+            const updatedInvoice = updated?.invoice ?? updated;
+            setLocalInvoices((prev) => prev.map((x) => (x.id === updatedInvoice.id ? { ...x, ...updatedInvoice } : x)));
           }}
         />
       )}
 
-      {/* ✅ Modal création devis */}
       {invoiceForDevis && (
         <CreateDevisModal
           open={openDevisModal}
           onClose={() => setOpenDevisModal(false)}
           invoiceId={invoiceForDevis.id}
           onCreated={(devis) => {
-            // ✅ marquer l'invoice localement comme ayant un devis
-            const created = devis?.devis ?? devis
-            const dev_id = created?.dev_id
-            const dev_numdevis = created?.dev_numdevis
+            const created = devis?.devis ?? devis;
+            const dev_id = created?.dev_id;
+            const dev_numdevis = created?.dev_numdevis;
 
             setLocalInvoices((prev) =>
               prev.map((x) =>
-                x.id === invoiceForDevis.id
-                  ? { ...x, devis: [{ dev_id, dev_numdevis }] }
-                  : x
+                x.id === invoiceForDevis.id ? { ...x, devis: { dev_id, dev_numdevis } } : x
               )
-            )
+            );
           }}
         />
       )}
 
-
-      <Modal open={openApercu} onClose={()=>setOpenApercu(false)} modalDescription="Aperçu du devis">
-        <DevisApercu devisId={targetDevisIdForApercu} onClose={()=>setOpenApercu(false)} />
+      <Modal open={openApercu} onClose={() => setOpenApercu(false)} modalDescription="Aperçu du devis">
+        <DevisApercu devisId={targetDevisIdForApercu} onClose={() => setOpenApercu(false)} />
       </Modal>
     </div>
-  )
+  );
 }
-
 
 
 

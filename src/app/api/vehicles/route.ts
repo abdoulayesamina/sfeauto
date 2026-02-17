@@ -31,12 +31,10 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
 
-    // ✅ Autorisé: MANAGER et AGENCE
     if (!session?.user || !["MANAGER", "AGENCE"].includes(session.user.role)) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-      // ✅ Pour AGENCE, baseId obligatoire
     if (session.user.role === "AGENCE" && !session.user.baseId) {
       return NextResponse.json(
         { error: "Compte agence sans base associée" },
@@ -47,7 +45,6 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search");
 
-    // Filtre base pour AGENCE
     const baseFilter =
       session.user.role === "AGENCE"
         ? { baseId: session.user.baseId ?? "" }
@@ -117,7 +114,6 @@ export async function GET(request: NextRequest) {
       take: search ? 10 : 100,
     });
 
-    // ⚠️ Ton front attend souvent { vehicles }
     return NextResponse.json({ vehicles });
   } catch (error) {
     logError("Failed to fetch vehicles", error);
@@ -135,12 +131,10 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
 
-    // ✅ Autorisé: MANAGER et AGENCE
     if (!session?.user || !["MANAGER", "AGENCE"].includes(session.user.role)) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    // ✅ Pour AGENCE, baseId obligatoire
     if (session.user.role === "AGENCE" && !session.user.baseId) {
       return NextResponse.json(
         { error: "Compte agence sans base associée" },
@@ -176,7 +170,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Immatriculation requise" }, { status: 400 });
     }
 
-    // 🔒 Si AGENCE: on FORCE clientId/baseId depuis la session
     let finalBaseId: string | null = baseId ? String(baseId) : null;
     let finalClientId: string | null = clientId ? String(clientId) : null;
 
@@ -191,10 +184,9 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Base agence introuvable" }, { status: 400 });
       }
 
-      finalClientId = base.clientId; // ✅ cohérent
+      finalClientId = base.clientId; 
     }
 
-    // Pour MANAGER: clientId/baseId obligatoires
     if (session.user.role === "MANAGER") {
       if (!String(finalClientId ?? "").trim() || !String(finalBaseId ?? "").trim()) {
         return NextResponse.json(
@@ -214,7 +206,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Vérifier la base si fournie
     if (finalBaseId) {
       const base = await prisma.base.findUnique({
         where: { id: String(finalBaseId) },
@@ -273,7 +264,6 @@ export async function POST(request: NextRequest) {
         version: normalizeOptionalString(version),
         registrationCardDate: parsedRegistrationCard,
 
-        // ✅ si MANAGER: vient du body, si AGENCE: forcé par session
         clientId: finalClientId!,
         baseId: finalBaseId!,
 
