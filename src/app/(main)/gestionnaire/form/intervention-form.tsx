@@ -1,3 +1,4 @@
+import { Spinner } from "@/src/shared/components/spinner"
 import { Button } from "@/src/shared/components/ui/button"
 import { Input } from "@/src/shared/components/ui/input"
 import { Label } from "@/src/shared/components/ui/label"
@@ -196,6 +197,7 @@ export function InterventionForm({
           Annuler
         </Button>
         <Button type="submit" disabled={loading}>
+          {loading ? <Spinner className="h-4 w-4" /> : ""}
           {loading ? "Création..." : "Créer l’intervention"}
         </Button>
       </div>

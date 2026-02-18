@@ -23,6 +23,7 @@ type VehicleItemProps = {
   onClick?: () => void
   compact?: boolean
   loading?: boolean
+  reloadVehicles?: () => void
 }
 
 /* ----------------------------- SKELETON ----------------------------- */
@@ -54,19 +55,22 @@ export function VehicleItem({
   onClick,
   compact = false,
   loading = false,
+  reloadVehicles,
 }: VehicleItemProps) {
   const [interventionModalOpen, setInterventionModalOpen] = useState(false)
   const { createIntervention, loading: submitting } = useInterventionApi()
 
   // State local pour les interventions (refresh instantané)
-  const [localInterventions, setLocalInterventions] = useState<any[]>(
-    vehicle?.invoices ?? []
-  )
+  // const [localInterventions, setLocalInterventions] = useState<any[]>(
+  //   vehicle?.invoices ?? []
+  // )
 
   // Quand le vehicle change, on resynchronise le state local
-  useEffect(() => {
-    setLocalInterventions(vehicle?.invoices ?? [])
-  }, [vehicle?.id])
+  // useEffect(() => {  
+  //   setLocalInterventions(vehicle?.invoices ?? [])
+  // }, [vehicle])
+
+  
 
   if (loading || !vehicle) {
     return <VehicleItemSkeleton />
@@ -100,18 +104,26 @@ export function VehicleItem({
       comments: data.commentaires || null,
       status,
       images: data.images || [],
+    }).catch((e) => {
+      console.error("Error creating intervention:", e)
+      return null
     })
 
-    setLocalInterventions((prev) => [newIntervention, ...prev])
+    // setLocalInterventions((prev) => [newIntervention, ...prev])
     setInterventionModalOpen(false)
+    reloadVehicles?.()
   }
 
   /* ----------------------------- BADGES GROUPES ----------------------------- */
-  const groupedBadges = useMemo(() => {
-    if (!localInterventions || localInterventions.length === 0) return []
-    return groupInterventionsByStatus(localInterventions as any[])
-  }, [localInterventions])
+  // const groupedBadges = useMemo(() => {
+  //   if (!localInterventions || localInterventions.length === 0) return []
+  //   return groupInterventionsByStatus(localInterventions as any[])
+  // }, [localInterventions])
 
+  const groupedBadges = useMemo(() => {
+    if (!vehicle?.invoices?.length) return []
+    return groupInterventionsByStatus(vehicle.invoices)
+  }, [vehicle?.invoices])
   /* ----------------------------- UI ----------------------------- */
   return (
     <>

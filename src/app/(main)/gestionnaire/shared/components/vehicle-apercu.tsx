@@ -2,7 +2,7 @@
 
 import { Button } from "@/src/shared/components/ui/button";
 import { Eye, PlusCircle, FileText, Pencil } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Modal } from "@/src/shared/components/modal";
 import { toUIStatus, getStatusMeta } from "@/src/utils/constants/intervention-status";
 import IntervDetailGes from "./Intervention";
@@ -51,10 +51,23 @@ export function VehiclePreview({
   const [invoiceForEdit, setInvoiceForEdit] = useState<any>(null);
 
   const [localInvoices, setLocalInvoices] = useState<any[]>(invoices);
+  const [filteredInvoices, setFilteredInvoices] = useState<any[]>(invoices);
 
-  const filteredInvoices = localInvoices
-    .map((inv) => ({ ...inv, uiStatus: toUIStatus(inv.status) }))
-    .filter((inv) => (filteredStatus === "EN_COURS" ? inv.uiStatus !== "TERMINEE" : inv.uiStatus === "TERMINEE"));
+  useEffect(() => {
+    console.log("Invoices dans VehiclePreview ----> ", invoices);
+    setLocalInvoices(invoices);
+    setFilteredInvoices(invoices
+      .map((inv) => ({ ...inv, uiStatus: toUIStatus(inv.status) }))
+      .filter((inv) => (filteredStatus === "EN_COURS" ? inv.uiStatus !== "TERMINEE" : inv.uiStatus === "TERMINEE"))
+    );
+  }, [invoices]);
+
+  useEffect(() => {
+    setFilteredInvoices(localInvoices
+      .map((inv) => ({ ...inv, uiStatus: toUIStatus(inv.status) }))
+      .filter((inv) => (filteredStatus === "EN_COURS" ? inv.uiStatus !== "TERMINEE" : inv.uiStatus === "TERMINEE"))
+    );
+  }, [filteredStatus]);
 
   const handleViewDetail = (invoice: any) => {
     setSelectedInvoice({
@@ -208,7 +221,7 @@ export function VehiclePreview({
       <div className="flex justify-center pt-2">
         <Button className="flex items-center gap-2 w-full h-[50px]" onClick={onNewIntervention}>
           <PlusCircle size={18} />
-          Nouvelle intervention
+          Nouvelle intervention 
         </Button>
       </div>
 

@@ -111,10 +111,12 @@ export default function GestionnairePage() {
     }
   }
 
-  const filteredVehicles = useMemo(() => {
+  const [filteredVehicles,setFilteredVehicles] = useState<Vehicule[]>([])
+  
+  useEffect(() => {
     const list = Array.isArray(vehicles) ? vehicles : []
 
-    return list.filter((v) => {
+    const filtered = list.filter((v) => {
       if (clientId && v.client?.id !== clientId) return false
       if (agenceId && v.base?.id !== agenceId) return false
 
@@ -130,7 +132,17 @@ export default function GestionnairePage() {
 
       return true
     })
+    setFilteredVehicles(filtered)
   }, [vehicles, clientId, agenceId, statut])
+
+  useEffect(() => {
+    if (!selectedVehicle) return
+
+    const updatedVehicle = vehicles.find(v => v.id === selectedVehicle.id)
+    if (updatedVehicle) {
+      setSelectedVehicle(updatedVehicle)
+    }
+  }, [vehicles])
 
   const filteredAgences = useMemo(() => {
     const list = Array.isArray(agences) ? agences : []
@@ -139,6 +151,7 @@ export default function GestionnairePage() {
   }, [agences, clientId])
 
   const handleSubmitIntervention = async (data: any) => {
+    setLoading(true)
     try {
       await createIntervention({
         vehicleId: selectedVehicle?.id ?? "",
@@ -152,10 +165,16 @@ export default function GestionnairePage() {
       })
 
       await loadAll()
+      // if(selectedVehicle) {
+      //   const updatedVehicle = vehicles.find(v => v.id === selectedVehicle.id)
+      //   setSelectedVehicle(updatedVehicle ?? null)
+      // }
+      setLoading(false)
       setInterventionModalOpen(false)
       toast.success("Intervention créée")
     } catch (e: any) {
       toast.error("Intervention", e.message)
+      setLoading(false)
     }
   }
 
@@ -163,25 +182,6 @@ export default function GestionnairePage() {
     setInterventionModalOpen(true)
   }
 
-  const [brandName, setBrandName] = useState<string>("");
-  const [modelName, setModelName] = useState<string>("");
-
-  useEffect(() => {
-    setBrandName("");
-    setModelName("");
-    if (selectedVehicle?.brandId) {
-      getBrandNameById(selectedVehicle.brandId).then(name => setBrandName(name));
-    } else {
-      setBrandName("...");
-    }
-
-    if (selectedVehicle?.modelId) {
-      getModelNameById(selectedVehicle.modelId).then(name => setModelName(name));
-    } else {
-      setModelName("...");
-    }
-
-  }, [selectedVehicle]);
 
   return (
     <div className="h-full py-4 px-12 bg-zinc-50">
@@ -246,6 +246,7 @@ export default function GestionnairePage() {
                 setSelectedVehicle(v)
                 setApercuVehiculeOpen(true)
               }}
+              reloadVehicles={loadAll}
             />
           </>
         ) : (
@@ -278,8 +279,8 @@ export default function GestionnairePage() {
         {selectedVehicle && (
           <VehiclePreview
             licensePlate={selectedVehicle.licensePlate}
-            brand={brandName ?? ""}
-            model={modelName ?? ""}
+            brand={selectedVehicle.brand?.name ?? ""}
+            model={selectedVehicle.model?.name ?? ""}
             year={selectedVehicle.year ?? 0}
             client={selectedVehicle.client?.name ?? ""}
             agence={selectedVehicle.base?.location ?? ""}

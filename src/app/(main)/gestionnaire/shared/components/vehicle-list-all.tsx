@@ -1,3 +1,4 @@
+import { useEffect } from "react"
 import { VehicleItem } from "./vehicle-Item"
 
 export function VehicleListAll({
@@ -5,6 +6,7 @@ export function VehicleListAll({
   clients,
   agences,
   onSelect,
+  reloadVehicles,
 }: any) {
   if (!vehicles || vehicles.length === 0) {
     return (
@@ -13,6 +15,10 @@ export function VehicleListAll({
       </div>
     )
   }
+
+  useEffect(() => {
+    console.log("Vehicles dans VehicleListAll ---->", vehicles)
+  }, [vehicles])
 
   return (
     <>
@@ -23,6 +29,7 @@ export function VehicleListAll({
           clients={clients}
           agences={agences}
           onClick={() => onSelect(v)}
+          reloadVehicles={()=> reloadVehicles?.()}
         />
       ))}
     </>
