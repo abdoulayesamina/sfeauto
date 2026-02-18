@@ -34,16 +34,28 @@ export function InterventionForm({
     console.log("Images selected:", imagesBlob)
   }, [imagesBlob])
 
+  // const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   if (!e.target.files) return
+
+  //   const files = Array.from(e.target.files)
+  //   setImages(files)
+
+  //   const previews = files.map((file) => URL.createObjectURL(file))
+  //   setImagesBlob(previews)
+  // }
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files) return
+    const files = Array.from(e.target.files || [])
+    if (!files.length) return
 
-    const files = Array.from(e.target.files)
-    setImages(files)
+    const previews = files.map(file => URL.createObjectURL(file))
 
-    const previews = files.map((file) => URL.createObjectURL(file))
-    setImagesBlob(previews)
-  }
+    setImages(prev => [...prev, ...files])          // File[]
+    setImagesBlob(prev => [...prev, ...previews])  // string[]
+}
 
+
+  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -177,8 +189,9 @@ export function InterventionForm({
           <Input
             name="numeroAccord"
             className="h-15"
-            defaultValue={defaultAccordNumber}
+            placeholder={defaultAccordNumber}
           />
+
         </div>
 
         <div className="space-y-2">

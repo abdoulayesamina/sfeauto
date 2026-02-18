@@ -183,14 +183,14 @@ export default function ClientPage() {
       cell: ({ row }) => (
         <div className="flex gap-2">
           <Button
-            size="sm"
+            //size="sm"
             variant="outline"
             onClick={() => handleEdit(row.original)}
           >
             Modifier
           </Button>
           <Button
-            size="sm"
+            // size="sm"
             variant="destructive"
             onClick={() => handleDelete(row.original)}
             disabled={idToDelete === row.original.id}

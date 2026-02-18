@@ -2,8 +2,7 @@
 
 import { Brand } from "@/src/utils/types/brand"
 
-const API_URL = "/api/brands"
-
+const API_URL = process.env.NEXT_PUBLIC_API_URL + "/brands"
 
 export function useBrandsApi() {
     const getBrands = async (): Promise<Brand[]> => {
