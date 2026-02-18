@@ -17,9 +17,74 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    function imprimerDiv(): void {
-        window.print();
-    }
+    // function imprimerDiv(): void {
+    //     window.print();
+    // }
+    function imprimerDiv() {
+        const content = document.getElementById("imprime");
+        if (!content) return;
+
+        const iframe = document.createElement("iframe");
+        iframe.style.position = "fixed";
+        iframe.style.right = "0";
+        iframe.style.bottom = "0";
+        iframe.style.width = "0";
+        iframe.style.height = "0";
+        iframe.style.border = "0";
+
+        document.body.appendChild(iframe);
+
+        const iframeDoc = iframe.contentWindow?.document;
+        if (!iframeDoc) return;
+
+        // Copier les styles existants
+        const styles = Array.from(document.styleSheets)
+            .map((styleSheet: any) => {
+            try {
+                if (styleSheet.href) {
+                return `<link rel="stylesheet" href="${styleSheet.href}">`;
+                } else if (styleSheet.cssRules) {
+                return `<style>${Array.from(styleSheet.cssRules)
+                    .map((rule: any) => rule.cssText)
+                    .join("")}</style>`;
+                }
+            } catch {
+                return "";
+            }
+            return "";
+            })
+            .join("");
+
+        iframeDoc.open();
+        iframeDoc.write(`
+            <html>
+            <head>
+                ${styles}
+                <style>
+                @page {
+                    size: A4;
+                    margin: 10mm;
+                }
+                body {
+                    margin: 0;
+                }
+                </style>
+            </head>
+            <body>
+                ${content.outerHTML}
+            </body>
+            </html>
+        `);
+        iframeDoc.close();
+
+        setTimeout(() => {
+            iframe.contentWindow?.focus();
+            iframe.contentWindow?.print();
+            document.body.removeChild(iframe);
+        }, 500);
+}
+ 
+
 
     useEffect(() => {
         async function loadDevis() {
@@ -61,7 +126,7 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
     return (
         <div className="max-w-[900px]">
             {devis ? 
-                <div id="imprime" className="print:block bg-white text-sm text-gray-800 p-6 w-full max-w-5xl mx-auto">
+                <div id="imprime" className="print:block bg-white text-sm text-gray-800">
                     {/* ===== EN-TÊTE ===== */}
                     <div className="flex flex-col mb-6">
                         {/* Garage */}
