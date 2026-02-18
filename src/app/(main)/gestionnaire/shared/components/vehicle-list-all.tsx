@@ -22,9 +22,9 @@ export function VehicleListAll({
 
   return (
     <>
-      {vehicles.map((v: any) => (
+      {vehicles.map((v: any, index: number) => (
         <VehicleItem
-          key={v.licensePlate}
+          key={index}
           vehicle={v}
           clients={clients}
           agences={agences}
