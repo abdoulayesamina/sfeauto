@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/src/shared/components/ui/select"
+import { Spinner } from "@/src/shared/components/spinner"
 
 const ENERGY_OPTIONS = ["GAZOLE", "ESSENCE", "HYBRIDE", "ELECTRIQUE", "GPL"] as const
 const GEARBOX_OPTIONS = ["BVM", "BVA"] as const
@@ -50,11 +51,13 @@ export function AddVehiculeForm({
   onSubmit,
   mode,
   data,
+  loading,
 }: {
   onClose: () => void
   onSubmit: (vehicule: Vehicule) => void
   mode: "create" | "edit"
   data?: Vehicule
+  loading?: boolean
 }) {
   const { getClients } = useClientApi()
   const { getAgences } = useAgenceApi()
@@ -448,10 +451,12 @@ export function AddVehiculeForm({
           variant="outline"
           className="w-full sm:w-auto"
           onClick={onClose}
+          disabled={loading}
         >
           Annuler
         </Button>
-        <Button type="submit" className="w-full sm:w-auto">
+        <Button type="submit" className="w-full sm:w-auto" disabled={loading}>
+          {loading ? <Spinner className="h-4 w-4" /> : ""}
           {mode === "edit" ? "Mettre à jour" : "Créer le véhicule"}
         </Button>
       </div>

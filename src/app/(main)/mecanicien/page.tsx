@@ -226,7 +226,7 @@ export default function MecanicienPage() {
                     })}
                 </div>
             </div>
-            <Modal open={open} onClose={() => setOpen(false)} modalDescription="Détail de l'intervention">
+            <Modal open={open} onClose={() => setOpen(false)} modalTitle="Détail de l'intervention">
                 <InterventionDetail
                     selectedIntervention={selectedIntervention}
                     onClose={()=>setOpen(false)}

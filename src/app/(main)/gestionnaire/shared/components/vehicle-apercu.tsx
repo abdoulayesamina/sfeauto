@@ -23,6 +23,7 @@ type VehiclePreviewProps = {
   enReparation?: number;
   termine?: number;
   onNewIntervention: () => void;
+  reloadInvoiceList: () => void;
 };
 
 export function VehiclePreview({
@@ -36,6 +37,7 @@ export function VehiclePreview({
   color,
   invoices,
   onNewIntervention,
+  reloadInvoiceList,
 }: VehiclePreviewProps) {
   const [filteredStatus, setFilteredStatus] = useState<"EN_COURS" | "TERMINEE">("EN_COURS");
   const [openDetailModal, setOpenDetailModal] = useState(false);
@@ -53,6 +55,8 @@ export function VehiclePreview({
   const [localInvoices, setLocalInvoices] = useState<any[]>(invoices);
   const [filteredInvoices, setFilteredInvoices] = useState<any[]>(invoices);
 
+  const [detectDevis, setDetectDevis] = useState(false);
+
   useEffect(() => {
     console.log("Invoices dans VehiclePreview ----> ", invoices);
     setLocalInvoices(invoices);
@@ -68,6 +72,16 @@ export function VehiclePreview({
       .filter((inv) => (filteredStatus === "EN_COURS" ? inv.uiStatus !== "TERMINEE" : inv.uiStatus === "TERMINEE"))
     );
   }, [filteredStatus]);
+
+  useEffect(() => {
+    if (detectDevis) {
+      setFilteredInvoices(localInvoices
+        .map((inv) => ({ ...inv, uiStatus: toUIStatus(inv.status) }))
+        .filter((inv) => (filteredStatus === "EN_COURS" ? inv.uiStatus !== "TERMINEE" : inv.uiStatus === "TERMINEE"))
+      );
+      setDetectDevis(false);
+    }
+  }, [detectDevis]);
 
   const handleViewDetail = (invoice: any) => {
     setSelectedInvoice({
@@ -225,7 +239,7 @@ export function VehiclePreview({
         </Button>
       </div>
 
-      <Modal open={openDetailModal} onClose={() => setOpenDetailModal(false)} modalDescription="Détail de l'intervention">
+      <Modal open={openDetailModal} onClose={() => setOpenDetailModal(false)} modalTitle="Détail de l'intervention">
         {selectedInvoice && <IntervDetailGes selectedIntervention={selectedInvoice} onClose={() => setOpenDetailModal(false)} />}
       </Modal>
 
@@ -238,6 +252,7 @@ export function VehiclePreview({
             const updatedInvoice = updated?.invoice ?? updated;
             setLocalInvoices((prev) => prev.map((x) => (x.id === updatedInvoice.id ? { ...x, ...updatedInvoice } : x)));
           }}
+          reloadInvoiceList={reloadInvoiceList}
         />
       )}
 
@@ -250,7 +265,7 @@ export function VehiclePreview({
             const created = devis?.devis ?? devis;
             const dev_id = created?.dev_id;
             const dev_numdevis = created?.dev_numdevis;
-
+            setDetectDevis(true);
             setLocalInvoices((prev) =>
               prev.map((x) =>
                 x.id === invoiceForDevis.id ? { ...x, devis: { dev_id, dev_numdevis } } : x
@@ -260,7 +275,7 @@ export function VehiclePreview({
         />
       )}
 
-      <Modal open={openApercu} onClose={() => setOpenApercu(false)} modalDescription="Aperçu du devis">
+      <Modal open={openApercu} onClose={() => setOpenApercu(false)} modalTitle="Aperçu du devis">
         <DevisApercu devisId={targetDevisIdForApercu} onClose={() => setOpenApercu(false)} />
       </Modal>
     </div>
