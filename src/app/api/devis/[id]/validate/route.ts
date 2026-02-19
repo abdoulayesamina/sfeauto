@@ -31,7 +31,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     const current = await prisma.te_devis_dev.findUnique({
       where: { dev_id },
-      select: { dev_id: true, dev_supprimee: true, dev_accordNumber: true },
+      select: {
+        dev_id: true,
+        dev_supprimee: true,
+        dev_accordNumber: true,
+        invoice: { select: { accordNumber: true } },
+      },
     });
 
     if (!current || current.dev_supprimee) {
@@ -42,10 +47,35 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       return NextResponse.json({ error: "Devis déjà validé" }, { status: 409 });
     }
 
+    const invoiceAccord = normalizeAccordNumber(current.invoice?.accordNumber);
+
+    if (!invoiceAccord) {
+      return NextResponse.json(
+        { error: "Impossible de valider : l’intervention liée n’a pas de numéro d’accord" },
+        { status: 400 }
+      );
+    }
+
+    if (dev_accordNumber !== invoiceAccord) {
+      return NextResponse.json(
+        {
+          error: "Numéro d’accord invalide : il doit être identique à celui de l’intervention",
+          code: "ACCORD_NUMBER_MISMATCH",
+          details: { expected: invoiceAccord, provided: dev_accordNumber },
+        },
+        { status: 409 }
+      );
+    }
+
     const exists = await prisma.te_devis_dev.findFirst({
-      where: { dev_supprimee: false, dev_accordNumber },
+      where: {
+        dev_supprimee: false,
+        dev_accordNumber,
+        dev_id: { not: dev_id },
+      },
       select: { dev_id: true },
     });
+
     if (exists) {
       return NextResponse.json({ error: "Ce numéro d’accord est déjà utilisé" }, { status: 409 });
     }
