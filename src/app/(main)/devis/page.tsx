@@ -23,11 +23,21 @@ function formatDate(d?: string | Date | null) {
   return dt.toLocaleDateString("fr-FR");
 }
 
+// function formatMoney(v: any) {
+//   const n = Number(v);
+//   if (!Number.isFinite(n)) return "0 F";
+//   return `${n.toLocaleString("fr-FR")} F`;
+// }
 function formatMoney(v: any) {
   const n = Number(v);
-  if (!Number.isFinite(n)) return "0 F";
-  return `${n.toLocaleString("fr-FR")} F`;
+  if (!Number.isFinite(n)) return "0 €";
+
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+  }).format(n);
 }
+
 
 export default function DevisPage() {
   const { listDevis } = useDevisApi();

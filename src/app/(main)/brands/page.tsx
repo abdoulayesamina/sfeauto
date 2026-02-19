@@ -108,12 +108,14 @@ export default function BrandsPage() {
       toast.success("Marque supprimée")
       loadBrands()
     } catch (e: any) {
-      toast.error(e.message)
+      // toast.error(e.message)
+      toast.error(e?.message || "Erreur lors de la suppression")
     } finally {
       setInteractionLoading(false)
       setIdToDelete(null)
     }
   }
+
 
   // ================= COLUMNS =================
 
@@ -126,8 +128,8 @@ export default function BrandsPage() {
       header: "Actions",
       cell: ({ row }) => (
         <div className="flex gap-2 ">
-          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); openEditBrand(row.original) }}>Modifier</Button>
-          <Button variant="destructive" size="sm" onClick={(e) => { e.stopPropagation(); handleDeleteBrand(row.original) }} disabled={interactionLoading && idToDelete === row.original.id}>
+          <Button variant="outline" onClick={(e) => { e.stopPropagation(); openEditBrand(row.original) }}>Modifier</Button>
+          <Button variant="destructive" onClick={(e) => { e.stopPropagation(); handleDeleteBrand(row.original) }} disabled={interactionLoading && idToDelete === row.original.id}>
             {interactionLoading && idToDelete === row.original.id ? <Spinner className="size-4" /> : "Supprimer"}
           </Button>
         </div>

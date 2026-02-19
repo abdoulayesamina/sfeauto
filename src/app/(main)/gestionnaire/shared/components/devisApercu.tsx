@@ -124,7 +124,7 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
     if (!devis) return null;
 
     return (
-        <div className="max-w-[900px]">
+        <div className="max-w-[600px]">
             {devis ? 
                 <div id="imprime" className="print:block bg-white text-sm text-gray-800">
                     {/* ===== EN-TÊTE ===== */}

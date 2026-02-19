@@ -195,12 +195,11 @@ export function InterventionForm({
         </div>
 
         <div className="space-y-2">
-          <Label>Date de confirmation *</Label>
+          <Label>Date de confirmation</Label>
           <Input
             name="dateConfirmation"
             type="date"
             className="h-15"
-            required
           />
         </div>
       </div>

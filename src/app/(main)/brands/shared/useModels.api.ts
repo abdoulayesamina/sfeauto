@@ -2,7 +2,7 @@
 
 import { Model } from "@/src/utils/types/model"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL + "models"
+const API_URL = process.env.NEXT_PUBLIC_API_URL + "/models"
 
 export function useModelsApi() {
     const getModels = async (brandId: string): Promise<Model[]> => {
