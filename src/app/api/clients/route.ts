@@ -9,9 +9,12 @@ export async function GET() {
     const session = await auth();
 
     // Allow both ADMIN and MANAGER to fetch clients
-    if (!session || (session.user.role !== "MANAGER" && session.user.role !== "ADMIN")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+   if (
+  !session ||
+  !["MANAGER", "ADMIN", "MECHANIC"].includes(session.user.role)
+) {
+  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+}
 
     const clients = await prisma.client.findMany({
       orderBy: {

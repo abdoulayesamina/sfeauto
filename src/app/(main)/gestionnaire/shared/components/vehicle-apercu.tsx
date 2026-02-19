@@ -1,10 +1,14 @@
 "use client";
 
-import { Button } from "@/src/shared/components/ui/button";
-import { Eye, PlusCircle, FileText, Pencil } from "lucide-react";
 import { useState } from "react";
+import { useSession } from "next-auth/react";
+import { Eye, PlusCircle, FileText, Pencil } from "lucide-react";
+
+import { Button } from "@/src/shared/components/ui/button";
 import { Modal } from "@/src/shared/components/modal";
 import { toUIStatus, getStatusMeta } from "@/src/utils/constants/intervention-status";
+import { canCreateDevis } from "@/src/utils/permissions";
+
 import IntervDetailGes from "./Intervention";
 import { CreateDevisModal } from "./CreateDevisModal";
 import { EditInterventionModal } from "./EditInterventionModal";
@@ -37,6 +41,9 @@ export function VehiclePreview({
   invoices,
   onNewIntervention,
 }: VehiclePreviewProps) {
+  const { data: session } = useSession();
+  const role = session?.user?.role ?? null;
+
   const [filteredStatus, setFilteredStatus] = useState<"EN_COURS" | "TERMINEE">("EN_COURS");
   const [openDetailModal, setOpenDetailModal] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<any>();
@@ -116,10 +123,16 @@ export function VehiclePreview({
       </div>
 
       <div className="flex gap-3 mt-6">
-        <Button variant={filteredStatus === "EN_COURS" ? "default" : "outline"} onClick={() => setFilteredStatus("EN_COURS")}>
+        <Button
+          variant={filteredStatus === "EN_COURS" ? "default" : "outline"}
+          onClick={() => setFilteredStatus("EN_COURS")}
+        >
           En cours ({localInvoices.filter((i) => toUIStatus(i.status) !== "TERMINEE").length})
         </Button>
-        <Button variant={filteredStatus === "TERMINEE" ? "default" : "outline"} onClick={() => setFilteredStatus("TERMINEE")}>
+        <Button
+          variant={filteredStatus === "TERMINEE" ? "default" : "outline"}
+          onClick={() => setFilteredStatus("TERMINEE")}
+        >
           Terminées ({localInvoices.filter((i) => toUIStatus(i.status) === "TERMINEE").length})
         </Button>
       </div>
@@ -169,21 +182,27 @@ export function VehiclePreview({
                     Voir tous les détails
                   </button>
 
-                  <Button variant="outline" className="flex items-center gap-2" onClick={() => handleEditIntervention(inv)}>
+                  <Button
+                    variant="outline"
+                    className="flex items-center gap-2"
+                    onClick={() => handleEditIntervention(inv)}
+                  >
                     <Pencil size={16} />
                     Modifier
                   </Button>
 
-                  <Button
-                    variant="outline"
-                    className="flex items-center gap-2"
-                    disabled={hasDevis}
-                    title={hasDevis ? "Un devis existe déjà pour cette intervention" : "Créer un devis"}
-                    onClick={() => handleCreateDevis(inv)}
-                  >
-                    <FileText size={16} />
-                    {hasDevis ? "Devis existant" : "Créer devis"}
-                  </Button>
+                  {canCreateDevis(role) && (
+                    <Button
+                      variant="outline"
+                      className="flex items-center gap-2"
+                      disabled={hasDevis}
+                      title={hasDevis ? "Un devis existe déjà pour cette intervention" : "Créer un devis"}
+                      onClick={() => handleCreateDevis(inv)}
+                    >
+                      <FileText size={16} />
+                      {hasDevis ? "Devis existant" : "Créer devis"}
+                    </Button>
+                  )}
                 </div>
 
                 {hasDevis && (
@@ -196,7 +215,7 @@ export function VehiclePreview({
                     }}
                   >
                     <Eye size={16} />
-                    aperçu du devis
+                    Aperçu du devis
                   </Button>
                 )}
               </div>
@@ -212,8 +231,14 @@ export function VehiclePreview({
         </Button>
       </div>
 
-      <Modal open={openDetailModal} onClose={() => setOpenDetailModal(false)} modalDescription="Détail de l'intervention">
-        {selectedInvoice && <IntervDetailGes selectedIntervention={selectedInvoice} onClose={() => setOpenDetailModal(false)} />}
+      <Modal
+        open={openDetailModal}
+        onClose={() => setOpenDetailModal(false)}
+        modalDescription="Détail de l'intervention"
+      >
+        {selectedInvoice && (
+          <IntervDetailGes selectedIntervention={selectedInvoice} onClose={() => setOpenDetailModal(false)} />
+        )}
       </Modal>
 
       {invoiceForEdit && (
@@ -223,7 +248,9 @@ export function VehiclePreview({
           invoice={invoiceForEdit}
           onUpdated={(updated) => {
             const updatedInvoice = updated?.invoice ?? updated;
-            setLocalInvoices((prev) => prev.map((x) => (x.id === updatedInvoice.id ? { ...x, ...updatedInvoice } : x)));
+            setLocalInvoices((prev) =>
+              prev.map((x) => (x.id === updatedInvoice.id ? { ...x, ...updatedInvoice } : x))
+            );
           }}
         />
       )}
@@ -239,9 +266,7 @@ export function VehiclePreview({
             const dev_numdevis = created?.dev_numdevis;
 
             setLocalInvoices((prev) =>
-              prev.map((x) =>
-                x.id === invoiceForDevis.id ? { ...x, devis: { dev_id, dev_numdevis } } : x
-              )
+              prev.map((x) => (x.id === invoiceForDevis.id ? { ...x, devis: { dev_id, dev_numdevis } } : x))
             );
           }}
         />
@@ -253,6 +278,7 @@ export function VehiclePreview({
     </div>
   );
 }
+
 
 
 
