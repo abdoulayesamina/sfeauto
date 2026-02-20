@@ -1,10 +1,14 @@
 "use client";
 
-import { Button } from "@/src/shared/components/ui/button";
+import { useEffect, useMemo, useState } from "react";
+import { useSession } from "next-auth/react";
 import { Eye, PlusCircle, FileText, Pencil } from "lucide-react";
-import { useEffect, useState } from "react";
+
+import { Button } from "@/src/shared/components/ui/button";
 import { Modal } from "@/src/shared/components/modal";
 import { toUIStatus, getStatusMeta } from "@/src/utils/constants/intervention-status";
+import { canCreateDevis } from "@/src/utils/permissions";
+
 import IntervDetailGes from "./Intervention";
 import { CreateDevisModal } from "./CreateDevisModal";
 import { EditInterventionModal } from "./EditInterventionModal";
@@ -26,6 +30,12 @@ type VehiclePreviewProps = {
   reloadInvoiceList: () => void;
 };
 
+const DEFAULT_META = {
+  label: "Inconnu",
+  bg: "bg-zinc-100",
+  color: "text-zinc-700",
+};
+
 export function VehiclePreview({
   licensePlate,
   brand,
@@ -39,6 +49,9 @@ export function VehiclePreview({
   onNewIntervention,
   reloadInvoiceList,
 }: VehiclePreviewProps) {
+  const { data: session } = useSession();
+  const role = session?.user?.role ?? null;
+
   const [filteredStatus, setFilteredStatus] = useState<"EN_COURS" | "TERMINEE">("EN_COURS");
   const [openDetailModal, setOpenDetailModal] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<any>();
@@ -53,34 +66,30 @@ export function VehiclePreview({
   const [invoiceForEdit, setInvoiceForEdit] = useState<any>(null);
 
   const [localInvoices, setLocalInvoices] = useState<any[]>(invoices);
-  const [filteredInvoices, setFilteredInvoices] = useState<any[]>(invoices);
+  const [filteredInvoices, setFilteredInvoices] = useState<any[]>([]);
 
   const [detectDevis, setDetectDevis] = useState(false);
 
+  const mappedInvoices = useMemo(() => {
+    return (localInvoices ?? []).map((inv) => ({
+      ...inv,
+      uiStatus: toUIStatus(inv?.status),
+    }));
+  }, [localInvoices]);
+
   useEffect(() => {
-    console.log("Invoices dans VehiclePreview ----> ", invoices);
-    setLocalInvoices(invoices);
-    setFilteredInvoices(invoices
-      .map((inv) => ({ ...inv, uiStatus: toUIStatus(inv.status) }))
-      .filter((inv) => (filteredStatus === "EN_COURS" ? inv.uiStatus !== "TERMINEE" : inv.uiStatus === "TERMINEE"))
-    );
+    setLocalInvoices(invoices ?? []);
   }, [invoices]);
 
   useEffect(() => {
-    setFilteredInvoices(localInvoices
-      .map((inv) => ({ ...inv, uiStatus: toUIStatus(inv.status) }))
-      .filter((inv) => (filteredStatus === "EN_COURS" ? inv.uiStatus !== "TERMINEE" : inv.uiStatus === "TERMINEE"))
+    const next = mappedInvoices.filter((inv) =>
+      filteredStatus === "EN_COURS" ? inv.uiStatus !== "TERMINEE" : inv.uiStatus === "TERMINEE"
     );
-  }, [filteredStatus]);
+    setFilteredInvoices(next);
+  }, [mappedInvoices, filteredStatus, detectDevis]);
 
   useEffect(() => {
-    if (detectDevis) {
-      setFilteredInvoices(localInvoices
-        .map((inv) => ({ ...inv, uiStatus: toUIStatus(inv.status) }))
-        .filter((inv) => (filteredStatus === "EN_COURS" ? inv.uiStatus !== "TERMINEE" : inv.uiStatus === "TERMINEE"))
-      );
-      setDetectDevis(false);
-    }
+    if (detectDevis) setDetectDevis(false);
   }, [detectDevis]);
 
   const handleViewDetail = (invoice: any) => {
@@ -110,6 +119,16 @@ export function VehiclePreview({
     setOpenEditModal(true);
   };
 
+  const countEnCours = useMemo(
+    () => (mappedInvoices ?? []).filter((i) => i.uiStatus !== "TERMINEE").length,
+    [mappedInvoices]
+  );
+
+  const countTerminee = useMemo(
+    () => (mappedInvoices ?? []).filter((i) => i.uiStatus === "TERMINEE").length,
+    [mappedInvoices]
+  );
+
   return (
     <div className="rounded-xl border bg-gradient-to-r from-zinc-50 to-white p-5 shadow-sm flex flex-col gap-4">
       <div className="rounded-xl bg-gradient-to-r from-black to-gray-900 p-6 text-white shadow-lg">
@@ -137,23 +156,23 @@ export function VehiclePreview({
           </div>
           <div>
             <p className="text-white/70">Date d’entrée</p>
-            <p className="font-semibold">{new Date(entreeDate).toLocaleDateString()}</p>
+            <p className="font-semibold">{entreeDate ? new Date(entreeDate).toLocaleDateString() : "—"}</p>
           </div>
         </div>
       </div>
 
       <div className="flex gap-3 mt-6">
         <Button variant={filteredStatus === "EN_COURS" ? "default" : "outline"} onClick={() => setFilteredStatus("EN_COURS")}>
-          En cours ({localInvoices.filter((i) => toUIStatus(i.status) !== "TERMINEE").length})
+          En cours ({countEnCours})
         </Button>
         <Button variant={filteredStatus === "TERMINEE" ? "default" : "outline"} onClick={() => setFilteredStatus("TERMINEE")}>
-          Terminées ({localInvoices.filter((i) => toUIStatus(i.status) === "TERMINEE").length})
+          Terminées ({countTerminee})
         </Button>
       </div>
 
       <div className="mt-6 space-y-4 p-2 min-h-[350px] max-h-[350px] overflow-auto">
         {filteredInvoices.map((inv) => {
-          const meta = getStatusMeta(inv.uiStatus);
+          const meta = getStatusMeta(inv?.uiStatus) ?? DEFAULT_META;
           const hasDevis = Boolean(inv?.devis?.dev_id);
           const devisId = inv?.devis?.dev_id ?? null;
 
@@ -161,14 +180,13 @@ export function VehiclePreview({
             <div key={inv.id} className="rounded-xl border bg-white p-5 shadow-sm hover:shadow-md transition">
               <div className="flex flex-col-reverse lg:flex-row justify-between items-start gap-4">
                 <div>
-                  <p className="font-semibold text-zinc-800">{inv.workDescription}</p>
+                  <p className="font-semibold text-zinc-800">{inv?.workDescription ?? "—"}</p>
                   <div className="flex flex-wrap gap-4 mt-2 text-sm text-zinc-500">
                     <span>
-                      <strong>N° Accord :</strong> {inv.accordNumber ?? "—"}
+                      <strong>N° Accord :</strong> {inv?.accordNumber ?? "—"}
                     </span>
                     <span>
-                      Confirmé le :{" "}
-                      {inv.dateOfConfirmation ? new Date(inv.dateOfConfirmation).toLocaleDateString() : "—"}
+                      Confirmé le : {inv?.dateOfConfirmation ? new Date(inv.dateOfConfirmation).toLocaleDateString() : "—"}
                     </span>
                   </div>
                 </div>
@@ -201,16 +219,18 @@ export function VehiclePreview({
                     Modifier
                   </Button>
 
-                  <Button
-                    variant="outline"
-                    className="flex items-center gap-2"
-                    disabled={hasDevis}
-                    title={hasDevis ? "Un devis existe déjà pour cette intervention" : "Créer un devis"}
-                    onClick={() => handleCreateDevis(inv)}
-                  >
-                    <FileText size={16} />
-                    {hasDevis ? "Devis existant" : "Créer devis"}
-                  </Button>
+                  {canCreateDevis(role) && (
+                    <Button
+                      variant="outline"
+                      className="flex items-center gap-2"
+                      disabled={hasDevis}
+                      title={hasDevis ? "Un devis existe déjà pour cette intervention" : "Créer un devis"}
+                      onClick={() => handleCreateDevis(inv)}
+                    >
+                      <FileText size={16} />
+                      {hasDevis ? "Devis existant" : "Créer devis"}
+                    </Button>
+                  )}
                 </div>
 
                 {hasDevis && (
@@ -223,7 +243,7 @@ export function VehiclePreview({
                     }}
                   >
                     <Eye size={16} />
-                    aperçu du devis
+                    Aperçu du devis
                   </Button>
                 )}
               </div>
@@ -235,12 +255,14 @@ export function VehiclePreview({
       <div className="flex justify-center pt-2">
         <Button className="flex items-center gap-2 w-full h-[50px]" onClick={onNewIntervention}>
           <PlusCircle size={18} />
-          Nouvelle intervention 
+          Nouvelle intervention
         </Button>
       </div>
 
       <Modal open={openDetailModal} onClose={() => setOpenDetailModal(false)} modalTitle="Détail de l'intervention">
-        {selectedInvoice && <IntervDetailGes selectedIntervention={selectedInvoice} onClose={() => setOpenDetailModal(false)} />}
+        {selectedInvoice && (
+          <IntervDetailGes selectedIntervention={selectedInvoice} onClose={() => setOpenDetailModal(false)} />
+        )}
       </Modal>
 
       {invoiceForEdit && (
@@ -267,9 +289,7 @@ export function VehiclePreview({
             const dev_numdevis = created?.dev_numdevis;
             setDetectDevis(true);
             setLocalInvoices((prev) =>
-              prev.map((x) =>
-                x.id === invoiceForDevis.id ? { ...x, devis: { dev_id, dev_numdevis } } : x
-              )
+              prev.map((x) => (x.id === invoiceForDevis.id ? { ...x, devis: { dev_id, dev_numdevis } } : x))
             );
           }}
         />
@@ -281,6 +301,7 @@ export function VehiclePreview({
     </div>
   );
 }
+
 
 
 

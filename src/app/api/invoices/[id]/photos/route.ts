@@ -16,7 +16,7 @@ export async function GET(
 ) {
   try {
     const session = await auth()
-    if (!session || session.user.role !== "MANAGER") {
+    if (!session || !["MANAGER", "MECHANIC"].includes(session.user.role)) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
     }
 

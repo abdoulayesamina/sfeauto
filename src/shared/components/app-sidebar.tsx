@@ -104,7 +104,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       title: "Gestionnaire",
       url: "/gestionnaire",
       icon: UserCog,
-      roles: ["MANAGER"],
+      roles:["MANAGER","MECHANIC"],
 
     },
     {

@@ -1,6 +1,7 @@
 import React from "react";
 import "@/src/app/globals.css";
 import { Poppins } from "next/font/google";
+import Providers from "../providers";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -12,7 +13,11 @@ const poppins = Poppins({
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr" className={poppins.variable}>
-      <body>{children}</body>
+      <body>
+        <Providers>
+          {children}
+        </Providers>
+      </body>
     </html>
   );
 }

@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     const session = await auth();
 
     const role = session?.user?.role;
-    if (!session || !["MANAGER", "AGENCE", "ADMIN"].includes(role as string)) {
+    if (!session || !["MANAGER", "AGENCE", "ADMIN","MECHANIC"].includes(role as string)) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
