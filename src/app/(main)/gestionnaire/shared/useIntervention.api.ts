@@ -20,12 +20,14 @@ export function useInterventionApi() {
       fd.append("ordersDetails", payload.ordersDetails ?? "")
       fd.append("comments", payload.comments ?? "")
 
-      for (const f of images) fd.append("photos", f)
+      for (const f of images) {
+        fd.append("photos", f)
+      }
 
       const res = await fetch(API_URL, {
         method: "POST",
         body: fd,
-        credentials: "include", // ✅ IMPORTANT
+        credentials: "include",
       })
 
       const result = await res.json()
@@ -35,7 +37,10 @@ export function useInterventionApi() {
         throw new Error(result.error || "Erreur inconnue")
       }
 
-      successAlert("Intervention créée avec succès")
+      successAlert(
+        result.message || "Intervention créée avec succès"
+      )
+
       return result
     } catch (e: any) {
       errorAlert("Erreur", e.message)

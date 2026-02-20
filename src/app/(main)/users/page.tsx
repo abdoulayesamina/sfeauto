@@ -12,6 +12,7 @@ import { useClientApi } from "../clients/shared/useClient.api"
 import { confirmAlert, errorAlert, successAlert } from "@/src/lib/alerts"
 import { useAgenceApi } from "../agence/shared/useAgence.api"
 import { Spinner } from "@/src/shared/components/spinner"
+import { toast } from "sonner"
 
 export default function UsersPage() {
   const { getUsers, createUser, updateUser, deleteUser } = useUserApi()
@@ -23,6 +24,8 @@ export default function UsersPage() {
   const [clients, setClients] = useState<{ id: string; name: string }[]>([])
   const [agences, setAgences] = useState<{ id: string; location: string; clientId: string }[]>([])
   const [loading, setLoading] = useState(true)
+  const [usersLoading, setUsersLoading] = useState(false)
+  const [idToDelete, setIdToDelete] = useState<string | null>(null);
 
   const [isOpen, setIsOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
@@ -45,7 +48,7 @@ export default function UsersPage() {
       const data = await getUsers()
       setUsers(data)
     } catch (e: any) {
-      errorAlert("Erreur", e.message)
+      toast.error("Erreur", e.message)
     }
     setLoading(false)
   }
@@ -55,7 +58,7 @@ export default function UsersPage() {
       const data = await getUsers()
       setUsers(data)
     } catch (e: any) {
-      errorAlert("Erreur", e.message)
+      toast.error("Erreur", e.message)
     }
   }
 
@@ -64,7 +67,7 @@ export default function UsersPage() {
       const data = await getClients()
       setClients(data.map((c) => ({ id: c.id, name: c.name })))
     } catch (e: any) {
-      errorAlert("Erreur", e.message)
+      toast.error("Erreur", e.message)
     }
   }
 
@@ -73,19 +76,22 @@ export default function UsersPage() {
       const data = await getAgences()
       setAgences(data.map((a) => ({ id: a.id, location: a.location, clientId: a.clientId })))
     } catch (e: any) {
-      errorAlert("Erreur", e.message)
+      toast.error("Erreur", e.message)
     }
   }
 
   const handleCreate = async () => {
     try {
+      setUsersLoading(true)
       await createUser(formData)
-      successAlert("Utilisateur créé")
+      toast.success("Utilisateur créé")
+      setUsersLoading(false)
       setIsOpen(false)
       setFormData({})
       loadUsersWithoutSpin()
     } catch (e: any) {
-      errorAlert("Erreur", e.message)
+      toast.error("Erreur : "+ e.message || e.error || "Impossible de créer l'utilisateur")
+      setUsersLoading(false)
     }
   }
 
@@ -108,14 +114,17 @@ export default function UsersPage() {
     if (!payload.password) delete payload.password
 
     try {
+      setUsersLoading(true)
       await updateUser(userToEdit.id, payload)
-      successAlert("Utilisateur mis à jour")
+      toast.success("Utilisateur mis à jour")
       setEditOpen(false)
       setUserToEdit(null)
       setFormData({})
+      setUsersLoading(false)
       loadUsersWithoutSpin()
     } catch (e: any) {
-      errorAlert("Erreur", e.message)
+      toast.error("Erreur", e.message)
+      setUsersLoading(false)
     }
   }
 
@@ -127,11 +136,16 @@ export default function UsersPage() {
     if (!confirmed) return
 
     try {
+      setIdToDelete(user.id ?? null);
       await deleteUser(user.id)
-      successAlert("Utilisateur supprimé", `"${user.name}" a été supprimé avec succès.`)
+      toast.success("Utilisateur supprimé", {
+        description: `"${user.name}" a été supprimé avec succès.`,
+      })
       setUsers((prev) => prev.filter((u) => u.id !== user.id))
+      setIdToDelete(null);
     } catch (err: any) {
-      errorAlert("Erreur", err.message || "Impossible de supprimer l'utilisateur")
+      toast.error("Erreur", err.message || "Impossible de supprimer l'utilisateur")
+      setIdToDelete(null);
     }
   }
 
@@ -156,8 +170,11 @@ export default function UsersPage() {
           <Button variant="outline" onClick={() => handleEdit(row.original)}>
             Modifier
           </Button>
-          <Button variant="destructive" onClick={() => handleDelete(row.original)}>
-            Supprimer
+          <Button variant="destructive" onClick={() => handleDelete(row.original)} disabled={idToDelete === row.original.id}>
+            <span className="flex items-center gap-2">
+              {idToDelete === row.original.id ? <Spinner className="size-4" /> : ""}
+              Supprimer
+            </span>
           </Button>
         </div>
       ),
@@ -202,7 +219,11 @@ export default function UsersPage() {
           value={formData}
           onChange={setFormData}
           onSubmit={handleCreate}
-          onClose={() => setIsOpen(false)}
+          loading={usersLoading}
+          onClose={() => {
+            setIsOpen(false)
+            setFormData({})
+          }}
           clients={clients}
           agences={agences}
         />
@@ -215,6 +236,7 @@ export default function UsersPage() {
           value={formData}
           onChange={setFormData}
           onSubmit={handleUpdate}
+          loading={usersLoading}
           onClose={() => setEditOpen(false)}
           clients={clients}
           agences={agences}

@@ -1,5 +1,6 @@
 "use client"
 
+import { Spinner } from "@/src/shared/components/spinner"
 import { Button } from "@/src/shared/components/ui/button"
 import { Input } from "@/src/shared/components/ui/input"
 import { Label } from "@/src/shared/components/ui/label"
@@ -11,10 +12,12 @@ import {
   SelectValue,
 } from "@/src/shared/components/ui/select"
 import { User } from "@/src/utils/types/user"
+import { useEffect, useRef } from "react"
 
 type UserFormProps = {
   value: Partial<User>
   mode: "create" | "edit"
+  loading?: boolean
   onChange: (data: Partial<User>) => void
   onSubmit: () => void
   onClose: () => void
@@ -30,6 +33,7 @@ export function UserForm({
   onClose,
   clients,
   agences,
+  loading,
 }: UserFormProps) {
   const roles = [
     { id: "ADMIN", name: "Administrateur" },
@@ -41,10 +45,14 @@ export function UserForm({
   ] as const
 
   const needsClientAndBase = value.role === "CLIENT" || value.role === "AGENCE"
-
   const filteredAgences = value.clientId
-    ? agences.filter((a) => a.clientId === value.clientId)
-    : []
+  ? agences.filter((a) => a.clientId === value.clientId)
+  : []
+
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+      inputRef.current?.focus();
+  }, [mode]);
 
   return (
     <form
@@ -57,6 +65,7 @@ export function UserForm({
       <div>
         <Label>Nom</Label>
         <Input
+          ref={inputRef}
           className="h-12"
           value={value.name || ""}
           onChange={(e) => onChange({ ...value, name: e.target.value })}
@@ -91,8 +100,9 @@ export function UserForm({
         <Label>Rôle</Label>
         <Select
           value={value.role || ""}
+
           onValueChange={(role : "CLIENT" | "AGENCE") => {
-            // Quand on change de rôle, on reset les champs qui ne s'appliquent plus
+
             const next: Partial<User> = { ...value, role}
 
             const willNeed = role === "CLIENT" || role === "AGENCE"
@@ -128,7 +138,7 @@ export function UserForm({
                 onChange({
                   ...value,
                   clientId,
-                  baseId: null, // reset base quand client change
+                  baseId: null, 
                 })
               }
             >
@@ -188,10 +198,13 @@ export function UserForm({
           type="submit"
           disabled={
             // Petit guard UI: si AGENCE => base obligatoire
-            value.role === "AGENCE" && (!value.clientId || !value.baseId)
+            value.role === "AGENCE" && (!value.clientId || !value.baseId) || loading
           }
         >
-          {mode === "create" ? "Créer" : "Modifier"}
+          <span className="flex items-center gap-2">
+            {loading ? <Spinner /> : ""}
+            {mode === "create" ? "Créer" : "Modifier"}
+          </span>
         </Button>
       </div>
     </form>

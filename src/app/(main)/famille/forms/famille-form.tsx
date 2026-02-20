@@ -5,6 +5,7 @@ import { Button } from "@/src/shared/components/ui/button"
 import { Input } from "@/src/shared/components/ui/input"
 import { Label } from "@/src/shared/components/ui/label"
 import { Famille } from "@/src/utils/types/famille"
+import { useEffect, useRef } from "react"
 
 type Props = {
   mode: "create" | "edit"
@@ -23,12 +24,19 @@ export function FamilleForm({
   onSubmit,
   onChange,
 }: Props) {
+
+    const inputRef = useRef<HTMLInputElement>(null);
+    useEffect(() => {
+        inputRef.current?.focus();
+    }, [mode]);
+
     return (
         <form>
             <div className="mb-4 flex flex-col gap-2 p-2">
             <Label>Nom</Label>
             <Input
-                className="h-16"
+                ref={inputRef}
+                className="h-12"
                 value={data.fam_name || ""}
                 onChange={(e) => onChange({ ...data, fam_name: e.target.value })}
                 placeholder="Nom de la famille"

@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/src/shared/components/ui/select"
+import { Spinner } from "@/src/shared/components/spinner"
 
 const ENERGY_OPTIONS = ["GAZOLE", "ESSENCE", "HYBRIDE", "ELECTRIQUE", "GPL"] as const
 const GEARBOX_OPTIONS = ["BVM", "BVA"] as const
@@ -50,11 +51,13 @@ export function AddVehiculeForm({
   onSubmit,
   mode,
   data,
+  loading,
 }: {
   onClose: () => void
   onSubmit: (vehicule: Vehicule) => void
   mode: "create" | "edit"
   data?: Vehicule
+  loading?: boolean
 }) {
   const { getClients } = useClientApi()
   const { getAgences } = useAgenceApi()
@@ -137,7 +140,7 @@ export function AddVehiculeForm({
         <Input
           id="immatriculation"
           placeholder="SSSSDDDD"
-          className="h-16"
+          className="h-12"
           value={vehicule.licensePlate}
           onChange={(e) =>
             setVehicule({ ...vehicule, licensePlate: e.target.value })
@@ -152,7 +155,7 @@ export function AddVehiculeForm({
           {/* <Input
             id="marque"
             placeholder="Renault"
-            className="h-16"
+            className="h-12"
             value={vehicule.brand || ""}
             onChange={(e) => setVehicule({ ...vehicule, brand: e.target.value })}
           /> */}
@@ -172,7 +175,7 @@ export function AddVehiculeForm({
           {/* <Input
             id="modele"
             placeholder="Megane"
-            className="h-16"
+            className="h-12"
             value={vehicule.model || ""}
             onChange={(e) => setVehicule({ ...vehicule, model: e.target.value })}
           /> */}
@@ -197,7 +200,7 @@ export function AddVehiculeForm({
             id="annee"
             type="number"
             placeholder="2023"
-            className="h-16"
+            className="h-12"
             value={vehicule.year ?? ""}
             onChange={(e) =>
               setVehicule({
@@ -212,7 +215,7 @@ export function AddVehiculeForm({
           <Input
             id="couleur"
             placeholder="Gris"
-            className="h-16"
+            className="h-12"
             value={vehicule.color || ""}
             onChange={(e) => setVehicule({ ...vehicule, color: e.target.value })}
           />
@@ -226,7 +229,7 @@ export function AddVehiculeForm({
           <Input
             id="firstRegistrationDate"
             type="date"
-            className="h-16"
+            className="h-12"
             value={fromISOToDateInput(vehicule.firstRegistrationDate)}
             onChange={(e) =>
               setVehicule({
@@ -242,7 +245,7 @@ export function AddVehiculeForm({
           <Input
             id="registrationCardDate"
             type="date"
-            className="h-16"
+            className="h-12"
             value={fromISOToDateInput(vehicule.registrationCardDate)}
             onChange={(e) =>
               setVehicule({
@@ -262,7 +265,7 @@ export function AddVehiculeForm({
             value={(vehicule.energy as string) || ""}
             onValueChange={(energy) => setVehicule({ ...vehicule, energy: energy as any })}
           >
-            <SelectTrigger className="h-16">
+            <SelectTrigger className="h-12">
               <SelectValue placeholder="Sélectionnez une énergie" />
             </SelectTrigger>
             <SelectContent className="z-[2000]">
@@ -283,7 +286,7 @@ export function AddVehiculeForm({
               setVehicule({ ...vehicule, bodyType: bodyType as any })
             }
           >
-            <SelectTrigger className="h-16">
+            <SelectTrigger className="h-12">
               <SelectValue placeholder="Sélectionnez une carrosserie" />
             </SelectTrigger>
             <SelectContent className="z-[2000]">
@@ -305,7 +308,7 @@ export function AddVehiculeForm({
             id="doorsCount"
             type="number"
             placeholder="5"
-            className="h-16"
+            className="h-12"
             value={vehicule.doorsCount ?? ""}
             onChange={(e) =>
               setVehicule({
@@ -324,7 +327,7 @@ export function AddVehiculeForm({
               setVehicule({ ...vehicule, gearboxType: gearboxType as any })
             }
           >
-            <SelectTrigger className="h-16">
+            <SelectTrigger className="h-12">
               <SelectValue placeholder="Sélectionnez un type" />
             </SelectTrigger>
             <SelectContent className="z-[2000]">
@@ -346,7 +349,7 @@ export function AddVehiculeForm({
             id="realPowerHp"
             type="number"
             placeholder="128"
-            className="h-16"
+            className="h-12"
             value={vehicule.realPowerHp ?? ""}
             onChange={(e) =>
               setVehicule({
@@ -363,7 +366,7 @@ export function AddVehiculeForm({
             id="fiscalPowerCv"
             type="number"
             placeholder="7"
-            className="h-16"
+            className="h-12"
             value={vehicule.fiscalPowerCv ?? ""}
             onChange={(e) =>
               setVehicule({
@@ -381,7 +384,7 @@ export function AddVehiculeForm({
         <Input
           id="version"
           placeholder="1.6 CRDI"
-          className="h-16"
+          className="h-12"
           value={vehicule.version || ""}
           onChange={(e) => setVehicule({ ...vehicule, version: e.target.value })}
         />
@@ -398,7 +401,7 @@ export function AddVehiculeForm({
             setVehicule({ ...vehicule, clientId, baseId: "" })
           }
         >
-          <SelectTrigger className="h-16">
+          <SelectTrigger className="h-12">
             <SelectValue placeholder={loadingClients ? "Chargement..." : "Sélectionnez un client"} />
           </SelectTrigger>
           <SelectContent className="z-[2000]">
@@ -421,7 +424,7 @@ export function AddVehiculeForm({
           onValueChange={(baseId) => setVehicule({ ...vehicule, baseId })}
           disabled={!vehicule.clientId || loadingAgences}
         >
-          <SelectTrigger className="h-16">
+          <SelectTrigger className="h-12">
             <SelectValue
               placeholder={
                 !vehicule.clientId
@@ -448,10 +451,12 @@ export function AddVehiculeForm({
           variant="outline"
           className="w-full sm:w-auto"
           onClick={onClose}
+          disabled={loading}
         >
           Annuler
         </Button>
-        <Button type="submit" className="w-full sm:w-auto">
+        <Button type="submit" className="w-full sm:w-auto" disabled={loading}>
+          {loading ? <Spinner className="h-4 w-4" /> : ""}
           {mode === "edit" ? "Mettre à jour" : "Créer le véhicule"}
         </Button>
       </div>

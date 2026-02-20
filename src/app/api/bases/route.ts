@@ -9,9 +9,12 @@ export async function GET(request: NextRequest) {
     const session = await auth();
 
     // Allow both ADMIN and MANAGER to fetch bases
-    if (!session || (session.user.role !== "MANAGER" && session.user.role !== "ADMIN")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  if (
+  !session ||
+  !["MANAGER", "ADMIN", "MECHANIC"].includes(session.user.role)
+) {
+  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+}
 
     const { searchParams } = new URL(request.url);
     const clientId = searchParams.get("clientId");

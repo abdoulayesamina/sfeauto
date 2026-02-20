@@ -1,14 +1,17 @@
 "use client"
 
+import { Spinner } from "@/src/shared/components/spinner"
 import { Button } from "@/src/shared/components/ui/button"
 import { Input } from "@/src/shared/components/ui/input"
 import { Label } from "@/src/shared/components/ui/label"
 import { Textarea } from "@/src/shared/components/ui/textarea"
 import { Client } from "@/src/utils/types/client"
+import { useEffect, useRef } from "react"
 
 type Props = {
   mode: "create" | "edit"
   data: Partial<Client>
+  loading?: boolean
   onClose: () => void
   onSubmit: () => void
   onChange: (data: Partial<Client>) => void
@@ -20,13 +23,22 @@ export function ClientForm({
   onClose,
   onSubmit,
   onChange,
+  loading,
 }: Props) {
+
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+      inputRef.current?.focus();
+  }, [mode]);
+
   return (
     <form className="space-y-6">
       <div className="grid grid-cols-1 gap-4">
         <div>
           <Label>Nom du client</Label>
           <Input
+            ref={inputRef}
             className="h-12"
             value={data.name || ""}
             onChange={(e) => onChange({ ...data, name: e.target.value })}
@@ -53,7 +65,7 @@ export function ClientForm({
             className="h-12"
             value={data.phone || ""}
             onChange={(e) => onChange({ ...data, phone: e.target.value })}
-            placeholder="+223 xx xx xx xx"
+            placeholder="+33 x xx xx xx xx"
           />
         </div>
       </div>
@@ -105,8 +117,11 @@ export function ClientForm({
         <Button type="button" variant="outline" onClick={onClose}>
           Annuler
         </Button>
-        <Button type="button" onClick={onSubmit}>
-          {mode === "create" ? "Créer le client" : "Modifier le client"}
+        <Button type="button" onClick={onSubmit} disabled={loading}>
+          <span className="flex items-center gap-2">
+            {loading ? <Spinner className="size-4" /> : ""}
+            {mode === "create" ? "Créer le client" : "Modifier le client"}
+          </span>
         </Button>
       </div>
 

@@ -17,9 +17,74 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    function imprimerDiv(): void {
-        window.print();
-    }
+    // function imprimerDiv(): void {
+    //     window.print();
+    // }
+    function imprimerDiv() {
+        const content = document.getElementById("imprime");
+        if (!content) return;
+
+        const iframe = document.createElement("iframe");
+        iframe.style.position = "fixed";
+        iframe.style.right = "0";
+        iframe.style.bottom = "0";
+        iframe.style.width = "0";
+        iframe.style.height = "0";
+        iframe.style.border = "0";
+
+        document.body.appendChild(iframe);
+
+        const iframeDoc = iframe.contentWindow?.document;
+        if (!iframeDoc) return;
+
+        // Copier les styles existants
+        const styles = Array.from(document.styleSheets)
+            .map((styleSheet: any) => {
+            try {
+                if (styleSheet.href) {
+                return `<link rel="stylesheet" href="${styleSheet.href}">`;
+                } else if (styleSheet.cssRules) {
+                return `<style>${Array.from(styleSheet.cssRules)
+                    .map((rule: any) => rule.cssText)
+                    .join("")}</style>`;
+                }
+            } catch {
+                return "";
+            }
+            return "";
+            })
+            .join("");
+
+        iframeDoc.open();
+        iframeDoc.write(`
+            <html>
+            <head>
+                ${styles}
+                <style>
+                @page {
+                    size: A4;
+                    margin: 10mm;
+                }
+                body {
+                    margin: 0;
+                }
+                </style>
+            </head>
+            <body>
+                ${content.outerHTML}
+            </body>
+            </html>
+        `);
+        iframeDoc.close();
+
+        setTimeout(() => {
+            iframe.contentWindow?.focus();
+            iframe.contentWindow?.print();
+            document.body.removeChild(iframe);
+        }, 500);
+}
+ 
+
 
     useEffect(() => {
         async function loadDevis() {
@@ -59,9 +124,9 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
     if (!devis) return null;
 
     return (
-        <div className="max-w-[900px]">
+        <div className="max-w-[600px]">
             {devis ? 
-                <div id="imprime" className="print:block bg-white text-sm text-gray-800 p-6 w-full max-w-5xl mx-auto">
+                <div id="imprime" className="print:block bg-white text-sm text-gray-800">
                     {/* ===== EN-TÊTE ===== */}
                     <div className="flex flex-col mb-6">
                         {/* Garage */}
@@ -182,8 +247,8 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
                     </div>
                     
                     {/* ===== TOTAUX =====*/}
-                    <div className="grid grid-cols-[250px_1fr] gap-2">
-                        <div className="flex flex-col">
+                    <div className="grid grid-cols-1">
+                        {/* <div className="flex flex-col">
                             <div className="grid grid-cols-3 text-[12px] bg-[#000033] text-white">
                                 <div className=" text-center">Libellé</div>
                                 <div className=" text-center">Qté/Temps</div>
@@ -196,43 +261,43 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
                                     <td className="border border-black">......</td>
                                 </tr>
                             </table>
-                        </div>
-                        <div className="grid grid-cols-[1fr_130px]">
+                        </div> */}
+                        <div className="grid grid-cols-[1fr_250px]">
                             <div>
                                 <table className="border-collapse w-full min-h-[80px]">
                                     <tr className="bg-[#000033] text-[12px] text-white">
-                                        <th className="border border-black">T</th>
-                                        <th className="border border-black">Base H.T</th>
-                                        <th className="border border-black">Tva</th>
-                                        <th className="border border-black">Mt.Tva</th>
+                                        <td className="text-center border border-black">T</td>
+                                        <td className="text-center border border-black">Base H.T</td>
+                                        <td className="text-center border border-black">Tva</td>
+                                        <td className="text-center border border-black">Mt.Tva</td>
                                     </tr>
-                                    <tr>
-                                        <td className="border border-black">......</td>
-                                        <td className="border border-black">{devis.dev_totalht}</td>
-                                        <td className="border border-black">{devis.dev_tva}</td>
-                                        <td className="border-y border-black">{devis.dev_totaltva}</td>
+                                    <tr className="">
+                                        <td className="border border-black text-center">1</td>
+                                        <td className="border border-black text-right">{devis.dev_totalht}</td>
+                                        <td className="border border-black text-right">{devis.dev_tva}</td>
+                                        <td className="border-y border-black text-right">{devis.dev_totaltva}</td>
                                     </tr>
                                 </table>
                             </div>
                             <div>
                                 <table className="w-full border border-black">
                                     <tr>
-                                        <th className="bg-[#000033] text-white text-center text-[12px] p-[9.5px]">Total HT</th>
+                                        <td className="bg-[#000033] text-white text-center text-[11px] p-[9.5px]">Total HT</td>
                                     </tr>
                                     <tr>
-                                        <td className="p-[9.5px]">{devis.dev_totalht} €</td>
+                                        <td className="p-[9.5px] text-right">{devis.dev_totalht} €</td>
                                     </tr>
                                     <tr>
-                                        <th className="bg-[#000033] text-white text-center text-[12px] p-[9.5px]">TVA</th>
+                                        <td className="bg-[#000033] text-white text-center text-[11px] p-[9.5px]">TVA</td>
                                     </tr>
                                     <tr>
-                                        <td className="p-[9.5px]">{devis.dev_totaltva} €</td>
+                                        <td className="p-[9.5px] text-right">{devis.dev_totaltva} €</td>
                                     </tr>
                                     <tr>
-                                        <th className="bg-[#000033] text-white text-center text-[12px] p-[9.5px]">NET À PAYER TTC</th>
+                                        <td className="bg-[#000033] text-white text-center text-[11px] p-[9.5px]">NET À PAYER TTC</td>
                                     </tr>
                                     <tr>
-                                        <td className="p-[9.5px]">{devis.dev_totalttc} €</td>
+                                        <td className="p-[9.5px] text-center font-bold text-[17px]">{devis.dev_totalttc} €</td>
                                     </tr>
                                 </table>
                                 {/* <div className="flex flex-col">

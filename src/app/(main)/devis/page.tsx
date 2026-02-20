@@ -10,10 +10,11 @@ import { Pencil, Eye, CheckCircle, Lock } from "lucide-react";
 import { errorAlert } from "@/src/lib/alerts";
 
 import { useDevisApi } from "./shared/hooks/useDevisApi.api";
-import { EditDevisModal } from "../gestionnaire/shared/components/EditDevisModal";
+import { EditDevisModal } from "../gestionnaire/shared/components/edit-devis/EditDevisModal";
 import { ValidateDevisModal } from "../gestionnaire/shared/components/ValidateDevisModal";
 import { Modal } from "@/src/shared/components/modal";
 import { DevisApercu } from "../gestionnaire/shared/components/devisApercu";
+import { toast } from "sonner";
 
 function formatDate(d?: string | Date | null) {
   if (!d) return "—";
@@ -22,11 +23,21 @@ function formatDate(d?: string | Date | null) {
   return dt.toLocaleDateString("fr-FR");
 }
 
+// function formatMoney(v: any) {
+//   const n = Number(v);
+//   if (!Number.isFinite(n)) return "0 F";
+//   return `${n.toLocaleString("fr-FR")} F`;
+// }
 function formatMoney(v: any) {
   const n = Number(v);
-  if (!Number.isFinite(n)) return "0 F";
-  return `${n.toLocaleString("fr-FR")} F`;
+  if (!Number.isFinite(n)) return "0 €";
+
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+  }).format(n);
 }
+
 
 export default function DevisPage() {
   const { listDevis } = useDevisApi();
@@ -56,10 +67,11 @@ export default function DevisPage() {
       if (!res.ok) throw new Error(res.error || "Erreur chargement devis");
 
       const list = res.data?.devis ?? [];
+
       setRows(list);
       setRowsSearch(list);
     } catch (e: any) {
-      errorAlert("Erreur", e.message);
+      toast.error("Erreur", e.message);
     } finally {
       setLoading(false);
     }
@@ -70,7 +82,6 @@ export default function DevisPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ✅ Recherche (comme tes autres pages)
   const handleSearch = (q: string) => {
     const s = q.toLowerCase().trim();
 
@@ -102,7 +113,6 @@ export default function DevisPage() {
     setRowsSearch(filtered);
   };
 
-  // ✅ Colonnes (ColumnDef) -> createColumns -> DataTable
   const columns: ColumnDef<any>[] = [
     {
       accessorKey: "dev_numdevis",
@@ -120,7 +130,7 @@ export default function DevisPage() {
       cell: ({ row }) => {
         const v = row.original?.vehicle;
         if (!v) return "—";
-        const brandModel = `${v.brand ?? ""} ${v.model ?? ""}`.trim();
+        const brandModel = `${v.brand?.name ?? ""} ${v.model?.name ?? ""}`.trim();
         return (
           <span>
             <span className="font-medium">{v.licensePlate}</span>
@@ -263,7 +273,7 @@ export default function DevisPage() {
         />
       )}
 
-      <Modal open={openApercu} onClose={()=>setOpenApercu(false)} modalDescription="Aperçu du devis">
+      <Modal open={openApercu} onClose={()=>setOpenApercu(false)} modalTitle="Aperçu du devis">
         <DevisApercu devisId={targetDevisIdForApercu} onClose={()=>setOpenApercu(false)} />
       </Modal>
     </div>

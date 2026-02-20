@@ -1,20 +1,15 @@
-// CreateDevisModal.tsx (extrait / version complète utile)
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/src/shared/components/ui/button";
 import { Modal } from "@/src/shared/components/modal";
 import { useDevisApi } from "../../../devis/shared/hooks/useDevisApi.api";
 
-type ArticleRow = {
-  art_id: number;
-  art_name: string;
-  art_price: number;
-  remises?: {
-    rem_pourcentage?: number | null;
-    rem_prixremise?: number | null;
-  } | null;
-};
+import { useArticles } from "../hooks/useArticles";
+import { calcTotals, LineRow } from "@/src/utils/devisPricing";
+import { DevisLineRow } from "./edit-devis/DevisLineRow";
+import { TotalsCard } from "./edit-devis/TotalsCard.tsx";
+
 
 type Props = {
   open: boolean;
@@ -25,28 +20,10 @@ type Props = {
 
 export function CreateDevisModal({ open, onClose, invoiceId, onCreated }: Props) {
   const { createDevis, loading, error } = useDevisApi();
+  const { articles, fetching } = useArticles(open);
 
-  const [articles, setArticles] = useState<ArticleRow[]>([]);
-  const [fetching, setFetching] = useState(false);
-
-  const [lines, setLines] = useState<Array<{ art_id: number; quantite: number; reference: string }>>([
-    { art_id: 0, quantite: 1, reference: "" },
-  ]);
-
-  useEffect(() => {
-    if (!open) return;
-
-    (async () => {
-      setFetching(true);
-      try {
-        const res = await fetch("/api/articles");
-        const data = await res.json();
-        setArticles(data?.articles ?? []);
-      } finally {
-        setFetching(false);
-      }
-    })();
-  }, [open]);
+  const [devTva, setDevTva] = useState<number>(20);
+  const [lines, setLines] = useState<LineRow[]>([{ art_id: 0, quantite: 1, reference: "" }]);
 
   const canSubmit = useMemo(() => {
     if (!invoiceId) return false;
@@ -54,100 +31,69 @@ export function CreateDevisModal({ open, onClose, invoiceId, onCreated }: Props)
     return lines.every((l) => l.art_id > 0 && l.quantite > 0);
   }, [invoiceId, lines]);
 
+  const { totalHT, totalTTC } = useMemo(() => {
+    return calcTotals(lines, articles, devTva);
+  }, [lines, articles, devTva]);
+
   const addLine = () => setLines((p) => [...p, { art_id: 0, quantite: 1, reference: "" }]);
-  const removeLine = (idx: number) => setLines((p) => p.filter((_, i) => i !== idx));
-
-  const updateLine = (idx: number, patch: Partial<{ art_id: number; quantite: number; reference: string }>) => {
+  const removeLine = (idx: number) => setLines((p) => (p.length === 1 ? p : p.filter((_, i) => i !== idx)));
+  const updateLine = (idx: number, patch: Partial<LineRow>) =>
     setLines((p) => p.map((l, i) => (i === idx ? { ...l, ...patch } : l)));
-  };
-
-  const getRemiseLabel = (art?: ArticleRow) => {
-    const r = art?.remises;
-    if (!r) return "—";
-    if (r.rem_pourcentage != null) return `${r.rem_pourcentage}%`;
-    if (r.rem_prixremise != null) return `Prix remisé: ${r.rem_prixremise}`;
-    return "—";
-  };
 
   async function handleCreate() {
     if (!canSubmit) return;
 
     const payload = {
       invoiceId,
+      dev_tva: devTva,
       items: lines.map((l) => ({
         art_id: l.art_id,
         quantite: l.quantite,
-        reference: l.reference?.trim() || null, // ✅ envoi référence
+        reference: l.reference?.trim() || null,
       })),
     };
 
     const res = await createDevis(payload as any);
-    if (res.ok) {
+    if (res?.ok) {
       onCreated?.(res.data?.devis ?? res.data);
       onClose();
     }
   }
 
   return (
-    <Modal open={open} onClose={onClose} modalDescription="Créer un devis">
-      <div className="space-y-4">
+    <Modal open={open} onClose={onClose} modalTitle="Créer un devis">
+      <div className="space-y-4 w-[95vw] max-w-[820px]">
         {fetching ? (
           <p className="text-sm text-zinc-500">Chargement des articles...</p>
         ) : (
           <>
-            <div className="space-y-3">
-              {lines.map((line, idx) => {
-                const art = articles.find((a) => a.art_id === line.art_id);
+            <div className="grid grid-cols-12 gap-3 items-end">
+              <div className="col-span-12 md:col-span-4 space-y-1">
+              
+              </div>
 
-                return (
-                  <div key={idx} className="rounded-lg border p-3 space-y-2">
-                    <div className="flex gap-3 items-center">
-                      <select
-                        className="w-full border rounded-md px-3 py-2"
-                        value={line.art_id}
-                        onChange={(e) => updateLine(idx, { art_id: Number(e.target.value) })}
-                      >
-                        <option value={0}>Sélectionner un article</option>
-                        {articles.map((a) => (
-                          <option key={a.art_id} value={a.art_id}>
-                            {a.art_name} — {a.art_price} F
-                          </option>
-                        ))}
-                      </select>
-
-                      <input
-                        className="w-[110px] border rounded-md px-3 py-2"
-                        type="number"
-                        min={1}
-                        value={line.quantite}
-                        onChange={(e) => updateLine(idx, { quantite: Number(e.target.value) })}
-                      />
-
-                      <Button variant="outline" onClick={() => removeLine(idx)} disabled={lines.length === 1}>
-                        Suppr
-                      </Button>
-                    </div>
-
-                    {/* ✅ Reference */}
-                    <div className="flex gap-3 items-center">
-                      <input
-                        className="w-full border rounded-md px-3 py-2"
-                        placeholder="Référence (ex: REF-12345)"
-                        value={line.reference}
-                        onChange={(e) => updateLine(idx, { reference: e.target.value })}
-                      />
-                      <div className="text-sm text-zinc-600 whitespace-nowrap">
-                        Remise: <strong>{getRemiseLabel(art)}</strong>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+              <div className="col-span-12 md:col-span-8 flex md:justify-end">
+                <Button variant="outline" onClick={addLine}>
+                  + Ajouter une ligne
+                </Button>
+              </div>
             </div>
 
-            <Button variant="outline" onClick={addLine}>
-              + Ajouter une ligne
-            </Button>
+            <div className="space-y-3">
+              {lines.map((line, idx) => (
+                <DevisLineRow
+                  key={idx}
+                  line={line}
+                  idx={idx}
+                  articles={articles}
+                  onChange={updateLine}
+                  onRemove={removeLine}
+                  disableRemove={lines.length === 1}
+                />
+              ))}
+            </div>
+
+            <TotalsCard totalHT={totalHT} totalTTC={totalTTC} devTva={devTva} />
 
             {error && <p className="text-sm text-red-600">{error}</p>}
 

@@ -17,6 +17,8 @@ import { VehiclePreview } from "./shared/components/vehicle-apercu"
 import { errorAlert, successAlert } from "@/src/lib/alerts"
 import { useInterventionApi } from "./shared/useIntervention.api"
 import { InterventionForm } from "./form/intervention-form"
+import { toast } from "sonner"
+import { getBrandNameById, getModelNameById } from "../brands/shared/hooks/GetBrandOrModelName"
 
 export default function GestionnairePage() {
   const { getVehicles, searchVehicles, createVehicle } = useManageApi()
@@ -43,7 +45,6 @@ export default function GestionnairePage() {
 
   const [interventionModalOpen, setInterventionModalOpen] = useState(false)
 
-  // Helpers: sécuriser les retours API
   const normalizeVehicles = (v: any): Vehicule[] => {
     if (Array.isArray(v)) return v
     if (Array.isArray(v?.vehicles)) return v.vehicles
@@ -54,7 +55,6 @@ export default function GestionnairePage() {
     return Array.isArray(x) ? x : []
   }
 
-  // Chargement initial
   useEffect(() => {
     loadAll()
     
@@ -73,7 +73,7 @@ export default function GestionnairePage() {
       setClients(normalizeArray(c))
       setAgences(normalizeArray(a))
     } catch (e: any) {
-      errorAlert("Erreur", e.message)
+      toast.error("Erreur", e.message)
     } finally {
       setLoading(false)
     }
@@ -95,28 +95,31 @@ export default function GestionnairePage() {
       setVehiculeNotFound(vv.length === 0)
       if (vv.length === 0) setPreFillLicensePlate(search)
     } catch (e: any) {
-      errorAlert("Recherche", e.message)
+      toast.error("Recherche", e.message)
     }
   }
 
-  // Création véhicule
   const handleCreateVehicle = async (data: Partial<Vehicule>) => {
     try {
+      setLoading(true)
       await createVehicle(data)
-      successAlert("Véhicule créé")
+      toast.success("Véhicule créé")
+      setLoading(false)
       setOpenCreateVehiculeModal(false)
       setVehiculeNotFound(false)
       await loadAll()
     } catch (e: any) {
-      errorAlert("Erreur", e.message)
+      toast.error("Erreur", e.message)
+      setLoading(false)
     }
   }
 
-  // Filtrage véhicules selon client, agence, statut
-  const filteredVehicles = useMemo(() => {
+  const [filteredVehicles,setFilteredVehicles] = useState<Vehicule[]>([])
+  
+  useEffect(() => {
     const list = Array.isArray(vehicles) ? vehicles : []
 
-    return list.filter((v) => {
+    const filtered = list.filter((v) => {
       if (clientId && v.client?.id !== clientId) return false
       if (agenceId && v.base?.id !== agenceId) return false
 
@@ -132,7 +135,17 @@ export default function GestionnairePage() {
 
       return true
     })
+    setFilteredVehicles(filtered)
   }, [vehicles, clientId, agenceId, statut])
+
+  useEffect(() => {
+    if (!selectedVehicle) return
+
+    const updatedVehicle = vehicles.find(v => v.id === selectedVehicle.id)
+    if (updatedVehicle) {
+      setSelectedVehicle(updatedVehicle)
+    }
+  }, [vehicles])
 
   const filteredAgences = useMemo(() => {
     const list = Array.isArray(agences) ? agences : []
@@ -141,6 +154,7 @@ export default function GestionnairePage() {
   }, [agences, clientId])
 
   const handleSubmitIntervention = async (data: any) => {
+    setLoading(true)
     try {
       await createIntervention({
         vehicleId: selectedVehicle?.id ?? "",
@@ -154,16 +168,23 @@ export default function GestionnairePage() {
       })
 
       await loadAll()
+      // if(selectedVehicle) {
+      //   const updatedVehicle = vehicles.find(v => v.id === selectedVehicle.id)
+      //   setSelectedVehicle(updatedVehicle ?? null)
+      // }
+      setLoading(false)
       setInterventionModalOpen(false)
-      successAlert("Intervention créée")
+      toast.success("Intervention créée")
     } catch (e: any) {
-      errorAlert("Intervention", e.message)
+      toast.error("Intervention", e.message)
+      setLoading(false)
     }
   }
 
   const handleNewInterventionFromVehiculePreview = () => {
     setInterventionModalOpen(true)
   }
+
 
   return (
     <div className="h-full py-4 px-12 bg-zinc-50">
@@ -224,10 +245,11 @@ export default function GestionnairePage() {
               vehicles={filteredVehicles}
               clients={clients}
               agences={filteredAgences}
-              onSelect={(v) => {
+              onSelect={(v) => {                
                 setSelectedVehicle(v)
                 setApercuVehiculeOpen(true)
               }}
+              reloadVehicles={loadAll}
             />
           </>
         ) : (
@@ -252,6 +274,7 @@ export default function GestionnairePage() {
           data={{ licensePlate: preFillLicensePlate } as Vehicule}
           onSubmit={handleCreateVehicle}
           onClose={() => setOpenCreateVehiculeModal(false)}
+          loading={loading}
         />
       </Modal>
 
@@ -260,8 +283,8 @@ export default function GestionnairePage() {
         {selectedVehicle && (
           <VehiclePreview
             licensePlate={selectedVehicle.licensePlate}
-            brand={selectedVehicle.brand ?? ""}
-            model={selectedVehicle.model ?? ""}
+            brand={selectedVehicle.brand?.name ?? ""}
+            model={selectedVehicle.model?.name ?? ""}
             year={selectedVehicle.year ?? 0}
             client={selectedVehicle.client?.name ?? ""}
             agence={selectedVehicle.base?.location ?? ""}
@@ -271,6 +294,7 @@ export default function GestionnairePage() {
             enReparation={1}
             termine={0}
             onNewIntervention={handleNewInterventionFromVehiculePreview}
+            reloadInvoiceList={loadAll}
           />
         )}
       </Modal>
@@ -283,7 +307,7 @@ export default function GestionnairePage() {
       >
         <InterventionForm
           vehicleId={selectedVehicle?.id ?? ""}
-          vehicleDisplayText={`${selectedVehicle?.licensePlate} - ${selectedVehicle?.brand} ${selectedVehicle?.model}`}
+          vehicleDisplayText={`${selectedVehicle?.licensePlate} - ${selectedVehicle?.brand?.name ?? ""} ${selectedVehicle?.model?.name ?? ""}`}
           defaultAccordNumber="ACC-2026-001"
           onSubmit={handleSubmitIntervention}
           onClose={() => setInterventionModalOpen(false)}

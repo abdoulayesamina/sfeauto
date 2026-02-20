@@ -15,7 +15,8 @@ import {
   Package,
   BadgePercent,
   Receipt,
-  FileText
+  FileText,
+  Car
 } from "lucide-react"
 
 import { NavDocuments } from "@/src/shared/components/nav-documents"
@@ -31,91 +32,92 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/src/shared/components/ui/sidebar"
+import Image from "next/image"
 
 type AppSidebarProps = {
   user: {
     name: string
     email: string
     avatar: string
-    role:"ADMIN" |"MANAGER"|"MECHANIC"|"CLIENT"|"SIEGE"| 'AGENCE'
+    role: "ADMIN" | "MANAGER" | "MECHANIC" | "CLIENT" | "SIEGE" | 'AGENCE'
   },
-    variant?: "inset" | "sidebar"
+  variant?: "inset" | "sidebar"
 
 } & React.ComponentProps<typeof Sidebar>
 
 export function AppSidebar({ user, ...props }: AppSidebarProps) {
-  
+
   const navMain = [
     {
       title: "Tableau de bord",
       url: "/dashboard",
       icon: LayoutDashboard,
-      roles:["ADMIN"],
+      roles: ["ADMIN"],
     },
     {
       title: "Utilisateurs",
       url: "/users",
       icon: Users,
-      roles:["ADMIN"],
+      roles: ["ADMIN"],
 
     },
     {
       title: "Agences",
       url: "/agence",
       icon: Building2,
-      roles:["ADMIN"],
+      roles: ["ADMIN"],
     },
     {
       title: "Clients",
       url: "/clients",
       icon: Briefcase,
-      roles:["ADMIN"],
+      roles: ["ADMIN"],
 
     },
     {
       title: "Familles",
       url: "/famille",
       icon: Layers,
-      roles:["ADMIN"],
+      roles: ["ADMIN"],
 
     },
     {
       title: "Collections",
       url: "/collection",
       icon: FolderOpen,
-      roles:["ADMIN"],
+      roles: ["ADMIN"],
 
     },
     {
       title: "Articles",
       url: "/article",
       icon: Package,
-      roles:["ADMIN"],
+      roles: ["ADMIN"],
     },
     {
       title: "Remises",
       url: "/remise",
       icon: BadgePercent,
-      roles:["ADMIN"],
+      roles: ["ADMIN"],
     },
     {
       title: "Gestionnaire",
       url: "/gestionnaire",
       icon: UserCog,
-      roles:["MANAGER"],
+      roles:["MANAGER","MECHANIC"],
 
     },
-     {
+    {
       title: "Devis",
       url: "/devis",
       icon: Receipt,
-      roles:["MANAGER","ADMIN"],
+      roles: ["MANAGER", "ADMIN"],
     },
     {
       title: "Mécanicien",
       url: "/mecanicien",
       icon: Wrench,
-      roles:["MECHANIC"],
+      roles: ["MECHANIC"],
 
     },
 
@@ -123,20 +125,26 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       title: "Client",
       url: "/client",
       icon: User,
-      roles:["CLIENT"],
+      roles: ["CLIENT"],
     },
 
     {
       title: "Agence",
       url: "/agenceClient",
       icon: Wrench,
-      roles:["AGENCE"],
+      roles: ["AGENCE"],
 
     },
     {
-      title: "Marques & Modèles",
+      title: "Marques",
       url: "/brands",
-      icon: FileText, 
+      icon: FileText,
+      roles: ["ADMIN"],
+    },
+    {
+      title: "Modèles",
+      url: "/models",
+      icon: Car,
       roles: ["ADMIN"],
     },
 
@@ -153,10 +161,10 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
   //   { title: "Aide", url: "#", icon: HelpCircleIcon },
   //   { title: "Recherche", url: "#", icon: SearchIcon },
   // ]
-const filteredNav = navMain.filter(item =>
+  const filteredNav = navMain.filter(item =>
     item.roles.includes(user.role)
   )
-  
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader className="w-full border-b ">
@@ -167,7 +175,7 @@ const filteredNav = navMain.filter(item =>
               className="data-[slot=sidebar-menu-button]:!p-1.5 "
             >
               <span>
-                <ArrowUpCircleIcon className="h-5 w-5" />
+                <Image alt="LOGO-sfe-auto" src={"/sfe-auto-logo2.png"} width={70} height={70} />
                 <span className="text-base font-semibold">SFE Auto</span>
               </span>
             </SidebarMenuButton>

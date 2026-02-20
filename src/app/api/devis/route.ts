@@ -4,20 +4,6 @@ import { prisma } from "@/src/lib/prisma";
 import { DEFAULT_TVA_PERCENT } from "@/src/utils/constants/tva";
 import { NextResponse } from "next/server";
 
-/**
- * Body attendu:
- * {
- *   invoiceId: string,
- *   dev_tva?: number, // TVA par défaut du devis (optionnel)
- *   items: Array<{
- *     art_id: number,
- *     quantite: number,
- *     tva?: number,           // TVA ligne optionnelle
- *     reference?: string,     // optionnel
- *     designation?: string    // optionnel (sinon art_name)
- *   }>
- * }
- */
 
 function asNumber(v: any): number {
   const n = Number(v);

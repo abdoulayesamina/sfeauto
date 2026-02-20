@@ -51,18 +51,16 @@ export default function ClientPage() {
     setOpenInterventionModal(true)
   }
 
-  // ✅ détail complet = on ouvre une intervention (dernière par défaut)
   const handleViewDetailsFromVehicle = (v: any) => {
     const invoices: Invoice[] = Array.isArray(v.invoices) ? v.invoices : []
     if (!invoices.length) return
 
-    const last = invoices[invoices.length - 1] // ✅ dernière intervention
+    const last = invoices[invoices.length - 1]
     setVehiculeSelect(v)
-    setInterventionVehicule([{ ...last, vehicle: v }]) // pattern identique à ton ClientPage
+    setInterventionVehicule([{ ...last, vehicle: v }]) 
     setOpenDetailModal(true)
   }
 
-  // ✅ 1 card = 1 véhicule (plus de flatMap)
   const filteredVehicles = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
 
@@ -81,16 +79,36 @@ export default function ClientPage() {
           !q || plate.includes(q) || brand.includes(q) || model.includes(q)
 
         // filtre statut (match si au moins 1 invoice correspond)
+        // let statusMatch = true
+        // if (filterStatus !== "ALL") {
+        //   statusMatch = v.invoices.some((i: Invoice) => toUIStatus(i.status) === filterStatus)
+        // }
+
         let statusMatch = true
-        if (filterStatus !== "ALL") {
-          statusMatch = v.invoices.some((i: Invoice) => toUIStatus(i.status) === filterStatus)
+
+        if (filterStatus === "ATTENTE_REPARATION") {
+          statusMatch =
+            v.invoices.length > 0 &&
+            v.invoices.some((i: Invoice) => toUIStatus(i.status) === "ATTENTE_REPARATION")
         }
+
+        if (filterStatus === "ATTENTE_PIECES") {
+          statusMatch =
+            v.invoices.length > 0 &&
+            v.invoices.some((i: Invoice) => toUIStatus(i.status) === "ATTENTE_PIECES")
+        }
+
+        if (filterStatus === "TERMINEE") {
+          statusMatch =
+            v.invoices.length > 0 &&
+            v.invoices.every((i: Invoice) => toUIStatus(i.status) === "TERMINEE")
+        }
+
 
         return searchMatch && statusMatch
       })
   }, [vehicles, searchQuery, filterStatus])
 
-  // ✅ Stats (comme toi, OK)
   const stats = useMemo(() => {
     const total = vehicles.length
 
@@ -200,7 +218,7 @@ export default function ClientPage() {
         <Modal
           open={openDetailModal}
           onClose={() => setOpenDetailModal(false)}
-          modalDescription="Détail complet de l'intervention"
+          modalTitle="Détail complet de l'intervention"
           className="max-w-4xl"
         >
           {vehiculeSelect && (

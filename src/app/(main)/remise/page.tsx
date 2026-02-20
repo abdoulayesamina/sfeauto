@@ -24,6 +24,7 @@ import { Remise } from "@/src/utils/types/remise";
 import { log } from "console";
 import { useRemiseApi } from "./shared/hooks/useRemise.api";
 import { RemiseDataTable } from "./shared/components/remise-datatable";
+import { toast } from "sonner";
 
 export default function RemisePage() {
 
@@ -40,8 +41,8 @@ export default function RemisePage() {
     const [collectionIdSelected, setCollectionIdSelected] = useState<number | null>(null);
     const [articleIdSelected, setArticleIdSelected] = useState<number | null>(null);
 
-    const [remiseValue, setRemiseValue] = useState<number>(0);
-    const [pourcentageRemise, setPourcentageRemise] = useState<number>(0);
+    const [remiseValue, setRemiseValue] = useState<number | null>(null);
+    const [pourcentageRemise, setPourcentageRemise] = useState<number | null>(null);
 
     const [refreshDataTable, setRefreshDataTable] = useState(0);
     const [modeUpdate, setModeUpdate] = useState(false);
@@ -95,14 +96,24 @@ export default function RemisePage() {
         setRemise((prev) => ({...(prev ?? {}), rem_articleId: v,}));
     };
 
-    const handlePrixRemise = (v: number) => {
-        setRemiseValue(v)
-        setRemise((prev) => ({ ...(prev ?? {}), rem_prixremise: v }));
+    const handlePrixRemise = (v: string | number) => {
+        const val = Number(v)        
+        if (v === "") {
+            setRemiseValue(null)
+        }else{
+            setRemiseValue(val)
+        }
+        setRemise((prev) => ({ ...(prev ?? {}), rem_prixremise: val }));
     };
 
-    const handlePourcentage = (v: number) => {
-        setPourcentageRemise(v)
-        setRemise((prev) => ({ ...(prev ?? {}), rem_pourcentage: v }));
+    const handlePourcentage = (v: string | number) => {
+        const val = Number(v)
+        if (v === "") {
+            setPourcentageRemise(null)
+        }else{
+            setPourcentageRemise(val)
+        }
+        setRemise((prev) => ({ ...(prev ?? {}), rem_pourcentage: val }));
     };
 
 
@@ -111,7 +122,7 @@ export default function RemisePage() {
             setApplyRemiseLoading(true);
             const res = await createRemise(remise);
             setApplyRemiseLoading(false);
-            successAlert("Succès", "Rémise appliquée avec succès.");
+            toast.success("Succès",{description: "Rémise appliquée avec succès."});
 
             setRefreshDataTable(r=>r+1)
             setArticleIdSelected(null)
@@ -121,7 +132,7 @@ export default function RemisePage() {
             setFamilleIdSelected(null)
             
         }catch(e : any){
-            errorAlert("Erreur de création", `${e.error||e.message||"Erreur lors de la création de remise"}`)
+            toast.error("Erreur de création", {description:`${e.error||e.message||"Erreur lors de la création de remise"}`})
             setApplyRemiseLoading(false);
             return;
         }
@@ -148,11 +159,11 @@ export default function RemisePage() {
             console.log("Modification : ", remise);
             const res = await updateRemise(remise);
             setApplyRemiseLoading(false);
-            successAlert("Succès", "Rémise modifié avec succès.");
+            toast.success("Succès", {description:" Rémise modifié avec succès."});
             setRefreshDataTable(r=>r+1)
             cancelEdit()
         }catch(e : any){
-            errorAlert("Erreur de modification", `${e.error||e.message||"Erreur lors de la modification de remise"}`)
+            toast.error("Erreur de modification", {description:`${e.error||e.message||"Erreur lors de la modification de remise"}`})
             setApplyRemiseLoading(false);
             return;
         }
@@ -170,17 +181,15 @@ export default function RemisePage() {
     return(
         <div className="shadow bg-white rounded-lg m-3">
             <div className="p-10 mx-4 mt-2">
-                <div className="flex mb-2 p-6 gap-4 items-center">
-                    <div className="p-2 rounded-lg bg-blue-100 text-blue-700">
-                        <BadgePercent />
-                    </div>
+                <div className="flex mb-2 gap-4 items-center">
                     <h2 className="font-bold text-2xl">Gestion des Remises</h2>
                 </div>
+                
                 <div className="rounded-lg grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
                     <div>
                         <Label>Famille</Label>
                         <Select value={String(familleIdSelected)} onValueChange={(v) => setFamilleIdSelected(Number(v))}>
-                            <SelectTrigger className="w-full !h-16">
+                            <SelectTrigger className="w-full !h-12">
                                 {loading && <Spinner />}
                                 <SelectValue placeholder="Sélectionnez une famille" />
                             </SelectTrigger>
@@ -202,7 +211,7 @@ export default function RemisePage() {
                                  if(modeUpdate)setModeUpdate(false) 
                             }} 
                         >
-                            <SelectTrigger className="w-full !h-16">
+                            <SelectTrigger className="w-full !h-12">
                                 {loading && <Spinner />}
                                 <SelectValue placeholder="Sélectionnez une collection" />
                             </SelectTrigger>
@@ -225,7 +234,7 @@ export default function RemisePage() {
                                 if(modeUpdate)setModeUpdate(false)
                             }} 
                         >
-                            <SelectTrigger className="w-full !h-16">
+                            <SelectTrigger className="w-full !h-12">
                                 {loading && <Spinner />}
                                 <SelectValue placeholder="Sélectionnez un article" />
                             </SelectTrigger>
@@ -248,11 +257,11 @@ export default function RemisePage() {
                                 min={0}
                                 type="number"
                                 placeholder=""
-                                className="h-16"
-                                value={remiseValue}
-                                disabled={pourcentageRemise > 0}
+                                className="h-12"
+                                value={remiseValue ?? ""}
+                                disabled={pourcentageRemise ? pourcentageRemise > 0 : false}
                                 onChange={(e) =>{
-                                    handlePrixRemise(Number(e.target.value))
+                                    handlePrixRemise(e.target.value)
                                 }}
                             />
                         </div>
@@ -263,11 +272,11 @@ export default function RemisePage() {
                                 min={0}
                                 type="number"
                                 placeholder=""
-                                className="h-16"
-                                disabled={remiseValue > 0}
-                                value={pourcentageRemise}
+                                className="h-12"
+                                disabled={remiseValue ? remiseValue > 0 : false}
+                                value={pourcentageRemise ?? ""}
                                 onChange={(e) =>{
-                                    handlePourcentage(Number(e.target.value))
+                                    handlePourcentage(e.target.value)
                                 }}
                             />
                         </div>
@@ -324,7 +333,7 @@ export default function RemisePage() {
                         <div className="flex justify-start md:justify-end ">
                             {modeUpdate ?
                                 <div className="flex flex-col items-start gap-2 md:flex-row md:items-center">
-                                    <Button className="bg-orange-700" type="button" onClick={HandleEditSubmit} disabled={applyRemiseLoading || (!articleIdSelected || (remiseValue <=0 && pourcentageRemise <=0))}>
+                                    <Button className="bg-orange-700" type="button" onClick={HandleEditSubmit} disabled={applyRemiseLoading || (!articleIdSelected || ((remiseValue && pourcentageRemise) ? (remiseValue <=0 && pourcentageRemise <=0) : false))}>
                                         {applyRemiseLoading && <Spinner className="mr-2 h-4 w-4" />}
                                         Modifier la remise
                                     </Button>
@@ -333,7 +342,7 @@ export default function RemisePage() {
                                     </Button>
                                 </div>
                                 :
-                                <Button type="button" onClick={handleCreate} disabled={applyRemiseLoading || (!articleIdSelected || (remiseValue <=0 && pourcentageRemise <=0))}>
+                                <Button type="button" onClick={handleCreate} disabled={applyRemiseLoading || (!articleIdSelected || ((remiseValue && pourcentageRemise) ? (remiseValue <=0 && pourcentageRemise <=0) : false))}>
                                     {applyRemiseLoading && <Spinner className="mr-2 h-4 w-4" />}
                                     Appliquer la remise
                                 </Button>

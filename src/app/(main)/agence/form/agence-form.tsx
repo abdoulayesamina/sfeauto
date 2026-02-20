@@ -5,28 +5,36 @@ import { Input } from "@/src/shared/components/ui/input"
 import { Label } from "@/src/shared/components/ui/label"
 import { Button } from "@/src/shared/components/ui/button"
 import { Agence } from "@/src/utils/types/agence"
+import { useEffect, useRef } from "react"
+import { Spinner } from "@/src/shared/components/spinner"
 
 type Props = {
   mode: "create" | "edit"
   data: Partial<Agence>
   clients: { id: string; name: string }[]
+  loading?: boolean
   onClose: () => void
   onSubmit: () => void
   onChange: (data: Partial<Agence>) => void
 }
 
-export function AgenceForm({ mode, data, clients, onClose, onSubmit, onChange }: Props) {
+export function AgenceForm({ mode, data, clients, loading, onClose, onSubmit, onChange }: Props) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     onSubmit()
   }
+
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+      inputRef.current?.focus();
+  }, [mode]);
 
   return (
     <form onSubmit={handleSubmit}>
       <div className="mb-4 flex flex-col gap-2">
         <Label>Client</Label>
         <Select value={data.clientId || ""} onValueChange={(v) => onChange({ ...data, clientId: v })}>
-          <SelectTrigger className="w-full !h-16">
+          <SelectTrigger className="w-full !h-12">
             <SelectValue placeholder="Sélectionnez un client" />
           </SelectTrigger>
           <SelectContent className="z-[2000]">
@@ -42,7 +50,8 @@ export function AgenceForm({ mode, data, clients, onClose, onSubmit, onChange }:
       <div className="mb-4 flex flex-col gap-2">
         <Label>Emplacement</Label>
         <Input
-          className="h-16"
+          ref={inputRef}
+          className="h-12"
           value={data.location || ""}
           onChange={(e) => onChange({ ...data, location: e.target.value })}
           placeholder="Emplacement"
@@ -53,7 +62,12 @@ export function AgenceForm({ mode, data, clients, onClose, onSubmit, onChange }:
         <Button type="button" variant="outline" onClick={onClose}>
           Annuler
         </Button>
-        <Button type="submit">Enregistrer</Button>
+        <Button type="submit" disabled={loading}>
+          <span className="flex items-center gap-2">
+            {loading ? <Spinner /> : ""}
+            {mode === "create" ? "Créer" : "Modifier"}
+          </span>
+        </Button>
       </div>
     </form>
   )

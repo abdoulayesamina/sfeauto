@@ -12,6 +12,8 @@ import { useAgenceApi } from "./shared/useAgence.api"
 import { useClientApi } from "../clients/shared/useClient.api"
 import { confirmAlert, errorAlert, successAlert } from "@/src/lib/alerts"
 import { Spinner } from "@/src/shared/components/spinner"
+import { toast } from "sonner"
+import { success } from "zod"
 
 export default function AgencePage() {
   const { getAgences, createAgence, updateAgence, deleteAgence } = useAgenceApi()
@@ -21,6 +23,9 @@ export default function AgencePage() {
   const [agenceSearch, setAgenceSearch] = useState<Agence[]>([])
   const [clients, setClients] = useState<{ id: string; name: string }[]>([])
   const [loading, setLoading] = useState(true)
+
+  const [agencesLoading, setAgencesLoading] = useState(false)
+  const [idToDelete, setIdToDelete] = useState<string | null>(null);
 
   const [isOpen, setIsOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
@@ -42,7 +47,7 @@ export default function AgencePage() {
       const data = await getClients()
       setClients(data.map((c) => ({ id: c.id, name: c.name })))
     } catch (e: any) {
-      errorAlert("Erreur", e.message)
+      toast.error("Erreur", e.message)
     }
   }
 
@@ -52,7 +57,7 @@ export default function AgencePage() {
       const data = await getAgences()
       setAgences(data)
     } catch (e: any) {
-      errorAlert("Erreur", e.message)
+      toast.error("Erreur", e.message)
     }
     setLoading(false)
   }
@@ -62,19 +67,22 @@ export default function AgencePage() {
       const data = await getAgences()
       setAgences(data)
     } catch (e: any) {
-      errorAlert("Erreur", e.message)
+      toast.error("Erreur", e.message)
     }
   }
 
   const handleCreate = async () => {
     try {
+      setAgencesLoading(true)
       await createAgence(formData)
-      successAlert("Agence créée")
+      toast.success("Agence créée")
+      setAgencesLoading(false)
       setIsOpen(false)
       setFormData({})
       loadAgencesWithoutSpin()
     } catch (e: any) {
-      errorAlert("Erreur", e.message)
+      toast.error("Erreur", e.message)
+      setAgencesLoading(false)
     }
   }
 
@@ -87,14 +95,17 @@ export default function AgencePage() {
   const handleUpdate = async () => {
     if (!agenceToEdit) return
     try {
+      setAgencesLoading(true)
       await updateAgence(agenceToEdit.id, formData)
-      successAlert("Agence mise à jour")
+      toast.success("Agence mise à jour")
       setEditOpen(false)
       setAgenceToEdit(null)
+      setAgencesLoading(false)
       setFormData({})
       loadAgencesWithoutSpin()
     } catch (e: any) {
-      errorAlert("Erreur", e.message)
+      toast.error("Erreur", e.message)
+      setAgencesLoading(false)
     }
   }
 
@@ -106,11 +117,14 @@ export default function AgencePage() {
     if (!confirmed) return
 
     try {
+      setIdToDelete(agence.id);
       await deleteAgence(agence.id)
-      successAlert("Agence supprimée")
+      toast.success("Agence supprimée")
+      setIdToDelete(null);
       setAgences((prev) => prev.filter((a) => a.id !== agence.id))
     } catch (e: any) {
-      errorAlert("Suppression impossible", e.message)
+      toast.error("Suppression impossible", e.message)
+      setIdToDelete(null);
     }
   }
 
@@ -130,8 +144,11 @@ export default function AgencePage() {
           <Button variant="outline" onClick={() => handleEdit(row.original)}>
             Modifier
           </Button>
-          <Button variant="destructive" onClick={() => handleDelete(row.original)}>
-            Supprimer
+          <Button variant="destructive" onClick={() => handleDelete(row.original)} disabled={idToDelete === row.original.id}>
+            <span className="flex items-center gap-2">
+              {idToDelete === row.original.id ? <Spinner className="size-4" /> : ""}
+              Supprimer
+            </span>
           </Button>
         </div>
       ),
@@ -172,8 +189,9 @@ export default function AgencePage() {
           mode="create"
           data={formData}
           clients={clients}
+          loading={agencesLoading}
           onChange={setFormData}
-          onClose={() => setIsOpen(false)}
+          onClose={() => {setIsOpen(false); setFormData({})}}
           onSubmit={handleCreate}
         />
       </Modal>
@@ -184,8 +202,9 @@ export default function AgencePage() {
           mode="edit"
           data={formData}
           clients={clients}
+          loading={agencesLoading}
           onChange={setFormData}
-          onClose={() => setEditOpen(false)}
+          onClose={() => {setEditOpen(false); setFormData({})}}
           onSubmit={handleUpdate}
         />
       </Modal>

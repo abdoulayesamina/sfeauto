@@ -56,7 +56,7 @@ export function BrandSelect({
           }
         }}
       >
-        <SelectTrigger className="h-16">
+        <SelectTrigger className="h-12">
           <SelectValue placeholder="Sélectionner une marque" />
         </SelectTrigger>
         <SelectContent className="z-[9999]">

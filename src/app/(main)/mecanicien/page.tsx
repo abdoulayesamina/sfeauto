@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/src/shared/components/ui/button"
 import { Input } from "@/src/shared/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/shared/components/ui/select"
@@ -102,6 +102,10 @@ export default function MecanicienPage() {
     const [selectedIntervention, setSelectedIntervention] = useState<any>(null)
     const filteredInterventions = interventions.filter(inv => STATUS_UI_MAP[inv.status] === filterStatus)
 
+    useEffect(()=>{
+        console.log("Intervention VV : ",interventions);
+    },[interventions])
+
     return (
         <div className="bg-zinc-50 min-h-screen p-4 sm:p-8">
             <div className="bg-white rounded-2xl shadow-sm p-6 flex flex-col gap-6">
@@ -157,7 +161,8 @@ export default function MecanicienPage() {
                         return (
                             <div key={inv.id} className="border rounded-xl p-5 flex flex-col gap-4 lg:flex-row lg:items-center hover:shadow-md transition">
                                 <div className="flex items-start gap-3 flex-1">
-                                    <Car className="text-gray-400 mt-1" />
+                                    {/* <Car className="text-gray-400 mt-1" /> */}
+                                    <Car size={18} className="text-gray-400 mt-1 shrink-0" />
                                     <div>
                                         <p className="font-bold">{inv.vehicle.licensePlate}</p>
                                         <p className="text-sm text-gray-500">{inv.vehicle.brand} {inv.vehicle.model}</p>
@@ -165,7 +170,8 @@ export default function MecanicienPage() {
                                 </div>
 
                                 <div className="flex items-start gap-3 flex-1">
-                                    <Calendar className="text-gray-400 mt-1" />
+                                    {/* <Calendar className="text-gray-400 mt-1" /> */}
+                                    <Calendar size={18} className="text-gray-400 mt-1 shrink-0" />
                                     <div>
                                         <p className="font-medium">{inv.accordNumber || "—"}</p>
                                         <p className="text-sm text-gray-500">{inv.createdAt.slice(0, 10)}</p>
@@ -173,7 +179,8 @@ export default function MecanicienPage() {
                                 </div>
 
                                 <div className="flex items-start gap-3 flex-1">
-                                    <User className="text-gray-400 mt-1" />
+                                    {/* <User className="text-gray-400 mt-1" /> */}
+                                    <User size={18} className="text-gray-400 mt-1 shrink-0" />
                                     <div>
                                         <p className="font-medium">{inv.vehicle.client.name}</p>
                                         <p className="text-sm text-gray-500 flex items-center gap-1">
@@ -219,7 +226,7 @@ export default function MecanicienPage() {
                     })}
                 </div>
             </div>
-            <Modal open={open} onClose={() => setOpen(false)} modalDescription="Détail de l'intervention">
+            <Modal open={open} onClose={() => setOpen(false)} modalTitle="Détail de l'intervention">
                 <InterventionDetail
                     selectedIntervention={selectedIntervention}
                     onClose={()=>setOpen(false)}

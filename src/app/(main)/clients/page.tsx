@@ -12,6 +12,7 @@ import { useClientApi } from "./shared/useClient.api"
 import { confirmAlert, errorAlert, successAlert } from "@/src/lib/alerts"
 import { Spinner } from "@/src/shared/components/spinner"
 import { Client } from "@/src/utils/types/client"
+import { toast } from "sonner"
 
 type ClientWithCount = Client & {
   _count?: {
@@ -26,6 +27,9 @@ export default function ClientPage() {
   const [clients, setClients] = useState<Client[]>([])
   const [clientSearch, setClientSearch] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
+
+  const [clientsLoading, setClientsLoading] = useState(false)
+  const [idToDelete, setIdToDelete] = useState<string | null>(null);
 
   const [isOpen, setIsOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
@@ -47,7 +51,7 @@ export default function ClientPage() {
       const data = await getClients()
       setClients(data)
     } catch (e: any) {
-      errorAlert("Erreur", e.message)
+      toast.error("Erreur", e.message)
     }
     setLoading(false)
   }
@@ -57,19 +61,22 @@ export default function ClientPage() {
       const data = await getClients()
       setClients(data)
     } catch (e: any) {
-      errorAlert("Erreur", e.message)
+      toast.error("Erreur", e.message)
     }
   }
 
   const handleCreate = async () => {
     try {
+      setClientsLoading(true)
       await createClient(formData)
-      successAlert("Client créé")
+      toast.success("Client créé")
       setIsOpen(false)
       setFormData({})
       loadClientsWithoutSpin()
     } catch (e: any) {
-      errorAlert("Erreur", e.message)
+      toast.error("Erreur", e.message)
+    } finally {
+      setClientsLoading(false)
     }
   }
 
@@ -83,14 +90,17 @@ export default function ClientPage() {
     if (!clientToEdit) return
 
     try {
+      setClientsLoading(true)
       await updateClient(clientToEdit.id, formData)
-      successAlert("Client mis à jour")
+      toast.success("Client mis à jour")
       setEditOpen(false)
       setClientToEdit(null)
       setFormData({})
       loadClientsWithoutSpin()
     } catch (e: any) {
-      errorAlert("Erreur", e.message)
+      toast.error("Erreur", e.message)
+    }finally {
+      setClientsLoading(false)
     }
   }
 
@@ -102,11 +112,14 @@ export default function ClientPage() {
     if (!confirmed) return
 
     try {
+      setIdToDelete(client.id);
       await deleteClient(client.id)
-      successAlert("Client supprimé")
+      toast.success("Client supprimé")
       setClients((prev) => prev.filter((c) => c.id !== client.id))
     } catch (e: any) {
-      errorAlert("Suppression impossible", e.message)
+      toast.error("Suppression impossible", e.message)
+    }finally {
+      setIdToDelete(null);
     }
   }
 
@@ -170,18 +183,22 @@ export default function ClientPage() {
       cell: ({ row }) => (
         <div className="flex gap-2">
           <Button
-            size="sm"
+            //size="sm"
             variant="outline"
             onClick={() => handleEdit(row.original)}
           >
             Modifier
           </Button>
           <Button
-            size="sm"
+            // size="sm"
             variant="destructive"
             onClick={() => handleDelete(row.original)}
+            disabled={idToDelete === row.original.id}
           >
-            Supprimer
+            <span className="flex items-center gap-2">
+              {idToDelete === row.original.id ? <Spinner className="size-4" /> : ""}
+              Supprimer
+            </span>
           </Button>
         </div>
       ),
@@ -223,8 +240,9 @@ export default function ClientPage() {
         <ClientForm
           mode="create"
           data={formData}
+          loading={clientsLoading}
           onChange={setFormData}
-          onClose={() => setIsOpen(false)}
+          onClose={() => {setIsOpen(false); setFormData({})}}
           onSubmit={handleCreate}
         />
       </Modal>
@@ -234,8 +252,9 @@ export default function ClientPage() {
         <ClientForm
           mode="edit"
           data={formData}
+          loading={clientsLoading}
           onChange={setFormData}
-          onClose={() => setEditOpen(false)}
+          onClose={() => {setEditOpen(false); setFormData({})}}
           onSubmit={handleUpdate}
         />
       </Modal>

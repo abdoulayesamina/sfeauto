@@ -1,290 +1,189 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/src/shared/components/ui/button"
-import { Input } from "@/src/shared/components/ui/input"
-import { Trash2, Pencil } from "lucide-react"
-
-type Brand = {
-  id: string
-  name: string
-}
-
-type Model = {
-  id: string
-  name: string
-  brandId: string
-}
+import { Brand } from "@/src/utils/types/brand"
+import { useBrandsApi } from "./shared/useBrands.api"
+import { confirmAlert } from "@/src/lib/alerts"
+import { createColumns, DataTable } from "@/src/shared/components/data-table"
+import { ColumnDef } from "@tanstack/react-table"
+import { Spinner } from "@/src/shared/components/spinner"
+import { Modal } from "@/src/shared/components/modal"
+import { BrandForm } from "./forms/brand-form"
+import { toast } from "sonner"
 
 export default function BrandsPage() {
+  const { getBrands, createBrand: apiCreateBrand, updateBrand: apiUpdateBrand, deleteBrand: apiDeleteBrand } = useBrandsApi()
+
+  // Data State
   const [brands, setBrands] = useState<Brand[]>([])
-  const [models, setModels] = useState<Model[]>([])
-  const [selectedBrandId, setSelectedBrandId] = useState<string | null>(null)
+  const [filteredBrands, setFilteredBrands] = useState<Brand[]>([])
 
-  const [newBrand, setNewBrand] = useState("")
-  const [newModel, setNewModel] = useState("")
+  // Loading State
+  const [loadingBrands, setLoadingBrands] = useState(false)
+  const [interactionLoading, setInteractionLoading] = useState(false)
+  const [idToDelete, setIdToDelete] = useState<string | null>(null)
 
-  const [brandSearch, setBrandSearch] = useState("")
-  const [modelSearch, setModelSearch] = useState("")
-
-  const [editingBrandId, setEditingBrandId] = useState<string | null>(null)
-  const [editingModelId, setEditingModelId] = useState<string | null>(null)
-  const [editValue, setEditValue] = useState("")
+  // Modals & Forms State
+  const [isBrandModalOpen, setIsBrandModalOpen] = useState(false)
+  const [isEditBrandOpen, setIsEditBrandOpen] = useState(false)
+  const [brandFormData, setBrandFormData] = useState<Partial<Brand>>({})
 
   // ================= LOAD =================
 
   const loadBrands = async () => {
-    const res = await fetch("/api/brands")
-    setBrands(await res.json())
-  }
-
-  const loadModels = async (brandId: string) => {
-    const res = await fetch(`/api/models?brandId=${brandId}`)
-    setModels(await res.json())
+    setLoadingBrands(true)
+    try {
+      const data = await getBrands()
+      setBrands(data)
+      setFilteredBrands(data)
+    } catch (e: any) {
+      toast.error(e.message)
+    } finally {
+      setLoadingBrands(false)
+    }
   }
 
   useEffect(() => {
     loadBrands()
   }, [])
 
-  useEffect(() => {
-    if (selectedBrandId) loadModels(selectedBrandId)
-    else setModels([])
-  }, [selectedBrandId])
-
   // ================= FILTER =================
 
-  const filteredBrands = useMemo(
-    () =>
-      brands.filter((b) =>
-        b.name.toLowerCase().includes(brandSearch.toLowerCase())
-      ),
-    [brands, brandSearch]
-  )
+  const handleBrandSearch = (query: string) => {
+    const filtered = brands.filter(b => b.name.toLowerCase().includes(query.toLowerCase()))
+    setFilteredBrands(filtered)
+  }
 
-  const filteredModels = useMemo(
-    () =>
-      models.filter((m) =>
-        m.name.toLowerCase().includes(modelSearch.toLowerCase())
-      ),
-    [models, modelSearch]
-  )
+  // ================= HANDLERS: BRANDS =================
 
-  // ================= CREATE =================
+  const openCreateBrand = () => {
+    setBrandFormData({})
+    setIsBrandModalOpen(true)
+  }
 
-  const createBrand = async () => {
-    if (!newBrand.trim()) return
-    const res = await fetch("/api/brands", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newBrand }),
-    })
-    if (res.ok) {
-      setNewBrand("")
+  const openEditBrand = (brand: Brand) => {
+    setBrandFormData(brand)
+    setIsEditBrandOpen(true)
+  }
+
+  const handleCreateBrand = async () => {
+    if (!brandFormData.name?.trim()) return
+    setInteractionLoading(true)
+    try {
+      await apiCreateBrand(brandFormData.name)
+      toast.success("Marque ajoutée")
+      setIsBrandModalOpen(false)
       loadBrands()
-    } else alert((await res.json()).error)
-  }
-
-  const createModel = async () => {
-    if (!newModel.trim() || !selectedBrandId) return
-    const res = await fetch("/api/models", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newModel, brandId: selectedBrandId }),
-    })
-    if (res.ok) {
-      setNewModel("")
-      loadModels(selectedBrandId)
-    } else alert((await res.json()).error)
-  }
-
-  // ================= UPDATE =================
-
-  const updateBrand = async (id: string) => {
-    const res = await fetch(`/api/brands/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: editValue }),
-    })
-
-    if (!res.ok) {
-      alert((await res.json()).error)
-      return
+    } catch (e: any) {
+      toast.error(e.message)
+    } finally {
+      setInteractionLoading(false)
     }
-
-    setEditingBrandId(null)
-    setEditValue("")
-    loadBrands()
   }
 
-  const updateModel = async (id: string) => {
-    const res = await fetch(`/api/models/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: editValue }),
-    })
-
-    if (!res.ok) {
-      alert((await res.json()).error)
-      return
+  const handleUpdateBrand = async () => {
+    if (!brandFormData.id || !brandFormData.name?.trim()) return
+    setInteractionLoading(true)
+    try {
+      await apiUpdateBrand(brandFormData.id, brandFormData.name)
+      toast.success("Marque modifiée")
+      setIsEditBrandOpen(false)
+      loadBrands()
+    } catch (e: any) {
+      toast.error(e.message)
+    } finally {
+      setInteractionLoading(false)
     }
-
-    setEditingModelId(null)
-    setEditValue("")
-    loadModels(selectedBrandId!)
   }
 
-  // ================= DELETE =================
+  const handleDeleteBrand = async (brand: Brand) => {
+    const confirmed = await confirmAlert("Supprimer la marque", `Voulez-vous vraiment supprimer ${brand.name} ?`)
+    if (!confirmed) return
 
-  const deleteBrand = async (id: string) => {
-    if (!confirm("Supprimer cette marque ?")) return
-    const res = await fetch(`/api/brands/${id}`, { method: "DELETE" })
-    if (!res.ok) {
-      alert((await res.json()).error)
-      return
+    setIdToDelete(brand.id)
+    setInteractionLoading(true)
+    try {
+      await apiDeleteBrand(brand.id)
+      toast.success("Marque supprimée")
+      loadBrands()
+    } catch (e: any) {
+      // toast.error(e.message)
+      toast.error(e?.message || "Erreur lors de la suppression")
+    } finally {
+      setInteractionLoading(false)
+      setIdToDelete(null)
     }
-    if (id === selectedBrandId) setSelectedBrandId(null)
-    loadBrands()
   }
 
-  const deleteModel = async (id: string) => {
-    if (!confirm("Supprimer ce modèle ?")) return
-    const res = await fetch(`/api/models/${id}`, { method: "DELETE" })
-    if (!res.ok) {
-      alert((await res.json()).error)
-      return
+
+  // ================= COLUMNS =================
+
+  const brandColumnsRaw: ColumnDef<Brand>[] = [
+    {
+      accessorKey: "name",
+      header: "Nom",
+    },
+    {
+      header: "Actions",
+      cell: ({ row }) => (
+        <div className="flex gap-2 ">
+          <Button variant="outline" onClick={(e) => { e.stopPropagation(); openEditBrand(row.original) }}>Modifier</Button>
+          <Button variant="destructive" onClick={(e) => { e.stopPropagation(); handleDeleteBrand(row.original) }} disabled={interactionLoading && idToDelete === row.original.id}>
+            {interactionLoading && idToDelete === row.original.id ? <Spinner className="size-4" /> : "Supprimer"}
+          </Button>
+        </div>
+      )
     }
-    loadModels(selectedBrandId!)
-  }
+  ]
+
+  const brandColumns = createColumns({ columns: brandColumnsRaw })
 
   // ================= UI =================
-
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div className="space-y-10 p-10">
+
       {/* ===== MARQUES ===== */}
-      <div className="space-y-4">
-        <h1 className="text-xl font-semibold">Marques</h1>
+      <div>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-3xl font-bold">Gestion des Marques</h2>
+          <Button onClick={openCreateBrand}>Ajouter une marque</Button>
+        </div>
 
-        <Input
-          placeholder="Rechercher une marque..."
-          value={brandSearch}
-          onChange={(e) => setBrandSearch(e.target.value)}
-        />
-
-        <div className="flex gap-2">
-          <Input
-            placeholder="Nouvelle marque"
-            value={newBrand}
-            onChange={(e) => setNewBrand(e.target.value)}
+        {loadingBrands ? (
+          <div className="flex justify-center p-10"><Spinner /></div>
+        ) : (
+          <DataTable
+            data={filteredBrands}
+            columnsProps={brandColumns}
+            handleSearch={handleBrandSearch}
+            title="Liste des marques"
           />
-          <Button onClick={createBrand}>Ajouter</Button>
-        </div>
-
-        <div className="border rounded-md divide-y max-h-[400px] overflow-auto">
-          {filteredBrands.map((b) => (
-            <div
-              key={b.id}
-              className={`flex justify-between items-center p-3 cursor-pointer ${
-                selectedBrandId === b.id ? "bg-muted" : ""
-              }`}
-              onClick={() => setSelectedBrandId(b.id)}
-            >
-              {editingBrandId === b.id ? (
-                <Input
-                  value={editValue}
-                  onChange={(e) => setEditValue(e.target.value)}
-                  onBlur={() => updateBrand(b.id)}
-                  autoFocus
-                />
-              ) : (
-                <span>{b.name}</span>
-              )}
-
-              <div className="flex gap-2">
-                <Pencil
-                  className="h-4 w-4 text-blue-500 hover:text-blue-700"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setEditingBrandId(b.id)
-                    setEditValue(b.name)
-                  }}
-                />
-                <Trash2
-                  className="h-4 w-4 text-red-500 hover:text-red-700"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    deleteBrand(b.id)
-                  }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ===== MODELES ===== */}
-      <div className="space-y-4">
-        <h1 className="text-xl font-semibold">Modèles</h1>
-
-        {!selectedBrandId && (
-          <p className="text-muted-foreground">
-            Sélectionnez une marque
-          </p>
-        )}
-
-        {selectedBrandId && (
-          <>
-            <Input
-              placeholder="Rechercher un modèle..."
-              value={modelSearch}
-              onChange={(e) => setModelSearch(e.target.value)}
-            />
-
-            <div className="flex gap-2">
-              <Input
-                placeholder="Nouveau modèle"
-                value={newModel}
-                onChange={(e) => setNewModel(e.target.value)}
-              />
-              <Button onClick={createModel}>Ajouter</Button>
-            </div>
-
-            <div className="border rounded-md divide-y max-h-[400px] overflow-auto">
-              {filteredModels.map((m) => (
-                <div
-                  key={m.id}
-                  className="flex justify-between items-center p-3"
-                >
-                  {editingModelId === m.id ? (
-                    <Input
-                      value={editValue}
-                      onChange={(e) => setEditValue(e.target.value)}
-                      onBlur={() => updateModel(m.id)}
-                      autoFocus
-                    />
-                  ) : (
-                    <span>{m.name}</span>
-                  )}
-
-                  <div className="flex gap-2">
-                    <Pencil
-                      className="h-4 w-4 text-blue-500 hover:text-blue-700"
-                      onClick={() => {
-                        setEditingModelId(m.id)
-                        setEditValue(m.name)
-                      }}
-                    />
-                    <Trash2
-                      className="h-4 w-4 text-red-500 hover:text-red-700"
-                      onClick={() => deleteModel(m.id)}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </>
         )}
       </div>
+
+      {/* ===== MODALS BRANDS ===== */}
+      <Modal open={isBrandModalOpen} modalTitle="Nouvelle marque" onClose={() => setIsBrandModalOpen(false)}>
+        <BrandForm
+          mode="create"
+          data={brandFormData}
+          loading={interactionLoading}
+          onChange={setBrandFormData}
+          onClose={() => setIsBrandModalOpen(false)}
+          onSubmit={handleCreateBrand}
+        />
+      </Modal>
+
+      <Modal open={isEditBrandOpen} modalTitle="Modifier marque" onClose={() => setIsEditBrandOpen(false)}>
+        <BrandForm
+          mode="edit"
+          data={brandFormData}
+          loading={interactionLoading}
+          onChange={setBrandFormData}
+          onClose={() => setIsEditBrandOpen(false)}
+          onSubmit={handleUpdateBrand}
+        />
+      </Modal>
     </div>
   )
 }
