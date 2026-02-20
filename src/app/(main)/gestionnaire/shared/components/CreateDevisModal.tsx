@@ -61,7 +61,7 @@ export function CreateDevisModal({ open, onClose, invoiceId, onCreated }: Props)
   }
 
   return (
-    <Modal open={open} onClose={onClose} modalDescription="Créer un devis">
+    <Modal open={open} onClose={onClose} modalTitle="Créer un devis">
       <div className="space-y-4 w-[95vw] max-w-[820px]">
         {fetching ? (
           <p className="text-sm text-zinc-500">Chargement des articles...</p>

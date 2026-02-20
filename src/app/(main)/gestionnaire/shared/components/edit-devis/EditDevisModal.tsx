@@ -110,7 +110,7 @@ export function EditDevisModal({ open, onClose, devis, onUpdated }: Props) {
   }
 
   return (
-    <Modal open={open} onClose={onClose} modalDescription="Modifier le devis">
+    <Modal open={open} onClose={onClose} modalTitle="Modifier le devis">
       <div className="space-y-4 w-[95vw] max-w-[820px]">
         <VehicleSummaryCard devis={devis} />
 
