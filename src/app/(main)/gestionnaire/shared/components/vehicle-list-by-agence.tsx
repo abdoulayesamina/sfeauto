@@ -5,6 +5,7 @@ export function VehicleListByAgence({
   agences,
   clients,
   onSelect,
+  reloadVehicles,
 }: any) {
   return (
     <>
@@ -32,6 +33,7 @@ export function VehicleListByAgence({
                   clients={clients}
                   compact
                   onClick={() => onSelect(v)}
+                  reloadVehicles={()=> reloadVehicles?.()}
                 />
               ))
             ) : (

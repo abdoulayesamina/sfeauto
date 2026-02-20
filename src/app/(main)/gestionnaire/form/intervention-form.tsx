@@ -1,3 +1,4 @@
+import { Spinner } from "@/src/shared/components/spinner"
 import { Button } from "@/src/shared/components/ui/button"
 import { Input } from "@/src/shared/components/ui/input"
 import { Label } from "@/src/shared/components/ui/label"
@@ -33,16 +34,28 @@ export function InterventionForm({
     console.log("Images selected:", imagesBlob)
   }, [imagesBlob])
 
+  // const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   if (!e.target.files) return
+
+  //   const files = Array.from(e.target.files)
+  //   setImages(files)
+
+  //   const previews = files.map((file) => URL.createObjectURL(file))
+  //   setImagesBlob(previews)
+  // }
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files) return
+    const files = Array.from(e.target.files || [])
+    if (!files.length) return
 
-    const files = Array.from(e.target.files)
-    setImages(files)
+    const previews = files.map(file => URL.createObjectURL(file))
 
-    const previews = files.map((file) => URL.createObjectURL(file))
-    setImagesBlob(previews)
-  }
+    setImages(prev => [...prev, ...files])          // File[]
+    setImagesBlob(prev => [...prev, ...previews])  // string[]
+}
 
+
+  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -176,17 +189,17 @@ export function InterventionForm({
           <Input
             name="numeroAccord"
             className="h-15"
-            defaultValue={defaultAccordNumber}
+            placeholder={defaultAccordNumber}
           />
+
         </div>
 
         <div className="space-y-2">
-          <Label>Date de confirmation *</Label>
+          <Label>Date de confirmation</Label>
           <Input
             name="dateConfirmation"
             type="date"
             className="h-15"
-            required
           />
         </div>
       </div>
@@ -196,6 +209,7 @@ export function InterventionForm({
           Annuler
         </Button>
         <Button type="submit" disabled={loading}>
+          {loading ? <Spinner className="h-4 w-4" /> : ""}
           {loading ? "Création..." : "Créer l’intervention"}
         </Button>
       </div>

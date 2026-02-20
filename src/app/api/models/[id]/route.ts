@@ -70,3 +70,26 @@ export async function PATCH(
     )
   }
 }
+
+
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const id  = await params.then(p=>p.id);
+
+  try {
+    const model = await prisma.model.findUnique({
+      where: { id },
+    });
+
+    if (!model) {
+      return NextResponse.json({ error: "Modèle introuvable" }, { status: 404 });
+    }
+
+    return NextResponse.json(model);
+  } catch (e) {
+    console.error("GET /api/models/[id] error:", e);
+    return NextResponse.json({ error: "Erreur récupération modèle" }, { status: 500 });
+  }
+}

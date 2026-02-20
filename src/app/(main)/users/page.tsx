@@ -24,6 +24,8 @@ export default function UsersPage() {
   const [clients, setClients] = useState<{ id: string; name: string }[]>([])
   const [agences, setAgences] = useState<{ id: string; location: string; clientId: string }[]>([])
   const [loading, setLoading] = useState(true)
+  const [usersLoading, setUsersLoading] = useState(false)
+  const [idToDelete, setIdToDelete] = useState<string | null>(null);
 
   const [isOpen, setIsOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
@@ -80,13 +82,16 @@ export default function UsersPage() {
 
   const handleCreate = async () => {
     try {
+      setUsersLoading(true)
       await createUser(formData)
       toast.success("Utilisateur créé")
+      setUsersLoading(false)
       setIsOpen(false)
       setFormData({})
       loadUsersWithoutSpin()
     } catch (e: any) {
-      toast.error("Erreur", e.message)
+      toast.error("Erreur : "+ e.message || e.error || "Impossible de créer l'utilisateur")
+      setUsersLoading(false)
     }
   }
 
@@ -109,14 +114,17 @@ export default function UsersPage() {
     if (!payload.password) delete payload.password
 
     try {
+      setUsersLoading(true)
       await updateUser(userToEdit.id, payload)
       toast.success("Utilisateur mis à jour")
       setEditOpen(false)
       setUserToEdit(null)
       setFormData({})
+      setUsersLoading(false)
       loadUsersWithoutSpin()
     } catch (e: any) {
       toast.error("Erreur", e.message)
+      setUsersLoading(false)
     }
   }
 
@@ -128,13 +136,16 @@ export default function UsersPage() {
     if (!confirmed) return
 
     try {
+      setIdToDelete(user.id ?? null);
       await deleteUser(user.id)
       toast.success("Utilisateur supprimé", {
         description: `"${user.name}" a été supprimé avec succès.`,
       })
       setUsers((prev) => prev.filter((u) => u.id !== user.id))
+      setIdToDelete(null);
     } catch (err: any) {
       toast.error("Erreur", err.message || "Impossible de supprimer l'utilisateur")
+      setIdToDelete(null);
     }
   }
 
@@ -159,8 +170,11 @@ export default function UsersPage() {
           <Button variant="outline" onClick={() => handleEdit(row.original)}>
             Modifier
           </Button>
-          <Button variant="destructive" onClick={() => handleDelete(row.original)}>
-            Supprimer
+          <Button variant="destructive" onClick={() => handleDelete(row.original)} disabled={idToDelete === row.original.id}>
+            <span className="flex items-center gap-2">
+              {idToDelete === row.original.id ? <Spinner className="size-4" /> : ""}
+              Supprimer
+            </span>
           </Button>
         </div>
       ),
@@ -205,7 +219,11 @@ export default function UsersPage() {
           value={formData}
           onChange={setFormData}
           onSubmit={handleCreate}
-          onClose={() => setIsOpen(false)}
+          loading={usersLoading}
+          onClose={() => {
+            setIsOpen(false)
+            setFormData({})
+          }}
           clients={clients}
           agences={agences}
         />
@@ -218,6 +236,7 @@ export default function UsersPage() {
           value={formData}
           onChange={setFormData}
           onSubmit={handleUpdate}
+          loading={usersLoading}
           onClose={() => setEditOpen(false)}
           clients={clients}
           agences={agences}

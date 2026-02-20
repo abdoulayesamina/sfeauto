@@ -8,6 +8,7 @@ type VehicleListCardProps = {
   clients: any[]
   agences: any[]
   onSelect: (vehicle: any) => void
+  reloadVehicles?: () => void
 }
 
 export function VehicleListCard({
@@ -16,6 +17,7 @@ export function VehicleListCard({
   clients,
   agences,
   onSelect,
+  reloadVehicles, 
 }: VehicleListCardProps) {
   return (
     <div className="mt-6 border p-3 rounded">
@@ -34,6 +36,7 @@ export function VehicleListCard({
             clients={clients}
             agences={agences}
             onSelect={onSelect}
+            reloadVehicles={()=> reloadVehicles?.()}
           />
         ) : (
           <VehicleListByAgence
@@ -41,6 +44,7 @@ export function VehicleListCard({
             agences={agences}
             clients={clients}
             onSelect={onSelect}
+            reloadVehicles={()=> reloadVehicles?.()}
           />
         )}
 

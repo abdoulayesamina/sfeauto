@@ -6,17 +6,44 @@ import { WorkStatus } from '@/generated/prisma'
 import { logError } from '@/src/lib/logger'
 
 // Validation des transitions de statut
-function isValidStatusTransition(currentStatus: WorkStatus, newStatus: WorkStatus): boolean {
-  const forward: Record<WorkStatus, WorkStatus[]> = {
-    CONFIRMED_IN_PLANNING: ['WAITING_FOR_PARTS', 'FIXING_STARTED', 'FIXING_FINISHED'],
-    WAITING_FOR_PARTS: ['FIXING_STARTED', 'FIXING_FINISHED'],
-    FIXING_STARTED: ['FIXING_FINISHED', 'WAITING_FOR_PARTS'],
-    FIXING_FINISHED: []
+function isValidStatusTransition(
+  currentStatus: WorkStatus,
+  newStatus: WorkStatus
+): boolean {
+
+  const transitions: Record<WorkStatus, WorkStatus[]> = {
+    CONFIRMED_IN_PLANNING: [
+      'WAITING_FOR_PARTS',
+      'FIXING_STARTED',
+      'FIXING_FINISHED'
+    ],
+
+    WAITING_FOR_PARTS: [
+      'CONFIRMED_IN_PLANNING',
+      'FIXING_STARTED',
+      'FIXING_FINISHED'
+    ],
+
+    FIXING_STARTED: [
+      'CONFIRMED_IN_PLANNING',
+      'WAITING_FOR_PARTS',
+      'FIXING_FINISHED'
+    ],
+
+    FIXING_FINISHED: [
+      'FIXING_STARTED',
+      'WAITING_FOR_PARTS',
+      'CONFIRMED_IN_PLANNING'
+    ],
   }
 
   if (currentStatus === newStatus) return true
-  return forward[currentStatus]?.includes(newStatus) || false
+
+  return transitions[currentStatus]?.includes(newStatus) ?? false
 }
+
+
+
 
 export async function PATCH(
   request: NextRequest,

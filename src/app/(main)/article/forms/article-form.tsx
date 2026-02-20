@@ -33,9 +33,7 @@ export function ArticleForm({
 
     const inputRef = useRef<HTMLInputElement>(null);
     useEffect(() => {
-    if (mode === "edit") {
         inputRef.current?.focus();
-    }
     }, [mode]);
 
     useEffect(() => {
@@ -75,17 +73,6 @@ export function ArticleForm({
                 </Select>
             </div>
             <div className="mb-4 flex flex-col gap-2 p-2">
-                <Label>Référence</Label>
-                <Input
-                    className="h-12"
-                    value={data.art_reference || ""}
-                    onChange={(e) => onChange({ ...data, art_reference: e.target.value })}
-                    placeholder="Ex: FV1, 2PN..."
-                />
-             </div>
-
-            
-            <div className="mb-4 flex flex-col gap-2 p-2">
                 <Label>Nom</Label>
                 <Input
                     ref={inputRef}
@@ -95,6 +82,16 @@ export function ArticleForm({
                     placeholder="Nom de l'article"
                 />
             </div>
+            
+            <div className="mb-4 flex flex-col gap-2 p-2">
+                <Label>Référence</Label>
+                <Input
+                    className="h-12"
+                    value={data.art_reference || ""}
+                    onChange={(e) => onChange({ ...data, art_reference: e.target.value })}
+                    placeholder="Ex: FV1, 2PN..."
+                />
+             </div>
 
             <div className="mb-4 flex flex-col gap-2 p-2">
                 <Label>Prix</Label>

@@ -67,6 +67,14 @@ export function EditDevisModal({ open, onClose, devis, onUpdated }: Props) {
     );
   }, [open, devis]);
 
+  useEffect(() => {
+      if (!open) {
+        setLines([{ art_id: 0, quantite: 1, reference: "" }]);
+        setDevTva(20);
+      }
+    }, [open]);
+
+
   const canSubmit = useMemo(() => {
     if (!devis?.dev_id) return false;
     if (!lines.length) return false;

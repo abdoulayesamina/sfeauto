@@ -18,6 +18,7 @@ import { errorAlert, successAlert } from "@/src/lib/alerts"
 import { useInterventionApi } from "./shared/useIntervention.api"
 import { InterventionForm } from "./form/intervention-form"
 import { toast } from "sonner"
+import { getBrandNameById, getModelNameById } from "../brands/shared/hooks/GetBrandOrModelName"
 
 export default function GestionnairePage() {
   const { getVehicles, searchVehicles, createVehicle } = useManageApi()
@@ -110,10 +111,12 @@ export default function GestionnairePage() {
     }
   }
 
-  const filteredVehicles = useMemo(() => {
+  const [filteredVehicles,setFilteredVehicles] = useState<Vehicule[]>([])
+  
+  useEffect(() => {
     const list = Array.isArray(vehicles) ? vehicles : []
 
-    return list.filter((v) => {
+    const filtered = list.filter((v) => {
       if (clientId && v.client?.id !== clientId) return false
       if (agenceId && v.base?.id !== agenceId) return false
 
@@ -129,7 +132,17 @@ export default function GestionnairePage() {
 
       return true
     })
+    setFilteredVehicles(filtered)
   }, [vehicles, clientId, agenceId, statut])
+
+  useEffect(() => {
+    if (!selectedVehicle) return
+
+    const updatedVehicle = vehicles.find(v => v.id === selectedVehicle.id)
+    if (updatedVehicle) {
+      setSelectedVehicle(updatedVehicle)
+    }
+  }, [vehicles])
 
   const filteredAgences = useMemo(() => {
     const list = Array.isArray(agences) ? agences : []
@@ -138,6 +151,7 @@ export default function GestionnairePage() {
   }, [agences, clientId])
 
   const handleSubmitIntervention = async (data: any) => {
+    setLoading(true)
     try {
       await createIntervention({
         vehicleId: selectedVehicle?.id ?? "",
@@ -151,16 +165,23 @@ export default function GestionnairePage() {
       })
 
       await loadAll()
+      // if(selectedVehicle) {
+      //   const updatedVehicle = vehicles.find(v => v.id === selectedVehicle.id)
+      //   setSelectedVehicle(updatedVehicle ?? null)
+      // }
+      setLoading(false)
       setInterventionModalOpen(false)
       toast.success("Intervention créée")
     } catch (e: any) {
       toast.error("Intervention", e.message)
+      setLoading(false)
     }
   }
 
   const handleNewInterventionFromVehiculePreview = () => {
     setInterventionModalOpen(true)
   }
+
 
   return (
     <div className="h-full py-4 px-12 bg-zinc-50">
@@ -221,10 +242,11 @@ export default function GestionnairePage() {
               vehicles={filteredVehicles}
               clients={clients}
               agences={filteredAgences}
-              onSelect={(v) => {
+              onSelect={(v) => {                
                 setSelectedVehicle(v)
                 setApercuVehiculeOpen(true)
               }}
+              reloadVehicles={loadAll}
             />
           </>
         ) : (
@@ -257,8 +279,8 @@ export default function GestionnairePage() {
         {selectedVehicle && (
           <VehiclePreview
             licensePlate={selectedVehicle.licensePlate}
-            brand={selectedVehicle.brand ?? ""}
-            model={selectedVehicle.model ?? ""}
+            brand={selectedVehicle.brand?.name ?? ""}
+            model={selectedVehicle.model?.name ?? ""}
             year={selectedVehicle.year ?? 0}
             client={selectedVehicle.client?.name ?? ""}
             agence={selectedVehicle.base?.location ?? ""}
@@ -280,7 +302,7 @@ export default function GestionnairePage() {
       >
         <InterventionForm
           vehicleId={selectedVehicle?.id ?? ""}
-          vehicleDisplayText={`${selectedVehicle?.licensePlate} - ${selectedVehicle?.brand} ${selectedVehicle?.model}`}
+          vehicleDisplayText={`${selectedVehicle?.licensePlate} - ${selectedVehicle?.brand?.name ?? ""} ${selectedVehicle?.model?.name ?? ""}`}
           defaultAccordNumber="ACC-2026-001"
           onSubmit={handleSubmitIntervention}
           onClose={() => setInterventionModalOpen(false)}
