@@ -304,7 +304,7 @@ export default function AgencePage() {
             setOpenDetailModal(false)
             setDetailIntervention(null)
           }}
-          modalDescription="Détail complet de l'intervention"
+          modalTitle="Détail complet de l'intervention"
           className="max-w-4xl"
         >
           {vehicleForDetails && (

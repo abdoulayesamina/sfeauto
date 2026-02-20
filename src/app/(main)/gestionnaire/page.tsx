@@ -101,13 +101,16 @@ export default function GestionnairePage() {
 
   const handleCreateVehicle = async (data: Partial<Vehicule>) => {
     try {
+      setLoading(true)
       await createVehicle(data)
       toast.success("Véhicule créé")
+      setLoading(false)
       setOpenCreateVehiculeModal(false)
       setVehiculeNotFound(false)
       await loadAll()
     } catch (e: any) {
       toast.error("Erreur", e.message)
+      setLoading(false)
     }
   }
 
@@ -271,6 +274,7 @@ export default function GestionnairePage() {
           data={{ licensePlate: preFillLicensePlate } as Vehicule}
           onSubmit={handleCreateVehicle}
           onClose={() => setOpenCreateVehiculeModal(false)}
+          loading={loading}
         />
       </Modal>
 
@@ -290,6 +294,7 @@ export default function GestionnairePage() {
             enReparation={1}
             termine={0}
             onNewIntervention={handleNewInterventionFromVehiculePreview}
+            reloadInvoiceList={loadAll}
           />
         )}
       </Modal>

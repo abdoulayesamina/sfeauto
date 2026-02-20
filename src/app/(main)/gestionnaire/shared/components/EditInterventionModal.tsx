@@ -21,6 +21,7 @@ type Props = {
   onClose: () => void;
   invoice: any;
   onUpdated?: (updatedInvoice: any) => void;
+  reloadInvoiceList?: () => void;
 };
 
 function toDateInputValue(d?: string | Date | null) {
@@ -30,7 +31,7 @@ function toDateInputValue(d?: string | Date | null) {
   return date.toISOString().slice(0, 10); 
 }
 
-export function EditInterventionModal({ open, onClose, invoice, onUpdated }: Props) {
+export function EditInterventionModal({ open, onClose, invoice, onUpdated, reloadInvoiceList }: Props) {
   const { patchInvoice, loading } = useInvoiceApi();
 
   // hotos existantes (SAS) comme IntervDetailGes
@@ -107,50 +108,51 @@ export function EditInterventionModal({ open, onClose, invoice, onUpdated }: Pro
 
   
   async function handleSave(e?: React.FormEvent) {
-  e?.preventDefault();
-  if (!invoice?.id) return;
+    e?.preventDefault();
+    if (!invoice?.id) return;
 
-  const didOrderParts = piecesCommande === "oui";
+    const didOrderParts = piecesCommande === "oui";
 
-  const payload: InvoicePatchPayload = {
-    workDescription: workDescription.trim() || null,
-    accordNumber: accordNumber.trim() || null,
-    dateOfConfirmation: dateOfConfirmation
-      ? new Date(dateOfConfirmation).toISOString()
-      : null,
-    didOrderParts,
-    ordersDetails: didOrderParts ? (ordersDetails.trim() || null) : null,
-    comments: comments.trim() || null,
-  };
+    const payload: InvoicePatchPayload = {
+      workDescription: workDescription.trim() || null,
+      accordNumber: accordNumber.trim() || null,
+      dateOfConfirmation: dateOfConfirmation
+        ? new Date(dateOfConfirmation).toISOString()
+        : null,
+      didOrderParts,
+      ordersDetails: didOrderParts ? (ordersDetails.trim() || null) : null,
+      comments: comments.trim() || null,
+    };
 
-  const res = await patchInvoice(invoice.id, payload);
+    const res = await patchInvoice(invoice.id, payload);
 
-  if (!res.ok) return;
+    if (!res.ok) return;
 
-  // 🔥 UPLOAD PHOTOS SI PRESENTES
-  if (images.length > 0) {
-    const formData = new FormData();
+    // 🔥 UPLOAD PHOTOS SI PRESENTES
+    if (images.length > 0) {
+      const formData = new FormData();
 
-    images.forEach((file) => {
-      formData.append("files", file);
-    });
+      images.forEach((file) => {
+        formData.append("files", file);
+      });
 
-    await fetch(
-      `/api/invoices/${invoice.id}/photos`,
-      {
-        method: "POST",
-        body: formData,
-      }
-    );
+      await fetch(
+        `/api/invoices/${invoice.id}/photos`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+    }
+
+    onUpdated?.(res.data?.invoice ?? res.data);
+    reloadInvoiceList?.();
+    onClose();
   }
-
-  onUpdated?.(res.data?.invoice ?? res.data);
-  onClose();
-}
 
 
   return (
-    <Modal open={open} onClose={onClose} modalDescription="Modifier l’intervention" >
+    <Modal open={open} onClose={onClose} modalTitle="Modifier l’intervention" >
       <form onSubmit={handleSave} className="space-y-8 p-4 md:w-[650px]">
         {invoice?.vehicle?.licensePlate && (
           <div className="space-y-2">

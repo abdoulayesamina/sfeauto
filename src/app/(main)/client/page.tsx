@@ -218,7 +218,7 @@ export default function ClientPage() {
         <Modal
           open={openDetailModal}
           onClose={() => setOpenDetailModal(false)}
-          modalDescription="Détail complet de l'intervention"
+          modalTitle="Détail complet de l'intervention"
           className="max-w-4xl"
         >
           {vehiculeSelect && (

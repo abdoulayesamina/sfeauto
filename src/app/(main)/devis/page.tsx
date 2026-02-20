@@ -273,7 +273,7 @@ export default function DevisPage() {
         />
       )}
 
-      <Modal open={openApercu} onClose={()=>setOpenApercu(false)} modalDescription="Aperçu du devis">
+      <Modal open={openApercu} onClose={()=>setOpenApercu(false)} modalTitle="Aperçu du devis">
         <DevisApercu devisId={targetDevisIdForApercu} onClose={()=>setOpenApercu(false)} />
       </Modal>
     </div>
