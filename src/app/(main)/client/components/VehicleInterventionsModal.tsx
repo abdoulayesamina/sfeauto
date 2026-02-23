@@ -10,7 +10,7 @@ import InterventionStatusBadge from "./InterventionStatusBadge"
 interface VehicleInterventionsModalProps {
   vehicle: any
   interventions: any[]
-  filterStatus: "ALL" | "ATTENTE_REPARATION" | "TERMINEE" | "ATTENTE_PIECES"
+  filterStatus: "ALL" | "CONFIRMEE" | "EN_COURS" | "TERMINEE" | "ATTENTE_PIECES"
   onClose: () => void
   onViewDetails: (intervention: any) => void
 }
@@ -25,8 +25,8 @@ const displayValue = (v: any) => {
     if ("name" in v && v?.name) return String(v.name)
     if ("label" in v && v?.label) return String(v.label)
     if ("title" in v && v?.title) return String(v.title)
-    if ("location" in v && v?.location) return displayValue(v.location) 
-    return "-" 
+    if ("location" in v && v?.location) return displayValue(v.location)
+    return "-"
   }
 
   return "-"
@@ -43,7 +43,8 @@ export default function VehicleInterventionsModal({
 
   const stats = {
     total: interventions.length,
-    enCours: interventions.filter((i) => toUIStatus(i.status) === "ATTENTE_REPARATION").length,
+    confirmee: interventions.filter((i) => toUIStatus(i.status) === "CONFIRMEE").length,
+    enCours: interventions.filter((i) => toUIStatus(i.status) === "EN_COURS").length,
     attentePieces: interventions.filter((i) => toUIStatus(i.status) === "ATTENTE_PIECES").length,
     terminee: interventions.filter((i) => toUIStatus(i.status) === "TERMINEE").length,
   }
@@ -106,6 +107,12 @@ export default function VehicleInterventionsModal({
                 <FileText size={12} className="mr-1" />
                 Total: {stats.total}
               </Badge>
+
+              {stats.confirmee > 0 && (
+                <Badge variant="secondary" className="text-sm">
+                  Confirmées: {stats.confirmee}
+                </Badge>
+              )}
 
               {stats.enCours > 0 && (
                 <Badge variant="secondary" className="text-sm">
@@ -180,8 +187,8 @@ export default function VehicleInterventionsModal({
                             Mis à jour :{" "}
                             {(intervention.statusUpdatedAt || intervention.createdAt)
                               ? new Date(intervention.statusUpdatedAt || intervention.createdAt).toLocaleDateString(
-                                  "fr-FR"
-                                )
+                                "fr-FR"
+                              )
                               : "-"}
                           </div>
                         </div>
@@ -203,7 +210,7 @@ export default function VehicleInterventionsModal({
                     )}
 
                     {/* Actions */}
-                    
+
                   </div>
                 </CardContent>
               </Card>

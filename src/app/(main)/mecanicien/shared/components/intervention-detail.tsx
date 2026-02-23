@@ -5,7 +5,7 @@ import { Car, User, MapPin, Wrench } from "lucide-react"
 import { Button } from "@/src/shared/components/ui/button"
 import { toUIStatus, getStatusMeta, HISTORY_LABELS } from "@/src/utils/constants/intervention-status"
 
-type UIStatus = "EN_COURS" | "ATTENTE_PIECES" | "ATTENTE_REPARATION" | "TERMINEE"
+type UIStatus = "CONFIRMEE" | "EN_COURS" | "ATTENTE_PIECES" | "TERMINEE"
 
 type Props = {
   selectedIntervention: any
@@ -144,7 +144,7 @@ export default function InterventionDetail({
 
               <div className="flex-1 pb-4">
                 <p className="text-sm font-medium">
-                  {HISTORY_LABELS[h.previousStatus]?? h.previousStatus} →{" "}
+                  {HISTORY_LABELS[h.previousStatus] ?? h.previousStatus} →{" "}
                   <span className="text-blue-600">
                     {HISTORY_LABELS[h.newStatus] ?? h.newStatus}
                   </span>

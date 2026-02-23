@@ -17,10 +17,11 @@ import EmptyState from "../client/components/EmptyState"
 import VehicleInterventionsModal from "../client/components/VehicleInterventionsModal"
 import InterventionDetailClient from "../client/components/detailsInterv"
 
-type UIStatus = "ALL" | "ATTENTE_REPARATION" | "TERMINEE" | "ATTENTE_PIECES"
+type UIStatus = "ALL" | "CONFIRMEE" | "EN_COURS" | "TERMINEE" | "ATTENTE_PIECES"
 
 type Counts = {
-  ATTENTE_REPARATION: number
+  CONFIRMEE: number
+  EN_COURS: number
   ATTENTE_PIECES: number
   TERMINEE: number
 }
@@ -76,7 +77,7 @@ export default function AgencePage() {
         map.set(v.id, {
           vehicle: v,
           invoices: [],
-          counts: { ATTENTE_REPARATION: 0, ATTENTE_PIECES: 0, TERMINEE: 0 },
+          counts: { CONFIRMEE: 0, EN_COURS: 0, ATTENTE_PIECES: 0, TERMINEE: 0 },
           lastInvoice: null,
         })
       }
@@ -93,7 +94,8 @@ export default function AgencePage() {
       }
 
       const ui = toUIStatus(inv.status)
-      if (ui === "ATTENTE_REPARATION") row.counts.ATTENTE_REPARATION += 1
+      if (ui === "CONFIRMEE") row.counts.CONFIRMEE += 1
+      if (ui === "EN_COURS") row.counts.EN_COURS += 1
       if (ui === "ATTENTE_PIECES") row.counts.ATTENTE_PIECES += 1
       if (ui === "TERMINEE") row.counts.TERMINEE += 1
     }
@@ -112,7 +114,8 @@ export default function AgencePage() {
 
       const statusMatch =
         filterStatus === "ALL" ||
-        (filterStatus === "ATTENTE_REPARATION" && row.counts.ATTENTE_REPARATION > 0) ||
+        (filterStatus === "CONFIRMEE" && row.counts.CONFIRMEE > 0) ||
+        (filterStatus === "EN_COURS" && row.counts.EN_COURS > 0) ||
         (filterStatus === "ATTENTE_PIECES" && row.counts.ATTENTE_PIECES > 0) ||
         (filterStatus === "TERMINEE" && row.counts.TERMINEE > 0)
 
@@ -128,10 +131,11 @@ export default function AgencePage() {
 
   const stats = useMemo(() => {
     const total = interventions.length
-    const enCours = interventions.filter((i) => toUIStatus(i.status) === "ATTENTE_REPARATION").length
+    const confirmee = interventions.filter((i) => toUIStatus(i.status) === "CONFIRMEE").length
+    const enCours = interventions.filter((i) => toUIStatus(i.status) === "EN_COURS").length
     const termine = interventions.filter((i) => toUIStatus(i.status) === "TERMINEE").length
     const attentePieces = interventions.filter((i) => toUIStatus(i.status) === "ATTENTE_PIECES").length
-    return { total, enCours, termine, attentePieces }
+    return { total, confirmee, enCours, termine, attentePieces }
   }, [interventions])
 
   const handleViewInterventions = (vehicleRow: any) => {
@@ -197,20 +201,20 @@ export default function AgencePage() {
   const vehicleForDetails =
     vehiculeSelect && detailIntervention
       ? {
-          ...vehiculeSelect,
-          invoices: [
-            {
-              id: detailIntervention.id,
-              status: detailIntervention.status,
-              invoiceConfirmed: detailIntervention.invoiceConfirmed,
-              workDescription: detailIntervention.workDescription,
-              accordNumber: detailIntervention.accordNumber,
-              dateOfConfirmation: detailIntervention.dateOfConfirmation,
-              createdAt: detailIntervention.createdAt,
-              statusUpdatedAt: detailIntervention.statusUpdatedAt,
-            },
-          ],
-        }
+        ...vehiculeSelect,
+        invoices: [
+          {
+            id: detailIntervention.id,
+            status: detailIntervention.status,
+            invoiceConfirmed: detailIntervention.invoiceConfirmed,
+            workDescription: detailIntervention.workDescription,
+            accordNumber: detailIntervention.accordNumber,
+            dateOfConfirmation: detailIntervention.dateOfConfirmation,
+            createdAt: detailIntervention.createdAt,
+            statusUpdatedAt: detailIntervention.statusUpdatedAt,
+          },
+        ],
+      }
       : null
 
   return (
@@ -235,10 +239,14 @@ export default function AgencePage() {
           onFilterChange={setFilterStatus}
         />
 
-        <div className="mb-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="mb-8 grid grid-cols-2 md:grid-cols-5 gap-4">
           <div className="rounded-xl bg-white border p-4">
-            <div className="text-sm text-gray-500">Total interventions</div>
+            <div className="text-sm text-gray-500">Total</div>
             <div className="text-2xl font-bold">{stats.total}</div>
+          </div>
+          <div className="rounded-xl bg-white border p-4">
+            <div className="text-sm text-gray-500">Confirmées</div>
+            <div className="text-2xl font-bold">{stats.confirmee}</div>
           </div>
           <div className="rounded-xl bg-white border p-4">
             <div className="text-sm text-gray-500">En cours</div>
@@ -289,7 +297,7 @@ export default function AgencePage() {
             </div>
 
             <VehicleInterventionsModal
-              vehicle={vehiculeSelect}  
+              vehicle={vehiculeSelect}
               interventions={interventionsVehicule}
               filterStatus={filterStatus}
               onClose={() => setOpenVehicleModal(false)}
@@ -326,9 +334,8 @@ export default function AgencePage() {
           {vehiculeSelect && (
             <InterventionForm
               vehicleId={vehiculeSelect.id}
-              vehicleDisplayText={`${vehiculeSelect.licensePlate} - ${vehiculeSelect.brand?.name ?? ""} ${
-                vehiculeSelect.model?.name ?? ""
-              }`}
+              vehicleDisplayText={`${vehiculeSelect.licensePlate} - ${vehiculeSelect.brand?.name ?? ""} ${vehiculeSelect.model?.name ?? ""
+                }`}
               defaultAccordNumber="ACC-2026-001"
               onSubmit={handleCreateIntervention}
               onClose={() => setOpenCreateIntervention(false)}

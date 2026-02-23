@@ -16,9 +16,23 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search')?.trim().toUpperCase()
     const clientId = searchParams.get('clientId')
     const baseId = searchParams.get('baseId')
+    const uiStatus = searchParams.get('status')
 
     // Build where clause for filters
     const whereClause: any = {}
+
+    // Filter by status
+    if (uiStatus && uiStatus !== 'ALL') {
+      if (uiStatus === 'EN_COURS') {
+        whereClause.status = {
+          in: ['CONFIRMED_IN_PLANNING', 'FIXING_STARTED']
+        }
+      } else if (uiStatus === 'TERMINEE') {
+        whereClause.status = 'FIXING_FINISHED'
+      } else if (uiStatus === 'ATTENTE_PIECES') {
+        whereClause.status = 'WAITING_FOR_PARTS'
+      }
+    }
 
     // Filter by base
     if (baseId) {
@@ -66,8 +80,8 @@ export async function GET(request: NextRequest) {
             base: {
               select: { id: true, location: true }
             },
-            brand:{select:{name:true}},
-            model:{select:{name:true}},
+            brand: { select: { name: true } },
+            model: { select: { name: true } },
           }
         },
         handledBy: {
@@ -88,7 +102,7 @@ export async function GET(request: NextRequest) {
         { status: 'asc' },  // In-progress jobs first
         { createdAt: 'desc' }
       ],
-      take: 50  // Limit results for performance
+      take: 100  // Limit results for performance
     })
 
     // Serialize dates for client
