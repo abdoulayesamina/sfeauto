@@ -225,7 +225,7 @@ export default function ClientPage() {
   return (
     <div className="p-10">
       <div className="flex justify-between mb-2 p-6 items-center">
-        <h2 className="font-bold text-2xl">Gestion des clients zz</h2>
+        <h2 className="font-bold text-2xl">Gestion des clients</h2>
         <Button onClick={() => setIsOpen(true)}>Ajouter un client</Button>
       </div>
       
