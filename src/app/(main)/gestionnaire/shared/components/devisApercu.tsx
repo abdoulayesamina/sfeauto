@@ -131,10 +131,10 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
                     <div className="flex flex-col mb-6">
                         {/* Garage */}
                         <div>
-                            <h2 className="font-bold text-lg">SFEAUTO</h2>
-                            <p>5 RUE FERDINAND DE LESSEPS</p>
-                            <p>95190 GOUSSAINVILLE</p>
-                            <p>Tél : 01 39 35 74 22</p>
+                            <h2 className="font-bold text-lg mb-6">SFEAUTO</h2>
+                            <p className="text-[12px]">5 RUE FERDINAND DE LESSEPS</p>
+                            <p className="text-[12px]">95190 GOUSSAINVILLE</p>
+                            <p className="text-[12px]">Tél : 01 39 35 74 22</p>
                         </div>
 
                         {/* Client */}
@@ -158,15 +158,15 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
                     {/* ===== INFOS DEVIS ===== */}
                     <div className="pt-3 mb-1 grid grid-cols-2">
                         <div className="border">
-                            <p className="font-semibold bg-[#000033] text-white text-center p-1">
+                            <p className="font-semibold bg-[#000033] text-white text-center p-1 text-[13px]">
                                 DEVIS N° {devis.dev_numdevis}
                             </p>
-                            <p className="text-end p-1 pr-4">
+                            <p className="text-end p-1 pr-4 text-[12px]">
                                 Date : {new Date(devis?.dev_datecreation ?? "").toLocaleDateString()}
                             </p>
                         </div>
 
-                        <div className="border flex flex-col p-1">
+                        <div className="border flex flex-col p-1 text-[12px] justify-between">
                             <div className="grid grid-cols-2 gap-2">
                                 <p>Client : {devis?.client?.cli_numClient ?? "..."}</p>
                                 <p>TVA intra : {devis?.client?.cli_tvaIntraCommunautaire ?? "..."}</p>
@@ -183,16 +183,14 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
 
                     {/* ===== VEHICULE ===== */}
                     <div className="border mb-2">
-                        <div className="bg-[#000033] text-white p-1">
+                        <div className="bg-[#000033] text-white p-1 text-[13px]">
                             Véhicule
                         </div>
-                        <div className="mb-6 grid grid-cols-2 gap-4">
+                        <div className="mb-6 grid grid-cols-2 gap-4 text-[12px]">
                             <div>
                                 <p><span className="font-semibold">Immatriculation :</span> {devis.vehicle?.licensePlate}</p>
-                                {/* <p><span className="font-semibold">Marque :</span> {devis.vehicle?.brand}</p>
-                                <p><span className="font-semibold">Modèle :</span> {devis.vehicle?.model}</p> */}
-                                <p><span className="font-semibold">Marque :</span> </p>
-                                <p><span className="font-semibold">Modèle :</span> </p>
+                                <p><span className="font-semibold">Marque :</span> {devis.vehicle?.brand?.name}</p>
+                                <p><span className="font-semibold">Modèle :</span> {devis.vehicle?.model?.name}</p>
                             </div>
 
                             <div>
@@ -203,9 +201,9 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
                     </div>
 
                     {/* ===== LIGNES ARTICLES ===== */}
-                    <div className="overflow-hidden border-b-[2px] border-b-black">
+                    <div className="overflow-hidden border-b-[2px] border-b-black text-[12px]">
                         {/* Header */}
-                        <div className="grid grid-cols-12 font-semibold px-3 py-2 bg-[#000033] text-white">
+                        <div className="grid grid-cols-12 px-3 py-1  bg-[#000033] text-white">
                             <div className="col-span-2 text-center">Référence</div>
                             <div className="col-span-4 text-center">Désignation</div>
                             <div className="col-span-2 text-center">Qté/Temps</div>
@@ -242,7 +240,7 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
                             </div>
                         ))}
                     </div>
-                    <div className="border-x p-1 text-[12px] border-x-[2px] border-gray-400">
+                    <div className="border-x p-1 text-[11px] border-x-[2px] border-gray-400">
                         Le garage vous remercie de votre confiance
                     </div>
                     
@@ -264,7 +262,7 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
                         </div> */}
                         <div className="grid grid-cols-[1fr_250px]">
                             <div>
-                                <table className="border-collapse w-full min-h-[80px]">
+                                <table className="border-collapse w-full">
                                     <tr className="bg-[#000033] text-[12px] text-white">
                                         <td className="text-center border border-black">T</td>
                                         <td className="text-center border border-black">Base H.T</td>
@@ -272,32 +270,32 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
                                         <td className="text-center border border-black">Mt.Tva</td>
                                     </tr>
                                     <tr className="">
-                                        <td className="border border-black text-center">1</td>
-                                        <td className="border border-black text-right">{devis.dev_totalht}</td>
-                                        <td className="border border-black text-right">{devis.dev_tva}</td>
-                                        <td className="border-y border-black text-right">{devis.dev_totaltva}</td>
+                                        <td className="p-3 border border-black text-center">1</td>
+                                        <td className="p-3 border border-black text-right">{devis.dev_totalht}</td>
+                                        <td className="p-3 border border-black text-right">{devis.dev_tva}</td>
+                                        <td className="p-3 border-y border-black text-right">{devis.dev_totaltva}</td>
                                     </tr>
                                 </table>
                             </div>
                             <div>
                                 <table className="w-full border border-black">
                                     <tr>
-                                        <td className="bg-[#000033] text-white text-center text-[11px] p-[9.5px]">Total HT</td>
+                                        <td className="bg-[#000033] text-white text-center text-[12px] border border-black">Total HT</td>
                                     </tr>
                                     <tr>
-                                        <td className="p-[9.5px] text-right">{devis.dev_totalht} €</td>
+                                        <td className=" text-right p-3">{devis.dev_totalht} €</td>
                                     </tr>
                                     <tr>
-                                        <td className="bg-[#000033] text-white text-center text-[11px] p-[9.5px]">TVA</td>
+                                        <td className="bg-[#000033] text-white text-center text-[12px] border border-black">TVA</td>
                                     </tr>
                                     <tr>
-                                        <td className="p-[9.5px] text-right">{devis.dev_totaltva} €</td>
+                                        <td className=" text-right p-3">{devis.dev_totaltva} €</td>
                                     </tr>
                                     <tr>
-                                        <td className="bg-[#000033] text-white text-center text-[11px] p-[9.5px]">NET À PAYER TTC</td>
+                                        <td className="bg-[#000033] text-white text-center text-[12px] border border-black">NET À PAYER TTC</td>
                                     </tr>
                                     <tr>
-                                        <td className="p-[9.5px] text-center font-bold text-[17px]">{devis.dev_totalttc} €</td>
+                                        <td className=" text-center font-bold text-[17px] p-3">{devis.dev_totalttc} €</td>
                                     </tr>
                                 </table>
                                 {/* <div className="flex flex-col">
@@ -315,7 +313,7 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
                             </div>
                         </div>
                     </div>
-                    <div className="text-sm mt-2 text-[11px]">
+                    <div className="text-[11px] mt-2 text-[11px]">
                         Lorem ipsum dolor, sit amet consectetur adipisicing elit. Dolores doloremque officia autem atque eius. Maxime quidem at quis nemo odit, eligendi doloremque aut, facere repudiandae neque voluptatum laborum sequi fugit.
                     </div>
                     <div className="mt-6 border-t pt-4 flex justify-end no-print">

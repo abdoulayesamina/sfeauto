@@ -166,7 +166,7 @@ const onSubmit = async (data: LoginForm) => {
 
           <div className="hidden md:flex flex-col items-center justify-center bg-gradient-to-br from-black/60 to-black/90 p-10">
             <Image
-              src="/cars.png"
+              src="/sfe-auto-logo.png"
               alt="GestCars logo"
               width={220}
               height={140}
