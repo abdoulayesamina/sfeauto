@@ -14,16 +14,17 @@ variables:
 steps:
 
 - script: |
-    echo "Installing Vercel CLI..."
-    npm install --global vercel
-  displayName: "Install Vercel CLI"
-
-- script: |
     echo "Deploying branch: $(Build.SourceBranchName)"
 
     if [ "$(Build.SourceBranchName)" = "main" ]; then
-      vercel deploy --prod --token=$(VERCEL_TOKEN) --yes
+      vercel deploy --prod \
+        --token=$(VERCEL_TOKEN) \
+        --yes \
+        --meta gitBranch=$(Build.SourceBranchName)
     else
-      vercel deploy --token=$(VERCEL_TOKEN) --yes
+      vercel deploy \
+        --token=$(VERCEL_TOKEN) \
+        --yes \
+        --meta gitBranch=$(Build.SourceBranchName)
     fi
   displayName: "Deploy to Vercel"
