@@ -1,0 +1,29 @@
+trigger:
+  branches:
+    include:
+      - develop
+      - staging
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  - group: sfeauto
+
+steps:
+
+- script: |
+    echo "Installing Vercel CLI..."
+    npm install --global vercel
+  displayName: "Install Vercel CLI"
+
+- script: |
+    echo "Deploying branch: $(Build.SourceBranchName)"
+
+    if [ "$(Build.SourceBranchName)" = "main" ]; then
+      vercel deploy --prod --token=$(VERCEL_TOKEN) --yes
+    else
+      vercel deploy --token=$(VERCEL_TOKEN) --yes
+    fi
+  displayName: "Deploy to Vercel"
