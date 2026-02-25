@@ -14,6 +14,11 @@ variables:
 steps:
 
 - script: |
+    echo "Installing Vercel CLI..."
+    npm install -g vercel
+  displayName: "Install Vercel CLI"
+
+- script: |
     echo "SourceBranch: $(Build.SourceBranch)"
     echo "SourceBranchName: $(Build.SourceBranchName)"
 
