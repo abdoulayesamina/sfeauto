@@ -1,8 +1,3 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-
 trigger:
   branches:
     include:
@@ -14,18 +9,13 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  - name: VERCEL_ORG_ID
-    value: $(VERCEL_ORG_ID)
-
-  - name: VERCEL_PROJECT_ID
-    value: $(VERCEL_PROJECT_ID)
+  - group: sfeauto
 
 steps:
 
 - script: |
     echo "Installing Vercel CLI..."
     npm install --global vercel
-
   displayName: "Install Vercel CLI"
 
 - script: |
@@ -36,5 +26,4 @@ steps:
     else
       vercel deploy --token=$(VERCEL_TOKEN) --yes
     fi
-
   displayName: "Deploy to Vercel"
