@@ -14,14 +14,17 @@ variables:
 steps:
 
 - script: |
-    echo "Deploying branch: $(Build.SourceBranchName)"
+    echo "SourceBranch: $(Build.SourceBranch)"
+    echo "SourceBranchName: $(Build.SourceBranchName)"
 
-    if [ "$(Build.SourceBranchName)" = "main" ]; then
+    if [[ "$(Build.SourceBranch)" == "refs/heads/main" ]]; then
+      echo " Deploying to PRODUCTION"
       vercel deploy --prod \
         --token=$(VERCEL_TOKEN) \
         --yes \
         --meta gitBranch=$(Build.SourceBranchName)
     else
+      echo " Deploying to PREVIEW"
       vercel deploy \
         --token=$(VERCEL_TOKEN) \
         --yes \
