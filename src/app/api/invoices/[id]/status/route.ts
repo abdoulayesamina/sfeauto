@@ -104,7 +104,7 @@ export async function PATCH(
     if (!invoice.invoiceConfirmed) {
       console.error("Dans !invoice.invoiceConfirmed")
       return NextResponse.json(
-        { error: 'Impossible de modifier le statut d\'une intervention non approuvée' },
+        { error: "Veuillez attribuer un numéro d'accord avant de modifier le statut de cette intervention." },
         { status: 403 }
       )
     }
