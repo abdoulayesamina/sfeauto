@@ -32,34 +32,35 @@ export default function LoginForm() {
 
   const router = useRouter()
 
-const onSubmit = async (data: LoginForm) => {
-  const res = await signIn("credentials", {
-    email: data.email,
-    password: data.password,
-    redirect: false,
-  })
+  const onSubmit = async (data: LoginForm) => {
+    const res = await signIn("credentials", {
+      email: data.email,
+      password: data.password,
+      redirect: false,
+    })
 
-  if (res?.ok) {
-    router.push("/dashboard")
-  } else {
-    alert("Email ou mot de passe incorrect")
+    if (res?.ok) {
+      router.push("/dashboard")
+    } else {
+      alert("Email ou mot de passe incorrect")
+    }
   }
-}
-
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <div className="relative flex items-center justify-center min-h-screen overflow-hidden">
 
       <div
-        className="absolute inset-0 bg-cover bg-center scale-105"
+        className="absolute inset-0 scale-105 bg-center bg-cover"
         style={{ backgroundImage: "url('/2149580561.jpg')" }}
       />
 
+
       <div className="absolute inset-0 bg-black/75" />
 
-      <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent pointer-events-none" />
 
-      <div className="relative z-10 w-full flex items-center justify-center px-4">
+      <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-white/10 via-transparent to-transparent" />
+
+      <div className="relative z-10 flex items-center justify-center w-full px-4">
         <div
           className="
             w-full max-w-4xl
@@ -73,13 +74,14 @@ const onSubmit = async (data: LoginForm) => {
           "
         >
 
-          <Card className="border-0 rounded-none bg-transparent">
+
+          <Card className="bg-transparent border-0 rounded-none">
             <CardHeader className="space-y-2">
-              <CardTitle className="text-2xl font-bold text-white text-center">
+              <CardTitle className="text-2xl font-bold text-center text-white">
                 Connexion
               </CardTitle>
-              <CardDescription className="text-gray-300 text-center">
-                Accédez à votre espace GestCars
+              <CardDescription className="text-center text-gray-300">
+                Accédez à votre espace SFE AUTO
               </CardDescription>
             </CardHeader>
 
@@ -90,14 +92,7 @@ const onSubmit = async (data: LoginForm) => {
                   <Label className="text-gray-200">Email</Label>
                   <Input
                     placeholder="admin@gestcars.com"
-                    className="
-                      bg-white/20
-                      border-white/30
-                      text-white
-                      placeholder:text-gray-300
-                      focus:border-white
-                      focus:ring-white/40
-                    "
+                    className="text-white bg-white/20 border-white/30 placeholder:text-gray-300 focus:border-white focus:ring-white/40"
                     {...register("email", {
                       required: "Email obligatoire",
                       pattern: {
@@ -118,14 +113,7 @@ const onSubmit = async (data: LoginForm) => {
                   <Input
                     type="password"
                     placeholder="••••••••"
-                    className="
-                      bg-white/20
-                      border-white/30
-                      text-white
-                      placeholder:text-gray-300
-                      focus:border-white
-                      focus:ring-white/40
-                    "
+                    className="text-white bg-white/20 border-white/30 placeholder:text-gray-300 focus:border-white focus:ring-white/40"
                     {...register("password", {
                       required: "Mot de passe obligatoire",
                     })}
@@ -151,7 +139,7 @@ const onSubmit = async (data: LoginForm) => {
                   "
                 >
                   {isSubmitting && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   )}
                   Se connecter
                 </Button>
@@ -160,28 +148,23 @@ const onSubmit = async (data: LoginForm) => {
             </CardContent>
 
             <CardFooter className="text-sm text-gray-300">
-              © {new Date().getFullYear()} GestCars
+              © {new Date().getFullYear()} SFE Auto - Tous droits réservés
             </CardFooter>
           </Card>
 
-          <div className="hidden md:flex flex-col items-center justify-center bg-gradient-to-br from-black/60 to-black/90 p-10">
+
+          <div className="relative hidden bg-white md:block">
             <Image
               src="/sfe-auto-logo.png"
               alt="GestCars logo"
-              width={220}
-              height={140}
-              className="
-                drop-shadow-2xl
-                animate-in fade-in zoom-in-95 duration-700
-              "
+              fill
+              priority
+              className="object-cover"
             />
-            <h1 className="text-4xl font-bold text-white mt-4">
-              GestCars
-            </h1>
           </div>
 
         </div>
-      </div>
+      </div>&
     </div>
   )
 }

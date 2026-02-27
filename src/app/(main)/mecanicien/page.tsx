@@ -191,10 +191,19 @@ export default function MecanicienPage() {
                                 {/* Statut (modifiable) */}
                                 <Select
                                     onValueChange={async (val) => {
-                                        setInterventionId(inv.id)
-                                        const success = await updateStatus(inv.id, val as any)
-                                        setInterventionId(null);
-                                        if (!success) return errorAlert("Erreur", statusError || "Impossible de mettre à jour le statut")
+                                       const result = await updateStatus(inv.id, val as any)
+
+                                            if (!result.success) {
+                                            return errorAlert("Erreur", result.message)
+                                            }
+
+                                            setInterventions(prev =>
+                                            prev.map(item =>
+                                                item.id === inv.id
+                                                ? { ...item, status: result.data.status }
+                                                : item
+                                            )
+                                            )
 
                                         setInterventions(prev =>
                                             prev.map(item =>
