@@ -81,6 +81,7 @@ export default function GestionnairePage() {
 
   // Recherche
   const handleSearch = async () => {
+    
     if (!search.trim()) {
       await loadAll()
       setVehiculeNotFound(false)
