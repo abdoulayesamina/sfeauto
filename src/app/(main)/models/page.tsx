@@ -179,74 +179,109 @@ export default function ModelsPage() {
 
     // ================= UI =================
 
-    return (
-        <div className="space-y-10 p-10">
-            <h1 className="text-3xl font-bold">Gestion des Modèles</h1>
+   return (
+  <div className="h-full py-4 px-12 bg-zinc-50">
+    <div className="bg-white min-h-full rounded-lg p-6 space-y-8">
 
-            <div className="space-y-6">
-                <div className="flex items-end gap-4 border p-4 rounded-lg bg-muted/20">
-                    <div className="flex-1 space-y-2">
-                        <Label>Filtrer par marque</Label>
-                        <Select
-                            value={selectedBrandId || ""}
-                            onValueChange={(val) => setSelectedBrandId(val)}
-                        >
-                            <SelectTrigger className="w-full bg-white h-11">
-                                <SelectValue placeholder="Choisir une marque..." />
-                            </SelectTrigger>
-                            <SelectContent className="z-[200]">
-                                {brands.map((b) => (
-                                    <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    {selectedBrandId && (
-                        <Button size="lg" onClick={openCreateModel}>Ajouter un modèle</Button>
-                    )}
-                </div>
+      {/* HEADER */}
+      <h1 className="font-bold text-2xl">Gestion des Modèles</h1>
 
-                {!selectedBrandId ? (
-                    <div className="text-center p-10 border border-dashed rounded-lg bg-muted/50">
-                        <p className="text-muted-foreground">Veuillez sélectionner une marque pour voir ses modèles</p>
-                    </div>
-                ) : loadingModels ? (
-                    <div className="flex justify-center p-10"><Spinner /></div>
-                ) : (
-                    <DataTable
-                        data={filteredModels}
-                        columnsProps={modelColumns}
-                        handleSearch={handleModelSearch}
-                        title={`Modèles - ${brands.find(b => b.id === selectedBrandId)?.name}`}
-                    />
-                )}
-            </div>
+      {/* CONTENU */}
+      <div className="space-y-6">
 
-            {/* ===== MODALS MODELS ===== */}
-            <Modal open={isModelModalOpen} modalTitle="Nouveau modèle" onClose={() => setIsModelModalOpen(false)}>
-                <ModelForm
-                    mode="create"
-                    data={modelFormData}
-                    brands={brands}
-                    loading={interactionLoading}
-                    onChange={setModelFormData}
-                    onClose={() => setIsModelModalOpen(false)}
-                    onSubmit={handleCreateModel}
-                />
-            </Modal>
+        {/* FILTRE + ACTION */}
+        <div className="flex items-end gap-4 border p-4 rounded-lg bg-muted/20">
+          
+          <div className="w-full max-w-xs space-y-2">
+            <Label>Filtrer par marque</Label>
+            <Select
+              value={selectedBrandId || ""}
+              onValueChange={(val) => setSelectedBrandId(val)}
+            >
+              <SelectTrigger className="w-full bg-white h-11">
+                <SelectValue placeholder="Choisir une marque..." />
+              </SelectTrigger>
+              <SelectContent className="z-[200]">
+                {brands.map((b) => (
+                  <SelectItem key={b.id} value={b.id}>
+                    {b.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-            <Modal open={isEditModelOpen} modalTitle="Modifier modèle" onClose={() => setIsEditModelOpen(false)}>
-                <ModelForm
-                    mode="edit"
-                    data={modelFormData}
-                    brands={brands} // needed if we allow changing brand
-                    loading={interactionLoading}
-                    onChange={setModelFormData}
-                    onClose={() => setIsEditModelOpen(false)}
-                    onSubmit={handleUpdateModel}
-                />
-            </Modal>
+          {selectedBrandId && (
+            <Button
+              size="lg"
+              onClick={openCreateModel}
+              className="ml-auto"
+            >
+              Ajouter un modèle
+            </Button>
+          )}
 
         </div>
-    )
+
+        {/* CONTENU PRINCIPAL */}
+        {!selectedBrandId ? (
+          <div className="text-center p-12 border border-dashed rounded-lg bg-muted/50">
+            <p className="text-muted-foreground">
+              Veuillez sélectionner une marque pour voir ses modèles
+            </p>
+          </div>
+        ) : loadingModels ? (
+          <div className="flex justify-center p-12">
+            <Spinner />
+          </div>
+        ) : (
+          <DataTable
+            data={filteredModels}
+            columnsProps={modelColumns}
+            handleSearch={handleModelSearch}
+            title={`Modèles - ${
+              brands.find((b) => b.id === selectedBrandId)?.name
+            }`}
+          />
+        )}
+
+      </div>
+
+      {/* ===== MODAL CREATION MODELE ===== */}
+      <Modal
+        open={isModelModalOpen}
+        modalTitle="Nouveau modèle"
+        onClose={() => setIsModelModalOpen(false)}
+      >
+        <ModelForm
+          mode="create"
+          data={modelFormData}
+          brands={brands}
+          loading={interactionLoading}
+          onChange={setModelFormData}
+          onClose={() => setIsModelModalOpen(false)}
+          onSubmit={handleCreateModel}
+        />
+      </Modal>
+
+      {/* ===== MODAL EDIT MODELE ===== */}
+      <Modal
+        open={isEditModelOpen}
+        modalTitle="Modifier modèle"
+        onClose={() => setIsEditModelOpen(false)}
+      >
+        <ModelForm
+          mode="edit"
+          data={modelFormData}
+          brands={brands}
+          loading={interactionLoading}
+          onChange={setModelFormData}
+          onClose={() => setIsEditModelOpen(false)}
+          onSubmit={handleUpdateModel}
+        />
+      </Modal>
+
+    </div>
+  </div>
+)
 }
