@@ -141,29 +141,37 @@ export default function BrandsPage() {
 
   // ================= UI =================
   return (
-    <div className="space-y-10 p-10">
+  <div className="h-full py-4 px-12 bg-zinc-50">
+    <div className="bg-white min-h-full rounded-lg p-6 space-y-8">
 
-      {/* ===== MARQUES ===== */}
-      <div>
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-3xl font-bold">Gestion des Marques</h2>
-          <Button onClick={openCreateBrand}>Ajouter une marque</Button>
-        </div>
-
-        {loadingBrands ? (
-          <div className="flex justify-center p-10"><Spinner /></div>
-        ) : (
-          <DataTable
-            data={filteredBrands}
-            columnsProps={brandColumns}
-            handleSearch={handleBrandSearch}
-            title="Liste des marques"
-          />
-        )}
+      {/* HEADER */}
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Gestion des Marques</h1>
+        <Button onClick={openCreateBrand}>
+          Ajouter une marque
+        </Button>
       </div>
 
-      {/* ===== MODALS BRANDS ===== */}
-      <Modal open={isBrandModalOpen} modalTitle="Nouvelle marque" onClose={() => setIsBrandModalOpen(false)}>
+      {/* TABLEAU */}
+      {loadingBrands ? (
+        <div className="flex justify-center p-12">
+          <Spinner />
+        </div>
+      ) : (
+        <DataTable
+          data={filteredBrands}
+          columnsProps={brandColumns}
+          handleSearch={handleBrandSearch}
+          title="Liste des marques"
+        />
+      )}
+
+      {/* ===== MODAL CREATION MARQUE ===== */}
+      <Modal
+        open={isBrandModalOpen}
+        modalTitle="Nouvelle marque"
+        onClose={() => setIsBrandModalOpen(false)}
+      >
         <BrandForm
           mode="create"
           data={brandFormData}
@@ -174,7 +182,12 @@ export default function BrandsPage() {
         />
       </Modal>
 
-      <Modal open={isEditBrandOpen} modalTitle="Modifier marque" onClose={() => setIsEditBrandOpen(false)}>
+      {/* ===== MODAL EDIT MARQUE ===== */}
+      <Modal
+        open={isEditBrandOpen}
+        modalTitle="Modifier marque"
+        onClose={() => setIsEditBrandOpen(false)}
+      >
         <BrandForm
           mode="edit"
           data={brandFormData}
@@ -184,6 +197,8 @@ export default function BrandsPage() {
           onSubmit={handleUpdateBrand}
         />
       </Modal>
+
     </div>
-  )
+  </div>
+)
 }
