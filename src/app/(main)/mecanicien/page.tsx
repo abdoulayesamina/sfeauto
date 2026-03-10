@@ -195,7 +195,6 @@ export default function MecanicienPage() {
                                     </div>
                                 </div>
 
-                                {/* Statut (modifiable) */}
                                 <Select
                                     onValueChange={async (val) => {
                                        const result = await updateStatus(inv.id, val as any)
