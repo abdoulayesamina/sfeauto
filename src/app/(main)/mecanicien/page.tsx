@@ -184,7 +184,6 @@ export default function MecanicienPage() {
                                 </div>
 
                                 <div className="flex items-start gap-3 flex-1">
-                                    {/* <User className="text-gray-400 mt-1" /> */}
                                     <User size={18} className="text-gray-400 mt-1 shrink-0" />
                                     <div>
                                         <p className="font-medium">{inv.vehicle.client.name}</p>
