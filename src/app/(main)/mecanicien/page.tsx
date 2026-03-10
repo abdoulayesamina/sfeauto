@@ -13,6 +13,7 @@ import InterventionDetail from "./shared/components/intervention-detail"
 import { Modal } from "@/src/shared/components/modal"
 import { Spinner } from "@/src/shared/components/spinner"
 import { errorAlert } from "@/src/lib/alerts"
+import { toast } from "sonner"
 
 export const statusStyles: Record<string, string> = {
     EN_COURS: "bg-blue-100 text-blue-700",
@@ -98,11 +99,17 @@ export default function MecanicienPage() {
     }
     const [open, setOpen] = useState(false)
     const [selectedIntervention, setSelectedIntervention] = useState<any>(null)
-    const filteredInterventions = interventions.filter(inv => STATUS_UI_MAP[inv.status] === filterStatus)
+    const [filteredInterventions, setFilteredInterventions] = useState<any[]>([])
 
     useEffect(() => {
-        console.log("Intervention VV : ", interventions);
-    }, [interventions])
+        console.log("Intervention : ", interventions);
+        if(interventions.error){
+            toast.error("Erreur : "+interventions.error)
+            return 
+        }
+        const filtered = interventions.filter((inv:any) => STATUS_UI_MAP[inv.status] === filterStatus)
+        setFilteredInterventions(filtered)
+    }, [interventions, filterStatus])
 
     return (
         <div className="bg-zinc-50 min-h-screen p-4 sm:p-8">
@@ -197,16 +204,16 @@ export default function MecanicienPage() {
                                             return errorAlert("Erreur", result.message)
                                             }
 
-                                            setInterventions(prev =>
-                                            prev.map(item =>
+                                            setInterventions((prev : any) =>
+                                            prev.map((item : any) =>
                                                 item.id === inv.id
                                                 ? { ...item, status: result.data.status }
                                                 : item
                                             )
                                             )
 
-                                        setInterventions(prev =>
-                                            prev.map(item =>
+                                        setInterventions((prev : any) =>
+                                            prev.map((item : any) =>
                                                 item.id === inv.id ? { ...item, status: Object.keys(STATUS_UI_MAP).find(key => STATUS_UI_MAP[key] === val) || item.status } : item
                                             )
                                         )

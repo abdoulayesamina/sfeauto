@@ -8,6 +8,11 @@ export function VehicleListAll({
   onSelect,
   reloadVehicles,
 }: any) {
+  
+  useEffect(() => {
+    console.log("Vehicles dans VehicleListAll ---->", vehicles)
+  }, [vehicles])
+  
   if (!vehicles || vehicles.length === 0) {
     return (
       <div className="flex items-center justify-center py-12 text-gray-500">
@@ -15,11 +20,7 @@ export function VehicleListAll({
       </div>
     )
   }
-
-  useEffect(() => {
-    console.log("Vehicles dans VehicleListAll ---->", vehicles)
-  }, [vehicles])
-
+  
   return (
     <>
       {vehicles.map((v: any, index: number) => (
