@@ -18,6 +18,9 @@ export async function GET(request: NextRequest) {
     const baseId = searchParams.get('baseId')
     const uiStatus = searchParams.get('status')
 
+
+    console.log("Requête reçue avec les paramètres : search=", search, " clientId=", clientId, " baseId=", baseId, " uiStatus=", uiStatus)
+
     // Build where clause for filters
     const whereClause: any = {}
 
@@ -68,6 +71,8 @@ export async function GET(request: NextRequest) {
       ]
     }
 
+    console.log("Affichage de tout les données avant fetch: ", whereClause)
+
     const interventions = await prisma.invoice.findMany({
       where: whereClause,
 
@@ -105,6 +110,8 @@ export async function GET(request: NextRequest) {
       take: 100  // Limit results for performance
     })
 
+    console.log("Interventions récupérées : ", interventions);
+
     // Serialize dates for client
     const serialized = interventions.map(inv => ({
       id: inv.id,
@@ -141,7 +148,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(serialized)
 
   } catch (error) {
-    logError('Failed to fetch interventions', error)
+    logError('ffffFailed to fetch interventions', error)
     return NextResponse.json(
       { error: 'Échec de la récupération des interventions' },
       { status: 500 }
