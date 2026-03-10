@@ -190,7 +190,6 @@ export default function MecanicienPage() {
                                     </div>
                                 </div>
 
-                                {/* Statut (modifiable) */}
                                 <Select
                                     onValueChange={async (val) => {
                                         setInterventionId(inv.id)
