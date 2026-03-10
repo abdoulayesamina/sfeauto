@@ -81,6 +81,7 @@ export default function GestionnairePage() {
 
   // Recherche
   const handleSearch = async () => {
+    
     if (!search.trim()) {
       await loadAll()
       setVehiculeNotFound(false)
@@ -237,6 +238,11 @@ export default function GestionnairePage() {
               }
               termine={filteredVehicles.filter((v) => v.invoices?.some((i) => i.status === "FIXING_FINISHED")).length}
               sansIntervention={filteredVehicles.filter((v) => !v.invoices || v.invoices.length === 0).length}
+              // Somme de tout les Invoice de tous les véhicules dont le base.location est "Paris Test Agency"
+              // test={filteredVehicles.filter((v) => v.base?.location === "Paris Test Agency").reduce((sum, v) => {
+              //   const invoices = Array.isArray(v.invoices) ? v.invoices : []
+              //   return sum + invoices.reduce((invSum, i) => invSum , 0)
+              // }, 0) }
             />
 
             {/* LISTE VEHICULES */}

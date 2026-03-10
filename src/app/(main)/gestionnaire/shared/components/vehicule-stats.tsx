@@ -17,6 +17,7 @@ type VehicleStatsProps = {
   enCours: number
   termine: number
   sansIntervention: number
+  test?: number
 }
 
 /* ---------------------------------- */
@@ -66,6 +67,7 @@ export function VehicleStats({
   enCours,
   termine,
   sansIntervention,
+  test,
 }: VehicleStatsProps) {
   return (
     <section className="mt-6">
@@ -97,6 +99,14 @@ export function VehicleStats({
           description="Aucune intervention"
           accentClass="bg-red-500"
         />
+
+        <StatsCard
+          title="Test"
+          value={test ?? 0}
+          description="Valeur de test"
+          accentClass="bg-purple-500"
+        />
+
       </div>
     </section>
   )

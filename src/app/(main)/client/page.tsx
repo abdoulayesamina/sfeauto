@@ -14,7 +14,7 @@ import VehicleInterventionsModal from "./components/VehicleInterventionsModal"
 import EmptyState from "./components/EmptyState"
 import { toUIStatus } from "@/src/utils/constants/intervention-status"
 
-type UIStatus = "ALL" | "ATTENTE_REPARATION" | "TERMINEE" | "ATTENTE_PIECES"
+type UIStatus = "ALL" | "CONFIRMEE" | "EN_COURS" | "TERMINEE" | "ATTENTE_PIECES"
 
 export default function ClientPage() {
   const { getVehicules } = useVehiculesApi()
@@ -57,7 +57,7 @@ export default function ClientPage() {
 
     const last = invoices[invoices.length - 1]
     setVehiculeSelect(v)
-    setInterventionVehicule([{ ...last, vehicle: v }]) 
+    setInterventionVehicule([{ ...last, vehicle: v }])
     setOpenDetailModal(true)
   }
 
@@ -86,10 +86,16 @@ export default function ClientPage() {
 
         let statusMatch = true
 
-        if (filterStatus === "ATTENTE_REPARATION") {
+        if (filterStatus === "CONFIRMEE") {
           statusMatch =
             v.invoices.length > 0 &&
-            v.invoices.some((i: Invoice) => toUIStatus(i.status) === "ATTENTE_REPARATION")
+            v.invoices.some((i: Invoice) => toUIStatus(i.status) === "CONFIRMEE")
+        }
+
+        if (filterStatus === "EN_COURS") {
+          statusMatch =
+            v.invoices.length > 0 &&
+            v.invoices.some((i: Invoice) => toUIStatus(i.status) === "EN_COURS")
         }
 
         if (filterStatus === "ATTENTE_PIECES") {
@@ -115,7 +121,13 @@ export default function ClientPage() {
     const enCours = vehicles.filter(
       (v) =>
         Array.isArray(v.invoices) &&
-        v.invoices.some((i: Invoice) => toUIStatus(i.status) === "ATTENTE_REPARATION")
+        v.invoices.some((i: Invoice) => toUIStatus(i.status) === "EN_COURS")
+    ).length
+
+    const confirmee = vehicles.filter(
+      (v) =>
+        Array.isArray(v.invoices) &&
+        v.invoices.some((i: Invoice) => toUIStatus(i.status) === "CONFIRMEE")
     ).length
 
     const termine = vehicles.filter(
@@ -129,7 +141,7 @@ export default function ClientPage() {
       (v) => !Array.isArray(v.invoices) || v.invoices.length === 0
     ).length
 
-    return { total, enCours, termine, sansIntervention }
+    return { total, enCours, confirmee, termine, sansIntervention }
   }, [vehicles])
 
   if (isLoading) {
@@ -188,7 +200,7 @@ export default function ClientPage() {
               filteredVehicles.map((v) => (
                 <InterventionCard
                   key={v.id}
-                 
+
                   intervention={{ vehicle: v }}
                   onViewInterventions={() => handleViewInterventions(v)}
                   onViewDetails={() => handleViewDetailsFromVehicle(v)}

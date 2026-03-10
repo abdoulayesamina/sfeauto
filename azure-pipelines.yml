@@ -1,0 +1,38 @@
+trigger:
+  branches:
+    include:
+      - develop
+      - staging
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  - group: sfeauto
+
+steps:
+
+- script: |
+    echo "Installing Vercel CLI..."
+    npm install -g vercel
+  displayName: "Install Vercel CLI"
+
+- script: |
+    echo "SourceBranch: $(Build.SourceBranch)"
+    echo "SourceBranchName: $(Build.SourceBranchName)"
+
+    if [[ "$(Build.SourceBranch)" == "refs/heads/main" ]]; then
+      echo " Deploying to PRODUCTION"
+      vercel deploy --prod \
+        --token=$(VERCEL_TOKEN) \
+        --yes \
+        --meta gitBranch=$(Build.SourceBranchName)
+    else
+      echo " Deploying to PREVIEW"
+      vercel deploy \
+        --token=$(VERCEL_TOKEN) \
+        --yes \
+        --meta gitBranch=$(Build.SourceBranchName)
+    fi
+  displayName: "Deploy to Vercel"

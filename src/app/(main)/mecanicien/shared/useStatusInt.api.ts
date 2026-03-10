@@ -5,8 +5,15 @@ import { WorkStatus } from "@/generated/prisma"
 
 type StatusUI = keyof typeof UI_TO_WORKSTATUS
 
+type UpdateStatusResult =
+  | { success: true; data: any }
+  | { success: false; message: string; status?: number }
+
 type UseStatusIntReturn = {
-  updateStatus: (invoiceId: string, newStatus: StatusUI) => Promise<boolean>
+  updateStatus: (
+    invoiceId: string,
+    newStatus: StatusUI
+  ) => Promise<UpdateStatusResult>
   loading: boolean
   error: string | null
 }
@@ -15,20 +22,14 @@ export function useStatusInt(): UseStatusIntReturn {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const updateStatus = async (invoiceId: string, newStatus: StatusUI) => {
+  const updateStatus = async (
+    invoiceId: string,
+    newStatus: StatusUI
+  ): Promise<UpdateStatusResult> => {
     setLoading(true)
     setError(null)
 
     const workStatus: WorkStatus = UI_TO_WORKSTATUS[newStatus]
-
-    console.log(
-      "[useStatusInt] PATCH invoice:",
-      invoiceId,
-      "newStatus UI:",
-      newStatus,
-      "→ WorkStatus:",
-      workStatus
-    )
 
     try {
       const res = await fetch(`/api/invoices/${invoiceId}/status`, {
@@ -37,20 +38,35 @@ export function useStatusInt(): UseStatusIntReturn {
         body: JSON.stringify({ status: workStatus }),
       })
 
+      const data = await res.json().catch(() => ({}))
+
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        console.error("[useStatusInt] PATCH failed:", data)
-        setError(data?.error || "Erreur serveur inconnue")
-        return false
+        const message =
+          data?.error ||
+          `Erreur ${res.status}`
+
+        setError(message)
+
+        return {
+          success: false,
+          message,
+          status: res.status,
+        }
       }
 
-      const updated = await res.json()
-      console.log("[useStatusInt] PATCH success:", updated)
-      return true
+      return {
+        success: true,
+        data,
+      }
+
     } catch (err: any) {
-      console.error("[useStatusInt] PATCH exception:", err)
-      setError(err?.message || "Erreur réseau")
-      return false
+      const message = err?.message || "Erreur réseau"
+      setError(message)
+
+      return {
+        success: false,
+        message,
+      }
     } finally {
       setLoading(false)
     }

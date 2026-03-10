@@ -12,9 +12,9 @@ import { errorAlert } from "@/src/lib/alerts"
 import { useInvoicePhotos } from "../hooks/useInvoicePhotos.api"
 
 type UIStatus =
+  | "CONFIRMEE"
   | "EN_COURS"
   | "ATTENTE_PIECES"
-  | "ATTENTE_REPARATION"
   | "TERMINEE"
 
 type Props = {

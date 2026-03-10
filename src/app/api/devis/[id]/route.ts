@@ -16,7 +16,7 @@ function round2(n: number): number {
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
-    if (!session || (session.user.role !== "MANAGER" && session.user.role !== "ADMIN")) {
+    if (!session || !["MANAGER" ,"ADMIN" ,"MECHANIC"].includes(session.user.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

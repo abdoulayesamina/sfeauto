@@ -31,40 +31,40 @@ const STATUS_UI_MAP: Record<string, string> = {
 export const getStatusMeta = (status?: string) => {
     switch (status) {
         case "FIXING_STARTED":
-        return {
-            label: "Réparation en cours",
-            icon: Wrench,
-            color: "text-blue-700",
-            bg: "bg-blue-100",
-        }
+            return {
+                label: "Réparation en cours",
+                icon: Wrench,
+                color: "text-blue-700",
+                bg: "bg-blue-100",
+            }
         case "WAITING_FOR_PARTS":
-        return {
-            label: "En attente de pièces",
-            icon: Clock,
-            color: "text-orange-700",
-            bg: "bg-orange-100",
-        }
+            return {
+                label: "En attente de pièces",
+                icon: Clock,
+                color: "text-orange-700",
+                bg: "bg-orange-100",
+            }
         case "FIXING_DONE":
-        return {
-            label: "Réparation terminée",
-            icon: CheckCircle2,
-            color: "text-green-700",
-            bg: "bg-green-100",
-        }
+            return {
+                label: "Réparation terminée",
+                icon: CheckCircle2,
+                color: "text-green-700",
+                bg: "bg-green-100",
+            }
         case "CANCELLED":
-        return {
-            label: "Annulée",
-            icon: XCircle,
-            color: "text-red-700",
-            bg: "bg-red-100",
-        }
+            return {
+                label: "Annulée",
+                icon: XCircle,
+                color: "text-red-700",
+                bg: "bg-red-100",
+            }
         default:
-        return {
-            label: "Statut inconnu",
-            icon: AlertTriangle,
-            color: "text-gray-600",
-            bg: "bg-gray-100",
-        }
+            return {
+                label: "Statut inconnu",
+                icon: AlertTriangle,
+                color: "text-gray-600",
+                bg: "bg-gray-100",
+            }
     }
 }
 export const translateStatus = (status?: string): string => {
@@ -73,14 +73,12 @@ export const translateStatus = (status?: string): string => {
 }
 
 const STATUS_TRANSLATIONS: Record<string, string> = {
-  CONFIRMED_IN_PLANNING: "Confirmée et planifiée",
-  FIXING_STARTED: "Réparation en cours",
-  WAITING_FOR_PARTS: "En attente de pièces",
-  FIXING_DONE: "Réparation terminée",
-  CANCELLED: "Annulée",
+    CONFIRMED_IN_PLANNING: "Confirmée et planifiée",
+    FIXING_STARTED: "Réparation en cours",
+    WAITING_FOR_PARTS: "En attente de pièces",
+    FIXING_DONE: "Réparation terminée",
+    CANCELLED: "Annulée",
 }
-
-
 
 export default function MecanicienPage() {
     const [filterStatus, setFilterStatus] = useState<"EN_COURS" | "TERMINEE" | "ATTENTE_PIECES">("EN_COURS")
@@ -102,9 +100,9 @@ export default function MecanicienPage() {
     const [selectedIntervention, setSelectedIntervention] = useState<any>(null)
     const filteredInterventions = interventions.filter(inv => STATUS_UI_MAP[inv.status] === filterStatus)
 
-    useEffect(()=>{
-        console.log("Intervention VV : ",interventions);
-    },[interventions])
+    useEffect(() => {
+        console.log("Intervention VV : ", interventions);
+    }, [interventions])
 
     return (
         <div className="bg-zinc-50 min-h-screen p-4 sm:p-8">
@@ -191,10 +189,19 @@ export default function MecanicienPage() {
 
                                 <Select
                                     onValueChange={async (val) => {
-                                        setInterventionId(inv.id)
-                                        const success = await updateStatus(inv.id, val as any)
-                                        setInterventionId(null);
-                                        if (!success) return errorAlert("Erreur", statusError || "Impossible de mettre à jour le statut")
+                                       const result = await updateStatus(inv.id, val as any)
+
+                                            if (!result.success) {
+                                            return errorAlert("Erreur", result.message)
+                                            }
+
+                                            setInterventions(prev =>
+                                            prev.map(item =>
+                                                item.id === inv.id
+                                                ? { ...item, status: result.data.status }
+                                                : item
+                                            )
+                                            )
 
                                         setInterventions(prev =>
                                             prev.map(item =>
@@ -205,7 +212,7 @@ export default function MecanicienPage() {
                                     value={uiStatus}
                                 >
                                     <SelectTrigger className={`w-[180px] ${statusStyles[uiStatus]}`} disabled={inv.id == interventionId}>
-                                        { inv.id == interventionId ? <Spinner/> : ""}
+                                        {inv.id == interventionId ? <Spinner /> : ""}
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -227,7 +234,7 @@ export default function MecanicienPage() {
             <Modal open={open} onClose={() => setOpen(false)} modalTitle="Détail de l'intervention">
                 <InterventionDetail
                     selectedIntervention={selectedIntervention}
-                    onClose={()=>setOpen(false)}
+                    onClose={() => setOpen(false)}
                     getStatusMeta={getStatusMeta}
                     translateStatus={translateStatus}
                 />

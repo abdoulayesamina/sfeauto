@@ -5,7 +5,7 @@ import { toUIStatus } from "@/src/utils/constants/intervention-status"
 import { useEffect, useState } from "react"
 import { getBrandNameById, getModelNameById } from "../../brands/shared/hooks/GetBrandOrModelName"
 
-type UIStatus = "ATTENTE_REPARATION" | "ATTENTE_PIECES" | "TERMINEE"
+type UIStatus = "CONFIRMEE" | "EN_COURS" | "ATTENTE_PIECES" | "TERMINEE"
 
 type Props = {
   intervention: any
@@ -18,7 +18,8 @@ type Props = {
 function computeCounts(intervention: any) {
   if (intervention?.counts) {
     return {
-      ATTENTE_REPARATION: Number(intervention.counts.ATTENTE_REPARATION ?? 0),
+      CONFIRMEE: Number(intervention.counts.CONFIRMEE ?? 0),
+      EN_COURS: Number(intervention.counts.EN_COURS ?? 0),
       ATTENTE_PIECES: Number(intervention.counts.ATTENTE_PIECES ?? 0),
       TERMINEE: Number(intervention.counts.TERMINEE ?? 0),
     }
@@ -26,18 +27,20 @@ function computeCounts(intervention: any) {
 
   const invoices = Array.isArray(intervention?.vehicle?.invoices) ? intervention.vehicle.invoices : []
 
-  let ar = 0,
-    ap = 0,
-    t = 0
+  let confirmee = 0,
+    enCours = 0,
+    attentePieces = 0,
+    terminee = 0
 
   for (const inv of invoices) {
     const ui = toUIStatus(inv.status)
-    if (ui === "ATTENTE_REPARATION") ar++
-    else if (ui === "ATTENTE_PIECES") ap++
-    else if (ui === "TERMINEE") t++
+    if (ui === "CONFIRMEE") confirmee++
+    else if (ui === "EN_COURS") enCours++
+    else if (ui === "ATTENTE_PIECES") attentePieces++
+    else if (ui === "TERMINEE") terminee++
   }
 
-  return { ATTENTE_REPARATION: ar, ATTENTE_PIECES: ap, TERMINEE: t }
+  return { CONFIRMEE: confirmee, EN_COURS: enCours, ATTENTE_PIECES: attentePieces, TERMINEE: terminee }
 }
 
 function Badge({ label, variant }: { label: string; variant: "blue" | "orange" | "green" }) {
@@ -45,8 +48,8 @@ function Badge({ label, variant }: { label: string; variant: "blue" | "orange" |
     variant === "blue"
       ? "bg-blue-100 text-blue-700"
       : variant === "orange"
-      ? "bg-orange-100 text-orange-700"
-      : "bg-emerald-100 text-emerald-700"
+        ? "bg-orange-100 text-orange-700"
+        : "bg-emerald-100 text-emerald-700"
 
   return <span className={`px-3 py-1 rounded-full text-sm font-medium ${cls}`}>{label}</span>
 }
@@ -57,19 +60,19 @@ export default function InterventionCard({
   onViewDetails,
   hideVehicleActions,
   hideDetailsButton,
-}: Props) {  
+}: Props) {
   const v = intervention?.vehicle ?? {}
   const counts = computeCounts(intervention)
 
   const totalInterventions =
-  counts.ATTENTE_REPARATION + counts.ATTENTE_PIECES + counts.TERMINEE
+    counts.CONFIRMEE + counts.EN_COURS + counts.ATTENTE_PIECES + counts.TERMINEE
 
   // affichage fallback si jamais brand/model null
-  const [brandModel,setBrandModel] = useState("");
+  const [brandModel, setBrandModel] = useState("");
 
-  useEffect(() => {    
+  useEffect(() => {
     if (!v?.brandId && !v?.modelId) {
-      setBrandModel(""); 
+      setBrandModel("");
       return;
     }
 
@@ -79,12 +82,12 @@ export default function InterventionCard({
         const modelName = v.modelId ? await getModelNameById(v.modelId) : "";
         setBrandModel(`${brandName} ${modelName}`.trim());
       } catch (err) {
-        setBrandModel("..."); 
+        setBrandModel("...");
       }
     };
 
     getNames();
-    
+
   }, [v.brandId, v.modelId]);
 
   return (
@@ -110,8 +113,11 @@ export default function InterventionCard({
           </div>
 
           <div className="mt-3 flex items-center gap-2 flex-wrap">
-            {counts.ATTENTE_REPARATION > 0 && (
-              <Badge variant="blue" label={`${counts.ATTENTE_REPARATION} En attente de réparation`} />
+            {counts.CONFIRMEE > 0 && (
+              <Badge variant="blue" label={`${counts.CONFIRMEE} Confirmée`} />
+            )}
+            {counts.EN_COURS > 0 && (
+              <Badge variant="blue" label={`${counts.EN_COURS} En cours`} />
             )}
             {counts.ATTENTE_PIECES > 0 && (
               <Badge variant="orange" label={`${counts.ATTENTE_PIECES} En attente de pièces`} />

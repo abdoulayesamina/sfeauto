@@ -13,8 +13,8 @@ import { cn } from "@/src/lib/utils"
 interface SearchFiltersProps {
   searchQuery: string
   onSearchChange: (value: string) => void
-  filterStatus: "ALL" | "ATTENTE_REPARATION" | "TERMINEE" | "ATTENTE_PIECES"
-  onFilterChange: (value: "ALL" | "ATTENTE_REPARATION" | "TERMINEE" | "ATTENTE_PIECES") => void
+  filterStatus: "ALL" | "CONFIRMEE" | "EN_COURS" | "TERMINEE" | "ATTENTE_PIECES"
+  onFilterChange: (value: "ALL" | "CONFIRMEE" | "EN_COURS" | "TERMINEE" | "ATTENTE_PIECES") => void
 }
 
 export default function SearchFilters({
@@ -60,11 +60,21 @@ export default function SearchFilters({
             Toutes
           </Button>
           <Button
-            onClick={() => onFilterChange("ATTENTE_REPARATION")}
-            variant={filterStatus === "ATTENTE_REPARATION" ? "default" : "outline"}
+            onClick={() => onFilterChange("CONFIRMEE")}
+            variant={filterStatus === "CONFIRMEE" ? "default" : "outline"}
             className={cn(
               "rounded-lg transition-all",
-              filterStatus === "ATTENTE_REPARATION" && "shadow-md"
+              filterStatus === "CONFIRMEE" && "shadow-md"
+            )}
+          >
+            Confirmées
+          </Button>
+          <Button
+            onClick={() => onFilterChange("EN_COURS")}
+            variant={filterStatus === "EN_COURS" ? "default" : "outline"}
+            className={cn(
+              "rounded-lg transition-all",
+              filterStatus === "EN_COURS" && "shadow-md"
             )}
           >
             En cours
@@ -101,7 +111,8 @@ export default function SearchFilters({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="ALL">Tous les statuts</SelectItem>
-            <SelectItem value="ATTENTE_REPARATION">En cours</SelectItem>
+            <SelectItem value="CONFIRMEE">Confirmées</SelectItem>
+            <SelectItem value="EN_COURS">En cours</SelectItem>
             <SelectItem value="ATTENTE_PIECES">Attente pièces</SelectItem>
             <SelectItem value="TERMINEE">Terminées</SelectItem>
           </SelectContent>
