@@ -80,7 +80,6 @@ export function SectionCards({user} : {user?: any} ) {
 
 
   useEffect(() => {
-    debugger;
     if(!agenceId || !vehicles) {
       setInterventionsParAgence(0);
       return;

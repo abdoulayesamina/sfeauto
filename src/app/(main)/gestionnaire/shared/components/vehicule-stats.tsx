@@ -67,7 +67,7 @@ export function VehicleStats({
   enCours,
   termine,
   sansIntervention,
-  test,
+  // test,
 }: VehicleStatsProps) {
   return (
     <section className="mt-6">
@@ -100,12 +100,12 @@ export function VehicleStats({
           accentClass="bg-red-500"
         />
 
-        <StatsCard
+        {/* <StatsCard
           title="Test"
           value={test ?? 0}
           description="Valeur de test"
           accentClass="bg-purple-500"
-        />
+        /> */}
 
       </div>
     </section>

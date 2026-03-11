@@ -7,7 +7,7 @@ export function useInterventions(
   baseId?: string,
   search?: string
 ) {
-  const [interventions, setInterventions] = useState<any[]>([])
+  const [interventions, setInterventions] = useState<any>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
