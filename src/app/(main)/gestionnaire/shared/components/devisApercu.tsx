@@ -138,7 +138,7 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
                         </div>
 
                         {/* Client */}
-                        <div className="flex justify-end">
+                        <div className="flex flex-col items-end gap-2">
                             <div className="relative p-3 w-full max-w-[50%]">
                                 <div>
                                     <div className="w-[10px] h-[10px] border-black border-l-[2px] border-t-[2px] absolute top-0 left-0"></div>
@@ -151,6 +151,9 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
                                 </p>
                                 <p>{devis.client?.email}</p>
                                 <p>{devis.client?.phone}</p>
+                            </div>
+                            <div className="text-[12px] bg-gray-100 p-2 w-full max-w-[50%] text-center ">
+                                <span className="font-semibold">N° d'accord : </span> {devis.invoice?.accordNumber ?? "—"}
                             </div>
                         </div>
                     </div>
