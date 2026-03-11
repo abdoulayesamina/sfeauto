@@ -1,37 +1,13 @@
 "use client"
 
-import React from "react"
-import { Car, User, MapPin, Wrench } from "lucide-react"
+import React, { useEffect, useState } from "react"
+import { Car, User, MapPin, Wrench, Images, X } from "lucide-react"
 import { Button } from "@/src/shared/components/ui/button"
-
-type Invoice = {
-  id: string
-  status: string
-  invoiceConfirmed: boolean
-  workDescription: string
-  accordNumber: string
-  dateOfConfirmation: string
-  createdAt: string
-  statusUpdatedAt?: string
-}
-
-type Vehicle = {
-  id: string
-  licensePlate: any
-  brand: any
-  model: any
-  year: any
-  color: any
-  client: any
-  base: any
-  invoices: Invoice[]
-  createdAt: any
-  updatedAt: any
-  handledBy?: any
-}
+import { errorAlert } from "@/src/lib/alerts"
+import { useInvoicePhotos } from "../../gestionnaire/shared/hooks/useInvoicePhotos.api"
 
 type Props = {
-  selectedVehicle: Vehicle
+  selectedIntervention: any
   onClose: () => void
 }
 
@@ -67,36 +43,43 @@ const formatDate = (d: any) => {
   return dt.toLocaleDateString("fr-FR")
 }
 
-export default function InterventionDetailClient({ selectedVehicle, onClose }: Props) {
-  if (!selectedVehicle || !selectedVehicle.invoices?.length) return null
+export default function InterventionDetailClient({ selectedIntervention, onClose }: Props) {
+  if (!selectedIntervention) return null
 
-  const firstInvoice = selectedVehicle.invoices[0]
+  const vehicle = selectedIntervention.vehicle ?? {}
 
-  const selectedIntervention = {
-    ...firstInvoice,
-    vehicle: {
-      licensePlate: selectedVehicle.licensePlate,
-      brand: selectedVehicle.brand,
-      model: selectedVehicle.model,
-      year: selectedVehicle.year,
-      color: selectedVehicle.color,
-      client: selectedVehicle.client,
-      base: selectedVehicle.base,
-    },
+  const {
+    photos,
+    loading: photosLoading,
+    error: photosError,
+  } = useInvoicePhotos(selectedIntervention.id)
+
+  const [viewerOpen, setViewerOpen] = useState(false)
+  const [activeIndex, setActiveIndex] = useState(0)
+
+  useEffect(() => {
+    if (photosError) errorAlert("Photos", photosError)
+  }, [photosError])
+
+  const openViewer = (idx: number) => {
+    setActiveIndex(idx)
+    setViewerOpen(true)
   }
+
+  const activePhoto = photos?.[activeIndex]?.sasUrl
 
   const getStatusMeta = (status: string) =>
     STATUS_UI_MAP[status] || { label: status, color: "", bg: "", icon: Car }
 
-  const plate = displayValue(selectedIntervention.vehicle.licensePlate)
-  const brand = displayValue(selectedIntervention.vehicle.brand)
-  const model = displayValue(selectedIntervention.vehicle.model)
-  const year = displayValue(selectedIntervention.vehicle.year)
-  const color = displayValue(selectedIntervention.vehicle.color)
+  const plate = displayValue(vehicle.licensePlate)
+  const brand = displayValue(vehicle.brand)
+  const model = displayValue(vehicle.model)
+  const year = displayValue(vehicle.year)
+  const color = displayValue(vehicle.color)
 
-  const clientName = displayValue(selectedIntervention.vehicle.client?.name ?? selectedIntervention.vehicle.client)
+  const clientName = displayValue(vehicle.client?.name ?? vehicle.client)
 
-  const baseLocation = displayValue(selectedIntervention.vehicle.base?.location)
+  const baseLocation = displayValue(vehicle.base?.location)
 
   const statusMeta = getStatusMeta(selectedIntervention.status)
 
@@ -198,20 +181,121 @@ export default function InterventionDetailClient({ selectedVehicle, onClose }: P
         </p>
       </div>
 
+      <div className="rounded-xl border p-4 bg-zinc-50">
+        <div className="flex items-center justify-between mb-3">
+          <p className="font-semibold flex items-center gap-2">
+            <Images className="w-5 h-5" />
+            Photos
+          </p>
+          <p className="text-xs text-gray-500">
+            {photosLoading ? "Chargement..." : `${photos.length} photo(s)`}
+          </p>
+        </div>
+
+        {photosLoading ? (
+          <div className="grid grid-cols-3 gap-3">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className="aspect-square rounded-lg bg-gray-200 animate-pulse"
+              />
+            ))}
+          </div>
+        ) : photos.length === 0 ? (
+          <p className="text-sm text-gray-500">
+            Aucune photo liée à cette intervention.
+          </p>
+        ) : (
+          <div className="grid grid-cols-3 gap-3">
+            {photos.map((p: any, idx: number) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => openViewer(idx)}
+                className="group relative aspect-square overflow-hidden rounded-lg border bg-white"
+                title="Cliquer pour agrandir"
+              >
+                <img
+                  src={p.sasUrl}
+                  alt={`Photo ${idx + 1}`}
+                  className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Informations */}
       <div className="rounded-xl border p-4 bg-zinc-50">
         <p className="font-semibold mb-2">Informations</p>
-        <p className="text-sm">Créé le {formatDate(selectedVehicle.createdAt)}</p>
+        <p className="text-sm">Créé le {formatDate(selectedIntervention.createdAt)}</p>
 
-        {selectedVehicle.handledBy && (
+        {selectedIntervention.handledBy && (
           <p className="text-sm mt-1">
-            Géré par <span className="font-medium">{displayValue(selectedVehicle.handledBy?.name)}</span>{" "}
+            Géré par <span className="font-medium">{displayValue(selectedIntervention.handledBy?.name)}</span>{" "}
             <span className="text-gray-500">
-              ({displayValue(selectedVehicle.handledBy?.email)})
+              ({displayValue(selectedIntervention.handledBy?.email)})
             </span>
           </p>
         )}
       </div>
+
+      {viewerOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+          onClick={() => setViewerOpen(false)}
+        >
+          <div
+            className="relative w-full max-w-4xl bg-black rounded-xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="absolute top-3 right-3 bg-white/10 hover:bg-white/20 text-white rounded-full p-2"
+              onClick={() => setViewerOpen(false)}
+              type="button"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center justify-between px-4 py-3 text-white text-sm">
+              <button
+                type="button"
+                className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 disabled:opacity-40"
+                disabled={activeIndex === 0}
+                onClick={() => setActiveIndex((i) => Math.max(0, i - 1))}
+              >
+                ←
+              </button>
+
+              <span>
+                {activeIndex + 1} / {photos.length}
+              </span>
+
+              <button
+                type="button"
+                className="px-3 py-2 mr-20 rounded-lg bg-white/10 hover:bg-white/20 disabled:opacity-40"
+                disabled={activeIndex === photos.length - 1}
+                onClick={() =>
+                  setActiveIndex((i) => Math.min(photos.length - 1, i + 1))
+                }
+              >
+                →
+              </button>
+            </div>
+
+            <div className="bg-black flex items-center justify-center">
+              <img
+                src={activePhoto}
+                alt="Photo intervention"
+                className="max-h-[75vh] w-auto object-contain"
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bouton fermer */}
       <Button onClick={onClose} className="w-full p-8">
