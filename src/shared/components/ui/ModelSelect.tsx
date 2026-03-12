@@ -13,18 +13,45 @@ import { Button } from "@/src/shared/components/ui/button"
 
 type Model = { id: string; name: string }
 
+// export function ModelSelect({
+//   brandId,
+//   value,
+//   onChange,
+// }: {
+//   brandId: string | null
+//   value: string | null
+//   onChange: (id: string) => void
+// }) 
 export function ModelSelect({
   brandId,
   value,
+  modelName,
   onChange,
 }: {
   brandId: string | null
   value: string | null
+  modelName?: string | null
   onChange: (id: string) => void
 }) {
   const [models, setModels] = useState<Model[]>([])
   const [creating, setCreating] = useState(false)
   const [newName, setNewName] = useState("")
+
+  useEffect(() => {
+
+    if (!value || !modelName) return
+
+    setModels((prev) => {
+
+      const exists = prev.some((m) => m.id === value)
+
+      if (exists) return prev
+
+      return [...prev, { id: value, name: modelName }]
+
+    })
+
+  }, [value, modelName])
 
   useEffect(() => {
     if (!brandId) {

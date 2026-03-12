@@ -1,10 +1,10 @@
 generator client {
-  provider = "prisma-client-js"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "mysql"
 }
 
 //////////////////////
@@ -12,48 +12,48 @@ datasource db {
 //////////////////////
 
 model famille_fam {
-  fam_id      Int              @id @default(autoincrement())
-  fam_name    String
-  collections collection_col[] @relation("Famille_Collections")
+  fam_id      Int              @id @default(autoincrement())
+  fam_name    String
+  collections collection_col[] @relation("Famille_Collections")
 
-  @@index([fam_name])
+  @@index([fam_name])
 }
 
 model collection_col {
-  col_id        Int           @id @default(autoincrement())
-  col_name      String
-  col_familleId Int
-  articles      article_art[] @relation("Collection_Articles")
-  col_famille   famille_fam   @relation("Famille_Collections", fields: [col_familleId], references: [fam_id])
+  col_id        Int           @id @default(autoincrement())
+  col_name      String
+  col_familleId Int
+  articles      article_art[] @relation("Collection_Articles")
+  col_famille   famille_fam   @relation("Famille_Collections", fields: [col_familleId], references: [fam_id])
 
-  @@index([col_name])
-  @@index([col_familleId])
+  @@index([col_name])
+  @@index([col_familleId])
 }
 
 model article_art {
-  art_id           Int               @id @default(autoincrement())
-  art_reference    String            @db.VarChar(100)
-  art_name         String
-  art_price        Int
-  art_collectionId Int
-  collection       collection_col    @relation("Collection_Articles", fields: [art_collectionId], references: [col_id])
-  remises          remise_rem?       @relation("Article_Remise")
-  devisLines       te_devisart_dea[]
+  art_id           Int               @id @default(autoincrement())
+  art_reference    String            @db.VarChar(100)
+  art_name         String
+  art_price        Int
+  art_collectionId Int
+  collection       collection_col    @relation("Collection_Articles", fields: [art_collectionId], references: [col_id])
+  remises          remise_rem?       @relation("Article_Remise")
+  devisLines       te_devisart_dea[]
 
-  @@index([art_name])
-  @@index([art_collectionId])
+  @@index([art_name])
+  @@index([art_collectionId])
 }
 
 model remise_rem {
-  rem_id          Int         @id @default(autoincrement())
-  rem_prixremise  Decimal?
-  rem_pourcentage Decimal?
-  rem_articleId   Int         @unique
-  article         article_art @relation("Article_Remise", fields: [rem_articleId], references: [art_id])
+  rem_id          Int         @id @default(autoincrement())
+  rem_prixremise  Decimal?
+  rem_pourcentage Decimal?
+  rem_articleId   Int         @unique
+  article         article_art @relation("Article_Remise", fields: [rem_articleId], references: [art_id])
 
-  @@index([rem_prixremise])
-  @@index([rem_pourcentage])
-  @@index([rem_articleId])
+  @@index([rem_prixremise])
+  @@index([rem_pourcentage])
+  @@index([rem_articleId])
 }
 
 //////////////////////
@@ -61,54 +61,54 @@ model remise_rem {
 //////////////////////
 
 model te_devis_dev {
-    dev_id                 Int       @id @default(autoincrement())
-    dev_cli_id             String
-    dev_veh_id             String
-    dev_invoice_id         String?   @unique
-    dev_user               String?
-    dev_adressefacturation String?   @db.Text
-    dev_numdevis           String    @unique
-    dev_datecreation       DateTime  @default(now())
-    dev_totalht            Decimal   @db.Decimal(14, 2)
-    dev_totaltva           Decimal   @db.Decimal(14, 2)
-    dev_totalttc           Decimal   @db.Decimal(14, 2)
-    dev_tva                Decimal?  @db.Decimal(5, 2)
-    dev_supprimee          Boolean   @default(false)
-    dev_accordNumber       String?   @unique
-    dev_dateAccord         DateTime?
+  dev_id                 Int       @id @default(autoincrement())
+  dev_cli_id             String
+  dev_veh_id             String
+  dev_invoice_id         String?   @unique
+  dev_user               String?
+  dev_adressefacturation String?   @db.Text
+  dev_numdevis           String    @unique
+  dev_datecreation       DateTime  @default(now())
+  dev_totalht            Decimal   @db.Decimal(14, 2)
+  dev_totaltva           Decimal   @db.Decimal(14, 2)
+  dev_totalttc           Decimal   @db.Decimal(14, 2)
+  dev_tva                Decimal?  @db.Decimal(5, 2)
+  dev_supprimee          Boolean   @default(false)
+  dev_accordNumber       String?   @unique
+  dev_dateAccord         DateTime?
 
-    client  client   @relation(fields: [dev_cli_id], references: [id], onDelete: Cascade)
-    vehicle vehicle  @relation(fields: [dev_veh_id], references: [id], onDelete: Cascade)
-    invoice invoice? @relation(fields: [dev_invoice_id], references: [id])
-    user    user?    @relation(fields: [dev_user], references: [id])
+  client  client   @relation(fields: [dev_cli_id], references: [id], onDelete: Cascade)
+  vehicle vehicle  @relation(fields: [dev_veh_id], references: [id], onDelete: Cascade)
+  invoice invoice? @relation(fields: [dev_invoice_id], references: [id])
+  user    user?    @relation(fields: [dev_user], references: [id])
 
-    articles te_devisart_dea[] @relation("Devis_Articles")
+  articles te_devisart_dea[] @relation("Devis_Articles")
 
-    @@index([dev_cli_id])
-    @@index([dev_veh_id])
-    @@index([dev_invoice_id])
-    @@index([dev_user])
-    @@index([dev_datecreation])
-    @@index([dev_supprimee])
+  @@index([dev_cli_id])
+  @@index([dev_veh_id])
+  @@index([dev_invoice_id])
+  @@index([dev_user])
+  @@index([dev_datecreation])
+  @@index([dev_supprimee])
 }
 
 model te_devisart_dea {
-  dea_id                Int      @id @default(autoincrement())
-  dea_dev_id            Int
-  dea_art_id            Int?
-  dea_art_designation   String
-  dea_art_reference     String?
-  dea_prixunitaire      Decimal  @db.Decimal(14, 2)
-  dea_quantite          Int
-  dea_tva               Decimal? @db.Decimal(5, 2)
-  dea_pourcentageremise Int?
-  dea_prixtotalht       Decimal  @db.Decimal(14, 2)
+  dea_id                Int      @id @default(autoincrement())
+  dea_dev_id            Int
+  dea_art_id            Int?
+  dea_art_designation   String
+  dea_art_reference     String?
+  dea_prixunitaire      Decimal  @db.Decimal(14, 2)
+  dea_quantite          Int
+  dea_tva               Decimal? @db.Decimal(5, 2)
+  dea_pourcentageremise Int?
+  dea_prixtotalht       Decimal  @db.Decimal(14, 2)
 
-  devis   te_devis_dev @relation("Devis_Articles", fields: [dea_dev_id], references: [dev_id], onDelete: Cascade)
-  article article_art? @relation(fields: [dea_art_id], references: [art_id])
+  devis   te_devis_dev @relation("Devis_Articles", fields: [dea_dev_id], references: [dev_id], onDelete: Cascade)
+  article article_art? @relation(fields: [dea_art_id], references: [art_id])
 
-  @@index([dea_dev_id])
-  @@index([dea_art_id])
+  @@index([dea_dev_id])
+  @@index([dea_art_id])
 }
 
 //////////////////////
@@ -116,82 +116,84 @@ model te_devisart_dea {
 //////////////////////
 
 model client {
-  id                        String   @id @default(cuid())
-  name                      String
-  email                     String?
-  phone                     String?
-  createdAt                 DateTime @default(now())
-  updatedAt                 DateTime @updatedAt
-  cli_adresseFacturation    String?
-  cli_numClient             String?
-  cli_tvaIntraCommunautaire String?
+  id                        String   @id @default(cuid())
+  name                      String
+  email                     String?
+  phone                     String?
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+  cli_adresseFacturation    String?
+  cli_numClient             String?
+  cli_tvaIntraCommunautaire String?
 
-  bases    base[]
-  vehicles vehicle[]
-  users    user[]
-  devis    te_devis_dev[]
+  bases    base[]
+  vehicles vehicle[]
+  users    user[]
+  devis    te_devis_dev[]
 
-  @@index([name])
+  @@index([name])
 }
 
 model base {
-  id        String   @id @default(cuid())
-  location  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  clientId  String
+  id        String   @id @default(cuid())
+  location  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  clientId  String
 
-  client   client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  vehicles vehicle[]
-  users    user[]
+  client   client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  vehicles vehicle[]
+  users    user[]
 
-  @@index([clientId])
-  @@index([location])
+  @@index([clientId])
+  @@index([location])
 }
 
 model vehicle {
-  id                    String               @id @default(cuid())
-  licensePlate          String               @unique
-  // brand                 String?
-  // model                 String?
-  year                  Int?
-  color                 String?              @default("GRIS")
-  firstRegistrationDate DateTime?
-  energy                vehicle_energy?
-  doorsCount            Int?
-  bodyType              vehicle_bodyType?
-  realPowerHp           Int?
-  fiscalPowerCv         Int?
-  gearboxType           vehicle_gearboxType?
-  version               String?
-  registrationCardDate  DateTime?
+  id                    String               @id @default(cuid())
+  licensePlate          String               @unique
+  normalizedPlate       String?              @unique
+  // brand                 String?
+  // model                 String?
+  year                  Int?
+  color                 String?              @default("GRIS")
+  firstRegistrationDate DateTime?
+  energy                vehicle_energy?
+  doorsCount            Int?
+  bodyType              vehicle_bodyType?
+  realPowerHp           Int?
+  fiscalPowerCv         Int?
+  gearboxType           vehicle_gearboxType?
+  version               String?
+  registrationCardDate  DateTime?
 
-  entryDate DateTime  @default(now())
-  exitDate  DateTime?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  entryDate DateTime  @default(now())
+  exitDate  DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
-  clientId    String
-  baseId      String
-  handledById String?
+  clientId    String
+  baseId      String
+  handledById String?
 
-  brandId String?
-  modelId String?
+  brandId String?
+  modelId String?
 
-  brand brand? @relation(fields: [brandId], references: [id], onDelete: SetNull)
-  model model? @relation(fields: [modelId], references: [id], onDelete: SetNull)
+  brand brand? @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  model model? @relation(fields: [modelId], references: [id], onDelete: SetNull)
 
-  client    client @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  base      base   @relation(fields: [baseId], references: [id], onDelete: Cascade)
-  handledBy user?  @relation("VehicleHandler", fields: [handledById], references: [id])
+  client    client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  base      base   @relation(fields: [baseId], references: [id], onDelete: Cascade)
+  handledBy user?  @relation("VehicleHandler", fields: [handledById], references: [id])
 
-  invoices invoice[]      @relation("VehicleInvoices")
-  devis    te_devis_dev[]
+  invoices invoice[]      @relation("VehicleInvoices")
+  devis    te_devis_dev[]
 
-  @@index([licensePlate])
-  @@index([clientId])
-  @@index([baseId])
-  @@index([handledById])
+  @@index([licensePlate])
+  @@index([normalizedPlate])
+  @@index([clientId])
+  @@index([baseId])
+  @@index([handledById])
 }
 
 //////////////////////
@@ -199,52 +201,52 @@ model vehicle {
 //////////////////////
 
 model invoice {
-  id                 String         @id @default(cuid())
-  accordNumber       String?        @unique
-  dateOfConfirmation DateTime?
-  invoiceConfirmed   Boolean        @default(false)
-  status             invoice_status @default(CONFIRMED_IN_PLANNING)
-  statusUpdatedAt    DateTime       @default(now())
-  workDescription    String?
-  didOrderParts      Boolean        @default(false)
-  ordersDetails      String?
-  comments           String?
-  createdAt          DateTime       @default(now())
-  updatedAt          DateTime       @updatedAt
+  id                 String         @id @default(cuid())
+  accordNumber       String?        @unique
+  dateOfConfirmation DateTime?
+  invoiceConfirmed   Boolean        @default(false)
+  status             invoice_status @default(CONFIRMED_IN_PLANNING)
+  statusUpdatedAt    DateTime       @default(now())
+  workDescription    String?
+  didOrderParts      Boolean        @default(false)
+  ordersDetails      String?
+  comments           String?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
 
-  vehicleId   String
-  handledById String?
+  vehicleId   String
+  handledById String?
 
-  vehicle   vehicle @relation("VehicleInvoices", fields: [vehicleId], references: [id], onDelete: Cascade)
-  handledBy user?   @relation("InvoiceHandler", fields: [handledById], references: [id])
+  vehicle   vehicle @relation("VehicleInvoices", fields: [vehicleId], references: [id], onDelete: Cascade)
+  handledBy user?   @relation("InvoiceHandler", fields: [handledById], references: [id])
 
-  photos  invoicephoto[]
-  history statushistory[]
-  changes changehistory[]
-  devis   te_devis_dev?
+  photos  invoicephoto[]
+  history statushistory[]
+  changes changehistory[]
+  devis   te_devis_dev?
 
-  @@index([accordNumber])
-  @@index([vehicleId])
-  @@index([handledById])
-  @@index([invoiceConfirmed])
-  @@index([status])
+  @@index([accordNumber])
+  @@index([vehicleId])
+  @@index([handledById])
+  @@index([invoiceConfirmed])
+  @@index([status])
 }
 
 model invoicephoto {
-  id           String   @id @default(cuid())
-  invoiceId    String
-  blobName     String   @unique
-  url          String
-  contentType  String?
-  size         Int?
-  createdAt    DateTime @default(now())
-  uploadedById String?
+  id           String   @id @default(cuid())
+  invoiceId    String
+  blobName     String   @unique
+  url          String
+  contentType  String?
+  size         Int?
+  createdAt    DateTime @default(now())
+  uploadedById String?
 
-  invoice    invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  uploadedBy user?   @relation(fields: [uploadedById], references: [id])
+  invoice    invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  uploadedBy user?   @relation(fields: [uploadedById], references: [id])
 
-  @@index([invoiceId])
-  @@index([createdAt])
+  @@index([invoiceId])
+  @@index([createdAt])
 }
 
 //////////////////////
@@ -252,36 +254,36 @@ model invoicephoto {
 //////////////////////
 
 model statushistory {
-  id             String                       @id @default(cuid())
-  previousStatus statushistory_previousStatus
-  newStatus      statushistory_newStatus
-  changedAt      DateTime                     @default(now())
-  invoiceId      String
-  changedById    String
+  id             String                       @id @default(cuid())
+  previousStatus statushistory_previousStatus
+  newStatus      statushistory_newStatus
+  changedAt      DateTime                     @default(now())
+  invoiceId      String
+  changedById    String
 
-  invoice invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  user    user    @relation(fields: [changedById], references: [id], onDelete: Cascade)
+  invoice invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  user    user    @relation(fields: [changedById], references: [id], onDelete: Cascade)
 
-  @@index([invoiceId])
-  @@index([changedById])
-  @@index([changedAt])
+  @@index([invoiceId])
+  @@index([changedById])
+  @@index([changedAt])
 }
 
 model changehistory {
-  id         String   @id @default(cuid())
-  invoiceId  String
-  changedBy  String
-  changedAt  DateTime @default(now())
-  fieldName  String
-  oldValue   String?
-  newValue   String?
-  changeType String
+  id         String   @id @default(cuid())
+  invoiceId  String
+  changedBy  String
+  changedAt  DateTime @default(now())
+  fieldName  String
+  oldValue   String?
+  newValue   String?
+  changeType String
 
-  invoice invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  user    user    @relation(fields: [changedBy], references: [id])
+  invoice invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  user    user    @relation(fields: [changedBy], references: [id])
 
-  @@index([invoiceId])
-  @@index([changedAt])
+  @@index([invoiceId])
+  @@index([changedAt])
 }
 
 //////////////////////
@@ -289,30 +291,30 @@ model changehistory {
 //////////////////////
 
 model user {
-  id              String    @id @default(cuid())
-  email           String    @unique
-  name            String
-  role            user_role
-  password        String
-  isSystemAccount Boolean   @default(false)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id              String    @id @default(cuid())
+  email           String    @unique
+  name            String
+  role            user_role
+  password        String
+  isSystemAccount Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  clientId String?
-  baseId   String?
+  clientId String?
+  baseId   String?
 
-  client client? @relation(fields: [clientId], references: [id])
-  base   base?   @relation(fields: [baseId], references: [id])
+  client client? @relation(fields: [clientId], references: [id])
+  base   base?   @relation(fields: [baseId], references: [id])
 
-  invoicesHandled invoice[]       @relation("InvoiceHandler")
-  vehiclesHandled vehicle[]       @relation("VehicleHandler")
-  uploadedPhotos  invoicephoto[]
-  statusChanges   statushistory[]
-  changeHistory   changehistory[]
-  devisCreated    te_devis_dev[]
+  invoicesHandled invoice[]       @relation("InvoiceHandler")
+  vehiclesHandled vehicle[]       @relation("VehicleHandler")
+  uploadedPhotos  invoicephoto[]
+  statusChanges   statushistory[]
+  changeHistory   changehistory[]
+  devisCreated    te_devis_dev[]
 
-  @@index([email])
-  @@index([role])
+  @@index([email])
+  @@index([role])
 }
 
 //////////////////////
@@ -320,86 +322,86 @@ model user {
 //////////////////////
 
 enum user_role {
-  ADMIN
-  MANAGER
-  MECHANIC
-  CLIENT
-  SIEGE
-  AGENCE
+  ADMIN
+  MANAGER
+  MECHANIC
+  CLIENT
+  SIEGE
+  AGENCE
 }
 
 enum invoice_status {
-  CONFIRMED_IN_PLANNING
-  WAITING_FOR_PARTS
-  FIXING_STARTED
-  FIXING_FINISHED
+  CONFIRMED_IN_PLANNING
+  WAITING_FOR_PARTS
+  FIXING_STARTED
+  FIXING_FINISHED
 }
 
 enum vehicle_bodyType {
-  BERLINE
-  SUV
-  BREAK
-  COUPE
-  CABRIOLET
-  MONOSPACE
-  PICKUP
-  UTILITAIRE
-  AUTRE
+  BERLINE
+  SUV
+  BREAK
+  COUPE
+  CABRIOLET
+  MONOSPACE
+  PICKUP
+  UTILITAIRE
+  AUTRE
 }
 
 enum vehicle_energy {
-  GAZOLE
-  ESSENCE
-  HYBRIDE
-  ELECTRIQUE
-  GPL
+  GAZOLE
+  ESSENCE
+  HYBRIDE
+  ELECTRIQUE
+  GPL
 }
 
 enum vehicle_gearboxType {
-  BVM
-  BVA
+  BVM
+  BVA
 }
 
 enum statushistory_previousStatus {
-  CONFIRMED_IN_PLANNING
-  WAITING_FOR_PARTS
-  FIXING_STARTED
-  FIXING_FINISHED
+  CONFIRMED_IN_PLANNING
+  WAITING_FOR_PARTS
+  FIXING_STARTED
+  FIXING_FINISHED
 }
 
 enum statushistory_newStatus {
-  CONFIRMED_IN_PLANNING
-  WAITING_FOR_PARTS
-  FIXING_STARTED
-  FIXING_FINISHED
+  CONFIRMED_IN_PLANNING
+  WAITING_FOR_PARTS
+  FIXING_STARTED
+  FIXING_FINISHED
 }
 
 model brand {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  models   model[]
-  vehicles vehicle[]
+  models   model[]
+  vehicles vehicle[]
 }
 
 model model {
-  id        String   @id @default(cuid())
-  name      String
-  brandId   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String   @id @default(cuid())
+  name      String
+  brandId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  brand    brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
-  vehicles vehicle[]
+  brand    brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  vehicles vehicle[]
 
-  @@unique([name, brandId])
+  @@unique([name, brandId])
 }
 
 enum WorkStatus {
-  CONFIRMED_IN_PLANNING
-  WAITING_FOR_PARTS
-  FIXING_STARTED
-  FIXING_FINISHED
+  CONFIRMED_IN_PLANNING
+  WAITING_FOR_PARTS
+  FIXING_STARTED
+  FIXING_FINISHED
 }

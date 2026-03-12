@@ -9,6 +9,7 @@ import { useAgenceApi } from "@/src/shared/hooks/useAgence.api"
 import { useClientApi } from "@/src/shared/hooks/useClient.api"
 import { BrandSelect } from "@/src/shared/components/ui/BrandSelect"
 import { ModelSelect } from "@/src/shared/components/ui/ModelSelect"
+import { formatLicensePlate } from "@/src/utils/formatters"
 import {
   Select,
   SelectContent,
@@ -80,12 +81,14 @@ export function AddVehiculeForm({
     gearboxType: undefined,
     version: "",
     registrationCardDate: undefined,
+    
   })
 
   const [clients, setClients] = useState<any[]>([])
   const [agences, setAgences] = useState<any[]>([])
   const [loadingClients, setLoadingClients] = useState(true)
   const [loadingAgences, setLoadingAgences] = useState(false)
+  const [lookupLoading, setLookupLoading] = useState(false)
 
   useEffect(() => {
     if (mode === "create" && data?.licensePlate) {
@@ -122,6 +125,91 @@ export function AddVehiculeForm({
       .finally(() => setLoadingAgences(false))
   }, [vehicule.clientId])
 
+  const handleLookup = async () => {
+
+  if (!vehicule.licensePlate) {
+    alert("Veuillez saisir une immatriculation")
+    return
+  }
+
+  try {
+
+    setLookupLoading(true)
+
+    const res = await fetch(
+      `/api/vehicles/lookup/${vehicule.licensePlate}`
+    )
+
+    const result = await res.json()
+
+    // ---------------------------
+    // CAS 1 : véhicule déjà en DB
+    // ---------------------------
+    if (result.found) {
+
+      const v = result.vehicle
+
+      setVehicule((prev) => ({
+        ...prev,
+        brandId: v.brandId ?? prev.brandId,
+        year: v.year ?? prev.year,
+        energy: v.energy ?? prev.energy,
+        doorsCount: v.doorsCount ?? prev.doorsCount,
+        bodyType: v.bodyType ?? prev.bodyType
+      }))
+
+      // attendre un render React
+      await new Promise((r) => setTimeout(r, 0))
+
+      setVehicule((prev) => ({
+        ...prev,
+        modelId: v.modelId ?? prev.modelId
+      }))
+
+      return
+    }
+
+    // ---------------------------
+    // CAS 2 : API externe
+    // ---------------------------
+    if (result.data) {
+
+      const d = result.data
+
+      setVehicule((prev) => ({
+        ...prev,
+        brandId: d.brandId ?? prev.brandId,
+        year: d.year ?? prev.year,
+        energy: d.energy ?? prev.energy,
+        doorsCount: d.doorsCount ?? prev.doorsCount,
+        bodyType: d.bodyType ?? prev.bodyType,
+        color: d.color ?? prev.color,
+        realPowerHp: d.realPowerHp ?? prev.realPowerHp,
+        fiscalPowerCv: d.fiscalPowerCv ?? prev.fiscalPowerCv,
+        gearboxType: d.gearboxType ?? prev.gearboxType,
+        firstRegistrationDate: d.firstRegistrationDate ?? prev.firstRegistrationDate,
+        registrationCardDate: d.registrationCardDate ?? prev.registrationCardDate,
+        version: d.version ?? prev.version,
+      }))
+
+      await new Promise((r) => setTimeout(r, 0))
+
+      setVehicule((prev) => ({
+        ...prev,
+       modelId: d.modelId,
+        model: {
+          id: d.modelId,
+          name: d.modelName
+        }
+      }))
+    }
+
+  } catch (err) {
+    console.error("Erreur lookup véhicule :", err)
+  } finally {
+    setLookupLoading(false)
+  }
+}
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!vehicule.clientId) return alert("Veuillez sélectionner un client")
@@ -137,15 +225,34 @@ export function AddVehiculeForm({
         <Label htmlFor="immatriculation">
           Immatriculation <span className="text-red-500">*</span>
         </Label>
-        <Input
-          id="immatriculation"
-          placeholder="SSSSDDDD"
-          className="h-12"
-          value={vehicule.licensePlate}
-          onChange={(e) =>
-            setVehicule({ ...vehicule, licensePlate: e.target.value })
-          }
-        />
+
+        <div className="flex gap-2">
+          <Input
+            id="immatriculation"
+            placeholder="AA-123-BB"
+            className="h-12"
+            // value={vehicule.licensePlate}
+            value={formatLicensePlate(vehicule.licensePlate || "")}
+            onChange={(e) => {
+            const normalized = e.target.value
+              .toUpperCase()
+              .replace(/[^A-Z0-9]/g, "")
+
+            setVehicule({
+              ...vehicule,
+              licensePlate: normalized
+            })
+          }}
+          />
+
+          <Button
+            type="button"
+            onClick={handleLookup}
+            disabled={lookupLoading}
+          >
+            {lookupLoading ? <Spinner className="h-4 w-4" /> : "Rechercher"}
+          </Button>
+        </div>
       </div>
 
       {/* Marque / Modèle */}
@@ -172,23 +279,17 @@ export function AddVehiculeForm({
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="modele">Modèle</Label>
-          {/* <Input
-            id="modele"
-            placeholder="Megane"
-            className="h-12"
-            value={vehicule.model || ""}
-            onChange={(e) => setVehicule({ ...vehicule, model: e.target.value })}
-          /> */}
           <ModelSelect
-              brandId={vehicule.brandId ?? null}
-              value={vehicule.modelId ?? null}
-              onChange={(modelId) =>
-                setVehicule({
-                  ...vehicule,
-                  modelId,
-                })
-              }
-            />
+            key={vehicule.brandId}  
+            brandId={vehicule.brandId ?? null}
+            value={vehicule.modelId ?? null}
+            onChange={(modelId) =>
+              setVehicule({
+                ...vehicule,
+                modelId,
+              })
+            }
+          />
         </div>
       </div>
 
