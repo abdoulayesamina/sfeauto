@@ -233,9 +233,9 @@ export default function ClientPage() {
           modalTitle="Détail complet de l'intervention"
           className="max-w-4xl"
         >
-          {vehiculeSelect && (
+          {interventionsVehicule[0] && (
             <InterventionDetailClient
-              selectedVehicle={vehiculeSelect}
+              selectedIntervention={interventionsVehicule[0]}
               onClose={() => setOpenDetailModal(false)}
             />
           )}

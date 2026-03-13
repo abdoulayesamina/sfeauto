@@ -12,7 +12,7 @@ interface VehicleInterventionsModalProps {
   interventions: any[]
   filterStatus: "ALL" | "CONFIRMEE" | "EN_COURS" | "TERMINEE" | "ATTENTE_PIECES"
   onClose: () => void
-  onViewDetails: (intervention: any) => void
+  onViewDetails: (intervention: any, vehicle: any) => void
 }
 
 
@@ -210,7 +210,17 @@ export default function VehicleInterventionsModal({
                     )}
 
                     {/* Actions */}
-
+                    <div className="flex justify-end pt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2"
+                        onClick={() => onViewDetails(intervention, vehicle)}
+                      >
+                        <Eye size={14} />
+                        Voir tous les détails
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

@@ -29,9 +29,9 @@ export function NavMain({
         <SidebarMenu>
           <SidebarMenuItem className="flex items-center gap-2">
             {/* <SidebarMenuButton
-              tooltip="Quick Create"
-              className="min-w-8 bg-primary text-primary-foreground duration-200 ease-linear hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
-            >
+                tooltip="Quick Create"
+                className="min-w-8 bg-primary text-primary-foreground duration-200 ease-linear hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
+              >
               <PlusCircleIcon />
               <span>Quick Create</span>
             </SidebarMenuButton>
@@ -45,15 +45,15 @@ export function NavMain({
             </Button> */}
           </SidebarMenuItem>
         </SidebarMenu>
-        <SidebarMenu>
+        <SidebarMenu className="w-full">
           {items.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton tooltip={item.title} className="p-0 cursor-pointer">
-                <Link href={item.url} className={`w-full flex items-center gap-2 p-2 ${pathname === item.url ? 'bg-gray-300' : ''}`}>
+            <SidebarMenuItem key={item.title} className={`${pathname === item.url ? 'bg-blue-100 border-r-4 border-blue-700 text-blue-600 font-medium transition-colors duration-200 ease-linear' : ''}`}>
+              <button className="w-full hover:bg-blue-100 rounded-none transition-colors duration-200 ease-linear">
+                <Link href={item.url} className={`!w-full flex items-center gap-2 p-3 `}>
                   {item.icon && <item.icon size={18} />}
                   <span>{item.title}</span>
                 </Link>
-              </SidebarMenuButton>
+              </button>
             </SidebarMenuItem>
           ))}
         </SidebarMenu>

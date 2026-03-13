@@ -166,13 +166,13 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
   )
 
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
-      <SidebarHeader className="w-full border-b ">
+    <Sidebar collapsible="offcanvas" {...props} className="px-0 border-r">
+      <SidebarHeader className="w-full border-b max-w-[95%] mx-auto">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              className="data-[slot=sidebar-menu-button]:!p-1.5 "
+              className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
               <span>
                 <Image alt="LOGO-sfe-auto" src={"/sfe-auto-logo2.png"} width={70} height={70} />

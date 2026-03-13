@@ -102,7 +102,6 @@ export function EditInterventionModal({ open, onClose, invoice, onUpdated, reloa
   const previews = files.map(file => URL.createObjectURL(file))
   setImagesBlob(prev => [...prev, ...previews])
 
-  // Important : reset l'input pour pouvoir re-sélectionner la même image
   e.target.value = ""
 }
 
@@ -220,14 +219,28 @@ export function EditInterventionModal({ open, onClose, invoice, onUpdated, reloa
         <div className="flex flex-col space-y-2">
           <Label>Ajouter des photos</Label>
 
-          <span
+          {/* <span
             className="text-sm text-gray-500 border p-2 rounded-md bg-gray-50 cursor-pointer hover:bg-gray-100"
             onClick={() => document.getElementById("EditInputImages")?.click()}
           >
             {imagesBlob.length > 0
               ? `${images.length} fichier(s) sélectionné(s)`
               : "Sélectionner des images"}
-          </span>
+          </span> */}
+
+          <Button
+              type="button"
+              variant="outline"
+              onClick={() => document.getElementById("EditInputImages")?.click()}
+            >
+              + Ajouter une photo
+            </Button>
+
+            {images.length > 0 && (
+              <span className="text-sm text-gray-500">
+                {images.length} fichier(s) sélectionné(s)
+              </span>
+            )}
 
           <Input
             id="EditInputImages"

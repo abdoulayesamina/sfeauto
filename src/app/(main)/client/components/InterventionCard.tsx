@@ -129,7 +129,7 @@ export default function InterventionCard({
 
         {!hideVehicleActions && (
           <div className="flex items-center gap-2 justify-end">
-            {!hideDetailsButton && (
+            {hideDetailsButton && (
               <Button variant="outline" onClick={onViewDetails}>
                 Voir détail complet
               </Button>
