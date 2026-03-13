@@ -52,7 +52,7 @@ export function SectionCards({user} : {user?: any} ) {
       const vehicles = await getVehicles();
       setVehicles(vehicles);
     } catch (error) {
-      throw error;
+      console.error("Erreur lors du chargement des données : ", error);
     } finally {
       setLoading(false);
     }
@@ -66,7 +66,9 @@ export function SectionCards({user} : {user?: any} ) {
 
     console.log("Liste des vehicules : ", vehicles?.vehicles);
     
-    const interventions = vehicles?.vehicles.flatMap((v : any) => v.invoices);
+    const interventions = vehicles?.vehicles.
+    filter((v : any) => v.base.id === agenceId).
+    flatMap((v : any) => v.invoices);
     
     setTotalInterventions(interventions?.length || 0);
 
@@ -76,31 +78,36 @@ export function SectionCards({user} : {user?: any} ) {
     const terminees = interventions?.filter(i => i.status === "FIXING_FINISHED");
     setInterventionsTerminees(terminees?.length || 0);
 
-  },[vehicles])
-
-
-  useEffect(() => {
-    if(!agenceId || !vehicles) {
-      setInterventionsParAgence(0);
-      return;
-    }
-
-    setAgenceIntloading(true);
+    setLoading(true);
     setTimeout(() => {
-      setAgenceIntloading(false);
+      setLoading(false);
     }, 600)
 
-    const interventions = vehicles.vehicles
-    .filter((v : any) => v.base.id === agenceId)
-    .flatMap((v : any) => v.invoices);
+  },[agenceId])
 
-    console.log("Interventions pour l'agence sélectionnée : ", interventions);
-    setInterventionsParAgence(interventions.length);
-  }, [agenceId])
+
+  // useEffect(() => {
+  //   if(!agenceId || !vehicles) {
+  //     setInterventionsParAgence(0);
+  //     return;
+  //   }
+
+  //   setAgenceIntloading(true);
+  //   setTimeout(() => {
+  //     setAgenceIntloading(false);
+  //   }, 600)
+
+  //   const interventions = vehicles.vehicles
+  //   .filter((v : any) => v.base.id === agenceId)
+  //   .flatMap((v : any) => v.invoices);
+
+  //   console.log("Interventions pour l'agence sélectionnée : ", interventions);
+  //   setInterventionsParAgence(interventions.length);
+  // }, [agenceId])
 
   return (
     <div>
-      <div className="p-6 w-full max-w-xl">
+      <div className="p-6 w-full max-w-xl flex flex-col gap-2 items-start">
         {/* <Label>
           Agence 
         </Label> */}
@@ -112,6 +119,7 @@ export function SectionCards({user} : {user?: any} ) {
             <SelectValue
               placeholder={"Sélectionnez une agence"}
             />
+            {loading && <Spinner className="size-4" />}
           </SelectTrigger>
           <SelectContent className="z-[2000]">
             {agences.map((b) => (
@@ -121,6 +129,9 @@ export function SectionCards({user} : {user?: any} ) {
             ))}
           </SelectContent>
         </Select>
+        <p className="text-sm text-muted-foreground">
+          Selectionnez une agence pour afficher les statistiques
+        </p>
       </div>
       {
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 px-6">
@@ -186,7 +197,7 @@ export function SectionCards({user} : {user?: any} ) {
               <div className="text-muted-foreground">Interventions terminées et validées</div>
             </CardFooter>
           </Card>
-          <Card className="@container/card">
+          {/* <Card className="@container/card">
             <CardHeader className="relative">
               <CardDescription>Interventions par agence</CardDescription>
               <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
@@ -202,7 +213,7 @@ export function SectionCards({user} : {user?: any} ) {
                 Affiché lorsque vous sélectionnez une agence spécifique
               </div>
             </CardFooter>
-          </Card>
+          </Card> */}
         </div>  
       }
     </div>
