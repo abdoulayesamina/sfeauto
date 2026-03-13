@@ -2,13 +2,10 @@
 
 import React from "react"
 
-/* ---------------------------------- */
-/* 🔹 TYPES */
-/* ---------------------------------- */
 type StatsCardProps = {
   title: string
   value: number | string
-  description: string
+  description?: string
   accentClass: string
 }
 
@@ -20,48 +17,42 @@ type VehicleStatsProps = {
   test?: number
 }
 
-/* ---------------------------------- */
-/* 🔹 STATS CARD COMPACTE */
-/* ---------------------------------- */
 function StatsCard({ title, value, description, accentClass }: StatsCardProps) {
   return (
     <div
       className={`
-        relative
-        bg-white
-        rounded-2xl
-        p-4
-        min-h-[120px]
-        border border-gray-100
-        shadow-sm
-        hover:shadow-md
-        hover:-translate-y-0.5
-        transition-all duration-200
+        group relative overflow-hidden
+        rounded-3xl
+        bg-white/70 backdrop-blur
+        border border-white/60
+        shadow-[0_10px_30px_rgba(0,0,0,0.06)]
+        hover:shadow-[0_14px_44px_rgba(0,0,0,0.09)]
+        transition-all duration-300
+        p-5
+        min-h-[112px]
         flex flex-col justify-between
       `}
     >
-      {/* Accent top bar */}
-      <div
-        className={`absolute top-0 left-0 right-0 h-1 rounded-t-2xl ${accentClass}`}
-      />
+      <div className={`absolute inset-x-0 top-0 h-1 ${accentClass}`} />
+      <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-white/40 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-      {/* Title */}
-      <span className="text-sm font-medium text-gray-500">{title}</span>
-
-      {/* Value */}
-      <div className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight mt-1">
-        {value}
+      <div className="flex items-start justify-between gap-3">
+        <span className="text-sm font-medium text-gray-600">{title}</span>
+        <span className={`h-2.5 w-2.5 rounded-full ${accentClass}`} />
       </div>
 
-      {/* Description */}
-      <p className="text-xs text-gray-400 mt-1">{description}</p>
+      <div>
+        <div className="text-3xl sm:text-4xl font-semibold text-gray-900 tracking-tight leading-none">
+          {value}
+        </div>
+        {description ? (
+          <p className="text-xs text-gray-500 mt-2 line-clamp-1">{description}</p>
+        ) : null}
+      </div>
     </div>
   )
 }
 
-/* ---------------------------------- */
-/* 🔹 VEHICLE STATS GRID COMPACTE */
-/* ---------------------------------- */
 export function VehicleStats({
   total,
   enCours,
@@ -76,36 +67,38 @@ export function VehicleStats({
           title="Total véhicules"
           value={total}
           description="Véhicules enregistrés"
-          accentClass="bg-blue-500"
+          accentClass="bg-gradient-to-r from-blue-500 to-indigo-500"
         />
 
         <StatsCard
           title="En cours"
           value={enCours}
-          description="Véhicules en intervention"
-          accentClass="bg-orange-500"
+          description="En intervention"
+          accentClass="bg-gradient-to-r from-amber-500 to-orange-500"
         />
 
         <StatsCard
           title="Terminés"
           value={termine}
           description="Interventions finalisées"
-          accentClass="bg-green-500"
+          accentClass="bg-gradient-to-r from-emerald-500 to-green-500"
         />
 
         <StatsCard
           title="Sans intervention"
           value={sansIntervention}
           description="Aucune intervention"
-          accentClass="bg-red-500"
+          accentClass="bg-gradient-to-r from-rose-500 to-red-500"
         />
 
-        <StatsCard
-          title="Test"
-          value={test ?? 0}
-          description="Valeur de test"
-          accentClass="bg-purple-500"
-        />
+        {test !== undefined ? (
+          <StatsCard
+            title="Test"
+            value={test}
+            description="Valeur de test"
+            accentClass="bg-gradient-to-r from-violet-500 to-purple-500"
+          />
+        ) : null}
 
       </div>
     </section>
