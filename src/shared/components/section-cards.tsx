@@ -37,7 +37,8 @@ export function SectionCards({user} : {user?: any} ) {
   const [totalInterventions, setTotalInterventions] = useState(0);
   const [interventionsEnCours, setInterventionsEnCours] = useState(0);
   const [interventionsTerminees, setInterventionsTerminees] = useState(0);
-  const [interventionsParAgence, setInterventionsParAgence] = useState(0);
+  const [interventionsEnAttenteDePiece, setInterventionsEnAttenteDePiece] = useState(0);
+  // const [interventionsParAgence, setInterventionsParAgence] = useState(0);
   // const [interventionsParAgence, setInterventionsParAgence] = useState<{[key: string]: number}>({});
 
   const loadAllData = async () => {
@@ -49,7 +50,7 @@ export function SectionCards({user} : {user?: any} ) {
       const vehicles = await getVehicles();
       setVehicles(vehicles);
     } catch (error) {
-      throw error;
+      console.error("Erreur lors du chargement des données : ", error);
     } finally {
       setLoading(false);
     }
@@ -63,41 +64,51 @@ export function SectionCards({user} : {user?: any} ) {
 
     console.log("Liste des vehicules : ", vehicles?.vehicles);
     
-    const interventions = vehicles?.vehicles.flatMap((v : any) => v.invoices);
+    const interventions = vehicles?.vehicles.
+    filter((v : any) => v.base.id === agenceId).
+    flatMap((v : any) => v.invoices);
     
     setTotalInterventions(interventions?.length || 0);
 
-    const enCours = interventions?.filter(i => i.status === "FIXING_STARTED");
+    const enCours = interventions?.filter(i => i.status === "CONFIRMED_IN_PLANNING" || i.status === "FIXING_STARTED");
     setInterventionsEnCours(enCours?.length || 0);
 
     const terminees = interventions?.filter(i => i.status === "FIXING_FINISHED");
     setInterventionsTerminees(terminees?.length || 0);
 
-  },[vehicles])
+    const attenteDePiece = interventions?.filter(i => i.status === "WAITING_FOR_PARTS"); 
+    setInterventionsEnAttenteDePiece(attenteDePiece?.length || 0);
 
-
-  useEffect(() => {
-    if(!agenceId || !vehicles) {
-      setInterventionsParAgence(0);
-      return;
-    }
-
-    setAgenceIntloading(true);
+    setLoading(true);
     setTimeout(() => {
-      setAgenceIntloading(false);
+      setLoading(false);
     }, 600)
 
-    const interventions = vehicles.vehicles
-    .filter((v : any) => v.base.id === agenceId)
-    .flatMap((v : any) => v.invoices);
+  },[agenceId])
 
-    console.log("Interventions pour l'agence sélectionnée : ", interventions);
-    setInterventionsParAgence(interventions.length);
-  }, [agenceId])
+
+  // useEffect(() => {
+  //   if(!agenceId || !vehicles) {
+  //     setInterventionsParAgence(0);
+  //     return;
+  //   }
+
+  //   setAgenceIntloading(true);
+  //   setTimeout(() => {
+  //     setAgenceIntloading(false);
+  //   }, 600)
+
+  //   const interventions = vehicles.vehicles
+  //   .filter((v : any) => v.base.id === agenceId)
+  //   .flatMap((v : any) => v.invoices);
+
+  //   console.log("Interventions pour l'agence sélectionnée : ", interventions);
+  //   setInterventionsParAgence(interventions.length);
+  // }, [agenceId])
 
   return (
     <div>
-      <div className="p-6 w-full max-w-xl">
+      <div className="p-6 w-full max-w-xl flex flex-col gap-2 items-start">
         {/* <Label>
           Agence 
         </Label> */}
@@ -109,6 +120,7 @@ export function SectionCards({user} : {user?: any} ) {
             <SelectValue
               placeholder={"Sélectionnez une agence"}
             />
+            {loading && <Spinner className="size-4" />}
           </SelectTrigger>
           <SelectContent className="z-[2000]">
             {agences.map((b) => (
@@ -118,6 +130,9 @@ export function SectionCards({user} : {user?: any} ) {
             ))}
           </SelectContent>
         </Select>
+        <p className="text-sm text-muted-foreground">
+          Selectionnez une agence pour afficher les statistiques
+        </p>
       </div>
       {
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 px-6">
@@ -156,10 +171,10 @@ export function SectionCards({user} : {user?: any} ) {
               },
             },
             {
-              title: "Par agence",
-              value: AgenceIntloading ? <Spinner className="size-4 text-white" /> : interventionsParAgence,
-              subtitle: agenceId ? "Sélectionnée" : "Choisir une agence",
-              icon: Building2,
+              title: "En attente de pièces",
+              value: AgenceIntloading ? <Spinner className="size-4 text-white" /> : interventionsEnAttenteDePiece,
+              subtitle: "Attente de pièce",
+              icon: CheckCircle2,
               tone: {
                 bg: "bg-gradient-to-br from-violet-50 via-white to-fuchsia-50",
                 accent: "text-violet-700",
@@ -204,7 +219,7 @@ export function SectionCards({user} : {user?: any} ) {
                 <div className={`text-xs ${c.tone.accent}`}>
                   {c.title === "Par agence"
                     ? "Filtré par agence"
-                    : "Vue d’ensemble"}
+                    : "Vue d'ensemble"}
                 </div>
               </CardFooter>
             </Card>
