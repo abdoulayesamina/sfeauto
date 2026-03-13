@@ -101,9 +101,9 @@ export function SectionCards({user} : {user?: any} ) {
   return (
     <div>
       <div className="p-6 w-full max-w-xl">
-        <Label>
+        {/* <Label>
           Agence 
-        </Label>
+        </Label> */}
         <Select
           // value={vehicule.baseId || ""}
           onValueChange={(baseId) => setAgenceId(baseId)}
