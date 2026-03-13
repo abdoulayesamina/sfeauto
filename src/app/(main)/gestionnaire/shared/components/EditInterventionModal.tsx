@@ -102,7 +102,6 @@ export function EditInterventionModal({ open, onClose, invoice, onUpdated, reloa
   const previews = files.map(file => URL.createObjectURL(file))
   setImagesBlob(prev => [...prev, ...previews])
 
-  // Important : reset l'input pour pouvoir re-sélectionner la même image
   e.target.value = ""
 }
 
