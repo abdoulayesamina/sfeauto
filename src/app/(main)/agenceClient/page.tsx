@@ -198,25 +198,6 @@ export default function AgencePage() {
     )
   }
 
-  const vehicleForDetails =
-    vehiculeSelect && detailIntervention
-      ? {
-        ...vehiculeSelect,
-        invoices: [
-          {
-            id: detailIntervention.id,
-            status: detailIntervention.status,
-            invoiceConfirmed: detailIntervention.invoiceConfirmed,
-            workDescription: detailIntervention.workDescription,
-            accordNumber: detailIntervention.accordNumber,
-            dateOfConfirmation: detailIntervention.dateOfConfirmation,
-            createdAt: detailIntervention.createdAt,
-            statusUpdatedAt: detailIntervention.statusUpdatedAt,
-          },
-        ],
-      }
-      : null
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
@@ -315,9 +296,9 @@ export default function AgencePage() {
           modalTitle="Détail complet de l'intervention"
           className="max-w-4xl"
         >
-          {vehicleForDetails && (
+          {detailIntervention && (
             <InterventionDetailClient
-              selectedVehicle={vehicleForDetails}
+              selectedIntervention={detailIntervention}
               onClose={() => {
                 setOpenDetailModal(false)
                 setDetailIntervention(null)
