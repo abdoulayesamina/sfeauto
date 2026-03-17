@@ -96,6 +96,7 @@ export function ArticleForm({
             <div className="mb-4 flex flex-col gap-2 p-2">
                 <Label>Prix</Label>
                 <Input
+                    type="number"
                     className="h-12"
                     value={data.art_price || ""}
                     onChange={(e) => onChange({ ...data, art_price: e.target.value })}

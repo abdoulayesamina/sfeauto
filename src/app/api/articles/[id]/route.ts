@@ -43,7 +43,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
         }
 
         const id = await params.then(p => Number(p.id));
-        prisma.article_art.delete({
+        await prisma.article_art.delete({
             where: { art_id: id },
         });
 

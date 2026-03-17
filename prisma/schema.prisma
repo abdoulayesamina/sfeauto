@@ -34,7 +34,7 @@ model article_art {
   art_id           Int               @id @default(autoincrement())
   art_reference    String            @db.VarChar(100)
   art_name         String
-  art_price        Int
+  art_price        Decimal 
   art_collectionId Int
   collection       collection_col    @relation("Collection_Articles", fields: [art_collectionId], references: [col_id])
   remises          remise_rem?       @relation("Article_Remise")

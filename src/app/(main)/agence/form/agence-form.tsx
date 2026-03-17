@@ -34,7 +34,7 @@ export function AgenceForm({ mode, data, clients, loading, onClose, onSubmit, on
       <div className="mb-4 flex flex-col gap-2">
         <Label>Client</Label>
         <Select value={data.clientId || ""} onValueChange={(v) => onChange({ ...data, clientId: v })}>
-          <SelectTrigger className="w-full !h-12">
+          <SelectTrigger className="w-full !h-12" ref={inputRef as any}>
             <SelectValue placeholder="Sélectionnez un client" />
           </SelectTrigger>
           <SelectContent className="z-[2000]">
@@ -50,7 +50,6 @@ export function AgenceForm({ mode, data, clients, loading, onClose, onSubmit, on
       <div className="mb-4 flex flex-col gap-2">
         <Label>Emplacement</Label>
         <Input
-          ref={inputRef}
           className="h-12"
           value={data.location || ""}
           onChange={(e) => onChange({ ...data, location: e.target.value })}
