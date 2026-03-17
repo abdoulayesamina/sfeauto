@@ -233,6 +233,7 @@ export function AddVehiculeForm({
 
         <div className="flex gap-2">
           <Input
+            disabled
             id="immatriculation"
             placeholder="AA-123-BB"
             className="h-12"
