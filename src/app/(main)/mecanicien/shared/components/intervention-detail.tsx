@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useEffect, useState } from "react"
-import { Car, User, MapPin, Wrench, Images, X } from "lucide-react"
+import { Car, User, MapPin, Wrench, Images, X, CheckCircle } from "lucide-react"
 import { Button } from "@/src/shared/components/ui/button"
 import { toUIStatus, getStatusMeta, HISTORY_LABELS } from "@/src/utils/constants/intervention-status"
 import { errorAlert } from "@/src/lib/alerts"
@@ -106,7 +106,7 @@ export default function InterventionDetail({
         <div className="rounded-xl border p-4 bg-zinc-50">
           <div className="mb-1 flex items-center gap-2">
             <div className="p-2 rounded-lg bg-orange-100 text-orange-700">
-              <Wrench />
+              <CheckCircle />
             </div>
             <p className="font-semibold">Accord client</p>
           </div>
