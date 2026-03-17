@@ -171,7 +171,7 @@ export function SectionCards({user} : {user?: any} ) {
               },
             },
             {
-              title: "En attente de pièces",
+              title: "En attente de pièce",
               value: AgenceIntloading ? <Spinner className="size-4 text-white" /> : interventionsEnAttenteDePiece,
               subtitle: "Attente de pièce",
               icon: CheckCircle2,

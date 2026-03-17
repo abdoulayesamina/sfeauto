@@ -52,7 +52,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       title: "Tableau de bord",
       url: "/dashboard",
       icon: LayoutDashboard,
-      roles: ["ADMIN"],
+      roles: ["ADMIN", "MECHANIC"],
     },
     {
       title: "Utilisateurs",
