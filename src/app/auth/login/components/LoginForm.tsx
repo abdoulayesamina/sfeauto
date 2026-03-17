@@ -15,8 +15,10 @@ import { useForm } from "react-hook-form"
 import { Loader2 } from "lucide-react"
 import Image from "next/image"
 
-import { signIn } from "next-auth/react"
+import { getSession, signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
+import Swal from "sweetalert2"
 
 type LoginForm = {
   email: string
@@ -40,9 +42,17 @@ export default function LoginForm() {
     })
 
     if (res?.ok) {
-      router.push("/dashboard")
+      const session = await getSession()
+      const role = (session?.user as any)?.role
+      router.push(role === "AGENCE" ? "/agenceClient" : (role === "CLIENT") ? "/client" : "/dashboard")
     } else {
-      alert("Email ou mot de passe incorrect")
+      Swal.fire(
+        {
+          title: "Erreur !",
+          text: 'Email ou mot de passe incorrect',
+          icon: "error"
+        }  
+      )
     }
   }
 
@@ -164,7 +174,7 @@ export default function LoginForm() {
           </div>
 
         </div>
-      </div>&
+      </div>
     </div>
   )
 }

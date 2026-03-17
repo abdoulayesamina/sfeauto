@@ -49,8 +49,8 @@ export function NavMain({
           {items.map((item) => (
             <SidebarMenuItem key={item.title} className={`${pathname === item.url ? 'bg-blue-100 border-r-4 border-blue-700 text-blue-600 font-medium transition-colors duration-200 ease-linear' : ''}`}>
               <button className="w-full hover:bg-blue-100 rounded-none transition-colors duration-200 ease-linear">
-                <Link href={item.url} className={`!w-full flex items-center gap-2 p-3 `}>
-                  {item.icon && <item.icon size={18} />}
+                <Link href={item.url} className={`!w-full flex items-center gap-2 p-2 text-[13px]`}>
+                  {item.icon && <item.icon size={15} />}
                   <span>{item.title}</span>
                 </Link>
               </button>

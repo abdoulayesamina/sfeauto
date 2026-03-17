@@ -8,7 +8,7 @@ export async function GET() {
   try {
     const session = await auth()
 
-    if (!session?.user || session.user.role !== 'ADMIN') {
+    if (!session?.user || session.user.role !== 'ADMIN' && session.user.role !== 'MECHANIC') {
       return NextResponse.json({ error: 'Accès administrateur requis' }, { status: 403 })
     }
 

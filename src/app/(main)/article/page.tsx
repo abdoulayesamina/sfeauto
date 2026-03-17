@@ -151,23 +151,17 @@ export default function ArticlesPage() {
 
     const columns: ColumnDef<any>[] = [
         {
-        accessorKey: "art_reference",
-        header: "Référence",
-        cell: ({ row }) => (
-            <Badge variant="secondary">
-                {row.original.art_reference || "—"}
-            </Badge>
-        ),
-        },
-
-        {
             accessorKey: "art_name",
             header: "Nom",
         },
         {
-            accessorKey: "art_price",
-            header: "Prix",
-            cell: ({ row }) => <Badge className="bg-green-300 text-black">{row.original.art_price} €</Badge>,
+            accessorKey: "art_reference",
+            header: "Référence",
+            cell: ({ row }) => (
+                <Badge variant="secondary">
+                    {row.original.art_reference || "—"}
+                </Badge>
+            ),
         },
         {
             accessorKey: "art_collectionId",
@@ -176,6 +170,11 @@ export default function ArticlesPage() {
                 const collection = collections.find(c => c.col_id === row.original.art_collectionId);
                 return <Badge>{collection ? collection.col_name : "N/A"}</Badge>;
             }
+        },
+        {
+            accessorKey: "art_price",
+            header: "Prix",
+            cell: ({ row }) => <Badge className="bg-green-300 text-black">{row.original.art_price} €</Badge>,
         },
         {
             header: "Famille",
@@ -225,7 +224,7 @@ export default function ArticlesPage() {
             {<DataTable data={articlesSearch} columnsProps={tableColumns} handleSearch={(e)=>handleSearch(e)}/>}
 
             {/* CREATE */}
-            <Modal open={isOpen} modalTitle="Nouveau article" onClose={() => setIsOpen(false)}>
+            <Modal open={isOpen} modalTitle="Nouvel article" onClose={() => setIsOpen(false)}>
                 <ArticleForm
                     mode="create"
                     data={formData}

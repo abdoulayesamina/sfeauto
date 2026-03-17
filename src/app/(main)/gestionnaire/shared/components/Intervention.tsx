@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useEffect, useState } from "react"
-import { Car, User, MapPin, Wrench, FileText, Images, X } from "lucide-react"
+import { Car, User, MapPin, Wrench, FileText, Images, X, CheckCircle } from "lucide-react"
 import { Button } from "@/src/shared/components/ui/button"
 import {
   toUIStatus,
@@ -130,7 +130,7 @@ export default function IntervDetailGes({ selectedIntervention, onClose }: Props
         <div className="rounded-xl border p-4 bg-zinc-50">
           <div className="mb-1 flex items-center gap-2">
             <div className="p-2 rounded-lg bg-orange-100 text-orange-700">
-              <Wrench />
+              <CheckCircle />
             </div>
             <p className="font-semibold">Accord client</p>
           </div>
@@ -160,9 +160,7 @@ export default function IntervDetailGes({ selectedIntervention, onClose }: Props
           <p className="text-xs text-gray-500 mt-1">
             Mis à jour le{" "}
             {selectedIntervention?.statusUpdatedAt
-              ? new Date(
-                selectedIntervention.statusUpdatedAt
-              ).toLocaleString("fr-FR")
+              ?(new Date( selectedIntervention.statusUpdatedAt).toLocaleDateString("fr-FR") +" à "+ new Date( selectedIntervention.statusUpdatedAt).toLocaleTimeString("fr-FR"))
               : "-"}
           </p>
         </div>
