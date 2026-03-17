@@ -212,7 +212,7 @@ export default function GestionnairePage() {
     setInterventionModalOpen(true)
   }
 
-
+  // const session = getSession();
   return (
     <div className="h-full py-4 px-12 bg-zinc-50">
       <div className="bg-white min-h-full rounded-lg p-4">

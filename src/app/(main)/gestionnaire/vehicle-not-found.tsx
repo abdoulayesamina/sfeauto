@@ -1,5 +1,6 @@
 import { Button } from "@/src/shared/components/ui/button"
 import { SearchX, ArrowLeft, PlusCircle } from "lucide-react"
+import { useSession } from "next-auth/react"
 
 type VehicleNotFoundProps = {
   onBack: () => void
@@ -7,6 +8,9 @@ type VehicleNotFoundProps = {
 }
 
 export function VehicleNotFound({ onBack, onCreate }: VehicleNotFoundProps) {
+  const { data: session } = useSession();
+  const role = session?.user?.role ?? null;
+
   return (
     <div className="w-full lg:w-[70%] mt-14 mx-auto rounded-2xl border bg-white/70 backdrop-blur shadow-lg p-16 flex flex-col items-center gap-6">
       
@@ -32,13 +36,14 @@ export function VehicleNotFound({ onBack, onCreate }: VehicleNotFoundProps) {
           Revenir à la recherche
         </Button>
 
-        <Button
-          className="flex items-center gap-2"
-          onClick={onCreate}
-        >
-          <PlusCircle size={18} />
-          Créer un nouveau véhicule
-        </Button>
+        {role === "MANAGER" && (
+          <Button
+            className="flex items-center gap-2"
+            onClick={onCreate}
+          >
+            <PlusCircle size={18} />
+            Créer un nouveau véhicule
+        </Button> )}
       </div>
 
     </div>
