@@ -160,9 +160,7 @@ export default function IntervDetailGes({ selectedIntervention, onClose }: Props
           <p className="text-xs text-gray-500 mt-1">
             Mis à jour le{" "}
             {selectedIntervention?.statusUpdatedAt
-              ? new Date(
-                selectedIntervention.statusUpdatedAt
-              ).toLocaleString("fr-FR")
+              ?(new Date( selectedIntervention.statusUpdatedAt).toLocaleDateString("fr-FR") +" à "+ new Date( selectedIntervention.statusUpdatedAt).toLocaleTimeString("fr-FR"))
               : "-"}
           </p>
         </div>

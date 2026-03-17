@@ -212,7 +212,7 @@ export default function MecanicienPage() {
             onClick={() => setFilterStatus("ATTENTE_PIECES")}
             variant={filterStatus === "ATTENTE_PIECES" ? "default" : "outline"}
           >
-            En attente de pièce
+            En attente de pièces
           </Button>
         </div>
 

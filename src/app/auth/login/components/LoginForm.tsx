@@ -44,7 +44,7 @@ export default function LoginForm() {
     if (res?.ok) {
       const session = await getSession()
       const role = (session?.user as any)?.role
-      router.push(role === "AGENCE" ? "/agenceClient" : "/dashboard")
+      router.push(role === "AGENCE" ? "/agenceClient" : (role === "CLIENT") ? "/client" : "/dashboard")
     } else {
       Swal.fire(
         {
