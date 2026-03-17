@@ -12,7 +12,12 @@ export default async function DashboardPage() {
   if (!session) {
     redirect("/auth/login")
   }
-
+  if (session.user.role === "CLIENT") {
+    redirect("/client")
+  }
+  if (session.user.role === "AGENCE") {
+    redirect("/agenceClient")
+  }
   const user = {
     name: session.user?.name ?? "Invité",
     email: session.user?.email ?? "",
