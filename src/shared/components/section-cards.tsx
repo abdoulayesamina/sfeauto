@@ -37,6 +37,7 @@ export function SectionCards({user} : {user?: any} ) {
   const [totalInterventions, setTotalInterventions] = useState(0);
   const [interventionsEnCours, setInterventionsEnCours] = useState(0);
   const [interventionsTerminees, setInterventionsTerminees] = useState(0);
+  const [interventionsEnAttenteDePiece, setInterventionsEnAttenteDePiece] = useState(0);
   // const [interventionsParAgence, setInterventionsParAgence] = useState(0);
   // const [interventionsParAgence, setInterventionsParAgence] = useState<{[key: string]: number}>({});
 
@@ -69,11 +70,14 @@ export function SectionCards({user} : {user?: any} ) {
     
     setTotalInterventions(interventions?.length || 0);
 
-    const enCours = interventions?.filter(i => i.status === "FIXING_STARTED");
+    const enCours = interventions?.filter(i => i.status === "CONFIRMED_IN_PLANNING" || i.status === "FIXING_STARTED");
     setInterventionsEnCours(enCours?.length || 0);
 
     const terminees = interventions?.filter(i => i.status === "FIXING_FINISHED");
     setInterventionsTerminees(terminees?.length || 0);
+
+    const attenteDePiece = interventions?.filter(i => i.status === "WAITING_FOR_PARTS"); 
+    setInterventionsEnAttenteDePiece(attenteDePiece?.length || 0);
 
     setLoading(true);
     setTimeout(() => {
@@ -166,17 +170,17 @@ export function SectionCards({user} : {user?: any} ) {
                 iconBg: "bg-emerald-600/10 ring-emerald-600/20",
               },
             },
-            // {
-            //   title: "Par agence",
-            //   value: AgenceIntloading ? <Spinner className="size-4 text-white" /> : interventionsParAgence,
-            //   subtitle: agenceId ? "Sélectionnée" : "Choisir une agence",
-            //   icon: Building2,
-            //   tone: {
-            //     bg: "bg-gradient-to-br from-violet-50 via-white to-fuchsia-50",
-            //     accent: "text-violet-700",
-            //     iconBg: "bg-violet-600/10 ring-violet-600/20",
-            //   },
-            // },
+            {
+              title: "En attente de pièce",
+              value: AgenceIntloading ? <Spinner className="size-4 text-white" /> : interventionsEnAttenteDePiece,
+              subtitle: "Attente de pièce",
+              icon: CheckCircle2,
+              tone: {
+                bg: "bg-gradient-to-br from-violet-50 via-white to-fuchsia-50",
+                accent: "text-violet-700",
+                iconBg: "bg-violet-600/10 ring-violet-600/20",
+              },
+            },
           ].map((c) => (
             <Card
               key={c.title}
