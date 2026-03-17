@@ -35,7 +35,7 @@ const BODY_OPTIONS = [
 
 function toISODateTime(dateValue: string) {
   if (!dateValue) return ""
-  const d = new Date(dateValue) 
+  const d = new Date(dateValue)
   if (isNaN(d.getTime())) return ""
   return d.toISOString()
 }
@@ -81,7 +81,7 @@ export function AddVehiculeForm({
     gearboxType: undefined,
     version: "",
     registrationCardDate: undefined,
-    
+
   })
 
   const [clients, setClients] = useState<any[]>([])
@@ -110,7 +110,7 @@ export function AddVehiculeForm({
       .finally(() => setLoadingClients(false))
   }, [])
 
-  
+
   useEffect(() => {
     if (!vehicule.clientId) {
       setAgences([])
@@ -125,91 +125,97 @@ export function AddVehiculeForm({
       .finally(() => setLoadingAgences(false))
   }, [vehicule.clientId])
 
+
   const handleLookup = async () => {
-
-  if (!vehicule.licensePlate) {
-    alert("Veuillez saisir une immatriculation")
-    return
-  }
-
-  try {
-
-    setLookupLoading(true)
-
-    const res = await fetch(
-      `/api/vehicles/lookup/${vehicule.licensePlate}`
-    )
-
-    const result = await res.json()
-
-    // ---------------------------
-    // CAS 1 : véhicule déjà en DB
-    // ---------------------------
-    if (result.found) {
-
-      const v = result.vehicle
-
-      setVehicule((prev) => ({
-        ...prev,
-        brandId: v.brandId ?? prev.brandId,
-        year: v.year ?? prev.year,
-        energy: v.energy ?? prev.energy,
-        doorsCount: v.doorsCount ?? prev.doorsCount,
-        bodyType: v.bodyType ?? prev.bodyType
-      }))
-
-      // attendre un render React
-      await new Promise((r) => setTimeout(r, 0))
-
-      setVehicule((prev) => ({
-        ...prev,
-        modelId: v.modelId ?? prev.modelId
-      }))
-
+    if (!vehicule.licensePlate) {
+      alert("Veuillez saisir une immatriculation")
       return
     }
 
-    // ---------------------------
-    // CAS 2 : API externe
-    // ---------------------------
-    if (result.data) {
+    try {
+      setLookupLoading(true)
 
-      const d = result.data
+      const res = await fetch(`/api/vehicles/lookup/${vehicule.licensePlate}`)
 
-      setVehicule((prev) => ({
-        ...prev,
-        brandId: d.brandId ?? prev.brandId,
-        year: d.year ?? prev.year,
-        energy: d.energy ?? prev.energy,
-        doorsCount: d.doorsCount ?? prev.doorsCount,
-        bodyType: d.bodyType ?? prev.bodyType,
-        color: d.color ?? prev.color,
-        realPowerHp: d.realPowerHp ?? prev.realPowerHp,
-        fiscalPowerCv: d.fiscalPowerCv ?? prev.fiscalPowerCv,
-        gearboxType: d.gearboxType ?? prev.gearboxType,
-        firstRegistrationDate: d.firstRegistrationDate ?? prev.firstRegistrationDate,
-        registrationCardDate: d.registrationCardDate ?? prev.registrationCardDate,
-        version: d.version ?? prev.version,
-      }))
+      if (!res.ok) {
+        throw new Error("Lookup API failed")
+      }
 
-      await new Promise((r) => setTimeout(r, 0))
+      const result = await res.json()
 
-      setVehicule((prev) => ({
-        ...prev,
-       modelId: d.modelId,
-        model: {
-          id: d.modelId,
-          name: d.modelName
-        }
-      }))
+      if (result.found) {
+        const v = result.vehicle
+
+        setVehicule((prev) => ({
+          ...prev,
+          brandId: v.brandId ?? prev.brandId,
+          year: v.year ?? prev.year,
+          energy: v.energy ?? prev.energy,
+          doorsCount: v.doorsCount ?? prev.doorsCount,
+          bodyType: v.bodyType ?? prev.bodyType,
+          color: v.color ?? prev.color,
+          realPowerHp: v.realPowerHp ?? prev.realPowerHp,
+          fiscalPowerCv: v.fiscalPowerCv ?? prev.fiscalPowerCv,
+          gearboxType: v.gearboxType ?? prev.gearboxType,
+          firstRegistrationDate: v.firstRegistrationDate
+            ? new Date(v.firstRegistrationDate).toISOString()
+            : prev.firstRegistrationDate,
+
+          registrationCardDate: v.registrationCardDate
+            ? new Date(v.registrationCardDate).toISOString()
+            : prev.registrationCardDate,
+
+          version: v.version ?? prev.version,
+        }))
+
+        await new Promise((r) => setTimeout(r, 0))
+
+        setVehicule((prev) => ({
+          ...prev,
+          modelId: v.modelId ?? prev.modelId,
+        }))
+
+        return
+      }
+
+      if (result.data) {
+        const d = result.data
+
+        setVehicule((prev) => ({
+          ...prev,
+          brandId: d.brandId ?? prev.brandId,
+          year: d.year ?? prev.year,
+          energy: d.energy ?? prev.energy,
+          doorsCount: d.doorsCount ?? prev.doorsCount,
+          bodyType: d.bodyType ?? prev.bodyType,
+          color: d.color ?? prev.color,
+          realPowerHp: d.realPowerHp ?? prev.realPowerHp,
+          fiscalPowerCv: d.fiscalPowerCv ?? prev.fiscalPowerCv,
+          gearboxType: d.gearboxType ?? prev.gearboxType,
+          firstRegistrationDate: d.firstRegistrationDate
+            ? new Date(d.firstRegistrationDate).toISOString()
+            : prev.firstRegistrationDate,
+
+          registrationCardDate: d.registrationCardDate
+            ? new Date(d.registrationCardDate).toISOString()
+            : prev.registrationCardDate,
+
+          version: d.version ?? prev.version,
+        }))
+
+        await new Promise((r) => setTimeout(r, 0))
+
+        setVehicule((prev) => ({
+          ...prev,
+          modelId: d.modelId ?? prev.modelId,
+        }))
+      }
+    } catch (err) {
+      console.error("Erreur lookup véhicule :", err)
+    } finally {
+      setLookupLoading(false)
     }
-
-  } catch (err) {
-    console.error("Erreur lookup véhicule :", err)
-  } finally {
-    setLookupLoading(false)
   }
-}
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!vehicule.clientId) return alert("Veuillez sélectionner un client")
@@ -217,7 +223,6 @@ export function AddVehiculeForm({
     if (!vehicule.licensePlate) return alert("Veuillez saisir l'immatriculation")
     onSubmit(vehicule)
   }
-
   return (
     <form className="space-y-6" onSubmit={handleSubmit}>
       {/* Immatriculation */}
@@ -234,16 +239,17 @@ export function AddVehiculeForm({
             // value={vehicule.licensePlate}
             value={formatLicensePlate(vehicule.licensePlate || "")}
             onChange={(e) => {
-            const normalized = e.target.value
-              .toUpperCase()
-              .replace(/[^A-Z0-9]/g, "")
+              const normalized = e.target.value
+                .toUpperCase()
+                .replace(/[^A-Z0-9]/g, "")
 
-            setVehicule({
-              ...vehicule,
-              licensePlate: normalized
-            })
-          }}
+              setVehicule({
+                ...vehicule,
+                licensePlate: normalized
+              })
+            }}
           />
+
 
           <Button
             type="button"
@@ -280,7 +286,7 @@ export function AddVehiculeForm({
         <div className="flex flex-col gap-2">
           <Label htmlFor="modele">Modèle</Label>
           <ModelSelect
-            key={vehicule.brandId}  
+            key={vehicule.brandId}
             brandId={vehicule.brandId ?? null}
             value={vehicule.modelId ?? null}
             onChange={(modelId) =>
@@ -531,8 +537,8 @@ export function AddVehiculeForm({
                 !vehicule.clientId
                   ? "Sélectionnez un client d'abord"
                   : loadingAgences
-                  ? "Chargement..."
-                  : "Sélectionnez une agence"
+                    ? "Chargement..."
+                    : "Sélectionnez une agence"
               }
             />
           </SelectTrigger>

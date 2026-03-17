@@ -1,10 +1,8 @@
 "use client"
-import { TrendingDownIcon, TrendingUpIcon } from "lucide-react"
+import { Building2, CheckCircle2, Clock3, ClipboardList } from "lucide-react"
 
-import { Badge } from "@/src/shared/components/ui/badge"
 import {
   Card,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -14,7 +12,6 @@ import { useAgenceApi } from "@/src/app/(main)/agence/shared/useAgence.api";
 import { useEffect, useState } from "react";
 import { Agence } from "@/src/utils/types/agence";
 import { Vehicule } from "@/src/utils/types/vehicule";
-import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Spinner } from "./spinner";
@@ -40,7 +37,7 @@ export function SectionCards({user} : {user?: any} ) {
   const [totalInterventions, setTotalInterventions] = useState(0);
   const [interventionsEnCours, setInterventionsEnCours] = useState(0);
   const [interventionsTerminees, setInterventionsTerminees] = useState(0);
-  const [interventionsParAgence, setInterventionsParAgence] = useState(0);
+  // const [interventionsParAgence, setInterventionsParAgence] = useState(0);
   // const [interventionsParAgence, setInterventionsParAgence] = useState<{[key: string]: number}>({});
 
   const loadAllData = async () => {
@@ -135,85 +132,94 @@ export function SectionCards({user} : {user?: any} ) {
       </div>
       {
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 px-6">
-          <Card className="@container/card">
-            <CardHeader className="relative">
-              <CardDescription>Total Interventions</CardDescription>
-              <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                {loading ? <Spinner className="size-4" /> : totalInterventions}
-              </CardTitle>
-              {/* <div className="absolute right-4 top-4">
-                <Badge variant="outline" className="flex gap-1 rounded-lg text-xs">
-                  <TrendingDownIcon className="size-3" />
-                  -20%
-                </Badge>
-              </div> */}
-            </CardHeader>
-            <CardFooter className="flex-col items-start gap-1 text-sm">
-              <div className="line-clamp-1 flex gap-2 font-medium">
-                Total des interventions enregistrées
-              </div>
-              <div className="text-muted-foreground">
-                Inclut toutes les interventions liées aux véhicules
-              </div>
-            </CardFooter>
-          </Card>
-          <Card className="@container/card">
-            <CardHeader className="relative">
-              <CardDescription>Interventions en cours</CardDescription>
-              <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                {loading ? <Spinner className="size-4" /> : interventionsEnCours}
-              </CardTitle>
-              {/* <div className="absolute right-4 top-4">
-                <Badge variant="outline" className="flex gap-1 rounded-lg text-xs">
-                  <TrendingUpIcon className="size-3" />
-                  +12.5%
-                </Badge>
-              </div> */}
-            </CardHeader>
-            <CardFooter className="flex-col items-start gap-1 text-sm">
-              <div className="line-clamp-1 flex gap-2 font-medium">
-                Nombre d'interventions actuellement en cours
-              </div>
-              <div className="text-muted-foreground">Interventions non terminées</div>
-            </CardFooter>
-          </Card>
-          <Card className="@container/card">
-            <CardHeader className="relative">
-              <CardDescription>Interventions terminées</CardDescription>
-              <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                {loading ? <Spinner className="size-4" /> : interventionsTerminees}
-              </CardTitle>
-              {/* <div className="absolute right-4 top-4">
-                <Badge variant="outline" className="flex gap-1 rounded-lg text-xs">
-                  <TrendingUpIcon className="size-3" />
-                  +4.5%
-                </Badge>
-              </div> */}
-            </CardHeader>
-            <CardFooter className="flex-col items-start gap-1 text-sm">
-              <div className="line-clamp-1 flex gap-2 font-medium">
-                Nombre d'interventions qui ont été finalisées
-              </div>
-              <div className="text-muted-foreground">Interventions terminées et validées</div>
-            </CardFooter>
-          </Card>
-          {/* <Card className="@container/card">
-            <CardHeader className="relative">
-              <CardDescription>Interventions par agence</CardDescription>
-              <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                {AgenceIntloading ? <Spinner className="size-4" /> : interventionsParAgence}
-              </CardTitle>
+          {[
+            {
+              title: "Total",
+              value: loading ? <Spinner className="size-4 text-white" /> : totalInterventions,
+              subtitle: "Interventions",
+              icon: ClipboardList,
+              tone: {
+                bg: "bg-gradient-to-br from-blue-50 via-white to-indigo-50",
+                accent: "text-blue-700",
+                iconBg: "bg-blue-600/10 ring-blue-600/20",
+              },
+            },
+            {
+              title: "En cours",
+              value: loading ? <Spinner className="size-4 text-white" /> : interventionsEnCours,
+              subtitle: "Actives",
+              icon: Clock3,
+              tone: {
+                bg: "bg-gradient-to-br from-amber-50 via-white to-orange-50",
+                accent: "text-orange-700",
+                iconBg: "bg-orange-600/10 ring-orange-600/20",
+              },
+            },
+            {
+              title: "Terminées",
+              value: loading ? <Spinner className="size-4 text-white" /> : interventionsTerminees,
+              subtitle: "Clôturées",
+              icon: CheckCircle2,
+              tone: {
+                bg: "bg-gradient-to-br from-emerald-50 via-white to-teal-50",
+                accent: "text-emerald-700",
+                iconBg: "bg-emerald-600/10 ring-emerald-600/20",
+              },
+            },
+            // {
+            //   title: "Par agence",
+            //   value: AgenceIntloading ? <Spinner className="size-4 text-white" /> : interventionsParAgence,
+            //   subtitle: agenceId ? "Sélectionnée" : "Choisir une agence",
+            //   icon: Building2,
+            //   tone: {
+            //     bg: "bg-gradient-to-br from-violet-50 via-white to-fuchsia-50",
+            //     accent: "text-violet-700",
+            //     iconBg: "bg-violet-600/10 ring-violet-600/20",
+            //   },
+            // },
+          ].map((c) => (
+            <Card
+              key={c.title}
+              className={`@container/card group relative overflow-hidden rounded-3xl border border-gray-200/60 shadow-[0_12px_34px_rgba(0,0,0,0.08)] hover:shadow-[0_18px_52px_rgba(0,0,0,0.10)] transition-shadow ${c.tone.bg}`}
+            >
+              <div className="absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b from-black/0 via-black/0 to-black/0" />
+              <div className="absolute inset-0 bg-gradient-to-t from-white/70 via-white/20 to-white/0" />
+              <div className="absolute -right-12 -top-12 h-32 w-32 rounded-full bg-white/70 blur-2xl opacity-70 group-hover:opacity-90 transition-opacity" />
+              <div className="absolute inset-0 ring-1 ring-inset ring-white/50" />
 
-            </CardHeader>
-            <CardFooter className="flex-col items-start gap-1 text-sm">
-              <div className="line-clamp-1 flex gap-2 font-medium">
-                Nombre d'interventions liées à l'agence sélectionnée
-              </div>
-              <div className="text-muted-foreground">
-                Affiché lorsque vous sélectionnez une agence spécifique
-              </div>
-            </CardFooter>
-          </Card> */}
+              <CardHeader className="relative">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium text-gray-900">{c.title}</div>
+                    <div className="text-xs text-gray-600 mt-0.5">{c.subtitle}</div>
+                  </div>
+                  <div
+                    className={`grid place-items-center h-10 w-10 rounded-2xl ${c.tone.iconBg} ring-1`}
+                  >
+                    <c.icon className={`h-5 w-5 ${c.tone.accent}`} />
+                  </div>
+                </div>
+
+                <CardTitle className="mt-4 @[250px]/card:text-4xl text-3xl font-semibold tabular-nums tracking-tight text-gray-900">
+                  {loading || AgenceIntloading ? (
+                    <span className="inline-flex items-center">
+                      <Spinner className={`size-4 ${c.tone.accent}`} />
+                    </span>
+                  ) : (
+                    c.value
+                  )}
+                </CardTitle>
+              </CardHeader>
+
+              <CardFooter className="relative pt-0">
+                <div className={`text-xs ${c.tone.accent}`}>
+                  {c.title === "Par agence"
+                    ? "Filtré par agence"
+                    : "Vue d’ensemble"}
+                </div>
+              </CardFooter>
+            </Card>
+          ))}
         </div>  
       }
     </div>

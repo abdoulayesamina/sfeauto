@@ -24,7 +24,6 @@ function normalizeOptionalString(value: unknown): string | null {
   return s.length ? s : null;
 }
 
-// ============================
 // GET /api/vehicles
 // ============================
 export async function GET(request: NextRequest) {
