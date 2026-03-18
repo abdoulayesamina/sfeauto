@@ -219,7 +219,7 @@ export function SectionCards({user} : {user?: any} ) {
                 <div className={`text-xs ${c.tone.accent}`}>
                   {c.title === "Par agence"
                     ? "Filtré par agence"
-                    : "Vue d’ensemble"}
+                    : "Vue d'ensemble"}
                 </div>
               </CardFooter>
             </Card>

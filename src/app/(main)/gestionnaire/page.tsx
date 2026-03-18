@@ -19,6 +19,8 @@ import { useInterventionApi } from "./shared/useIntervention.api"
 import { InterventionForm } from "./form/intervention-form"
 import { toast } from "sonner"
 import { getBrandNameById, getModelNameById } from "../brands/shared/hooks/GetBrandOrModelName"
+import { formatLicensePlate } from "@/src/utils/formatters"
+import { searchSmart } from "@/src/utils/searchSmart"
 
 export default function GestionnairePage() {
   const { getVehicles, searchVehicles, createVehicle } = useManageApi()
@@ -80,25 +82,49 @@ export default function GestionnairePage() {
   }
 
   // Recherche
-  const handleSearch = async () => {
+  // const handleSearch = async () => {
     
-    if (!search.trim()) {
-      await loadAll()
-      setVehiculeNotFound(false)
-      return
-    }
+  //   if (!search.trim()) {
+  //     await loadAll()
+  //     setVehiculeNotFound(false)
+  //     return
+  //   }
 
-    try {
-      const data = await searchVehicles(search)
-      const vv = normalizeVehicles(data)
+  //   try {
+  //     const data = await searchVehicles(search)
+  //     const vv = normalizeVehicles(data)
 
-      setVehicles(vv)
-      setVehiculeNotFound(vv.length === 0)
-      if (vv.length === 0) setPreFillLicensePlate(search)
-    } catch (e: any) {
-      toast.error("Recherche", e.message)
-    }
+  //     setVehicles(vv)
+  //     setVehiculeNotFound(vv.length === 0)
+  //     if (vv.length === 0) setPreFillLicensePlate(search)
+  //   } catch (e: any) {
+  //     toast.error("Recherche", e.message)
+  //   }
+  // }
+
+  const handleSearch = async () => {
+  if (!search.trim()) {
+    await loadAll()
+    setVehiculeNotFound(false)
+    return
   }
+
+  try {
+    const { normalized } = searchSmart(search)
+
+    const data = await searchVehicles(normalized)
+
+    const vv = normalizeVehicles(data)
+
+    setVehicles(vv)
+    setVehiculeNotFound(vv.length === 0)
+
+    if (vv.length === 0) setPreFillLicensePlate(search)
+
+  } catch (e: any) {
+    toast.error("Recherche", e.message)
+  }
+}
 
   const handleCreateVehicle = async (data: Partial<Vehicule>) => {
     try {
@@ -288,7 +314,8 @@ export default function GestionnairePage() {
       <Modal open={apercuVehiculeOpen} onClose={() => setApercuVehiculeOpen(false)} modalTitle="Aperçu véhicule">
         {selectedVehicle && (
           <VehiclePreview
-            licensePlate={selectedVehicle.licensePlate}
+            // licensePlate={selectedVehicle.licensePlate}
+            licensePlate={formatLicensePlate(selectedVehicle.licensePlate || "")}
             brand={selectedVehicle.brand?.name ?? ""}
             model={selectedVehicle.model?.name ?? ""}
             year={selectedVehicle.year ?? 0}
@@ -313,7 +340,8 @@ export default function GestionnairePage() {
       >
         <InterventionForm
           vehicleId={selectedVehicle?.id ?? ""}
-          vehicleDisplayText={`${selectedVehicle?.licensePlate} - ${selectedVehicle?.brand?.name ?? ""} ${selectedVehicle?.model?.name ?? ""}`}
+          // vehicleDisplayText={`${selectedVehicle?.licensePlate} - ${selectedVehicle?.brand?.name ?? ""} ${selectedVehicle?.model?.name ?? ""}`}
+          vehicleDisplayText={`${formatLicensePlate(selectedVehicle?.licensePlate || "")} - ${selectedVehicle?.brand?.name ?? ""} ${selectedVehicle?.model?.name ?? ""}`}
           defaultAccordNumber="ACC-2026-001"
           onSubmit={handleSubmitIntervention}
           onClose={() => setInterventionModalOpen(false)}

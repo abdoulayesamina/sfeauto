@@ -15,6 +15,7 @@ import { InterventionForm } from "../../form/intervention-form"
 import { useInterventionApi } from "../useIntervention.api"
 import { toUIStatus, getStatusMeta } from "@/src/utils/constants/intervention-status"
 import { groupInterventionsByStatus } from "@/src/utils/constants/groupInterventionsByStatus"
+import { formatLicensePlate } from "@/src/utils/formatters"
 
 type VehicleItemProps = {
   vehicle?: Vehicule
@@ -138,7 +139,8 @@ export function VehicleItem({
         <div className="flex-1 px-6 py-5 cursor-pointer" onClick={onClick}>
           <div className="flex flex-col md:flex-row md:items-center gap-3">
             <span className="text-lg font-semibold text-gray-900">
-              {vehicle.licensePlate}
+              {/* {vehicle.licensePlate} */}
+              {formatLicensePlate(vehicle.licensePlate || "")}
             </span>
             <span className="text-gray-500">
               {vehicle.brand?.name} {vehicle.model?.name} · {vehicle.year}
@@ -203,7 +205,8 @@ export function VehicleItem({
       >
         <InterventionForm
           vehicleId={vehicle.id ?? ""}
-          vehicleDisplayText={`${vehicle.licensePlate} - ${vehicle.brand?.name} ${vehicle.model?.name}`}
+          // vehicleDisplayText={`${vehicle.licensePlate} - ${vehicle.brand?.name} ${vehicle.model?.name}`}
+          vehicleDisplayText={`${formatLicensePlate(vehicle.licensePlate || "")} - ${vehicle.brand?.name} ${vehicle.model?.name}`}
           defaultAccordNumber="ACC-2026-001"
           onSubmit={handleSubmitIntervention}
           onClose={() => setInterventionModalOpen(false)}
