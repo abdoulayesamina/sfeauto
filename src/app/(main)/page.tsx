@@ -4,7 +4,7 @@ import Link from "next/link"
 function page() {
     return (
         <div>
-            <h1 className='text-red-500'>Hello World</h1>
+            {/* <h1 className='text-red-500'>from '@prisma/client'World</h1> */}
             <Button><Link href="/dashboard">Go to Dashboard</Link></Button>
         </div>
     )

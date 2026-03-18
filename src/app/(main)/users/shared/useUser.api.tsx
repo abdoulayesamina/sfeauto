@@ -58,6 +58,19 @@ export function useUserApi() {
     return res.json()
   }
 
+  // const deleteUser = async (id: string) => {
+  //   const res = await fetch(`${API_URL}/${id}`, {
+  //     method: "DELETE",
+  //     credentials: "include",
+  //   })
+
+  //   if (!res.ok) {
+  //     const error = await res.json()
+  //     throw new Error(error.error || "Erreur lors de la suppression")
+  //   }
+
+  //   return true
+  // }
   const deleteUser = async (id: string) => {
     const res = await fetch(`${API_URL}/${id}`, {
       method: "DELETE",
@@ -65,8 +78,17 @@ export function useUserApi() {
     })
 
     if (!res.ok) {
-      const error = await res.json()
-      throw new Error(error.error || "Erreur lors de la suppression")
+      let errorMessage = "Erreur lors de la suppression"
+
+      try {
+        const error = await res.json()
+        errorMessage = error.error || error.message || errorMessage
+      } catch {}
+
+      const err: any = new Error(errorMessage)
+      err.status = res.status 
+
+      throw err
     }
 
     return true

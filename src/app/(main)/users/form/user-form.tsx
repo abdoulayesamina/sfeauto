@@ -4,6 +4,7 @@ import { Spinner } from "@/src/shared/components/spinner"
 import { Button } from "@/src/shared/components/ui/button"
 import { Input } from "@/src/shared/components/ui/input"
 import { Label } from "@/src/shared/components/ui/label"
+import { useState } from "react"
 import {
   Select,
   SelectContent,
@@ -13,6 +14,7 @@ import {
 } from "@/src/shared/components/ui/select"
 import { User } from "@/src/utils/types/user"
 import { useEffect, useRef } from "react"
+
 
 type UserFormProps = {
   value: Partial<User>
@@ -25,6 +27,7 @@ type UserFormProps = {
   agences: { id: string; location: string; clientId: string }[]
 }
 
+
 export function UserForm({
   value,
   mode,
@@ -35,6 +38,7 @@ export function UserForm({
   agences,
   loading,
 }: UserFormProps) {
+  const [confirmPassword, setConfirmPassword] = useState("");
   const roles = [
     { id: "ADMIN", name: "Administrateur" },
     { id: "MANAGER", name: "Gestionnaire" },
@@ -53,6 +57,21 @@ export function UserForm({
   useEffect(() => {
       inputRef.current?.focus();
   }, [mode]);
+
+  const password = value.password || "";
+
+  const passwordRules = {
+    length: password.length >= 8,
+    uppercase: /[A-Z]/.test(password),
+    lowercase: /[a-z]/.test(password),
+    number: /[0-9]/.test(password),
+  };
+
+  const passwordsMatch = password === confirmPassword;
+
+  const isPasswordValid =
+    Object.values(passwordRules).every(Boolean) && passwordsMatch;
+  
 
   return (
     <form
@@ -81,7 +100,7 @@ export function UserForm({
         />
       </div>
 
-      <div>
+      {/* <div>
         <Label>Mot de passe</Label>
         <Input
           className="h-12"
@@ -94,7 +113,57 @@ export function UserForm({
           }
           onChange={(e) => onChange({ ...value, password: e.target.value })}
         />
+      </div> */}
+      <div>
+      <Label>Mot de passe</Label>
+      <Input
+        className="h-12"
+        type="password"
+        value={value.password || ""}
+        placeholder={
+          mode === "edit"
+            ? "Mot de passe (laisser vide pour ne pas changer)"
+            : "Mot de passe"
+        }
+        onChange={(e) => onChange({ ...value, password: e.target.value })}
+      />
+
+      {/*  RÈGLES */}
+      {mode === "create" && (
+        <div className="text-sm mt-2 space-y-1">
+          <p className={passwordRules.length ? "text-green-500" : "text-red-500"}>
+            • 8 caractères minimum
+          </p>
+          <p className={passwordRules.uppercase ? "text-green-500" : "text-red-500"}>
+            • Une majuscule
+          </p>
+          <p className={passwordRules.lowercase ? "text-green-500" : "text-red-500"}>
+            • Une minuscule
+          </p>
+          <p className={passwordRules.number ? "text-green-500" : "text-red-500"}>
+            • Un chiffre
+          </p>
+        </div>
+      )}
+    </div>
+
+    {mode === "create" && (
+      <div>
+        <Label>Confirmer le mot de passe</Label>
+        <Input
+          className="h-12"
+          type="password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+        />
+
+        {confirmPassword && !passwordsMatch && (
+          <p className="text-red-500 text-sm mt-1">
+            Les mots de passe ne correspondent pas
+          </p>
+        )}
       </div>
+    )}
 
       <div>
         <Label>Rôle</Label>
@@ -196,9 +265,14 @@ export function UserForm({
         </Button>
         <Button
           type="submit"
+          // disabled={
+          //   // Petit guard UI: si AGENCE => base obligatoire
+          //   value.role === "AGENCE" && (!value.clientId || !value.baseId) || loading
+          // }
           disabled={
-            // Petit guard UI: si AGENCE => base obligatoire
-            value.role === "AGENCE" && (!value.clientId || !value.baseId) || loading
+            (value.role === "AGENCE" && (!value.clientId || !value.baseId)) ||
+            loading ||
+            (mode === "create" && !isPasswordValid)
           }
         >
           <span className="flex items-center gap-2">

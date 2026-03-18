@@ -128,26 +128,70 @@ export default function UsersPage() {
     }
   }
 
-  const handleDelete = async (user: User) => {
-    const confirmed = await confirmAlert(
-      "Confirmer la suppression",
-      `Êtes-vous sûr de vouloir supprimer "${user.name}" ?`
-    )
-    if (!confirmed) return
+  // const handleDelete = async (user: User) => {
+  //   const confirmed = await confirmAlert(
+  //     "Confirmer la suppression",
+  //     `Êtes-vous sûr de vouloir supprimer "${user.name}" ?`
+  //   )
+  //   if (!confirmed) return
 
-    try {
-      setIdToDelete(user.id ?? null);
-      await deleteUser(user.id)
-      toast.success("Utilisateur supprimé", {
-        description: `"${user.name}" a été supprimé avec succès.`,
-      })
-      setUsers((prev) => prev.filter((u) => u.id !== user.id))
-      setIdToDelete(null);
-    } catch (err: any) {
-      toast.error("Erreur", err.message || "Impossible de supprimer l'utilisateur")
-      setIdToDelete(null);
+  //   try {
+  //     setIdToDelete(user.id ?? null);
+  //     await deleteUser(user.id)
+  //     toast.success("Utilisateur supprimé", {
+  //       description: `"${user.name}" a été supprimé avec succès.`,
+  //     })
+  //     setUsers((prev) => prev.filter((u) => u.id !== user.id))
+  //     setIdToDelete(null);
+  //   } catch (err: any) {
+  //     toast.error("Erreur", err.message || "Impossible de supprimer l'utilisateur")
+  //     setIdToDelete(null);
+  //   }
+  // }
+  const handleDelete = async (user: User) => {
+      const confirmed = await confirmAlert(
+        "Confirmer la suppression",
+        `Êtes-vous sûr de vouloir supprimer "${user.name}" ?`
+      )
+      if (!confirmed) return
+
+      try {
+        setIdToDelete(user.id ?? null)
+
+        await deleteUser(user.id)
+
+        toast.success("Utilisateur supprimé", {
+          description: `"${user.name}" a été supprimé avec succès.`,
+        })
+
+        setUsers((prev) => prev.filter((u) => u.id !== user.id))
+      } catch (err: any) {
+
+        //  CAS MÉTIER (user lié à des données)
+        if (err.status === 409) {
+          toast.error("Suppression impossible", {
+            description:
+              "Cet utilisateur est lié à des données existantes et ne peut pas être supprimé.",
+          })
+
+        //  AUTRE ERREUR BACKEND
+        } else if (err.status === 400) {
+          toast.error("Action invalide", {
+            description: err.message || "Requête incorrecte",
+          })
+
+        // 🔥 FALLBACK
+        } else {
+          toast.error("Erreur serveur", {
+            description:
+              err.message || "Impossible de supprimer l'utilisateur",
+          })
+        }
+
+      } finally {
+        setIdToDelete(null)
+      }
     }
-  }
 
   const columns: ColumnDef<User>[] = [
     { accessorKey: "name", header: "Nom" },
