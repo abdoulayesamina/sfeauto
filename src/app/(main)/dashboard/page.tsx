@@ -18,6 +18,9 @@ export default async function DashboardPage() {
   if (session.user.role === "AGENCE") {
     redirect("/agenceClient")
   }
+  if (session.user.role === "MANAGER") {
+    redirect("/gestionnaire")
+  }
   const user = {
     name: session.user?.name ?? "Invité",
     email: session.user?.email ?? "",
