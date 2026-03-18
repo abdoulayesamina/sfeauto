@@ -101,11 +101,12 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       roles: ["ADMIN"],
     },
     {
-      title: "Gestionnaire",
+      title: user.role === "MECHANIC"
+        ? "Demande d’intervention"
+        : "Gestionnaire",
       url: "/gestionnaire",
       icon: UserCog,
-      roles:["MANAGER","MECHANIC"],
-
+      roles: ["MANAGER", "MECHANIC"],
     },
     {
       title: "Devis",

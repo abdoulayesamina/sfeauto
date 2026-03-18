@@ -14,7 +14,7 @@ import { Modal } from "@/src/shared/components/modal"
 import { Spinner } from "@/src/shared/components/spinner"
 import { errorAlert } from "@/src/lib/alerts"
 import { toast } from "sonner"
-
+import { formatLicensePlate } from "@/src/utils/formatters"
 export const statusStyles: Record<string, string> = {
     EN_COURS: "bg-blue-100 text-blue-700",
     ATTENTE_PIECES: "bg-orange-100 text-orange-700",
@@ -169,7 +169,10 @@ export default function MecanicienPage() {
                                     {/* <Car className="text-gray-400 mt-1" /> */}
                                     <Car size={18} className="text-gray-400 mt-1 shrink-0" />
                                     <div>
-                                        <p className="font-bold">{inv.vehicle.licensePlate}</p>
+                                        {/* <p className="font-bold">{inv.vehicle.licensePlate}</p> */}
+                                        <p className="font-bold">
+                                        {formatLicensePlate(inv.vehicle.licensePlate || "")}
+                                        </p>
                                         <p className="text-sm text-gray-500">{inv.vehicle.brand} {inv.vehicle.model}</p>
                                     </div>
                                 </div>
