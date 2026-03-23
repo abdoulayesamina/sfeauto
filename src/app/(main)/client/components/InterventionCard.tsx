@@ -67,31 +67,42 @@ export default function InterventionCard({
   const totalInterventions =
     counts.CONFIRMEE + counts.EN_COURS + counts.ATTENTE_PIECES + counts.TERMINEE
 
-  // affichage fallback si jamais brand/model null
-  const [brandModel, setBrandModel] = useState("");
+  const [brandModel, setBrandModel] = useState("")
 
   useEffect(() => {
     if (!v?.brandId && !v?.modelId) {
-      setBrandModel("");
-      return;
+      setBrandModel("")
+      return
     }
 
     const getNames = async () => {
       try {
-        const brandName = v.brandId ? await getBrandNameById(v.brandId) : "";
-        const modelName = v.modelId ? await getModelNameById(v.modelId) : "";
-        setBrandModel(`${brandName} ${modelName}`.trim());
+        const brandName = v.brandId ? await getBrandNameById(v.brandId) : ""
+        const modelName = v.modelId ? await getModelNameById(v.modelId) : ""
+        setBrandModel(`${brandName} ${modelName}`.trim())
       } catch (err) {
-        setBrandModel("...");
+        setBrandModel("...")
       }
-    };
+    }
 
-    getNames();
-
-  }, [v.brandId, v.modelId]);
+    getNames()
+  }, [v.brandId, v.modelId])
 
   return (
-    <div className="bg-white border rounded-2xl p-5 shadow-sm">
+    <div
+      onClick={onViewDetails}
+      className="bg-white border rounded-2xl p-5 shadow-sm cursor-pointer hover:shadow-md transition
+        hover:border-[#F5963A]
+"
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault()
+          onViewDetails()
+        }
+      }}
+    >
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
@@ -130,11 +141,24 @@ export default function InterventionCard({
         {!hideVehicleActions && (
           <div className="flex items-center gap-2 justify-end">
             {hideDetailsButton && (
-              <Button variant="outline" onClick={onViewDetails}>
+              <Button
+                variant="outline"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onViewDetails()
+                }}
+              >
                 Voir détail complet
               </Button>
             )}
-            <Button onClick={onViewInterventions}>Voir interventions</Button>
+            <Button
+              onClick={(e) => {
+                e.stopPropagation()
+                onViewInterventions()
+              }}
+            >
+              Voir interventions
+            </Button>
           </div>
         )}
       </div>

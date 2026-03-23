@@ -202,17 +202,19 @@ export default function MecanicienPage() {
           >
             En cours
           </Button>
-          <Button
-            onClick={() => setFilterStatus("TERMINEE")}
-            variant={filterStatus === "TERMINEE" ? "default" : "outline"}
-          >
-            Terminées
-          </Button>
+          
           <Button
             onClick={() => setFilterStatus("ATTENTE_PIECES")}
             variant={filterStatus === "ATTENTE_PIECES" ? "default" : "outline"}
           >
             En attente de pièces
+          </Button>
+
+          <Button
+            onClick={() => setFilterStatus("TERMINEE")}
+            variant={filterStatus === "TERMINEE" ? "default" : "outline"}
+          >
+            Terminées
           </Button>
         </div>
 
