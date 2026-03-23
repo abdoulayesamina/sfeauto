@@ -101,8 +101,8 @@ export async function PATCH(
       )
     }
 
-    if (!invoice.invoiceConfirmed) {
-      console.error("Dans !invoice.invoiceConfirmed")
+    if (!invoice.accordNumber) {
+      console.error("Dans !invoice.accordNumber")
       return NextResponse.json(
         { error: "Veuillez attribuer un numéro d'accord avant de modifier le statut de cette intervention." },
         { status: 403 }

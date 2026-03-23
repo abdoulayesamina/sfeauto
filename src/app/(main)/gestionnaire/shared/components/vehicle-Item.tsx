@@ -15,6 +15,7 @@ import { InterventionForm } from "../../form/intervention-form"
 import { useInterventionApi } from "../useIntervention.api"
 import { toUIStatus, getStatusMeta } from "@/src/utils/constants/intervention-status"
 import { groupInterventionsByStatus } from "@/src/utils/constants/groupInterventionsByStatus"
+import { formatLicensePlate } from "@/src/utils/formatters"
 
 type VehicleItemProps = {
   vehicle?: Vehicule
@@ -85,7 +86,7 @@ export function VehicleItem({
   }, [agences, vehicle.base?.id])
 
   const entryDateText = useMemo(() => {
-    return vehicle.entryDate ? String(vehicle.entryDate).slice(0, 10) : "—"
+    return vehicle.entryDate ? new Date(vehicle.entryDate).toLocaleDateString("fr-FR") : "—"
   }, [vehicle.entryDate])
 
   /* ----------------------------- ACTIONS ----------------------------- */

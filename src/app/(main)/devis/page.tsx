@@ -11,6 +11,7 @@ import { EditDevisModal } from "../gestionnaire/shared/components/edit-devis/Edi
 import { Modal } from "@/src/shared/components/modal";
 import { DevisApercu } from "../gestionnaire/shared/components/devisApercu";
 import { toast } from "sonner";
+import { formatLicensePlate } from "@/src/utils/formatters"
 
 function formatDate(d?: string | Date | null) {
   if (!d) return "—";
@@ -123,7 +124,10 @@ export default function DevisPage() {
         const brandModel = `${v.brand?.name ?? ""} ${v.model?.name ?? ""}`.trim();
         return (
           <span>
-            <span className="font-medium">{v.licensePlate}</span>
+            {/* <span className="font-medium">{v.licensePlate}</span> */}
+            <span className="font-medium">
+              {formatLicensePlate(v.licensePlate || "")}
+            </span>
             {brandModel ? ` — ${brandModel}` : ""}
           </span>
         );

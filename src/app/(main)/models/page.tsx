@@ -100,50 +100,90 @@ export default function ModelsPage() {
 
     const handleCreateModel = async () => {
         if (!modelFormData.name?.trim() || !modelFormData.brandId) return
+
         setInteractionLoading(true)
+
         try {
-            await apiCreateModel(modelFormData.name, modelFormData.brandId)
-            toast.success("Modèle ajouté")
-            setIsModelModalOpen(false)
-            loadModels(modelFormData.brandId)
+          const newModel = await apiCreateModel(
+            modelFormData.name,
+            modelFormData.brandId
+          )
+
+          toast.success("Modèle ajouté")
+
+          //  UPDATE LOCAL
+          setModels((prev) => [...prev, newModel])
+          setFilteredModels((prev) => [...prev, newModel])
+
+          setIsModelModalOpen(false)
+
         } catch (e: any) {
-            toast.error(e.message)
+          toast.error(e.message)
         } finally {
-            setInteractionLoading(false)
+          setInteractionLoading(false)
         }
-    }
+      }
 
     const handleUpdateModel = async () => {
-        if (!modelFormData.id || !modelFormData.name?.trim()) return
-        setInteractionLoading(true)
-        try {
-            await apiUpdateModel(modelFormData.id, modelFormData.name)
-            toast.success("Modèle modifié")
-            setIsEditModelOpen(false)
-            if (modelFormData.brandId) loadModels(modelFormData.brandId)
-        } catch (e: any) {
-            toast.error(e.message)
-        } finally {
-            setInteractionLoading(false)
-        }
+      if (!modelFormData.id || !modelFormData.name?.trim()) return
+
+      setInteractionLoading(true)
+
+      try {
+        const updatedModel = await apiUpdateModel(
+          modelFormData.id,
+          modelFormData.name
+        )
+
+        toast.success("Modèle modifié")
+
+        // UPDATE LOCAL
+        setModels((prev) =>
+          prev.map((m) =>
+            m.id === updatedModel.id ? updatedModel : m
+          )
+        )
+
+        setFilteredModels((prev) =>
+          prev.map((m) =>
+            m.id === updatedModel.id ? updatedModel : m
+          )
+        )
+
+        setIsEditModelOpen(false)
+
+      } catch (e: any) {
+        toast.error(e.message)
+      } finally {
+        setInteractionLoading(false)
+      }
     }
 
     const handleDeleteModel = async (model: Model) => {
-        const confirmed = await confirmAlert("Supprimer le modèle", `Voulez-vous vraiment supprimer ${model.name} ?`)
-        if (!confirmed) return
+      const confirmed = await confirmAlert(
+        "Supprimer le modèle",
+        `Voulez-vous vraiment supprimer ${model.name} ?`
+      )
+      if (!confirmed) return
 
-        setIdToDelete(model.id)
-        setInteractionLoading(true)
-        try {
-            await apiDeleteModel(model.id)
-            toast.success("Modèle supprimé")
-            if (selectedBrandId) loadModels(selectedBrandId)
-        } catch (e: any) {
-            toast.error(e.message)
-        } finally {
-            setInteractionLoading(false)
-            setIdToDelete(null)
-        }
+      setIdToDelete(model.id)
+      setInteractionLoading(true)
+
+      try {
+        await apiDeleteModel(model.id)
+
+        toast.success("Modèle supprimé")
+
+        // UPDATE LOCAL (évite le flash)
+        setModels((prev) => prev.filter((m) => m.id !== model.id))
+        setFilteredModels((prev) => prev.filter((m) => m.id !== model.id))
+
+      } catch (e: any) {
+        toast.error(e.message)
+      } finally {
+        setInteractionLoading(false)
+        setIdToDelete(null)
+      }
     }
 
 

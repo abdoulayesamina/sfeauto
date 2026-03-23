@@ -69,12 +69,20 @@ export default function BrandsPage() {
 
   const handleCreateBrand = async () => {
     if (!brandFormData.name?.trim()) return
+
     setInteractionLoading(true)
+
     try {
-      await apiCreateBrand(brandFormData.name)
+      const newBrand = await apiCreateBrand(brandFormData.name)
+
       toast.success("Marque ajoutée")
+
+      // 🔥 UPDATE LOCAL
+      setBrands((prev) => [...prev, newBrand])
+      setFilteredBrands((prev) => [...prev, newBrand])
+
       setIsBrandModalOpen(false)
-      loadBrands()
+
     } catch (e: any) {
       toast.error(e.message)
     } finally {
@@ -83,38 +91,66 @@ export default function BrandsPage() {
   }
 
   const handleUpdateBrand = async () => {
-    if (!brandFormData.id || !brandFormData.name?.trim()) return
-    setInteractionLoading(true)
-    try {
-      await apiUpdateBrand(brandFormData.id, brandFormData.name)
-      toast.success("Marque modifiée")
-      setIsEditBrandOpen(false)
-      loadBrands()
-    } catch (e: any) {
-      toast.error(e.message)
-    } finally {
-      setInteractionLoading(false)
-    }
+  if (!brandFormData.id || !brandFormData.name?.trim()) return
+
+  setInteractionLoading(true)
+
+  try {
+    const updatedBrand = await apiUpdateBrand(
+      brandFormData.id,
+      brandFormData.name
+    )
+
+    toast.success("Marque modifiée")
+
+    // 🔥 UPDATE LOCAL
+    setBrands((prev) =>
+      prev.map((b) =>
+        b.id === updatedBrand.id ? updatedBrand : b
+      )
+    )
+
+    setFilteredBrands((prev) =>
+      prev.map((b) =>
+        b.id === updatedBrand.id ? updatedBrand : b
+      )
+    )
+
+    setIsEditBrandOpen(false)
+
+  } catch (e: any) {
+    toast.error(e.message)
+  } finally {
+    setInteractionLoading(false)
   }
+}
 
   const handleDeleteBrand = async (brand: Brand) => {
-    const confirmed = await confirmAlert("Supprimer la marque", `Voulez-vous vraiment supprimer ${brand.name} ?`)
-    if (!confirmed) return
+  const confirmed = await confirmAlert(
+    "Supprimer la marque",
+    `Voulez-vous vraiment supprimer ${brand.name} ?`
+  )
+  if (!confirmed) return
 
-    setIdToDelete(brand.id)
-    setInteractionLoading(true)
-    try {
-      await apiDeleteBrand(brand.id)
-      toast.success("Marque supprimée")
-      loadBrands()
-    } catch (e: any) {
-      // toast.error(e.message)
-      toast.error(e?.message || "Erreur lors de la suppression")
-    } finally {
-      setInteractionLoading(false)
-      setIdToDelete(null)
-    }
+  setIdToDelete(brand.id)
+  setInteractionLoading(true)
+
+  try {
+    await apiDeleteBrand(brand.id)
+
+    toast.success("Marque supprimée")
+
+    // 🔥 UPDATE LOCAL
+    setBrands((prev) => prev.filter((b) => b.id !== brand.id))
+    setFilteredBrands((prev) => prev.filter((b) => b.id !== brand.id))
+
+  } catch (e: any) {
+    toast.error(e?.message || "Erreur lors de la suppression")
+  } finally {
+    setInteractionLoading(false)
+    setIdToDelete(null)
   }
+}
 
 
   // ================= COLUMNS =================

@@ -54,7 +54,7 @@ export function NavMain({
                   <span>{item.title}</span>
                 </Link>
               </button>
-            </SidebarMenuItem>
+            </SidebarMenuItem> 
           ))}
         </SidebarMenu>
       </SidebarGroupContent>

@@ -332,7 +332,8 @@ export default function IntervDetailGes({ selectedIntervention, onClose }: Props
                     </span>
                   </p>
                   <p className="text-xs text-gray-500">
-                    {new Date(h.changedAt).toLocaleString("fr-FR")}
+                    {/* {new Date(h.changedAt).toLocaleString("fr-FR")} */}
+                    {new Date(h.changedAt).toLocaleDateString("fr-FR")+" à "+new Date(h.changedAt).toLocaleTimeString("fr-FR")}
                   </p>
                   <p className="text-xs text-gray-500">
                     Modifié par{" "}

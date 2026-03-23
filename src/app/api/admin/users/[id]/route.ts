@@ -117,6 +117,49 @@ export async function PUT(
 }
 
 // DELETE user
+// export async function DELETE(
+//   request: NextRequest,
+//   { params }: { params: Promise<{ id: string }> }
+// ) {
+//   try {
+//     const session = await auth()
+
+//     if (!session?.user || session.user.role !== 'ADMIN') {
+//       return NextResponse.json({ error: 'Accès administrateur requis' }, { status: 403 })
+//     }
+
+//     const { id } = await params
+
+//     // Prevent admin from deleting themselves
+//     if (id === session.user.id) {
+//       return NextResponse.json({ error: 'Impossible de supprimer votre propre compte' }, { status: 400 })
+//     }
+
+//     // Check if user is a system account
+//     const user = await prisma.user.findUnique({
+//       where: { id },
+//       select: { isSystemAccount: true }
+//     })
+
+//     if (!user) {
+//       return NextResponse.json({ error: 'Utilisateur introuvable' }, { status: 404 })
+//     }
+
+//     if (user.isSystemAccount) {
+//       return NextResponse.json({ error: 'Impossible de supprimer un compte système' }, { status: 403 })
+//     }
+
+//     await prisma.user.delete({
+//       where: { id }
+//     })
+
+//     return NextResponse.json({ success: true })
+//   } catch (error) {
+//     logError('Failed to delete user', error)
+//     return NextResponse.json({ error: 'Échec de la suppression de l\'utilisateur' }, { status: 500 })
+//   }
+// }
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -130,12 +173,14 @@ export async function DELETE(
 
     const { id } = await params
 
-    // Prevent admin from deleting themselves
+    // Prevent self delete
     if (id === session.user.id) {
-      return NextResponse.json({ error: 'Impossible de supprimer votre propre compte' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Impossible de supprimer votre propre compte' },
+        { status: 400 }
+      )
     }
 
-    // Check if user is a system account
     const user = await prisma.user.findUnique({
       where: { id },
       select: { isSystemAccount: true }
@@ -146,16 +191,37 @@ export async function DELETE(
     }
 
     if (user.isSystemAccount) {
-      return NextResponse.json({ error: 'Impossible de supprimer un compte système' }, { status: 403 })
+      return NextResponse.json(
+        { error: 'Impossible de supprimer un compte système' },
+        { status: 403 }
+      )
     }
 
+    //  DELETE avec gestion d'erreur métier
     await prisma.user.delete({
       where: { id }
     })
 
     return NextResponse.json({ success: true })
-  } catch (error) {
+
+  } catch (error: any) {
+
+    // 🔥 CAS IMPORTANT : relation existante
+    if (error.code === 'P2003') {
+      return NextResponse.json(
+        {
+          error:
+            "Impossible de supprimer cet utilisateur car il est lié à d'autres données"
+        },
+        { status: 409 }
+      )
+    }
+
     logError('Failed to delete user', error)
-    return NextResponse.json({ error: 'Échec de la suppression de l\'utilisateur' }, { status: 500 })
+
+    return NextResponse.json(
+      { error: 'Échec de la suppression de l\'utilisateur' },
+      { status: 500 }
+    )
   }
 }
