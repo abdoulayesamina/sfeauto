@@ -195,7 +195,7 @@ export default function MecanicienPage() {
         </div>
 
         {/* Statut filter */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Button
             onClick={() => setFilterStatus("EN_COURS")}
             variant={filterStatus === "EN_COURS" ? "default" : "outline"}
