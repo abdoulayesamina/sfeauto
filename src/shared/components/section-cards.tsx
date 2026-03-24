@@ -414,8 +414,8 @@ export function SectionCards({user} : {user?: any} ) {
                         <div className="flex items-center gap-5 flex-1">
                           <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 
                                           flex items-center justify-center text-sm font-semibold text-gray-700 shadow-sm">
-                            {inv.vehicle.brand.name[0]}
-                            {inv.vehicle.model.name[0]}
+                            {inv.vehicle.brand.name}
+                            {inv.vehicle.model.name}
                           </div>
 
                           <div className="flex-1 min-w-0">
