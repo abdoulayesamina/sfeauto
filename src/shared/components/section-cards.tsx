@@ -62,7 +62,6 @@ export function SectionCards({user} : {user?: any} ) {
 
 
   const updateInterventionsStats = (interventions: any[] = []) => {
-    debugger
     setNombreTotalInterventions(interventions.length)
     setTotalInterventions(interventions)
 
