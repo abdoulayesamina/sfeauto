@@ -181,8 +181,8 @@ export function SectionCards({user} : {user?: any} ) {
       ...inv,
       vehicle: {
         ...inv.vehicle,
-        brand: inv.vehicle.brand.name,
-        model: inv.vehicle.model.name,
+        brand: inv.vehicle?.brand?.name ?? "",
+        model: inv.vehicle?.model?.name ?? "",
       }
     });
     setOpenDetailModal(true);
