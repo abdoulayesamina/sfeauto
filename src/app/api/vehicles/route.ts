@@ -101,6 +101,7 @@ export async function GET(request: NextRequest) {
         invoices: {
           select: {
             id: true,
+            vehicleId:true,
             invoiceConfirmed: true,
             status: true,
             accordNumber: true,
@@ -118,6 +119,28 @@ export async function GET(request: NextRequest) {
               where: { dev_supprimee: false },
               select: { dev_id: true, dev_numdevis: true },
             },
+            vehicle:{
+              select: {
+                licensePlate: true,
+                color: true,
+                year: true,
+                clientId: true,
+                baseId: true,
+                entryDate: true,
+                brand:{
+                  select: {name : true}
+                },
+                model:{
+                  select: {name : true}
+                },
+                client:{
+                  select: {name:true}
+                },
+                base:{
+                  select: {location:true}
+                }
+              }
+            }
           },
           orderBy: { createdAt: "desc" },
         },

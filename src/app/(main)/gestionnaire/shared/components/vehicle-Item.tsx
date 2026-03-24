@@ -131,7 +131,7 @@ export function VehicleItem({
         className="
           mt-4 bg-white border border-gray-200 rounded-xl
           shadow-sm hover:shadow-md transition-all
-          flex flex-col lg:flex-row gap-4
+          flex flex-col lg:flex-row
         "
       >
         {/* INFOS VEHICULE */}
