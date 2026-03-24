@@ -414,22 +414,22 @@ export function SectionCards({user} : {user?: any} ) {
                         <div className="flex items-center gap-5 flex-1">
                           <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 
                                           flex items-center justify-center text-sm font-semibold text-gray-700 shadow-sm">
-                            {inv.vehicle.brand.name[0] ?? ""}
-                            {inv.vehicle.model.name[0] ?? ""}
+                            {inv.vehicle?.brand?.name[0] ?? ""}
+                            {inv.vehicle?.model?.name[0] ?? ""}
                           </div>
 
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between flex-wrap lg:justify-start gap-3">
                               <div className="font-semibold text-gray-900 truncate">
-                                {inv.vehicle.brand.name} {inv.vehicle.model.name}
+                                {inv.vehicle?.brand?.name ?? ""} {inv.vehicle?.model?.name ?? ""}
                               </div>
                               <span className="flex items-center gap-3">
                                 <span className="text-xs bg-gray-100 px-2 py-0.5 rounded-md text-gray-600">
-                                  {inv.vehicle.year}
+                                  {inv.vehicle?.year ?? ""}
                                 </span>
 
                                 <span className="text-xs bg-slate-100 px-2 py-0.5 rounded-md text-gray-600">
-                                  {inv.vehicle.color}
+                                  {inv.vehicle?.color ?? ""}
                                 </span>
                               </span>
                             </div>
@@ -437,12 +437,12 @@ export function SectionCards({user} : {user?: any} ) {
                             <div className="text-sm text-gray-600 mt-1">
                               Plaque :{" "}
                               <span className="font-medium text-gray-800">
-                                {inv.vehicle.licensePlate}
+                                {inv.vehicle?.licensePlate ?? ""}
                               </span>
                             </div>
 
                             <div className="text-sm mt-1 text-gray-500 truncate">
-                              {inv.workDescription}
+                              {inv.workDescription ?? ""}
                             </div>
                           </div>
                         </div>
