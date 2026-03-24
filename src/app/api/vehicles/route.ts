@@ -220,16 +220,23 @@ export async function POST(request: NextRequest) {
         brandId: brandId || null,
         modelId: modelId || null,
         year: parseOptionalInt(year),
+        // color: normalizeOptionalString(color),
+
         color: normalizeOptionalString(color),
+        version: normalizeOptionalString(version),
+
+        bodyType: bodyType?.trim() || null,
+        gearboxType: gearboxType?.trim() || null,
+        energy: energy?.trim() || null,
 
         firstRegistrationDate: parseOptionalDate(firstRegistrationDate),
-        energy: energy ?? null,
+        // energy: energy ?? null,
         doorsCount: parseOptionalInt(doorsCount),
-        bodyType: bodyType ?? null,
+        // bodyType: bodyType ?? null,
         realPowerHp: parseOptionalInt(realPowerHp),
         fiscalPowerCv: parseOptionalInt(fiscalPowerCv),
-        gearboxType: gearboxType ?? null,
-        version: normalizeOptionalString(version),
+        // gearboxType: gearboxType ?? null,
+        // version: normalizeOptionalString(version),
         registrationCardDate: parseOptionalDate(registrationCardDate),
 
         clientId: finalClientId!,

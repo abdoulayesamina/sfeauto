@@ -12,6 +12,7 @@ import { Modal } from "@/src/shared/components/modal";
 
 import { InvoicePatchPayload, useInvoiceApi } from "../hooks/useInvoiceApi.api";
 import { useInvoicePhotos } from "../hooks/useInvoicePhotos.api";
+import { toast } from "sonner";
 
 
 type PiecesCommande = "oui" | "non";
@@ -82,29 +83,69 @@ export function EditInterventionModal({ open, onClose, invoice, onUpdated, reloa
 
   const canSave = useMemo(() => Boolean(invoice?.id), [invoice?.id]);
 
-  // const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   if (!e.target.files) return;
+//   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+//   if (!e.target.files) return
 
-  //   const files = Array.from(e.target.files);
-  //   setImages(files);
+//   const files = Array.from(e.target.files)
 
-  //   const previews = files.map((file) => URL.createObjectURL(file));
-  //   setImagesBlob(previews);
-  // };
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  if (!e.target.files) return
+//   // 🔥 Ajouter au lieu de remplacer
+//   setImages(prev => [...prev, ...files])
 
-  const files = Array.from(e.target.files)
+//   const previews = files.map(file => URL.createObjectURL(file))
+//   setImagesBlob(prev => [...prev, ...previews])
 
-  // 🔥 Ajouter au lieu de remplacer
-  setImages(prev => [...prev, ...files])
+//   e.target.value = ""
+// }
 
-  const previews = files.map(file => URL.createObjectURL(file))
-  setImagesBlob(prev => [...prev, ...previews])
+const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  if (!e.target.files) return;
 
-  e.target.value = ""
-}
+  const files = Array.from(e.target.files);
 
+  const allowedTypes = ["image/png", "image/jpeg"];
+  const maxSize = 5 * 1024 * 1024; // 5MB
+
+  const validFiles: File[] = [];
+
+  let hasTypeError = false;
+  let hasSizeError = false;
+
+  for (let file of files) {
+    if (!allowedTypes.includes(file.type)) {
+      hasTypeError = true;
+      continue;
+    }
+
+    if (file.size > maxSize) {
+      hasSizeError = true;
+      continue;
+    }
+
+    validFiles.push(file);
+  }
+
+  // 🔥 TOASTS
+  if (hasTypeError) {
+    toast.error("Certains fichiers ont été ignorés (formats autorisés : PNG, JPEG)");
+  }
+
+  if (hasSizeError) {
+    toast.error("Certains fichiers dépassent 5MB");
+  }
+
+  if (validFiles.length === 0) {
+    e.target.value = "";
+    return;
+  }
+
+  // ✅ Ajout des fichiers valides
+  setImages(prev => [...prev, ...validFiles]);
+
+  const previews = validFiles.map(file => URL.createObjectURL(file));
+  setImagesBlob(prev => [...prev, ...previews]);
+
+  e.target.value = "";
+};
   
   async function handleSave(e?: React.FormEvent) {
     e?.preventDefault();
@@ -236,6 +277,10 @@ export function EditInterventionModal({ open, onClose, invoice, onUpdated, reloa
               + Ajouter une photo
             </Button>
 
+            <p className="text-gray-500 text-xs">
+              Formats acceptés : PNG, JPEG • Max 5MB
+            </p>
+
             {images.length > 0 && (
               <span className="text-sm text-gray-500">
                 {images.length} fichier(s) sélectionné(s)
@@ -246,7 +291,8 @@ export function EditInterventionModal({ open, onClose, invoice, onUpdated, reloa
             id="EditInputImages"
             type="file"
             className="cursor-pointer hidden"
-            accept="image/*"
+            // accept="image/*"
+            accept="image/png, image/jpeg"
             multiple
             onChange={handleFileChange}
           />
