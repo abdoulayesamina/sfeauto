@@ -59,7 +59,7 @@ export default function GestionnairePage() {
 
   useEffect(() => {
     loadAll()
-    
+
   }, [])
 
   const loadAll = async () => {
@@ -83,7 +83,7 @@ export default function GestionnairePage() {
 
   // Recherche
   // const handleSearch = async () => {
-    
+
   //   if (!search.trim()) {
   //     await loadAll()
   //     setVehiculeNotFound(false)
@@ -103,30 +103,31 @@ export default function GestionnairePage() {
   // }
 
   const handleSearch = async () => {
-  if (!search.trim()) {
-    await loadAll()
-    setVehiculeNotFound(false)
-    return
+    if (!search.trim()) {
+      await loadAll()
+      setVehiculeNotFound(false)
+      return
+    }
+
+    try {
+      const { normalized } = searchSmart(search)
+
+      const data = await searchVehicles(normalized)
+
+      const vv = normalizeVehicles(data)
+
+      setVehicles(vv)
+      setVehiculeNotFound(vv.length === 0)
+
+      if (vv.length === 0) setPreFillLicensePlate(search)
+
+    } catch (e: any) {
+      toast.error("Recherche", e.message)
+    }
   }
-
-  try {
-    const { normalized } = searchSmart(search)
-
-    const data = await searchVehicles(normalized)
-
-    const vv = normalizeVehicles(data)
-
-    setVehicles(vv)
-    setVehiculeNotFound(vv.length === 0)
-
-    if (vv.length === 0) setPreFillLicensePlate(search)
-
-  } catch (e: any) {
-    toast.error("Recherche", e.message)
-  }
-}
 
   const handleCreateVehicle = async (data: Partial<Vehicule>) => {
+    debugger
     try {
       setLoading(true)
       await createVehicle(data)
@@ -136,13 +137,14 @@ export default function GestionnairePage() {
       setVehiculeNotFound(false)
       await loadAll()
     } catch (e: any) {
-      toast.error("Erreur", e.message)
+      toast.error("Erreur: " + e.message)
+
       setLoading(false)
     }
   }
 
-  const [filteredVehicles,setFilteredVehicles] = useState<Vehicule[]>([])
-  
+  const [filteredVehicles, setFilteredVehicles] = useState<Vehicule[]>([])
+
   useEffect(() => {
     const list = Array.isArray(vehicles) ? vehicles : []
 
@@ -264,11 +266,11 @@ export default function GestionnairePage() {
               }
               termine={filteredVehicles.filter((v) => v.invoices?.some((i) => i.status === "FIXING_FINISHED")).length}
               sansIntervention={filteredVehicles.filter((v) => !v.invoices || v.invoices.length === 0).length}
-              // Somme de tout les Invoice de tous les véhicules dont le base.location est "Paris Test Agency"
-              // test={filteredVehicles.filter((v) => v.base?.location === "Paris Test Agency").reduce((sum, v) => {
-              //   const invoices = Array.isArray(v.invoices) ? v.invoices : []
-              //   return sum + invoices.reduce((invSum, i) => invSum , 0)
-              // }, 0) }
+            // Somme de tout les Invoice de tous les véhicules dont le base.location est "Paris Test Agency"
+            // test={filteredVehicles.filter((v) => v.base?.location === "Paris Test Agency").reduce((sum, v) => {
+            //   const invoices = Array.isArray(v.invoices) ? v.invoices : []
+            //   return sum + invoices.reduce((invSum, i) => invSum , 0)
+            // }, 0) }
             />
 
             {/* LISTE VEHICULES */}
@@ -277,7 +279,7 @@ export default function GestionnairePage() {
               vehicles={filteredVehicles}
               clients={clients}
               agences={filteredAgences}
-              onSelect={(v) => {                
+              onSelect={(v) => {
                 setSelectedVehicle(v)
                 setApercuVehiculeOpen(true)
               }}
