@@ -29,16 +29,14 @@ function toDateInputValue(d?: string | Date | null) {
   if (!d) return "";
   const date = new Date(d);
   if (isNaN(date.getTime())) return "";
-  return date.toISOString().slice(0, 10); 
+  return date.toISOString().slice(0, 10);
 }
 
 export function EditInterventionModal({ open, onClose, invoice, onUpdated, reloadInvoiceList }: Props) {
   const { patchInvoice, loading } = useInvoiceApi();
 
-  // hotos existantes (SAS) comme IntervDetailGes
-  // const { photos, loading: photosLoading, error: photosError } = useInvoicePhotos(invoice?.id);
   const { photos, loading: photosLoading, error: photosError, refetch } =
-  useInvoicePhotos(invoice?.id);
+    useInvoicePhotos(invoice?.id);
 
 
   const [piecesCommande, setPiecesCommande] = useState<PiecesCommande>("non");
@@ -68,85 +66,83 @@ export function EditInterventionModal({ open, onClose, invoice, onUpdated, reloa
 
     setImages([]);
     setImagesBlob([]);
-   
+
 
   }, [open, invoice]);
 
-  // Amadou
 
   useEffect(() => {
-  if (open && invoice?.id) {
-    refetch()
-  }
-}, [open, invoice?.id])
+    if (open && invoice?.id) {
+      refetch()
+    }
+  }, [open, invoice?.id])
 
 
   const canSave = useMemo(() => Boolean(invoice?.id), [invoice?.id]);
 
-//   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-//   if (!e.target.files) return
+  //   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   if (!e.target.files) return
 
-//   const files = Array.from(e.target.files)
+  //   const files = Array.from(e.target.files)
 
-//   // 🔥 Ajouter au lieu de remplacer
-//   setImages(prev => [...prev, ...files])
+  //   // 🔥 Ajouter au lieu de remplacer
+  //   setImages(prev => [...prev, ...files])
 
-//   const previews = files.map(file => URL.createObjectURL(file))
-//   setImagesBlob(prev => [...prev, ...previews])
+  //   const previews = files.map(file => URL.createObjectURL(file))
+  //   setImagesBlob(prev => [...prev, ...previews])
 
-//   e.target.value = ""
-// }
+  //   e.target.value = ""
+  // }
 
-const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  if (!e.target.files) return;
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
 
-  const files = Array.from(e.target.files);
+    const files = Array.from(e.target.files);
 
-  const allowedTypes = ["image/png", "image/jpeg"];
-  const maxSize = 5 * 1024 * 1024; // 5MB
+    const allowedTypes = ["image/png", "image/jpeg"];
+    const maxSize = 5 * 1024 * 1024; // 5MB
 
-  const validFiles: File[] = [];
+    const validFiles: File[] = [];
 
-  let hasTypeError = false;
-  let hasSizeError = false;
+    let hasTypeError = false;
+    let hasSizeError = false;
 
-  for (let file of files) {
-    if (!allowedTypes.includes(file.type)) {
-      hasTypeError = true;
-      continue;
+    for (let file of files) {
+      if (!allowedTypes.includes(file.type)) {
+        hasTypeError = true;
+        continue;
+      }
+
+      if (file.size > maxSize) {
+        hasSizeError = true;
+        continue;
+      }
+
+      validFiles.push(file);
     }
 
-    if (file.size > maxSize) {
-      hasSizeError = true;
-      continue;
+    // 🔥 TOASTS
+    if (hasTypeError) {
+      toast.error("Certains fichiers ont été ignorés (formats autorisés : PNG, JPEG)");
     }
 
-    validFiles.push(file);
-  }
+    if (hasSizeError) {
+      toast.error("Certains fichiers dépassent 5MB");
+    }
 
-  // 🔥 TOASTS
-  if (hasTypeError) {
-    toast.error("Certains fichiers ont été ignorés (formats autorisés : PNG, JPEG)");
-  }
+    if (validFiles.length === 0) {
+      e.target.value = "";
+      return;
+    }
 
-  if (hasSizeError) {
-    toast.error("Certains fichiers dépassent 5MB");
-  }
+    setImages(prev => [...prev, ...validFiles]);
 
-  if (validFiles.length === 0) {
+    const previews = validFiles.map(file => URL.createObjectURL(file));
+    setImagesBlob(prev => [...prev, ...previews]);
+
     e.target.value = "";
-    return;
-  }
+  };
 
-  // ✅ Ajout des fichiers valides
-  setImages(prev => [...prev, ...validFiles]);
-
-  const previews = validFiles.map(file => URL.createObjectURL(file));
-  setImagesBlob(prev => [...prev, ...previews]);
-
-  e.target.value = "";
-};
-  
   async function handleSave(e?: React.FormEvent) {
     e?.preventDefault();
     if (!invoice?.id) return;
@@ -168,7 +164,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 
     if (!res.ok) return;
 
-    // 🔥 UPLOAD PHOTOS SI PRESENTES
+
     if (images.length > 0) {
       const formData = new FormData();
 
@@ -224,34 +220,34 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {photos.map((p: any, index: number) => (
-                 <div key={p.id} className="relative group">
-                    <img
-                      src={p.sasUrl}
-                      alt={`photo-${index}`}
-                      className="w-full h-32 object-cover rounded-lg border"
-                      loading="lazy"
-                    />
+                <div key={p.id} className="relative group">
+                  <img
+                    src={p.sasUrl}
+                    alt={`photo-${index}`}
+                    className="w-full h-32 object-cover rounded-lg border"
+                    loading="lazy"
+                  />
 
-                    <Button
-                      type="button"
-                      size="sm"
-                      className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white text-xs px-2 py-1 opacity-0 group-hover:opacity-100 transition"
-                      onClick={async (e) => {
-                        e.stopPropagation()
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white text-xs px-2 py-1 opacity-0 group-hover:opacity-100 transition"
+                    onClick={async (e) => {
+                      e.stopPropagation()
 
-                        await fetch(
-                          `${process.env.NEXT_PUBLIC_API_URL}/photos/${p.id}`,
-                          {
-                            method: "DELETE",
-                          }
-                        )
+                      await fetch(
+                        `${process.env.NEXT_PUBLIC_API_URL}/photos/${p.id}`,
+                        {
+                          method: "DELETE",
+                        }
+                      )
 
-                        await refetch()
-                      }}
-                    >
-                      ✕
-                    </Button>
-                  </div>
+                      await refetch()
+                    }}
+                  >
+                    ✕
+                  </Button>
+                </div>
               ))}
             </div>
           )}
@@ -270,22 +266,22 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
           </span> */}
 
           <Button
-              type="button"
-              variant="outline"
-              onClick={() => document.getElementById("EditInputImages")?.click()}
-            >
-              + Ajouter une photo
-            </Button>
+            type="button"
+            variant="outline"
+            onClick={() => document.getElementById("EditInputImages")?.click()}
+          >
+            + Ajouter une photo
+          </Button>
 
-            <p className="text-gray-500 text-xs">
-              Formats acceptés : PNG, JPEG • Max 5MB
-            </p>
+          <p className="text-gray-500 text-xs">
+            Formats acceptés : PNG, JPEG • Max 5MB
+          </p>
 
-            {images.length > 0 && (
-              <span className="text-sm text-gray-500">
-                {images.length} fichier(s) sélectionné(s)
-              </span>
-            )}
+          {images.length > 0 && (
+            <span className="text-sm text-gray-500">
+              {images.length} fichier(s) sélectionné(s)
+            </span>
+          )}
 
           <Input
             id="EditInputImages"

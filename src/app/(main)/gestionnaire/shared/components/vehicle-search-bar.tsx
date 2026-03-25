@@ -24,7 +24,7 @@ export function VehicleSearchBar({
           onChange={(e) => onChange?.(e.target.value)}
         />
         <Button onClick={onSearch} className="w-full md:w-auto">
-          Rechercher
+          Créer une intervention
         </Button>
       </div>
     </div>

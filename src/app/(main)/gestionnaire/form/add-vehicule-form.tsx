@@ -127,171 +127,80 @@ export function AddVehiculeForm({
   }, [vehicule.clientId])
 
   const handleLookup = async () => {
-  if (!vehicule.licensePlate) {
-    toast.error("Veuillez saisir une immatriculation")
-    return
-  }
-
-  try {
-    setLookupLoading(true)
-
-    const res = await fetch(`/api/vehicles/lookup/${vehicule.licensePlate}`)
-    const result = await res.json()
-
-    if (!res.ok) {
-      throw new Error(result.error || "Erreur lors de la recherche")
+    if (!vehicule.licensePlate) {
+      toast.error("Veuillez saisir une immatriculation")
+      return
     }
 
-    // 🔥 CAS IMPORTANT : RIEN TROUVÉ
-    if (!result.found) {
-      toast.error("Véhicule introuvable", {
-        description: "Vérifiez la plaque ou saisissez les informations manuellement",
+    try {
+      setLookupLoading(true)
+
+      const res = await fetch(`/api/vehicles/lookup/${vehicule.licensePlate}`)
+      const result = await res.json()
+
+      if (!res.ok) {
+        throw new Error(result.error || "Erreur lors de la recherche")
+      }
+
+      if (!result.found) {
+        toast.error("Véhicule introuvable", {
+          description: "Vérifiez la plaque ou saisissez les informations manuellement",
+        })
+        return
+      }
+
+      const v = result.data || result.vehicle
+
+      if (!v) {
+        toast.error("Aucune donnée exploitable trouvée")
+        return
+      }
+
+      setVehicule((prev) => ({
+        ...prev,
+        brandId: v.brandId ?? prev.brandId,
+        year: v.year ?? prev.year,
+        energy: v.energy ?? prev.energy,
+        doorsCount: v.doorsCount ?? prev.doorsCount,
+        bodyType: v.bodyType ?? prev.bodyType,
+        color: v.color ?? prev.color,
+        realPowerHp: v.realPowerHp ?? prev.realPowerHp,
+        fiscalPowerCv: v.fiscalPowerCv ?? prev.fiscalPowerCv,
+        gearboxType: v.gearboxType ?? prev.gearboxType,
+        firstRegistrationDate: v.firstRegistrationDate
+          ? new Date(v.firstRegistrationDate).toISOString()
+          : prev.firstRegistrationDate,
+        registrationCardDate: v.registrationCardDate
+          ? new Date(v.registrationCardDate).toISOString()
+          : prev.registrationCardDate,
+        version: v.version ?? prev.version,
+      }))
+
+      await new Promise((r) => setTimeout(r, 0))
+
+      setVehicule((prev) => ({
+        ...prev,
+        modelId: v.modelId ?? prev.modelId,
+      }))
+
+      toast.success("Véhicule trouvé et pré-rempli")
+
+    } catch (err: any) {
+      console.error("Erreur lookup véhicule :", err)
+
+      toast.error("Erreur lors de la recherche", {
+        description: err.message || "Veuillez réessayer",
       })
-      return
+
+    } finally {
+      setLookupLoading(false)
     }
-
-    const v = result.data || result.vehicle
-
-    if (!v) {
-      toast.error("Aucune donnée exploitable trouvée")
-      return
-    }
-
-    // 🔥 REMPLISSAGE
-    setVehicule((prev) => ({
-      ...prev,
-      brandId: v.brandId ?? prev.brandId,
-      year: v.year ?? prev.year,
-      energy: v.energy ?? prev.energy,
-      doorsCount: v.doorsCount ?? prev.doorsCount,
-      bodyType: v.bodyType ?? prev.bodyType,
-      color: v.color ?? prev.color,
-      realPowerHp: v.realPowerHp ?? prev.realPowerHp,
-      fiscalPowerCv: v.fiscalPowerCv ?? prev.fiscalPowerCv,
-      gearboxType: v.gearboxType ?? prev.gearboxType,
-      firstRegistrationDate: v.firstRegistrationDate
-        ? new Date(v.firstRegistrationDate).toISOString()
-        : prev.firstRegistrationDate,
-      registrationCardDate: v.registrationCardDate
-        ? new Date(v.registrationCardDate).toISOString()
-        : prev.registrationCardDate,
-      version: v.version ?? prev.version,
-    }))
-
-    await new Promise((r) => setTimeout(r, 0))
-
-    setVehicule((prev) => ({
-      ...prev,
-      modelId: v.modelId ?? prev.modelId,
-    }))
-
-    // 🔥 SUCCESS FEEDBACK (optionnel mais stylé)
-    toast.success("Véhicule trouvé et pré-rempli")
-
-  } catch (err: any) {
-    console.error("Erreur lookup véhicule :", err)
-
-    toast.error("Erreur lors de la recherche", {
-      description: err.message || "Veuillez réessayer",
-    })
-
-  } finally {
-    setLookupLoading(false)
   }
-}
 
-  // const handleLookup = async () => {
-  //   if (!vehicule.licensePlate) {
-  //     alert("Veuillez saisir une immatriculation")
-  //     return
-  //   }
-
-  //   try {
-  //     setLookupLoading(true)
-
-  //     const res = await fetch(`/api/vehicles/lookup/${vehicule.licensePlate}`)
-
-  //     if (!res.ok) {
-  //       throw new Error("Lookup API failed")
-  //     }
-
-  //     const result = await res.json()
-
-  //     if (result.found) {
-  //       const v = result.vehicle
-
-  //       setVehicule((prev) => ({
-  //         ...prev,
-  //         brandId: v.brandId ?? prev.brandId,
-  //         year: v.year ?? prev.year,
-  //         energy: v.energy ?? prev.energy,
-  //         doorsCount: v.doorsCount ?? prev.doorsCount,
-  //         bodyType: v.bodyType ?? prev.bodyType,
-  //         color: v.color ?? prev.color,
-  //         realPowerHp: v.realPowerHp ?? prev.realPowerHp,
-  //         fiscalPowerCv: v.fiscalPowerCv ?? prev.fiscalPowerCv,
-  //         gearboxType: v.gearboxType ?? prev.gearboxType,
-  //         firstRegistrationDate: v.firstRegistrationDate
-  //           ? new Date(v.firstRegistrationDate).toISOString()
-  //           : prev.firstRegistrationDate,
-
-  //         registrationCardDate: v.registrationCardDate
-  //           ? new Date(v.registrationCardDate).toISOString()
-  //           : prev.registrationCardDate,
-
-  //         version: v.version ?? prev.version,
-  //       }))
-
-  //       await new Promise((r) => setTimeout(r, 0))
-
-  //       setVehicule((prev) => ({
-  //         ...prev,
-  //         modelId: v.modelId ?? prev.modelId,
-  //       }))
-
-  //       return
-  //     }
-
-  //     if (result.data) {
-  //       const d = result.data
-
-  //       setVehicule((prev) => ({
-  //         ...prev,
-  //         brandId: d.brandId ?? prev.brandId,
-  //         year: d.year ?? prev.year,
-  //         energy: d.energy ?? prev.energy,
-  //         doorsCount: d.doorsCount ?? prev.doorsCount,
-  //         bodyType: d.bodyType ?? prev.bodyType,
-  //         color: d.color ?? prev.color,
-  //         realPowerHp: d.realPowerHp ?? prev.realPowerHp,
-  //         fiscalPowerCv: d.fiscalPowerCv ?? prev.fiscalPowerCv,
-  //         gearboxType: d.gearboxType ?? prev.gearboxType,
-  //         firstRegistrationDate: d.firstRegistrationDate
-  //           ? new Date(d.firstRegistrationDate).toISOString()
-  //           : prev.firstRegistrationDate,
-
-  //         registrationCardDate: d.registrationCardDate
-  //           ? new Date(d.registrationCardDate).toISOString()
-  //           : prev.registrationCardDate,
-
-  //         version: d.version ?? prev.version,
-  //       }))
-
-  //       await new Promise((r) => setTimeout(r, 0))
-
-  //       setVehicule((prev) => ({
-  //         ...prev,
-  //         modelId: d.modelId ?? prev.modelId,
-  //       }))
-  //     }
-  //   } catch (err) {
-  //     console.error("Erreur lookup véhicule :", err)
-  //   } finally {
-  //     setLookupLoading(false)
-  //   }
-  // }
-   const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (!vehicule.brandId) return alert("Veuillez sélectionner une marque")
+    if (!vehicule.modelId) return alert("Veuillez sélectionner un modèle")
     if (!vehicule.clientId) return alert("Veuillez sélectionner un client")
     if (!vehicule.baseId) return alert("Veuillez sélectionner une agence")
     if (!vehicule.licensePlate) return alert("Veuillez saisir l'immatriculation")
@@ -311,7 +220,6 @@ export function AddVehiculeForm({
             id="immatriculation"
             placeholder="AA-123-BB"
             className="h-12"
-            // value={vehicule.licensePlate}
             value={formatLicensePlate(vehicule.licensePlate || "")}
             onChange={(e) => {
               const normalized = e.target.value
@@ -339,14 +247,7 @@ export function AddVehiculeForm({
       {/* Marque / Modèle */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div className="flex flex-col gap-2">
-          <Label htmlFor="marque">Marque</Label>
-          {/* <Input
-            id="marque"
-            placeholder="Renault"
-            className="h-12"
-            value={vehicule.brand || ""}
-            onChange={(e) => setVehicule({ ...vehicule, brand: e.target.value })}
-          /> */}
+          <Label htmlFor="marque">Marque <span className="text-red-500">*</span></Label>
           <BrandSelect
             value={vehicule.brandId ?? null}
             onChange={(brandId) =>
@@ -359,7 +260,7 @@ export function AddVehiculeForm({
           />
         </div>
         <div className="flex flex-col gap-2">
-          <Label htmlFor="modele">Modèle</Label>
+          <Label htmlFor="modele">Modèle <span className="text-red-500">*</span></Label>
           <ModelSelect
             key={vehicule.brandId}
             brandId={vehicule.brandId ?? null}

@@ -57,19 +57,19 @@ export async function GET(request: NextRequest) {
         ...baseFilter,
         ...(search
           ? {
-              OR: [
-                {
-                  licensePlate: {
-                    contains: search
-                  }
-                },
-                {
-                  normalizedPlate: {
-                    contains: normalizedSearch ?? ""
-                  }
+            OR: [
+              {
+                licensePlate: {
+                  contains: search
                 }
-              ]
-            }
+              },
+              {
+                normalizedPlate: {
+                  contains: normalizedSearch ?? ""
+                }
+              }
+            ]
+          }
           : {}),
       },
       select: {
@@ -104,7 +104,7 @@ export async function GET(request: NextRequest) {
         invoices: {
           select: {
             id: true,
-            vehicleId:true,
+            vehicleId: true,
             invoiceConfirmed: true,
             status: true,
             accordNumber: true,
@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
               where: { dev_supprimee: false },
               select: { dev_id: true, dev_numdevis: true },
             },
-            vehicle:{
+            vehicle: {
               select: {
                 licensePlate: true,
                 color: true,
@@ -130,17 +130,17 @@ export async function GET(request: NextRequest) {
                 clientId: true,
                 baseId: true,
                 entryDate: true,
-                brand:{
-                  select: {name : true}
+                brand: {
+                  select: { name: true }
                 },
-                model:{
-                  select: {name : true}
+                model: {
+                  select: { name: true }
                 },
-                client:{
-                  select: {name:true}
+                client: {
+                  select: { name: true }
                 },
-                base:{
-                  select: {location:true}
+                base: {
+                  select: { location: true }
                 }
               }
             }
@@ -202,6 +202,13 @@ export async function POST(request: NextRequest) {
       version,
       registrationCardDate,
     } = body;
+
+    if (!String(brandId ?? "").trim()) {
+      return NextResponse.json({ error: "Marque requise" }, { status: 400 });
+    }
+    if (!String(modelId ?? "").trim()) {
+      return NextResponse.json({ error: "Modèle requise" }, { status: 400 });
+    }
 
     if (!String(licensePlate ?? "").trim()) {
       return NextResponse.json({ error: "Immatriculation requise" }, { status: 400 });
