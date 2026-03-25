@@ -6,11 +6,12 @@ import { RadioGroup, RadioGroupItem } from "@/src/shared/components/ui/radio-gro
 import { Textarea } from "@/src/shared/components/ui/textarea"
 import Image from "next/image"
 import { useEffect, useState } from "react"
+import { toast } from "sonner"
 
 type PiecesCommande = "oui" | "non"
 
 interface InterventionFormProps {
-  vehicleId: string 
+  vehicleId: string
   vehicleDisplayText: string
   defaultAccordNumber?: string
   onSubmit?: (data: any) => void
@@ -44,18 +45,61 @@ export function InterventionForm({
   //   setImagesBlob(previews)
   // }
 
+  // const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const files = Array.from(e.target.files || [])
+  //   if (!files.length) return
+
+  //   const previews = files.map(file => URL.createObjectURL(file))
+
+  //   setImages(prev => [...prev, ...files])          // File[]
+  //   setImagesBlob(prev => [...prev, ...previews])  // string[]
+  // }
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
     if (!files.length) return
 
-    const previews = files.map(file => URL.createObjectURL(file))
+    const allowedTypes = ["image/png", "image/jpeg"]
+    const maxSize = 5 * 1024 * 1024 // 5MB
 
-    setImages(prev => [...prev, ...files])          // File[]
-    setImagesBlob(prev => [...prev, ...previews])  // string[]
-}
+    const validFiles: File[] = []
+
+    let hasTypeError = false
+    let hasSizeError = false
+
+    for (const file of files) {
+      if (!allowedTypes.includes(file.type)) {
+        hasTypeError = true
+        continue
+      }
+
+      if (file.size > maxSize) {
+        hasSizeError = true
+        continue
+      }
+
+      validFiles.push(file)
+    }
+
+    // 🔥 messages
+    if (hasTypeError) {
+      toast.error("Format non supporté (PNG / JPEG uniquement)")
+    }
+
+    if (hasSizeError) {
+      toast.error("Certains fichiers dépassent 5MB")
+    }
+
+    if (!validFiles.length) return
+
+    const previews = validFiles.map(file => URL.createObjectURL(file))
+
+    setImages(prev => [...prev, ...validFiles])
+    setImagesBlob(prev => [...prev, ...previews])
+  }
 
 
-  
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -65,8 +109,8 @@ export function InterventionForm({
     onSubmit?.({
       ...data,
       vehicleId,
-      piecesCommande, 
-      images,         
+      piecesCommande,
+      images,
     })
   }
 
@@ -102,7 +146,7 @@ export function InterventionForm({
         >
           {imagesBlob.length > 0
             ? `${images.length} fichier(s) sélectionné(s)`
-            : "Sélectionner des images "}
+            : "Sélectionner des images au format PNG ou JPEG . Max 5 Mo"}
         </span>
 
         <Input
@@ -110,7 +154,7 @@ export function InterventionForm({
           type="file"
           name="photoTravaux"
           className="cursor-pointer hidden"
-          accept="image/*"
+          accept="image/png, image/jpeg"
           multiple
           onChange={handleFileChange}
         />

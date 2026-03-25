@@ -94,6 +94,55 @@ export function EditInterventionModal({ open, onClose, invoice, onUpdated, reloa
   //   e.target.value = ""
   // }
 
+  // const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   if (!e.target.files) return;
+
+  //   const files = Array.from(e.target.files);
+
+  //   const allowedTypes = ["image/png", "image/jpeg"];
+  //   const maxSize = 5 * 1024 * 1024; // 5MB
+
+  //   const validFiles: File[] = [];
+
+  //   let hasTypeError = false;
+  //   let hasSizeError = false;
+
+  //   for (let file of files) {
+  //     if (!allowedTypes.includes(file.type)) {
+  //       hasTypeError = true;
+  //       continue;
+  //     }
+
+  //     if (file.size > maxSize) {
+  //       hasSizeError = true;
+  //       continue;
+  //     }
+
+  //     validFiles.push(file);
+  //   }
+
+  //   // 🔥 TOASTS
+  //   if (hasTypeError) {
+  //     toast.error("Certains fichiers ont été ignorés (formats autorisés : PNG, JPEG)");
+  //   }
+
+  //   if (hasSizeError) {
+  //     toast.error("Certains fichiers dépassent 5MB");
+  //   }
+
+  //   if (validFiles.length === 0) {
+  //     e.target.value = "";
+  //     return;
+  //   }
+
+  //   setImages(prev => [...prev, ...validFiles]);
+
+  //   const previews = validFiles.map(file => URL.createObjectURL(file));
+  //   setImagesBlob(prev => [...prev, ...previews]);
+
+  //   e.target.value = "";
+  // };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
 
@@ -107,8 +156,8 @@ export function EditInterventionModal({ open, onClose, invoice, onUpdated, reloa
     let hasTypeError = false;
     let hasSizeError = false;
 
-    for (let file of files) {
-      if (!allowedTypes.includes(file.type)) {
+    for (const file of files) {
+      if (!file.type || !allowedTypes.includes(file.type)) {
         hasTypeError = true;
         continue;
       }
@@ -121,13 +170,16 @@ export function EditInterventionModal({ open, onClose, invoice, onUpdated, reloa
       validFiles.push(file);
     }
 
-    // 🔥 TOASTS
     if (hasTypeError) {
-      toast.error("Certains fichiers ont été ignorés (formats autorisés : PNG, JPEG)");
+      toast.error("Formats non supportés détectés", {
+        description: "Seuls les fichiers PNG et JPEG sont autorisés",
+      });
     }
 
     if (hasSizeError) {
-      toast.error("Certains fichiers dépassent 5MB");
+      toast.error("Fichiers trop volumineux", {
+        description: "La taille maximale est de 5MB",
+      });
     }
 
     if (validFiles.length === 0) {
@@ -135,10 +187,11 @@ export function EditInterventionModal({ open, onClose, invoice, onUpdated, reloa
       return;
     }
 
-    setImages(prev => [...prev, ...validFiles]);
 
-    const previews = validFiles.map(file => URL.createObjectURL(file));
-    setImagesBlob(prev => [...prev, ...previews]);
+    setImages((prev) => [...prev, ...validFiles]);
+
+    const previews = validFiles.map((file) => URL.createObjectURL(file));
+    setImagesBlob((prev) => [...prev, ...previews]);
 
     e.target.value = "";
   };
