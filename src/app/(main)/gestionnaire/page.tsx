@@ -261,10 +261,22 @@ export default function GestionnairePage() {
             {/* STATS */}
             <VehicleStats
               total={filteredVehicles.length}
+              // enCours={
+              //   filteredVehicles.filter((v) => v.invoices?.some((i) => i.status !== "FIXING_FINISHED")).length
+              // }
               enCours={
-                filteredVehicles.filter((v) => v.invoices?.some((i) => i.status !== "FIXING_FINISHED")).length
+                filteredVehicles.filter((v) => {
+                  const invoices = v.invoices || []
+                  return invoices.length > 0 && invoices.some(i => i.status !== "FIXING_FINISHED")
+                }).length
               }
-              termine={filteredVehicles.filter((v) => v.invoices?.some((i) => i.status === "FIXING_FINISHED")).length}
+              // termine={filteredVehicles.filter((v) => v.invoices?.some((i) => i.status === "FIXING_FINISHED")).length}
+              termine={
+                filteredVehicles.filter((v) => {
+                  const invoices = v.invoices || []
+                  return invoices.length > 0 && invoices.every(i => i.status === "FIXING_FINISHED")
+                }).length
+              }
               sansIntervention={filteredVehicles.filter((v) => !v.invoices || v.invoices.length === 0).length}
             // Somme de tout les Invoice de tous les véhicules dont le base.location est "Paris Test Agency"
             // test={filteredVehicles.filter((v) => v.base?.location === "Paris Test Agency").reduce((sum, v) => {
