@@ -123,7 +123,7 @@ export default function UsersPage() {
       setUsersLoading(false)
       loadUsersWithoutSpin()
     } catch (e: any) {
-      toast.error("Erreur", e.message)
+      toast.error("Erreur : "+ e.message)
       setUsersLoading(false)
     }
   }

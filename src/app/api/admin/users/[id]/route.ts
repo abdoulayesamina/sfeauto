@@ -19,7 +19,15 @@ export async function PUT(
 
     const { id } = await params
     const body = await request.json()
-    const { name, email, password, role, clientId, baseId } = body
+    const { 
+      name, 
+      email, 
+      password: oldPassword,
+      newPassword,
+      role, 
+      clientId, 
+      baseId 
+    } = body
 
     // Validation
     if (!name?.trim() || !email?.trim() || !role) {
@@ -31,15 +39,7 @@ export async function PUT(
     if (!emailValidation.valid) {
       return NextResponse.json({ error: emailValidation.error }, { status: 400 })
     }
-
-    // Password validation (only if password is being updated)
-    if (password?.trim()) {
-      const passwordValidation = validatePassword(password)
-      if (!passwordValidation.valid) {
-        return NextResponse.json({ error: passwordValidation.error }, { status: 400 })
-      }
-    }
-
+    
     // Role validation
     const validRoles = ['ADMIN', 'MANAGER', 'MECHANIC', 'CLIENT','SIEGE', 'AGENCE'];
     if (!validRoles.includes(role)) {
@@ -53,9 +53,51 @@ export async function PUT(
         id: { not: id }
       }
     })
-
+    
     if (existingUser) {
       return NextResponse.json({ error: 'Cet email existe déjà' }, { status: 400 })
+    }
+
+    // ====================== GESTION DU MOT DE PASSE ======================
+    let hashedNewPassword: string | undefined = undefined
+
+    if (newPassword?.trim()) {
+      // Cas où l'utilisateur veut changer le mot de passe
+
+      if (!oldPassword?.trim()) {
+        return NextResponse.json(
+          { error: "L'ancien mot de passe est requis pour changer le mot de passe" }, 
+          { status: 400 }
+        )
+      }
+
+      // Récupérer l'utilisateur actuel pour vérifier l'ancien mot de passe
+      const currentUser = await prisma.user.findUnique({
+        where: { id },
+        select: { password: true }
+      })
+
+      if (!currentUser) {
+        return NextResponse.json({ error: 'Utilisateur non trouvé' }, { status: 404 })
+      }
+
+      // Vérifier que l'ancien mot de passe est correct
+      const isOldPasswordCorrect = await bcrypt.compare(oldPassword, currentUser.password)
+      if (!isOldPasswordCorrect) {
+        return NextResponse.json(
+          { error: "L'ancien mot de passe est incorrect" }, 
+          { status: 400 }
+        )
+      }
+
+      // Valider le nouveau mot de passe
+      const passwordValidation = validatePassword(newPassword)
+      if (!passwordValidation.valid) {
+        return NextResponse.json({ error: passwordValidation.error }, { status: 400 })
+      }
+
+      // Hasher le nouveau mot de passe
+      hashedNewPassword = await bcrypt.hash(newPassword, 10)
     }
 
     // If CLIENT role, validate that baseId belongs to the selected client
@@ -82,9 +124,9 @@ export async function PUT(
       baseId: baseId || null
     }
 
-    // Only update password if provided
-    if (password?.trim()) {
-      updateData.password = await bcrypt.hash(password, 10)
+    // On ajoute le nouveau mot de passe hashé uniquement s'il y en a un
+    if (hashedNewPassword) {
+      updateData.password = hashedNewPassword
     }
 
     // Update user

@@ -39,6 +39,10 @@ export function UserForm({
   loading,
 }: UserFormProps) {
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [oldPassword, setOldPassword] = useState("");                
+  const [newPassword, setNewPassword] = useState("");                
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");  
+
   const roles = [
     { id: "ADMIN", name: "Administrateur" },
     { id: "MANAGER", name: "Gestionnaire" },
@@ -71,7 +75,9 @@ export function UserForm({
 
   const isPasswordValid =
     Object.values(passwordRules).every(Boolean) && passwordsMatch;
-  
+
+  const isChangingPassword = oldPassword.trim().length > 0;
+  const newPasswordsMatch = newPassword === confirmNewPassword;
 
   return (
     <form
@@ -100,70 +106,99 @@ export function UserForm({
         />
       </div>
 
-      {/* <div>
-        <Label>Mot de passe</Label>
-        <Input
-          className="h-12"
-          type="password"
-          value={value.password || ""}
-          placeholder={
-            mode === "edit"
-              ? "Mot de passe (laisser vide pour ne pas changer)"
-              : "Mot de passe"
-          }
-          onChange={(e) => onChange({ ...value, password: e.target.value })}
-        />
-      </div> */}
-      <div>
-      <Label>Mot de passe</Label>
-      <Input
-        className="h-12"
-        type="password"
-        value={value.password || ""}
-        placeholder={
-          mode === "edit"
-            ? "Mot de passe (laisser vide pour ne pas changer)"
-            : "Mot de passe"
-        }
-        onChange={(e) => onChange({ ...value, password: e.target.value })}
-      />
+      
+      {mode === "create" ? (
+        <>
+          <div>
+            <Label>Mot de passe</Label>
+            <Input
+              className="h-12"
+              type="password"
+              value={value.password || ""}
+              placeholder="Mot de passe"
+              onChange={(e) => onChange({ ...value, password: e.target.value })}
+            />
 
-      {/*  RÈGLES */}
-      {mode === "create" && (
-        <div className="text-sm mt-2 space-y-1">
-          <p className={passwordRules.length ? "text-green-500" : "text-red-500"}>
-            • 8 caractères minimum
-          </p>
-          <p className={passwordRules.uppercase ? "text-green-500" : "text-red-500"}>
-            • Une majuscule
-          </p>
-          <p className={passwordRules.lowercase ? "text-green-500" : "text-red-500"}>
-            • Une minuscule
-          </p>
-          <p className={passwordRules.number ? "text-green-500" : "text-red-500"}>
-            • Un chiffre
-          </p>
-        </div>
+            <div className="text-sm mt-2 space-y-1">
+              <p className={passwordRules.length ? "text-green-500" : "text-red-500"}>• 8 caractères minimum</p>
+              <p className={passwordRules.uppercase ? "text-green-500" : "text-red-500"}>• Une majuscule</p>
+              <p className={passwordRules.lowercase ? "text-green-500" : "text-red-500"}>• Une minuscule</p>
+              <p className={passwordRules.number ? "text-green-500" : "text-red-500"}>• Un chiffre</p>
+            </div>
+          </div>
+
+          <div>
+            <Label>Confirmer le mot de passe</Label>
+            <Input
+              className="h-12"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
+            {confirmPassword && !passwordsMatch && (
+              <p className="text-red-500 text-sm mt-1">Les mots de passe ne correspondent pas</p>
+            )}
+          </div>
+        </>
+      ) : (
+        // ---------- MODE EDIT ----------
+        <>
+          <div>
+            <Label>Ancien mot de passe</Label>
+            <Input
+              className="h-12"
+              type="password"
+              value={oldPassword}
+              placeholder="Ancien mot de passe (laisser vide pour ne pas changer)"
+              onChange={(e) => {
+                const val = e.target.value;
+                setOldPassword(val);
+                onChange({ ...value, password: val }); 
+              }}
+            />
+          </div>
+
+          {isChangingPassword && (
+            <>
+              <div>
+                <Label>Nouveau mot de passe</Label>
+                <Input
+                  className="h-12"
+                  type="password"
+                  value={newPassword}
+                  placeholder="Nouveau mot de passe"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setNewPassword(val);
+                    onChange({ ...value, newPassword: val });
+                  }}
+                />
+
+                
+                <div className="text-sm mt-2 space-y-1">
+                  <p className={newPassword.length >= 8 ? "text-green-500" : "text-red-500"}>• 8 caractères minimum</p>
+                  <p className={/[A-Z]/.test(newPassword) ? "text-green-500" : "text-red-500"}>• Une majuscule</p>
+                  <p className={/[a-z]/.test(newPassword) ? "text-green-500" : "text-red-500"}>• Une minuscule</p>
+                  <p className={/[0-9]/.test(newPassword) ? "text-green-500" : "text-red-500"}>• Un chiffre</p>
+                </div>
+              </div>
+
+              <div>
+                <Label>Confirmer le nouveau mot de passe</Label>
+                <Input
+                  className="h-12"
+                  type="password"
+                  value={confirmNewPassword}
+                  onChange={(e) => setConfirmNewPassword(e.target.value)}
+                />
+                {confirmNewPassword && !newPasswordsMatch && (
+                  <p className="text-red-500 text-sm mt-1">Les mots de passe ne correspondent pas</p>
+                )}
+              </div>
+            </>
+          )}
+        </>
       )}
-    </div>
-
-    {mode === "create" && (
-      <div>
-        <Label>Confirmer le mot de passe</Label>
-        <Input
-          className="h-12"
-          type="password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-        />
-
-        {confirmPassword && !passwordsMatch && (
-          <p className="text-red-500 text-sm mt-1">
-            Les mots de passe ne correspondent pas
-          </p>
-        )}
-      </div>
-    )}
 
       <div>
         <Label>Rôle</Label>
@@ -272,7 +307,11 @@ export function UserForm({
           disabled={
             (value.role === "AGENCE" && (!value.clientId || !value.baseId)) ||
             loading ||
-            (mode === "create" && !isPasswordValid)
+            (mode === "create" && !isPasswordValid) ||
+            (mode === "edit" && 
+              oldPassword.trim().length > 0 && 
+              (!newPassword || !confirmNewPassword || newPassword !== confirmNewPassword)
+            )
           }
         >
           <span className="flex items-center gap-2">
