@@ -8,43 +8,61 @@ export async function GET(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await context.params; // <-- Important, await ici
+    const { id } = await context.params;
 
     const session = await auth();
 
     if (!session?.user) {
-      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    // Vérifier la facture
-    const invoice = await prisma.invoice.findUnique({
-      where: { id },
-      select: { id: true },
+    const invoice = await prisma.invoice_inv.findUnique({
+      where: { inv_id: id },
+      select: { inv_id: true },
     });
 
     if (!invoice) {
       return NextResponse.json(
-        { error: 'Intervention non trouvée' },
+        { error: "Intervention non trouvée" },
         { status: 404 }
       );
     }
 
-    // Historique
-    const history = await prisma.changehistory.findMany({
-      where: { invoiceId: id },
+    const history = await prisma.changehistory_chg.findMany({
+      where: { chg_invoiceId: id },
       include: {
-        user: { select: { name: true, email: true } },
+        chg_user: {
+          select: {
+            usr_name: true,
+            usr_email: true,
+          },
+        },
       },
-      orderBy: { changedAt: 'desc' },
+      orderBy: { chg_changedAt: "desc" },
     });
 
-    return NextResponse.json(history);
+    return NextResponse.json(
+      history.map((item) => ({
+        id: item.chg_id,
+        invoiceId: item.chg_invoiceId,
+        changedAt: item.chg_changedAt,
+        fieldName: item.chg_fieldName,
+        oldValue: item.chg_oldValue,
+        newValue: item.chg_newValue,
+        changeType: item.chg_changeType,
+        user: item.chg_user
+          ? {
+              name: item.chg_user.usr_name,
+              email: item.chg_user.usr_email,
+            }
+          : null,
+      }))
+    );
   } catch (error: any) {
-    logError('Failed to fetch change history', error);
+    logError("Failed to fetch change history", error);
     return NextResponse.json(
       { error: "Échec de la récupération de l'historique" },
       { status: 500 }
     );
   }
 }
-

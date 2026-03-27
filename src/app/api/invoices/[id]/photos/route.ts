@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/src/lib/prisma"
 import { auth } from "@/auth"
-// import { getSasUrlForBlob } from "@/src/lib/azureBlob"
 import { randomUUID } from "crypto"
 import { getContainerClient, getSasUrlForBlob } from "@/src/lib/azureBlob"
 import { logError } from "@/src/lib/logger"
-
-
 
 export const runtime = "nodejs"
 
@@ -16,7 +13,7 @@ export async function GET(
 ) {
   try {
     const session = await auth()
-    if (!session || !["MANAGER", "MECHANIC", "CLIENT","AGENCE","ADMIN"].includes(session.user.role)) {
+    if (!session || !["MANAGER", "MECHANIC", "CLIENT", "AGENCE", "ADMIN"].includes(session.user.role)) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
     }
 
@@ -26,32 +23,37 @@ export async function GET(
       return NextResponse.json({ error: "invoiceId invalide" }, { status: 400 })
     }
 
-    // Optionnel : s'assurer que l'intervention existe
-    const invoice = await prisma.invoice.findUnique({
-      where: { id: invoiceId },
-      select: { id: true },
+    const invoice = await prisma.invoice_inv.findUnique({
+      where: { inv_id: invoiceId },
+      select: { inv_id: true },
     })
+
     if (!invoice) {
       return NextResponse.json({ error: "Intervention introuvable" }, { status: 404 })
     }
 
-    const photos = await prisma.invoicephoto.findMany({
-      where: { invoiceId },
-      orderBy: { createdAt: "desc" },
+    const photos = await prisma.invoicephoto_ivp.findMany({
+      where: { ivp_invoiceId: invoiceId },
+      orderBy: { ivp_createdAt: "desc" },
       select: {
-        id: true,
-        blobName: true,
-        url: true,
-        contentType: true,
-        size: true,
-        createdAt: true,
+        ivp_id: true,
+        ivp_blobName: true,
+        ivp_url: true,
+        ivp_contentType: true,
+        ivp_size: true,
+        ivp_createdAt: true,
       },
     })
 
     return NextResponse.json({
       photos: photos.map((p) => ({
-        ...p,
-        sasUrl: getSasUrlForBlob(p.blobName),
+        id: p.ivp_id,
+        blobName: p.ivp_blobName,
+        url: p.ivp_url,
+        contentType: p.ivp_contentType,
+        size: p.ivp_size,
+        createdAt: p.ivp_createdAt,
+        sasUrl: getSasUrlForBlob(p.ivp_blobName),
       })),
     })
   } catch (e: any) {
@@ -70,7 +72,7 @@ export async function POST(
     const session = await auth()
     const role = session?.user?.role
 
-    if (!session || !["MANAGER", "AGENCE", "ADMIN","MECHANIC"].includes(role as string)) {
+    if (!session || !["MANAGER", "AGENCE", "ADMIN", "MECHANIC"].includes(role as string)) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
     }
 
@@ -80,9 +82,9 @@ export async function POST(
       return NextResponse.json({ error: "invoiceId invalide" }, { status: 400 })
     }
 
-    const invoice = await prisma.invoice.findUnique({
-      where: { id: invoiceId },
-      select: { id: true },
+    const invoice = await prisma.invoice_inv.findUnique({
+      where: { inv_id: invoiceId },
+      select: { inv_id: true },
     })
 
     if (!invoice) {
@@ -132,19 +134,24 @@ export async function POST(
         },
       })
 
-      const row = await prisma.invoicephoto.create({
+      const row = await prisma.invoicephoto_ivp.create({
         data: {
-          invoiceId,
-          blobName,
-          url: blockBlob.url,
-          contentType: file.type || null,
-          size: file.size,
-          uploadedById: session.user.id,
+          ivp_invoiceId: invoiceId,
+          ivp_blobName: blobName,
+          ivp_url: blockBlob.url,
+          ivp_contentType: file.type || null,
+          ivp_size: file.size,
+          ivp_uploadedById: session.user.id,
         },
       })
 
       createdPhotos.push({
-        ...row,
+        id: row.ivp_id,
+        blobName: row.ivp_blobName,
+        url: row.ivp_url,
+        contentType: row.ivp_contentType,
+        size: row.ivp_size,
+        createdAt: row.ivp_createdAt,
         sasUrl: getSasUrlForBlob(blobName),
       })
     }
