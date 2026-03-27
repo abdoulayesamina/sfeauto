@@ -18,9 +18,9 @@ export async function PUT(
     const { id } = await params
     const body = await request.json()
     const {
-      name,
-      email,
-      phone,
+      cli_name : name,
+      cli_email: email,
+      cli_phone : phone,
       cli_adresseFacturation,
       cli_numClient,
       cli_tvaIntraCommunautaire,
@@ -32,10 +32,10 @@ export async function PUT(
 
     // Check if client name already exists (excluding current client)
     // Note: SQLite doesn't support case-insensitive mode
-    const existingClient = await prisma.client.findFirst({
+    const existingClient = await prisma.client_cli.findFirst({
       where: {
-        name: name.trim(),
-        id: { not: id }
+        cli_name: name.trim(),
+        cli_id: { not: id }
       }
     })
 
@@ -43,13 +43,13 @@ export async function PUT(
       return NextResponse.json({ error: 'Ce nom de client existe déjà' }, { status: 400 })
     }
 
-    const client = await prisma.client.update({
-      where: { id },
+    const client = await prisma.client_cli.update({
+      where: { cli_id : id },
       data: {
-        name: name.trim(),
+        cli_name: name.trim(),
 
-        email: email?.trim() || null,
-        phone: phone?.trim() || null,
+        cli_email: email?.trim() || null,
+        cli_phone: phone?.trim() || null,
 
         cli_adresseFacturation: cli_adresseFacturation?.trim() || null,
         cli_numClient: cli_numClient?.trim() || null,
@@ -87,8 +87,8 @@ export async function DELETE(
     const { id } = await params
 
     // Check if client has bases or vehicles
-    const client = await prisma.client.findUnique({
-      where: { id },
+    const client = await prisma.client_cli.findUnique({
+      where: { cli_id : id },
       include: {
         _count: {
           select: {
@@ -110,8 +110,8 @@ export async function DELETE(
       )
     }
 
-    await prisma.client.delete({
-      where: { id }
+    await prisma.client_cli.delete({
+      where: { cli_id : id }
     })
 
     return NextResponse.json({ success: true })

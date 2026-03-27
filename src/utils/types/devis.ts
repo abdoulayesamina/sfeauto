@@ -7,7 +7,6 @@ import { UserSchema } from "./user";
 
 export const DevisSchema = z.object({
     dev_id: z.number().optional(),
-
     // --- Liens métier ---
     dev_cli_id: z.string(),
     dev_veh_id: z.string(),

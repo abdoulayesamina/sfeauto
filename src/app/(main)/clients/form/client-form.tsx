@@ -40,8 +40,8 @@ export function ClientForm({
           <Input
             ref={inputRef}
             className="h-12"
-            value={data.name || ""}
-            onChange={(e) => onChange({ ...data, name: e.target.value })}
+            value={data.cli_name || ""}
+            onChange={(e) => onChange({ ...data, cli_name: e.target.value })}
             placeholder="Nom du client"
           />
         </div>
@@ -53,8 +53,8 @@ export function ClientForm({
           <Input
             className="h-12"
             type="email"
-            value={data.email || ""}
-            onChange={(e) => onChange({ ...data, email: e.target.value })}
+            value={data.cli_email || ""}
+            onChange={(e) => onChange({ ...data, cli_email: e.target.value })}
             placeholder="email@exemple.com"
           />
         </div>
@@ -63,9 +63,9 @@ export function ClientForm({
           <Label>Téléphone</Label>
           <Input
             className="h-12"
-            value={data.phone || ""}
-            onChange={(e) => onChange({ ...data, phone: e.target.value })}
-            placeholder="+33 x xx xx xx xx"
+            value={data.cli_phone || ""}
+            onChange={(e) => onChange({ ...data, cli_phone: e.target.value })}
+            placeholder="+223 xx xx xx xx"
           />
         </div>
       </div>
@@ -76,9 +76,7 @@ export function ClientForm({
           <Input
             className="h-12"
             value={data.cli_numClient || ""}
-            onChange={(e) =>
-              onChange({ ...data, cli_numClient: e.target.value })
-            }
+            onChange={(e) => onChange({ ...data, cli_numClient: e.target.value })}
             placeholder="CLI-0001"
           />
         </div>
@@ -89,10 +87,7 @@ export function ClientForm({
             className="h-12"
             value={data.cli_tvaIntraCommunautaire || ""}
             onChange={(e) =>
-              onChange({
-                ...data,
-                cli_tvaIntraCommunautaire: e.target.value,
-              })
+              onChange({ ...data, cli_tvaIntraCommunautaire: e.target.value })
             }
             placeholder="FRXX999999999"
           />
@@ -103,7 +98,7 @@ export function ClientForm({
         <div>
           <Label>Adresse de facturation</Label>
           <Textarea
-            className="h-12"
+            className="h-24"                    // mieux que h-12 pour une adresse
             value={data.cli_adresseFacturation || ""}
             onChange={(e) =>
               onChange({ ...data, cli_adresseFacturation: e.target.value })
@@ -124,7 +119,6 @@ export function ClientForm({
           </span>
         </Button>
       </div>
-
     </form>
   )
 }

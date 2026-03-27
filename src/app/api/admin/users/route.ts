@@ -17,21 +17,29 @@ export async function GET() {
       return NextResponse.json({ error: "Accès administrateur requis" }, { status: 403 });
     }
 
-    const users = await prisma.user.findMany({
-      where: { isSystemAccount: false },
+    const users = await prisma.user_usr.findMany({
+      where: { usr_isSystemAccount: false },
       select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        clientId: true,
-        baseId: true,
-        createdAt: true,
-        updatedAt: true,
-        client: { select: { name: true } },
-        base: { select: { location: true } },
+        usr_id: true,
+        usr_name: true,
+        usr_email: true,      
+        usr_role: true,       
+        usr_clientId: true,   
+        usr_baseId: true,     
+        usr_createdAt: true,  
+        usr_updatedAt: true,  
+
+        usr_client: {         
+          select: { cli_name: true }   
+        },
+        usr_base: {           
+          select: { bas_location: true } 
+        },
       },
-      orderBy: [{ role: "asc" }, { name: "asc" }],
+      orderBy: [
+        { usr_role: "asc" }, 
+        { usr_name: "asc" }
+      ],
     });
 
     return NextResponse.json(users);
@@ -51,13 +59,14 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const name = String(body?.name ?? "").trim();
-    const email = String(body?.email ?? "").trim().toLowerCase();
-    const password = String(body?.password ?? "").trim();
-    const role = body?.role as ValidRole | undefined;
 
-    const clientId = body?.clientId ? String(body.clientId) : null;
-    const baseId = body?.baseId ? String(body.baseId) : null;
+    const name = String(body?.usr_name ?? "").trim();
+    const email = String(body?.usr_email ?? "").trim().toLowerCase();
+    const password = String(body?.usr_password ?? "").trim();
+    const role = body?.usr_role as ValidRole | undefined;
+
+    const clientId = body?.usr_clientId ? String(body.usr_clientId) : null;
+    const baseId = body?.usr_baseId ? String(body.usr_baseId) : null;
 
     // Required fields
     if (!name || !email || !password || !role) {
@@ -86,7 +95,7 @@ export async function POST(request: NextRequest) {
 
     // Verify client exists if provided
     if (clientId) {
-      const clientExists = await prisma.client.findUnique({ where: { id: clientId } });
+      const clientExists = await prisma.client_cli.findUnique({ where: { cli_id: clientId } });
       if (!clientExists) {
         return NextResponse.json({ error: "Client invalide" }, { status: 400 });
       }
@@ -101,9 +110,9 @@ export async function POST(request: NextRequest) {
 
     // Verify base exists if provided (CLIENT/AGENCE/others)
     if (baseId) {
-      const base = await prisma.base.findUnique({
-        where: { id: baseId },
-        select: { id: true, clientId: true },
+      const base = await prisma.base_bas.findUnique({
+        where: { bas_id: baseId },
+        select: { bas_id: true, bas_clientId: true },
       });
 
       if (!base) {
@@ -111,7 +120,7 @@ export async function POST(request: NextRequest) {
       }
 
       // If clientId is provided, ensure base belongs to that client
-      if (clientId && base.clientId !== clientId) {
+      if (clientId && base.bas_clientId !== clientId) {
         return NextResponse.json(
           { error: "L'agence sélectionnée n'appartient pas au client choisi" },
           { status: 400 }
@@ -119,7 +128,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Special rule: if role CLIENT and both provided, enforce same as before
-      if (role === "CLIENT" && clientId && base.clientId !== clientId) {
+      if (role === "CLIENT" && clientId && base.bas_clientId !== clientId) {
         return NextResponse.json(
           { error: "L'agence sélectionnée n'appartient pas au client choisi" },
           { status: 400 }
@@ -128,7 +137,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if email already exists
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const existingUser = await prisma.user_usr.findUnique({ where: { usr_email : email } });
     if (existingUser) {
       return NextResponse.json({ error: "Cet email existe déjà" }, { status: 400 });
     }
@@ -137,27 +146,32 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create user
-    const user = await prisma.user.create({
+    const user = await prisma.user_usr.create({
       data: {
-        name,
-        email,
-        password: hashedPassword,
-        role,
-        clientId,
-        baseId,
-        isSystemAccount: false,
+        usr_name: name,
+        usr_email: email,
+        usr_password: hashedPassword,
+        usr_role: role,
+        usr_clientId: clientId,
+        usr_baseId: baseId,
+        usr_isSystemAccount: false,
       },
       select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        clientId: true,
-        baseId: true,
-        createdAt: true,
-        updatedAt: true,
-        client: { select: { name: true } },
-        base: { select: { location: true } },
+        usr_id: true,
+        usr_name: true,
+        usr_email: true,
+        usr_role: true,
+        usr_clientId: true,
+        usr_baseId: true,
+        usr_createdAt: true,
+        usr_updatedAt: true,
+
+        usr_client: { 
+          select: { cli_name: true } 
+        },
+        usr_base: { 
+          select: { bas_location: true } 
+        },
       },
     });
 

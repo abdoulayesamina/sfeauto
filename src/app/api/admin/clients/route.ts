@@ -12,7 +12,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Accès administrateur requis' }, { status: 403 })
     }
 
-    const clients = await prisma.client.findMany({
+    const clients = await prisma.client_cli.findMany({
       include: {
         _count: {
           select: {
@@ -21,7 +21,7 @@ export async function GET() {
           }
         }
       },
-      orderBy: { name: 'asc' }
+      orderBy: { cli_name: 'asc' }
     })
 
     return NextResponse.json(clients)
@@ -42,9 +42,9 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const {
-      name,
-      email,
-      phone,
+      cli_name : name,
+      cli_email: email,
+      cli_phone : phone,
       cli_adresseFacturation,
       cli_numClient,
       cli_tvaIntraCommunautaire,
@@ -57,9 +57,9 @@ export async function POST(request: NextRequest) {
     // Check if client name already exists
     // Note: SQLite doesn't support case-insensitive mode
     // This will be case-sensitive in dev (SQLite), case-insensitive in prod (PostgreSQL with mode)
-    const existingClient = await prisma.client.findFirst({
+    const existingClient = await prisma.client_cli.findFirst({
       where: {
-        name: name.trim()
+        cli_name: name.trim()
       }
     })
 
@@ -67,12 +67,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Ce nom de client existe déjà' }, { status: 400 })
     }
 
-    const client = await prisma.client.create({
+    const client = await prisma.client_cli.create({
       data: {
-        name: name.trim(),
+        cli_name: name.trim(),
 
-        email: email?.trim() || null,
-        phone: phone?.trim() || null,
+        cli_email: email?.trim() || null,
+        cli_phone: phone?.trim() || null,
 
         cli_adresseFacturation: cli_adresseFacturation?.trim() || null,
         cli_numClient: cli_numClient?.trim() || null,

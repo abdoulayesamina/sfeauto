@@ -21,7 +21,7 @@ export default function AgencePage() {
 
   const [agences, setAgences] = useState<Agence[]>([])
   const [agenceSearch, setAgenceSearch] = useState<Agence[]>([])
-  const [clients, setClients] = useState<{ id: string; name: string }[]>([])
+  const [clients, setClients] = useState<{ cli_id: string; cli_name: string }[]>([])
   const [loading, setLoading] = useState(true)
 
   const [agencesLoading, setAgencesLoading] = useState(false)
@@ -45,7 +45,7 @@ export default function AgencePage() {
   const loadClients = async () => {
     try {
       const data = await getClients()
-      setClients(data.map((c) => ({ id: c.id, name: c.name })))
+      setClients(data.map((c) => ({ cli_id: c.cli_id, cli_name: c.cli_name })))
     } catch (e: any) {
       toast.error("Erreur", e.message)
     }
@@ -81,7 +81,7 @@ export default function AgencePage() {
       setFormData({})
       loadAgencesWithoutSpin()
     } catch (e: any) {
-      toast.error("Erreur", e.message)
+      toast.error("Erreur : "+ e.message)
       setAgencesLoading(false)
     }
   }
@@ -96,7 +96,7 @@ export default function AgencePage() {
     if (!agenceToEdit) return
     try {
       setAgencesLoading(true)
-      await updateAgence(agenceToEdit.id, formData)
+      await updateAgence(agenceToEdit.bas_id, formData)
       toast.success("Agence mise à jour")
       setEditOpen(false)
       setAgenceToEdit(null)
@@ -104,7 +104,7 @@ export default function AgencePage() {
       setFormData({})
       loadAgencesWithoutSpin()
     } catch (e: any) {
-      toast.error("Erreur", e.message)
+      toast.error("Erreur : "+ e.message)
       setAgencesLoading(false)
     }
   }
@@ -112,25 +112,25 @@ export default function AgencePage() {
   const handleDelete = async (agence: Agence) => {
     const confirmed = await confirmAlert(
       "Supprimer l’agence",
-      `Supprimer "${agence.location}" ?`
+      `Supprimer "${agence.bas_location}" ?`
     )
     if (!confirmed) return
 
     try {
-      setIdToDelete(agence.id);
-      await deleteAgence(agence.id)
+      setIdToDelete(agence.bas_id);
+      await deleteAgence(agence.bas_id)
       toast.success("Agence supprimée")
       setIdToDelete(null);
-      setAgences((prev) => prev.filter((a) => a.id !== agence.id))
+      setAgences((prev) => prev.filter((a) => a.bas_id !== agence.bas_id))
     } catch (e: any) {
-      toast.error("Suppression impossible", e.message)
+      toast.error("Suppression impossible : "+ e.message)
       setIdToDelete(null);
     }
   }
 
   const columns: ColumnDef<Agence>[] = [
-    { accessorKey: "location", header: "Emplacement" },
-    { header: "Client", cell: ({ row }) => row.original.client?.name || "N/A" },
+    { accessorKey: "bas_location", header: "Emplacement" },
+    { header: "Client", cell: ({ row }) => row.original.bas_client?.cli_name || "N/A" },
     {
       header: "Véhicules",
       cell: ({ row }) => (
@@ -144,9 +144,9 @@ export default function AgencePage() {
           <Button variant="outline" onClick={() => handleEdit(row.original)}>
             Modifier
           </Button>
-          <Button variant="destructive" onClick={() => handleDelete(row.original)} disabled={idToDelete === row.original.id}>
+          <Button variant="destructive" onClick={() => handleDelete(row.original)} disabled={idToDelete === row.original.bas_id}>
             <span className="flex items-center gap-2">
-              {idToDelete === row.original.id ? <Spinner className="size-4" /> : ""}
+              {idToDelete === row.original.bas_id ? <Spinner className="size-4" /> : ""}
               Supprimer
             </span>
           </Button>
@@ -165,8 +165,8 @@ export default function AgencePage() {
     }
     
     let agenceFiltered = agences.filter(a=>
-      a.location.toLocaleLowerCase().includes(value)
-      || a.client?.name?.toLocaleLowerCase().includes(value)
+      a.bas_location.toLocaleLowerCase().includes(value)
+      || a.bas_client?.cli_name?.toLocaleLowerCase().includes(value)
     )
     setAgenceSearch(agenceFiltered);
   }

@@ -21,8 +21,8 @@ export default function UsersPage() {
 
   const [users, setUsers] = useState<User[]>([])
   const [userSearch, setUserSearch] = useState<User[]>([])
-  const [clients, setClients] = useState<{ id: string; name: string }[]>([])
-  const [agences, setAgences] = useState<{ id: string; location: string; clientId: string }[]>([])
+  const [clients, setClients] = useState<{ cli_id: string; cli_name: string }[]>([])
+  const [agences, setAgences] = useState<{ bas_id: string; bas_location: string; bas_clientId: string }[]>([])
   const [loading, setLoading] = useState(true)
   const [usersLoading, setUsersLoading] = useState(false)
   const [idToDelete, setIdToDelete] = useState<string | null>(null);
@@ -65,7 +65,7 @@ export default function UsersPage() {
   const loadClients = async () => {
     try {
       const data = await getClients()
-      setClients(data.map((c) => ({ id: c.id, name: c.name })))
+      setClients(data.map((c) => ({ cli_id: c.cli_id, cli_name: c.cli_name })))
     } catch (e: any) {
       toast.error("Erreur", e.message)
     }
@@ -74,7 +74,7 @@ export default function UsersPage() {
   const loadAgences = async () => {
     try {
       const data = await getAgences()
-      setAgences(data.map((a) => ({ id: a.id, location: a.location, clientId: a.clientId })))
+      setAgences(data.map((a) => ({ bas_id: a.bas_id, bas_location: a.bas_location, bas_clientId: a.bas_clientId })))
     } catch (e: any) {
       toast.error("Erreur", e.message)
     }
@@ -98,12 +98,12 @@ export default function UsersPage() {
   const handleEdit = (user: User) => {
     setUserToEdit(user)
     setFormData({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      clientId: user.clientId,
-      baseId: user.baseId,
+      usr_id: user.usr_id,
+      usr_name: user.usr_name,
+      usr_email: user.usr_email,
+      usr_role: user.usr_role,
+      usr_clientId: user.usr_clientId,
+      usr_baseId: user.usr_baseId,
     })
     setEditOpen(true)
   }
@@ -111,11 +111,11 @@ export default function UsersPage() {
   const handleUpdate = async () => {
     if (!userToEdit) return
     const payload = { ...formData }
-    if (!payload.password) delete payload.password
+    if (!payload.usr_password) delete payload.usr_password
 
     try {
       setUsersLoading(true)
-      await updateUser(userToEdit.id, payload)
+      await updateUser(userToEdit.usr_id, payload)
       toast.success("Utilisateur mis à jour")
       setEditOpen(false)
       setUserToEdit(null)
@@ -151,20 +151,20 @@ export default function UsersPage() {
   const handleDelete = async (user: User) => {
       const confirmed = await confirmAlert(
         "Confirmer la suppression",
-        `Êtes-vous sûr de vouloir supprimer "${user.name}" ?`
+        `Êtes-vous sûr de vouloir supprimer "${user.usr_name}" ?`
       )
       if (!confirmed) return
 
       try {
-        setIdToDelete(user.id ?? null)
+        setIdToDelete(user.usr_id ?? null)
 
-        await deleteUser(user.id)
+        await deleteUser(user.usr_id)
 
         toast.success("Utilisateur supprimé", {
-          description: `"${user.name}" a été supprimé avec succès.`,
+          description: `"${user.usr_name}" a été supprimé avec succès.`,
         })
 
-        setUsers((prev) => prev.filter((u) => u.id !== user.id))
+        setUsers((prev) => prev.filter((u) => u.usr_id !== user.usr_id))
       } catch (err: any) {
 
         //  CAS MÉTIER (user lié à des données)
@@ -194,18 +194,18 @@ export default function UsersPage() {
     }
 
   const columns: ColumnDef<User>[] = [
-    { accessorKey: "name", header: "Nom" },
-    { accessorKey: "email", header: "Email" },
-    { accessorKey: "role", header: "Rôle" },
+    { accessorKey: "usr_name", header: "Nom" },
+    { accessorKey: "usr_email", header: "Email" },
+    { accessorKey: "usr_role", header: "Rôle" },
     {
-      accessorKey: "client",
+      accessorKey: "usr_client",
       header: "Client",
-      cell: ({ row }) => row.original.client?.name || "N/A",
+      cell: ({ row }) => row.original.usr_client?.cli_name || "N/A",
     },
     {
-      accessorKey: "base",
+      accessorKey: "usr_base",
       header: "Agence",
-      cell: ({ row }) => row.original.base?.location || "N/A",
+      cell: ({ row }) => row.original.usr_base?.bas_location || "N/A",
     },
     {
       header: "Actions",
@@ -214,9 +214,9 @@ export default function UsersPage() {
           <Button variant="outline" onClick={() => handleEdit(row.original)}>
             Modifier
           </Button>
-          <Button variant="destructive" onClick={() => handleDelete(row.original)} disabled={idToDelete === row.original.id}>
+          <Button variant="destructive" onClick={() => handleDelete(row.original)} disabled={idToDelete === row.original.usr_id}>
             <span className="flex items-center gap-2">
-              {idToDelete === row.original.id ? <Spinner className="size-4" /> : ""}
+              {idToDelete === row.original.usr_id ? <Spinner className="size-4" /> : ""}
               Supprimer
             </span>
           </Button>
@@ -235,11 +235,11 @@ export default function UsersPage() {
     }
     
     let userFiltered = users.filter(u=>
-      u.name.toLocaleLowerCase().includes(value)
-      || u.email?.toLocaleLowerCase().includes(value)
-      ||u.role?.toLocaleLowerCase().includes(value)
-      ||u.client?.name.toLocaleLowerCase().includes(value)
-      ||u.base?.location.toLocaleLowerCase().includes(value)
+      u.usr_name.toLocaleLowerCase().includes(value)
+      || u.usr_email?.toLocaleLowerCase().includes(value)
+      ||u.usr_role?.toLocaleLowerCase().includes(value)
+      ||u.usr_client?.cli_name.toLocaleLowerCase().includes(value)
+      ||u.usr_base?.bas_location.toLocaleLowerCase().includes(value)
     )
     setUserSearch(userFiltered);
   }

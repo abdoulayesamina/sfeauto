@@ -91,7 +91,7 @@ export default function ClientPage() {
 
     try {
       setClientsLoading(true)
-      await updateClient(clientToEdit.id, formData)
+      await updateClient(clientToEdit.cli_id, formData)
       toast.success("Client mis à jour")
       setEditOpen(false)
       setClientToEdit(null)
@@ -107,46 +107,48 @@ export default function ClientPage() {
   const handleDelete = async (client: Client) => {
     const confirmed = await confirmAlert(
       "Supprimer le client",
-      `Supprimer "${client.name}" ?`
+      `Supprimer "${client.cli_name}" ?`
     )
     if (!confirmed) return
 
     try {
-      setIdToDelete(client.id);
-      await deleteClient(client.id)
+      setIdToDelete(client.cli_id);                    
+      await deleteClient(client.cli_id);               
+      
       toast.success("Client supprimé")
-      setClients((prev) => prev.filter((c) => c.id !== client.id))
+      
+      setClients((prev) => prev.filter((c) => c.cli_id !== client.cli_id))  
     } catch (e: any) {
       toast.error("Suppression impossible", e.message)
-    }finally {
+    } finally {
       setIdToDelete(null);
     }
   }
 
-  const columns: ColumnDef<ClientWithCount>[] =  [
+  const columns: ColumnDef<ClientWithCount>[] = [
     {
-      accessorKey: "name",
+      accessorKey: "cli_name",
       header: "Nom",
       cell: ({ row }) => (
-        <div className="font-medium">{row.original.name}</div>
+        <div className="font-medium">{row.original.cli_name}</div>
       ),
     },
 
     {
-      accessorKey: "email",
+      accessorKey: "cli_email",
       header: "Email",
       cell: ({ row }) => (
         <span className="text-muted-foreground">
-          {row.original.email || "—"}
+          {row.original.cli_email || "—"}
         </span>
       ),
     },
 
     {
-      accessorKey: "phone",
+      accessorKey: "cli_phone",
       header: "Téléphone",
       cell: ({ row }) => (
-        <span>{row.original.phone || "—"}</span>
+        <span>{row.original.cli_phone || "—"}</span>
       ),
     },
 
@@ -183,20 +185,18 @@ export default function ClientPage() {
       cell: ({ row }) => (
         <div className="flex gap-2">
           <Button
-            //size="sm"
             variant="outline"
             onClick={() => handleEdit(row.original)}
           >
             Modifier
           </Button>
           <Button
-            // size="sm"
             variant="destructive"
             onClick={() => handleDelete(row.original)}
-            disabled={idToDelete === row.original.id}
+            disabled={idToDelete === row.original.cli_id}   
           >
             <span className="flex items-center gap-2">
-              {idToDelete === row.original.id ? <Spinner className="size-4" /> : ""}
+              {idToDelete === row.original.cli_id ? <Spinner className="size-4" /> : ""}   
               Supprimer
             </span>
           </Button>
@@ -215,9 +215,9 @@ export default function ClientPage() {
     }
     
     let clientFiltered = clients.filter(c=>
-      c.name.toLocaleLowerCase().includes(value)
-      || c.email?.toLocaleLowerCase().includes(value)
-      ||c.phone?.toLocaleLowerCase().includes(value)
+      c.cli_name.toLocaleLowerCase().includes(value)
+      || c.cli_email?.toLocaleLowerCase().includes(value)
+      ||c.cli_phone?.toLocaleLowerCase().includes(value)
     )
     setClientSearch(clientFiltered);
   }

@@ -17,21 +17,21 @@ export async function PUT(
 
     const { id } = await params
     const body = await request.json()
-    const { clientId, location } = body
+    const { bas_clientId : clientId, bas_location : location } = body
 
     if (!clientId || !location?.trim()) {
       return NextResponse.json({ error: 'Client et localisation requis' }, { status: 400 })
     }
 
-    const base = await prisma.base.update({
-      where: { id },
+    const base = await prisma.base_bas.update({
+      where: { bas_id : id },
       data: {
-        clientId,
-        location: location.trim()
+        bas_clientId : clientId,
+        bas_location: location.trim()
       },
       include: {
-        client: {
-          select: { name: true }
+        bas_client: {
+          select: { cli_name: true }
         },
         _count: {
           select: {
@@ -63,8 +63,8 @@ export async function DELETE(
     const { id } = await params
 
     // Check if base has vehicles
-    const base = await prisma.base.findUnique({
-      where: { id },
+    const base = await prisma.base_bas.findUnique({
+      where: { bas_id : id },
       include: {
         _count: {
           select: {
@@ -85,8 +85,8 @@ export async function DELETE(
       )
     }
 
-    await prisma.base.delete({
-      where: { id }
+    await prisma.base_bas.delete({
+      where: { bas_id : id }
     })
 
     return NextResponse.json({ success: true })
