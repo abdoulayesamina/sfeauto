@@ -16,26 +16,28 @@ function round2(n: number): number {
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
-    if (!session || !["MANAGER" ,"ADMIN" ,"MECHANIC"].includes(session.user.role)) {
+    if (!session || !["MANAGER", "ADMIN", "MECHANIC"].includes(session.user.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
     const dev_id = Number(id);
-    if (isNaN(dev_id)) return NextResponse.json({ error: "ID devis invalide" }, { status: 400 });
+    if (isNaN(dev_id)) {
+      return NextResponse.json({ error: "ID devis invalide" }, { status: 400 });
+    }
 
     const devis = await prisma.te_devis_dev.findUnique({
       where: { dev_id },
       include: {
-        client: true,
-        vehicle: true,
-        invoice: true,
-        user: true,
+        dev_client: true,
+        dev_vehicle: true,
+        dev_invoice: true,
+        dev_user: true,
         articles: {
           include: {
-            article: {
+            dea_article: {
               include: {
-                collection: true,
+                art_collection: true,
               },
             },
           },
@@ -63,7 +65,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     const { id } = await params;
     const dev_id = Number(id);
-    if (isNaN(dev_id)) return NextResponse.json({ error: "ID devis invalide" }, { status: 400 });
+    if (isNaN(dev_id)) {
+      return NextResponse.json({ error: "ID devis invalide" }, { status: 400 });
+    }
 
     const body = await req.json();
     const dev_tva = body?.dev_tva != null ? asNumber(body.dev_tva) : null;
@@ -82,7 +86,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       return NextResponse.json({ error: "Devis introuvable" }, { status: 404 });
     }
 
-    // TVA effective
     const effectiveDevTva =
       dev_tva != null
         ? dev_tva
@@ -96,10 +99,16 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     if (items) {
       if (!items.length) {
-        return NextResponse.json({ error: "items requis (au moins 1 ligne)" }, { status: 400 });
+        return NextResponse.json(
+          { error: "items requis (au moins 1 ligne)" },
+          { status: 400 }
+        );
       }
 
-      const artIds = items.map((x: any) => asNumber(x?.art_id)).filter((n: number) => !Number.isNaN(n));
+      const artIds = items
+        .map((x: any) => asNumber(x?.art_id))
+        .filter((n: number) => !Number.isNaN(n));
+
       if (artIds.length !== items.length) {
         return NextResponse.json({ error: "art_id invalide" }, { status: 400 });
       }
@@ -114,7 +123,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
       for (const artId of artIds) {
         if (!articleMap.has(artId)) {
-          return NextResponse.json({ error: `Article introuvable: art_id=${artId}` }, { status: 404 });
+          return NextResponse.json(
+            { error: `Article introuvable: art_id=${artId}` },
+            { status: 404 }
+          );
         }
       }
 
@@ -123,13 +135,20 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         const qte = asNumber(it.quantite);
 
         if (isNaN(qte) || qte <= 0) {
-          return NextResponse.json({ error: `Quantité invalide art_id=${artId}` }, { status: 400 });
+          return NextResponse.json(
+            { error: `Quantité invalide art_id=${artId}` },
+            { status: 400 }
+          );
         }
 
         const art = articleMap.get(artId)!;
         const baseUnit = asNumber(art.art_price);
+
         if (isNaN(baseUnit) || baseUnit < 0) {
-          return NextResponse.json({ error: `Prix article invalide art_id=${artId}` }, { status: 400 });
+          return NextResponse.json(
+            { error: `Prix article invalide art_id=${artId}` },
+            { status: 400 }
+          );
         }
 
         const remise = art.remises;
@@ -149,7 +168,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
         const lineTva = it?.tva != null ? asNumber(it.tva) : effectiveDevTva;
         if (isNaN(lineTva) || lineTva < 0) {
-          return NextResponse.json({ error: `TVA invalide art_id=${artId}` }, { status: 400 });
+          return NextResponse.json(
+            { error: `TVA invalide art_id=${artId}` },
+            { status: 400 }
+          );
         }
 
         const lineHT = round2(appliedUnit * qte);
@@ -160,7 +182,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
         lineCreates.push({
           dea_art_id: artId,
-          dea_art_designation: (it?.designation && String(it.designation).trim()) || art.art_name,
+          dea_art_designation:
+            (it?.designation && String(it.designation).trim()) || art.art_name,
           dea_art_reference: it?.reference ? String(it.reference) : null,
           dea_prixunitaire: appliedUnit,
           dea_quantite: Math.trunc(qte),
@@ -170,7 +193,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         });
       }
     } else {
-      // pas de items => on garde totaux actuels
       totalHT = Number(current.dev_totalht ?? 0);
       totalTVA = Number(current.dev_totaltva ?? 0);
     }
@@ -185,22 +207,39 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
           dev_totalht: totalHT,
           dev_totaltva: totalTVA,
           dev_totalttc: totalTTC,
-
           ...(items
             ? {
                 articles: {
-                  deleteMany: {},        
-                  create: lineCreates,  
+                  deleteMany: {},
+                  create: lineCreates,
                 },
               }
             : {}),
         },
         include: {
-          invoice: {
-            select: { id: true, accordNumber: true, workDescription: true, status: true, dateOfConfirmation: true },
+          dev_invoice: {
+            select: {
+              inv_id: true,
+              inv_accordNumber: true,
+              inv_workDescription: true,
+              inv_status: true,
+              inv_dateOfConfirmation: true,
+            },
           },
-          vehicle: { select: { id: true, licensePlate: true, brand: true, model: true } },
-          client: { select: { id: true, name: true } },
+          dev_vehicle: {
+            select: {
+              veh_id: true,
+              veh_licensePlate: true,
+              veh_brandId: true,
+              veh_modelId: true,
+            },
+          },
+          dev_client: {
+            select: {
+              cli_id: true,
+              cli_name: true,
+            },
+          },
           articles: true,
         },
       });
@@ -224,7 +263,9 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
 
     const { id } = await params;
     const dev_id = Number(id);
-    if (isNaN(dev_id)) return NextResponse.json({ error: "ID devis invalide" }, { status: 400 });
+    if (isNaN(dev_id)) {
+      return NextResponse.json({ error: "ID devis invalide" }, { status: 400 });
+    }
 
     await prisma.te_devis_dev.update({
       where: { dev_id },

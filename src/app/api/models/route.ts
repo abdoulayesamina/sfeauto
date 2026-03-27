@@ -8,16 +8,23 @@ export async function GET(req: Request) {
     const brandId = searchParams.get("brandId")
 
     if (!brandId) {
-      // IMPORTANT : toujours retourner du JSON
       return NextResponse.json([], { status: 200 })
     }
 
-    const models = await prisma.model.findMany({
-      where: { brandId },
-      orderBy: { name: "asc" },
+    const models = await prisma.model_mod.findMany({
+      where: { mod_brandId: brandId },
+      orderBy: { mod_name: "asc" },
     })
 
-    return NextResponse.json(models)
+    return NextResponse.json(
+      models.map((model) => ({
+        id: model.mod_id,
+        name: model.mod_name,
+        brandId: model.mod_brandId,
+        createdAt: model.mod_createdAt,
+        updatedAt: model.mod_updatedAt,
+      }))
+    )
   } catch (e) {
     console.error("GET /api/models error:", e)
     return NextResponse.json(
@@ -38,15 +45,24 @@ export async function POST(req: Request) {
       )
     }
 
-    const model = await prisma.model.create({
+    const model = await prisma.model_mod.create({
       data: {
-        id: randomUUID(),
-        name,
-        brandId,
+        mod_id: randomUUID(),
+        mod_name: name,
+        mod_brandId: brandId,
       },
     })
 
-    return NextResponse.json(model, { status: 201 })
+    return NextResponse.json(
+      {
+        id: model.mod_id,
+        name: model.mod_name,
+        brandId: model.mod_brandId,
+        createdAt: model.mod_createdAt,
+        updatedAt: model.mod_updatedAt,
+      },
+      { status: 201 }
+    )
   } catch (e: any) {
     console.error("POST /api/models error:", e)
 
@@ -63,4 +79,3 @@ export async function POST(req: Request) {
     )
   }
 }
-

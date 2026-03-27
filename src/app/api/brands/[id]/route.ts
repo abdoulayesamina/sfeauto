@@ -8,8 +8,8 @@ export async function DELETE(
   const { id } = await params
 
   try {
-    const vehiclesCount = await prisma.vehicle.count({
-      where: { brandId: id },
+    const vehiclesCount = await prisma.vehicle_veh.count({
+      where: { veh_brandId: id },
     })
 
     if (vehiclesCount > 0) {
@@ -19,8 +19,8 @@ export async function DELETE(
       )
     }
 
-    await prisma.brand.delete({
-      where: { id },
+    await prisma.brand_bra.delete({
+      where: { bra_id: id },
     })
 
     return NextResponse.json({ success: true })
@@ -48,9 +48,9 @@ export async function PATCH(
   }
 
   try {
-    const brand = await prisma.brand.update({
-      where: { id },
-      data: { name },
+    const brand = await prisma.brand_bra.update({
+      where: { bra_id: id },
+      data: { bra_name: name },
     })
 
     return NextResponse.json(brand)
@@ -69,26 +69,30 @@ export async function PATCH(
   }
 }
 
-
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  
-  const id  = await params.then(p=>p.id);
+  const id = await params.then((p) => p.id)
 
   try {
-    const brand = await prisma.brand.findUnique({
-      where: { id },
-    });
+    const brand = await prisma.brand_bra.findUnique({
+      where: { bra_id: id },
+    })
 
     if (!brand) {
-      return NextResponse.json({ error: "Marque introuvable" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Marque introuvable" },
+        { status: 404 }
+      )
     }
 
-    return NextResponse.json(brand);
+    return NextResponse.json(brand)
   } catch (e) {
-    console.error("GET /api/brands/[id] error:", e);
-    return NextResponse.json({ error: "Erreur récupération marque" }, { status: 500 });
+    console.error("GET /api/brands/[id] error:", e)
+    return NextResponse.json(
+      { error: "Erreur récupération marque" },
+      { status: 500 }
+    )
   }
 }

@@ -9,7 +9,10 @@ function normalizeAccordNumber(v: any): string | null {
   return s.length ? s : null;
 }
 
-export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const session = await auth();
     if (!session || (session.user.role !== "MANAGER" && session.user.role !== "ADMIN")) {
@@ -18,6 +21,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     const { id } = await params;
     const dev_id = Number(id);
+
     if (isNaN(dev_id)) {
       return NextResponse.json({ error: "ID devis invalide" }, { status: 400 });
     }
@@ -35,7 +39,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         dev_id: true,
         dev_supprimee: true,
         dev_accordNumber: true,
-        invoice: { select: { accordNumber: true } },
+        dev_invoice: {
+          select: {
+            inv_accordNumber: true,
+          },
+        },
       },
     });
 
@@ -47,7 +55,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       return NextResponse.json({ error: "Devis déjà validé" }, { status: 409 });
     }
 
-    const invoiceAccord = normalizeAccordNumber(current.invoice?.accordNumber);
+    const invoiceAccord = normalizeAccordNumber(current.dev_invoice?.inv_accordNumber);
 
     if (!invoiceAccord) {
       return NextResponse.json(
@@ -77,7 +85,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     });
 
     if (exists) {
-      return NextResponse.json({ error: "Ce numéro d’accord est déjà utilisé" }, { status: 409 });
+      return NextResponse.json(
+        { error: "Ce numéro d’accord est déjà utilisé" },
+        { status: 409 }
+      );
     }
 
     const updated = await prisma.te_devis_dev.update({
@@ -87,11 +98,29 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         dev_dateAccord: new Date(),
       },
       include: {
-        invoice: {
-          select: { id: true, accordNumber: true, workDescription: true, status: true, dateOfConfirmation: true },
+        dev_invoice: {
+          select: {
+            inv_id: true,
+            inv_accordNumber: true,
+            inv_workDescription: true,
+            inv_status: true,
+            inv_dateOfConfirmation: true,
+          },
         },
-        vehicle: { select: { id: true, licensePlate: true, brand: true, model: true } },
-        client: { select: { id: true, name: true } },
+        dev_vehicle: {
+          select: {
+            veh_id: true,
+            veh_licensePlate: true,
+            veh_brandId: true,
+            veh_modelId: true,
+          },
+        },
+        dev_client: {
+          select: {
+            cli_id: true,
+            cli_name: true,
+          },
+        },
         articles: true,
       },
     });
@@ -99,6 +128,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ devis: updated });
   } catch (error) {
     logError("Failed to validate devis", error);
-    return NextResponse.json({ error: "Échec validation devis" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Échec validation devis" },
+      { status: 500 }
+    );
   }
 }

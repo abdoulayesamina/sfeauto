@@ -13,7 +13,7 @@ export async function GET(){
         
         const articles = await prisma.article_art.findMany({
             include: {
-                collection: true,
+                art_collection: true,
                 remises:true
             }
         });
