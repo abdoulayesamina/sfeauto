@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     const session = await auth();
 
     const role = session?.user?.role;
-    if (!session || !["MANAGER", "AGENCE", "ADMIN","MECHANIC"].includes(role as string)) {
+    if (!session || !["MANAGER", "AGENCE", "ADMIN", "MECHANIC"].includes(role as string)) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
@@ -56,9 +56,9 @@ export async function POST(request: NextRequest) {
     const accordNumber = accordNumberRaw?.trim() ? accordNumberRaw.trim() : null;
     const hasAccordNumber = Boolean(accordNumber);
 
-    const vehicle = await prisma.vehicle.findUnique({
-      where: { id: vehicleId },
-      select: { id: true, baseId: true },
+    const vehicle = await prisma.vehicle_veh.findUnique({
+      where: { veh_id: vehicleId },
+      select: { veh_id: true, veh_baseId: true },
     });
 
     if (!vehicle) {
@@ -70,8 +70,11 @@ export async function POST(request: NextRequest) {
       if (!userBaseId) {
         return NextResponse.json({ error: "Compte agence sans baseId" }, { status: 403 });
       }
-      if (vehicle.baseId !== userBaseId) {
-        return NextResponse.json({ error: "Vous ne pouvez pas créer d’intervention pour une autre agence" }, { status: 403 });
+      if (vehicle.veh_baseId !== userBaseId) {
+        return NextResponse.json(
+          { error: "Vous ne pouvez pas créer d’intervention pour une autre agence" },
+          { status: 403 }
+        );
       }
     }
 
@@ -82,7 +85,10 @@ export async function POST(request: NextRequest) {
       const today = new Date();
       today.setHours(23, 59, 59, 999);
       if (confirmationDate > today) {
-        return NextResponse.json({ error: "La date de confirmation ne peut pas être dans le futur" }, { status: 400 });
+        return NextResponse.json(
+          { error: "La date de confirmation ne peut pas être dans le futur" },
+          { status: 400 }
+        );
       }
     }
 
@@ -97,9 +103,9 @@ export async function POST(request: NextRequest) {
     }
 
     if (hasAccordNumber) {
-      const existing = await prisma.invoice.findFirst({
-        where: { accordNumber },
-        select: { id: true, vehicleId: true, createdAt: true },
+      const existing = await prisma.invoice_inv.findFirst({
+        where: { inv_accordNumber: accordNumber },
+        select: { inv_id: true, inv_vehicleId: true, inv_createdAt: true },
       });
 
       if (existing) {
@@ -109,8 +115,8 @@ export async function POST(request: NextRequest) {
             code: "ACCORD_NUMBER_ALREADY_EXISTS",
             details: {
               accordNumber,
-              invoiceId: existing.id,
-              createdAt: existing.createdAt,
+              invoiceId: existing.inv_id,
+              createdAt: existing.inv_createdAt,
             },
           },
           { status: 409 }
@@ -125,48 +131,48 @@ export async function POST(request: NextRequest) {
 
     try {
       const result = await prisma.$transaction(async (tx) => {
-        const invoice = await tx.invoice.create({
+        const invoice = await tx.invoice_inv.create({
           data: {
-            vehicleId,
-            accordNumber: hasAccordNumber ? accordNumber : null,
-            dateOfConfirmation: dateOfConfirmation ? new Date(dateOfConfirmation) : null,
-            invoiceConfirmed,
-            status: invoiceConfirmed && didOrderParts ? "WAITING_FOR_PARTS" : "CONFIRMED_IN_PLANNING",
-            workDescription,
-            didOrderParts: didOrderParts || false,
-            ordersDetails,
-            comments,
-            handledById: session.user.id,
+            inv_vehicleId: vehicleId,
+            inv_accordNumber: hasAccordNumber ? accordNumber : null,
+            inv_dateOfConfirmation: dateOfConfirmation ? new Date(dateOfConfirmation) : null,
+            inv_invoiceConfirmed: invoiceConfirmed,
+            inv_status: invoiceConfirmed && didOrderParts ? "WAITING_FOR_PARTS" : "CONFIRMED_IN_PLANNING",
+            inv_workDescription: workDescription,
+            inv_didOrderParts: didOrderParts || false,
+            inv_ordersDetails: ordersDetails,
+            inv_comments: comments,
+            inv_handledById: session.user.id,
           },
           include: {
-            vehicle: { include: { client: true, base: true } },
-            handledBy: { select: { id: true, name: true, email: true } },
+            inv_vehicle: { include: { veh_client: true, veh_base: true } },
+            inv_handledBy: { select: { usr_id: true, usr_name: true, usr_email: true } },
           },
         });
 
-        await tx.changehistory.create({
+        await tx.changehistory_chg.create({
           data: {
-            invoiceId: invoice.id,
-            changedBy: session.user.id,
-            fieldName: "created",
-            newValue: JSON.stringify({
+            chg_invoiceId: invoice.inv_id,
+            chg_changedBy: session.user.id,
+            chg_fieldName: "created",
+            chg_newValue: JSON.stringify({
               invoiceConfirmed,
               accordNumber: hasAccordNumber ? accordNumber : null,
               dateOfConfirmation: dateOfConfirmation || null,
               workDescription: workDescription || null,
               didOrderParts: didOrderParts || false,
             }),
-            changeType: "created",
+            chg_changeType: "created",
           },
         });
 
         if (invoiceConfirmed && didOrderParts) {
-          await tx.statushistory.create({
+          await tx.statushistory_sth.create({
             data: {
-              invoiceId: invoice.id,
-              previousStatus: "CONFIRMED_IN_PLANNING",
-              newStatus: "WAITING_FOR_PARTS",
-              changedById: session.user.id,
+              sth_invoiceId: invoice.inv_id,
+              sth_previousStatus: "CONFIRMED_IN_PLANNING",
+              sth_newStatus: "WAITING_FOR_PARTS",
+              sth_changedById: session.user.id,
             },
           });
         }
@@ -177,7 +183,7 @@ export async function POST(request: NextRequest) {
           if (!(file instanceof File)) continue;
 
           const ext = file.name.includes(".") ? file.name.split(".").pop() : "jpg";
-          const blobName = `invoice/${invoice.id}/${randomUUID()}.${ext}`;
+          const blobName = `invoice/${invoice.inv_id}/${randomUUID()}.${ext}`;
 
           const blockBlob = container.getBlockBlobClient(blobName);
           const buffer = Buffer.from(await file.arrayBuffer());
@@ -188,14 +194,14 @@ export async function POST(request: NextRequest) {
 
           uploadedBlobNames.push(blobName);
 
-          const row = await tx.invoicephoto.create({
+          const row = await tx.invoicephoto_ivp.create({
             data: {
-              invoiceId: invoice.id,
-              blobName,
-              url: blockBlob.url,
-              contentType: file.type || null,
-              size: file.size,
-              uploadedById: session.user.id,
+              ivp_invoiceId: invoice.inv_id,
+              ivp_blobName: blobName,
+              ivp_url: blockBlob.url,
+              ivp_contentType: file.type || null,
+              ivp_size: file.size,
+              ivp_uploadedById: session.user.id,
             },
           });
 
@@ -241,6 +247,9 @@ export async function POST(request: NextRequest) {
     }
 
     logError("Failed to create invoice", error);
-    return NextResponse.json({ error: "Échec de la création de l'intervention" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Échec de la création de l'intervention" },
+      { status: 500 }
+    );
   }
 }
