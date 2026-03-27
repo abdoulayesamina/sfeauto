@@ -52,19 +52,19 @@ export async function GET(request: NextRequest) {
         ? { baseId: session.user.baseId ?? "" }
         : {};
 
-    const vehicles = await prisma.vehicle.findMany({
+    const vehicles = await prisma.vehicle_veh.findMany({
       where: {
         ...baseFilter,
         ...(search
           ? {
             OR: [
               {
-                licensePlate: {
+                veh_licensePlate: {
                   contains: search
                 }
               },
               {
-                normalizedPlate: {
+                veh_normalizedPlate: {
                   contains: normalizedSearch ?? ""
                 }
               }
@@ -73,45 +73,45 @@ export async function GET(request: NextRequest) {
           : {}),
       },
       select: {
-        id: true,
-        licensePlate: true,
-        brandId: true,
-        modelId: true,
+        veh_id: true,
+        veh_licensePlate: true,
+        veh_brandId: true,
+        veh_modelId: true,
 
-        year: true,
-        color: true,
-        firstRegistrationDate: true,
-        energy: true,
-        doorsCount: true,
-        bodyType: true,
-        realPowerHp: true,
-        fiscalPowerCv: true,
-        gearboxType: true,
-        version: true,
-        registrationCardDate: true,
+        veh_year: true,
+        veh_color: true,
+        veh_firstRegistrationDate: true,
+        veh_energy: true,
+        veh_doorsCount: true,
+        veh_bodyType: true,
+        veh_realPowerHp: true,
+        veh_fiscalPowerCv: true,
+        veh_gearboxType: true,
+        veh_version: true,
+        veh_registrationCardDate: true,
 
-        entryDate: true,
-        exitDate: true,
-        createdAt: true,
-        updatedAt: true,
+        veh_entryDate: true,
+        veh_exitDate: true,
+        veh_createdAt: true,
+        veh_updatedAt: true,
 
-        client: { select: { id: true, name: true } },
-        base: { select: { id: true, location: true, clientId: true } },
+        veh_client: { select: { cli_id: true, cli_name: true } },
+        veh_base: { select: { bas_id: true, bas_location: true, bas_clientId: true } },
 
-        brand: { select: { id: true, name: true } },
-        model: { select: { id: true, name: true } },
+        veh_brand: { select: { bra_id: true, bra_name: true } },
+        veh_model: { select: { mod_id: true, mod_name: true } },
 
         invoices: {
           select: {
-            id: true,
-            vehicleId: true,
-            invoiceConfirmed: true,
-            status: true,
-            accordNumber: true,
-            dateOfConfirmation: true,
-            statusUpdatedAt: true,
-            workDescription: true,
-            didOrderParts: true,
+            inv_id: true,
+            inv_vehicleId: true,
+            inv_invoiceConfirmed: true,
+            inv_status: true,
+            inv_accordNumber: true,
+            inv_dateOfConfirmation: true,
+            inv_statusUpdatedAt: true,
+            inv_workDescription: true,
+            inv_didOrderParts: true,
             ordersDetails: true,
             comments: true,
             createdAt: true,
@@ -221,16 +221,16 @@ export async function POST(request: NextRequest) {
 
     if (session.user.role === "AGENCE") {
       finalBaseId = session.user.baseId!;
-      const base = await prisma.base.findUnique({
-        where: { id: finalBaseId },
-        select: { clientId: true },
+      const base = await prisma.base_bas.findUnique({
+        where: { bas_id: finalBaseId },
+        select: { bas_clientId: true },
       });
 
       if (!base) {
         return NextResponse.json({ error: "Base agence introuvable" }, { status: 400 });
       }
 
-      finalClientId = base.clientId;
+      finalClientId = base.bas_clientId;
     }
 
     if (session.user.role === "MANAGER") {
@@ -242,9 +242,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const vehicle = await prisma.vehicle.create({
+    const vehicle = await prisma.vehicle_veh.create({
       data: {
-        licensePlate: cleanPlate,
+        veh_licensePlate: cleanPlate,
         normalizedPlate: normalizePlate(cleanPlate), // 🔥 IMPORTANT
 
         brandId: brandId || null,
