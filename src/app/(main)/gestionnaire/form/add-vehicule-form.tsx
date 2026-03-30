@@ -65,23 +65,23 @@ export function AddVehiculeForm({
   const { getAgences } = useAgenceApi()
 
   const [vehicule, setVehicule] = useState<Vehicule>({
-    baseId: "",
-    clientId: "",
-    licensePlate: "",
-    brandId: undefined,
-    modelId: undefined,
-    year: new Date().getFullYear(),
-    color: "",
+    veh_baseId: "",
+    veh_clientId: "",
+    veh_licensePlate: "",
+    veh_brandId: undefined,
+    veh_modelId: undefined,
+    veh_year: new Date().getFullYear(),
+    veh_color: "",
 
-    firstRegistrationDate: undefined,
-    energy: undefined,
-    doorsCount: undefined,
-    bodyType: undefined,
-    realPowerHp: undefined,
-    fiscalPowerCv: undefined,
-    gearboxType: undefined,
-    version: "",
-    registrationCardDate: undefined,
+    veh_firstRegistrationDate: undefined,
+    veh_energy: undefined,
+    veh_doorsCount: undefined,
+    veh_bodyType: undefined,
+    veh_realPowerHp: undefined,
+    veh_fiscalPowerCv: undefined,
+    veh_gearboxType: undefined,
+    veh_version: "",
+    veh_registrationCardDate: undefined,
 
   })
 
@@ -92,13 +92,13 @@ export function AddVehiculeForm({
   const [lookupLoading, setLookupLoading] = useState(false)
 
   useEffect(() => {
-    if (mode === "create" && data?.licensePlate) {
-      setVehicule((prev) => ({ ...prev, licensePlate: data.licensePlate }))
+    if (mode === "create" && data?.veh_licensePlate) {
+      setVehicule((prev) => ({ ...prev, veh_licensePlate: data.veh_licensePlate }))
     }
     if (mode === "edit" && data) {
       setVehicule({
         ...data,
-        version: data.version ?? "",
+        veh_version: data.veh_version ?? "",
       })
     }
   }, [data, mode])
@@ -113,21 +113,21 @@ export function AddVehiculeForm({
 
 
   useEffect(() => {
-    if (!vehicule.clientId) {
+    if (!vehicule.veh_clientId) {
       setAgences([])
-      setVehicule((prev) => ({ ...prev, baseId: "" }))
+      setVehicule((prev) => ({ ...prev, veh_baseId: "" }))
       return
     }
 
     setLoadingAgences(true)
-    getAgences(vehicule.clientId)
+    getAgences(vehicule.veh_clientId)
       .then((res) => setAgences(res))
       .catch((err) => console.error("Erreur agences :", err))
       .finally(() => setLoadingAgences(false))
-  }, [vehicule.clientId])
+  }, [vehicule.veh_clientId])
 
   const handleLookup = async () => {
-    if (!vehicule.licensePlate) {
+    if (!vehicule.veh_licensePlate) {
       toast.error("Veuillez saisir une immatriculation")
       return
     }
@@ -135,7 +135,7 @@ export function AddVehiculeForm({
     try {
       setLookupLoading(true)
 
-      const res = await fetch(`/api/vehicles/lookup/${vehicule.licensePlate}`)
+      const res = await fetch(`/api/vehicles/lookup/${vehicule.veh_licensePlate}`)
       const result = await res.json()
 
       if (!res.ok) {
@@ -158,29 +158,29 @@ export function AddVehiculeForm({
 
       setVehicule((prev) => ({
         ...prev,
-        brandId: v.brandId ?? prev.brandId,
-        year: v.year ?? prev.year,
-        energy: v.energy ?? prev.energy,
-        doorsCount: v.doorsCount ?? prev.doorsCount,
-        bodyType: v.bodyType ?? prev.bodyType,
-        color: v.color ?? prev.color,
-        realPowerHp: v.realPowerHp ?? prev.realPowerHp,
-        fiscalPowerCv: v.fiscalPowerCv ?? prev.fiscalPowerCv,
-        gearboxType: v.gearboxType ?? prev.gearboxType,
-        firstRegistrationDate: v.firstRegistrationDate
-          ? new Date(v.firstRegistrationDate).toISOString()
-          : prev.firstRegistrationDate,
-        registrationCardDate: v.registrationCardDate
-          ? new Date(v.registrationCardDate).toISOString()
-          : prev.registrationCardDate,
-        version: v.version ?? prev.version,
+        veh_brandId: v.brandId ?? prev.veh_brandId,
+        veh_year: v.year ?? prev.veh_year,
+        veh_energy: v.energy ?? prev.veh_energy,
+        veh_doorsCount: v.doorsCount ?? prev.veh_doorsCount,
+        veh_bodyType: v.bodyType ?? prev.veh_bodyType,
+        veh_color: v.color ?? prev.veh_color,
+        veh_realPowerHp: v.realPowerHp ?? prev.veh_realPowerHp,
+        veh_fiscalPowerCv: v.fiscalPowerCv ?? prev.veh_fiscalPowerCv,
+        veh_gearboxType: v.gearboxType ?? prev.veh_gearboxType,
+        veh_firstRegistrationDate: v.veh_firstRegistrationDate
+          ? new Date(v.veh_firstRegistrationDate).toISOString()
+          : prev.veh_firstRegistrationDate,
+        veh_registrationCardDate: v.veh_registrationCardDate
+          ? new Date(v.veh_registrationCardDate).toISOString()
+          : prev.veh_registrationCardDate,
+        veh_version: v.veh_version ?? prev.veh_version,
       }))
 
       await new Promise((r) => setTimeout(r, 0))
 
       setVehicule((prev) => ({
         ...prev,
-        modelId: v.modelId ?? prev.modelId,
+        veh_modelId: v.veh_modelId ?? prev.veh_modelId,
       }))
 
       toast.success("Véhicule trouvé et pré-rempli")
@@ -199,11 +199,11 @@ export function AddVehiculeForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!vehicule.brandId) return alert("Veuillez sélectionner une marque")
-    if (!vehicule.modelId) return alert("Veuillez sélectionner un modèle")
-    if (!vehicule.clientId) return alert("Veuillez sélectionner un client")
-    if (!vehicule.baseId) return alert("Veuillez sélectionner une agence")
-    if (!vehicule.licensePlate) return alert("Veuillez saisir l'immatriculation")
+    if (!vehicule.veh_brandId) return alert("Veuillez sélectionner une marque")
+    if (!vehicule.veh_modelId) return alert("Veuillez sélectionner un modèle")
+    if (!vehicule.veh_clientId) return alert("Veuillez sélectionner un client")
+    if (!vehicule.veh_baseId) return alert("Veuillez sélectionner une agence")
+    if (!vehicule.veh_licensePlate) return alert("Veuillez saisir l'immatriculation")
     onSubmit(vehicule)
   }
   return (
@@ -220,7 +220,7 @@ export function AddVehiculeForm({
             id="immatriculation"
             placeholder="AA-123-BB"
             className="h-12"
-            value={formatLicensePlate(vehicule.licensePlate || "")}
+            value={formatLicensePlate(vehicule.veh_licensePlate || "")}
             onChange={(e) => {
               const normalized = e.target.value
                 .toUpperCase()
@@ -228,7 +228,7 @@ export function AddVehiculeForm({
 
               setVehicule({
                 ...vehicule,
-                licensePlate: normalized
+                veh_licensePlate: normalized
               })
             }}
           />
@@ -249,12 +249,12 @@ export function AddVehiculeForm({
         <div className="flex flex-col gap-2">
           <Label htmlFor="marque">Marque <span className="text-red-500">*</span></Label>
           <BrandSelect
-            value={vehicule.brandId ?? null}
+            value={vehicule.veh_brandId ?? null}
             onChange={(brandId) =>
               setVehicule({
                 ...vehicule,
-                brandId,
-                modelId: null, // reset modèle
+                veh_brandId : brandId,
+                veh_modelId: null, // reset modèle
               })
             }
           />
@@ -262,13 +262,13 @@ export function AddVehiculeForm({
         <div className="flex flex-col gap-2">
           <Label htmlFor="modele">Modèle <span className="text-red-500">*</span></Label>
           <ModelSelect
-            key={vehicule.brandId}
-            brandId={vehicule.brandId ?? null}
-            value={vehicule.modelId ?? null}
+            key={vehicule.veh_brandId}
+            brandId={vehicule.veh_brandId ?? null}
+            value={vehicule.veh_modelId ?? null}
             onChange={(modelId) =>
               setVehicule({
                 ...vehicule,
-                modelId,
+                veh_modelId : modelId,
               })
             }
           />
@@ -284,11 +284,11 @@ export function AddVehiculeForm({
             type="number"
             placeholder="2023"
             className="h-12"
-            value={vehicule.year ?? ""}
+            value={vehicule.veh_year ?? ""}
             onChange={(e) =>
               setVehicule({
                 ...vehicule,
-                year: e.target.value ? Number(e.target.value) : undefined,
+                veh_year: e.target.value ? Number(e.target.value) : undefined,
               })
             }
           />
@@ -299,8 +299,8 @@ export function AddVehiculeForm({
             id="couleur"
             placeholder="Gris"
             className="h-12"
-            value={vehicule.color || ""}
-            onChange={(e) => setVehicule({ ...vehicule, color: e.target.value })}
+            value={vehicule.veh_color || ""}
+            onChange={(e) => setVehicule({ ...vehicule, veh_color: e.target.value })}
           />
         </div>
       </div>
@@ -313,11 +313,11 @@ export function AddVehiculeForm({
             id="firstRegistrationDate"
             type="date"
             className="h-12"
-            value={fromISOToDateInput(vehicule.firstRegistrationDate)}
+            value={fromISOToDateInput(vehicule.veh_firstRegistrationDate)}
             onChange={(e) =>
               setVehicule({
                 ...vehicule,
-                firstRegistrationDate: e.target.value ? toISODateTime(e.target.value) : undefined,
+                veh_firstRegistrationDate: e.target.value ? toISODateTime(e.target.value) : undefined,
               })
             }
           />
@@ -329,11 +329,11 @@ export function AddVehiculeForm({
             id="registrationCardDate"
             type="date"
             className="h-12"
-            value={fromISOToDateInput(vehicule.registrationCardDate)}
+            value={fromISOToDateInput(vehicule.veh_registrationCardDate)}
             onChange={(e) =>
               setVehicule({
                 ...vehicule,
-                registrationCardDate: e.target.value ? toISODateTime(e.target.value) : undefined,
+                veh_registrationCardDate: e.target.value ? toISODateTime(e.target.value) : undefined,
               })
             }
           />
@@ -345,8 +345,8 @@ export function AddVehiculeForm({
         <div className="flex flex-col gap-2">
           <Label>Énergie</Label>
           <Select
-            value={(vehicule.energy as string) || ""}
-            onValueChange={(energy) => setVehicule({ ...vehicule, energy: energy as any })}
+            value={(vehicule.veh_energy as string) || ""}
+            onValueChange={(energy) => setVehicule({ ...vehicule, veh_energy: energy as any })}
           >
             <SelectTrigger className="h-12">
               <SelectValue placeholder="Sélectionnez une énergie" />
@@ -364,9 +364,9 @@ export function AddVehiculeForm({
         <div className="flex flex-col gap-2">
           <Label>Carrosserie</Label>
           <Select
-            value={(vehicule.bodyType as string) || ""}
+            value={(vehicule.veh_bodyType as string) || ""}
             onValueChange={(bodyType) =>
-              setVehicule({ ...vehicule, bodyType: bodyType as any })
+              setVehicule({ ...vehicule, veh_bodyType: bodyType as any })
             }
           >
             <SelectTrigger className="h-12">
@@ -392,11 +392,11 @@ export function AddVehiculeForm({
             type="number"
             placeholder="5"
             className="h-12"
-            value={vehicule.doorsCount ?? ""}
+            value={vehicule.veh_doorsCount ?? ""}
             onChange={(e) =>
               setVehicule({
                 ...vehicule,
-                doorsCount: e.target.value ? Number(e.target.value) : undefined,
+                veh_doorsCount: e.target.value ? Number(e.target.value) : undefined,
               })
             }
           />
@@ -405,9 +405,9 @@ export function AddVehiculeForm({
         <div className="flex flex-col gap-2">
           <Label>Type de boîte</Label>
           <Select
-            value={(vehicule.gearboxType as string) || ""}
+            value={(vehicule.veh_gearboxType as string) || ""}
             onValueChange={(gearboxType) =>
-              setVehicule({ ...vehicule, gearboxType: gearboxType as any })
+              setVehicule({ ...vehicule, veh_gearboxType: gearboxType as any })
             }
           >
             <SelectTrigger className="h-12">
@@ -433,11 +433,11 @@ export function AddVehiculeForm({
             type="number"
             placeholder="128"
             className="h-12"
-            value={vehicule.realPowerHp ?? ""}
+            value={vehicule.veh_realPowerHp ?? ""}
             onChange={(e) =>
               setVehicule({
                 ...vehicule,
-                realPowerHp: e.target.value ? Number(e.target.value) : undefined,
+                veh_realPowerHp: e.target.value ? Number(e.target.value) : undefined,
               })
             }
           />
@@ -450,11 +450,11 @@ export function AddVehiculeForm({
             type="number"
             placeholder="7"
             className="h-12"
-            value={vehicule.fiscalPowerCv ?? ""}
+            value={vehicule.veh_fiscalPowerCv ?? ""}
             onChange={(e) =>
               setVehicule({
                 ...vehicule,
-                fiscalPowerCv: e.target.value ? Number(e.target.value) : undefined,
+                veh_fiscalPowerCv: e.target.value ? Number(e.target.value) : undefined,
               })
             }
           />
@@ -468,8 +468,8 @@ export function AddVehiculeForm({
           id="version"
           placeholder="1.6 CRDI"
           className="h-12"
-          value={vehicule.version || ""}
-          onChange={(e) => setVehicule({ ...vehicule, version: e.target.value })}
+          value={vehicule.veh_version || ""}
+          onChange={(e) => setVehicule({ ...vehicule, veh_version: e.target.value })}
         />
       </div>
 
@@ -479,9 +479,9 @@ export function AddVehiculeForm({
           Client <span className="text-red-500">*</span>
         </Label>
         <Select
-          value={vehicule.clientId || ""}
+          value={vehicule.veh_clientId || ""}
           onValueChange={(clientId) =>
-            setVehicule({ ...vehicule, clientId, baseId: "" })
+            setVehicule({ ...vehicule, veh_clientId : clientId, veh_baseId: "" })
           }
         >
           <SelectTrigger className="h-12">
@@ -489,8 +489,8 @@ export function AddVehiculeForm({
           </SelectTrigger>
           <SelectContent className="z-[2000]">
             {clients.map((c) => (
-              <SelectItem key={c.id} value={c.id}>
-                {c.name}
+              <SelectItem key={c.cli_id} value={c.cli_id}>
+                {c.cli_name}
               </SelectItem>
             ))}
           </SelectContent>
@@ -503,14 +503,14 @@ export function AddVehiculeForm({
           Agence <span className="text-red-500">*</span>
         </Label>
         <Select
-          value={vehicule.baseId || ""}
-          onValueChange={(baseId) => setVehicule({ ...vehicule, baseId })}
-          disabled={!vehicule.clientId || loadingAgences}
+          value={vehicule.veh_baseId || ""}
+          onValueChange={(baseId) => setVehicule({ ...vehicule, veh_baseId : baseId })}
+          disabled={!vehicule.veh_clientId || loadingAgences}
         >
           <SelectTrigger className="h-12">
             <SelectValue
               placeholder={
-                !vehicule.clientId
+                !vehicule.veh_clientId
                   ? "Sélectionnez un client d'abord"
                   : loadingAgences
                     ? "Chargement..."
@@ -520,8 +520,8 @@ export function AddVehiculeForm({
           </SelectTrigger>
           <SelectContent className="z-[2000]">
             {agences.map((b) => (
-              <SelectItem key={b.id} value={b.id}>
-                {b.location}
+              <SelectItem key={b.bas_id} value={b.bas_id}>
+                {b.bas_location}
               </SelectItem>
             ))}
           </SelectContent>

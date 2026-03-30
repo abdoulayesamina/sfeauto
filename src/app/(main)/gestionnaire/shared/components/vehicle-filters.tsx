@@ -43,8 +43,8 @@ export function VehicleFilters({
         <SelectContent>
           <SelectItem value="all">Tous les clients</SelectItem>
           {clients.map((client) => (
-            <SelectItem key={client.id} value={client.id}>
-              {client.name}
+            <SelectItem key={client.cli_id} value={client.cli_id}>
+              {client.cli_name}
             </SelectItem>
           ))}
         </SelectContent>
@@ -62,8 +62,8 @@ export function VehicleFilters({
   <SelectContent>
     <SelectItem value="all">Toutes les agences</SelectItem>
     {agences.map((agence) => (
-      <SelectItem key={agence.id} value={agence.id}>
-        {agence.location}
+      <SelectItem key={agence.bas_id} value={agence.bas_id}>
+        {agence.bas_location}
       </SelectItem>
     ))}
   </SelectContent>
