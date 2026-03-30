@@ -23,8 +23,8 @@ type UserFormProps = {
   onChange: (data: Partial<User>) => void
   onSubmit: () => void
   onClose: () => void
-  clients: { id: string; name: string }[]
-  agences: { id: string; location: string; clientId: string }[]
+  clients: { cli_id: string; cli_name: string }[]
+  agences: { bas_id: string; bas_location: string; bas_clientId: string }[]
 }
 
 
@@ -52,9 +52,9 @@ export function UserForm({
     { id: "AGENCE", name: "Agence" },
   ] as const
 
-  const needsClientAndBase = value.role === "CLIENT" || value.role === "AGENCE"
-  const filteredAgences = value.clientId
-  ? agences.filter((a) => a.clientId === value.clientId)
+  const needsClientAndBase = value.usr_role === "CLIENT" || value.usr_role === "AGENCE"
+  const filteredAgences = value.usr_clientId
+  ? agences.filter((a) => a.bas_clientId === value.usr_clientId)
   : []
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -62,7 +62,7 @@ export function UserForm({
       inputRef.current?.focus();
   }, [mode]);
 
-  const password = value.password || "";
+  const password = value.usr_password || "";
 
   const passwordRules = {
     length: password.length >= 8,
@@ -92,8 +92,8 @@ export function UserForm({
         <Input
           ref={inputRef}
           className="h-12"
-          value={value.name || ""}
-          onChange={(e) => onChange({ ...value, name: e.target.value })}
+          value={value.usr_name || ""}
+          onChange={(e) => onChange({ ...value, usr_name: e.target.value })}
         />
       </div>
 
@@ -101,8 +101,8 @@ export function UserForm({
         <Label>Email</Label>
         <Input
           className="h-12"
-          value={value.email || ""}
-          onChange={(e) => onChange({ ...value, email: e.target.value })}
+          value={value.usr_email || ""}
+          onChange={(e) => onChange({ ...value, usr_email: e.target.value })}
         />
       </div>
 
@@ -114,9 +114,9 @@ export function UserForm({
             <Input
               className="h-12"
               type="password"
-              value={value.password || ""}
+              value={value.usr_password || ""}
               placeholder="Mot de passe"
-              onChange={(e) => onChange({ ...value, password: e.target.value })}
+              onChange={(e) => onChange({ ...value, usr_password: e.target.value })}
             />
 
             <div className="text-sm mt-2 space-y-1">
@@ -153,7 +153,7 @@ export function UserForm({
               onChange={(e) => {
                 const val = e.target.value;
                 setOldPassword(val);
-                onChange({ ...value, password: val }); 
+                onChange({ ...value, usr_password: val }); 
               }}
             />
           </div>
@@ -203,16 +203,16 @@ export function UserForm({
       <div>
         <Label>Rôle</Label>
         <Select
-          value={value.role || ""}
+          value={value.usr_role || ""}
 
           onValueChange={(role : "CLIENT" | "AGENCE") => {
 
-            const next: Partial<User> = { ...value, role}
+            const next: Partial<User> = { ...value, usr_role : role}
 
             const willNeed = role === "CLIENT" || role === "AGENCE"
             if (!willNeed) {
-              next.clientId = null
-              next.baseId = null
+              next.usr_clientId = null
+              next.usr_baseId = null
             }
 
             onChange(next)
@@ -237,12 +237,12 @@ export function UserForm({
           <div>
             <Label>Client</Label>
             <Select
-              value={value.clientId || ""}
+              value={value.usr_clientId || ""}
               onValueChange={(clientId) =>
                 onChange({
                   ...value,
-                  clientId,
-                  baseId: null, 
+                  usr_clientId : clientId,
+                  usr_baseId: null, 
                 })
               }
             >
@@ -251,8 +251,8 @@ export function UserForm({
               </SelectTrigger>
               <SelectContent className="z-[2000]">
                 {clients.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name}
+                  <SelectItem key={c.cli_id} value={c.cli_id}>
+                    {c.cli_name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -262,14 +262,14 @@ export function UserForm({
           <div>
             <Label>Agence</Label>
             <Select
-              value={value.baseId || ""}
-              onValueChange={(baseId) => onChange({ ...value, baseId })}
-              disabled={!value.clientId}
+              value={value.usr_baseId || ""}
+              onValueChange={(baseId) => onChange({ ...value, usr_baseId : baseId })}
+              disabled={!value.usr_clientId}
             >
               <SelectTrigger className="h-12">
                 <SelectValue
                   placeholder={
-                    value.clientId
+                    value.usr_clientId
                       ? "Sélectionnez une agence"
                       : "Choisissez d'abord un client"
                   }
@@ -277,15 +277,15 @@ export function UserForm({
               </SelectTrigger>
               <SelectContent className="z-[2000]">
                 {filteredAgences.map((a) => (
-                  <SelectItem key={a.id} value={a.id}>
-                    {a.location}
+                  <SelectItem key={a.bas_id} value={a.bas_id}>
+                    {a.bas_location}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
             {/* Message d'aide spécifique */}
-            {value.role === "AGENCE" && (
+            {value.usr_role === "AGENCE" && (
               <p className="mt-1 text-xs text-muted-foreground">
                 Pour un compte <b>Agence</b>, l’agence (base) doit être sélectionnée.
               </p>
@@ -305,7 +305,7 @@ export function UserForm({
           //   value.role === "AGENCE" && (!value.clientId || !value.baseId) || loading
           // }
           disabled={
-            (value.role === "AGENCE" && (!value.clientId || !value.baseId)) ||
+            (value.usr_role === "AGENCE" && (!value.usr_clientId || !value.usr_baseId)) ||
             loading ||
             (mode === "create" && !isPasswordValid) ||
             (mode === "edit" && 

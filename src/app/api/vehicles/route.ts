@@ -112,46 +112,46 @@ export async function GET(request: NextRequest) {
             inv_statusUpdatedAt: true,
             inv_workDescription: true,
             inv_didOrderParts: true,
-            ordersDetails: true,
-            comments: true,
-            createdAt: true,
-            updatedAt: true,
-            photos: { select: { id: true, url: true } },
-            handledBy: { select: { name: true, email: true } },
+            inv_ordersDetails: true,
+            inv_comments: true,
+            inv_createdAt: true,
+            inv_updatedAt: true,
+            photos: { select: { ivp_id: true, ivp_url: true } },
+            inv_handledBy: { select: { usr_name: true, usr_email: true } },
             devis: {
               where: { dev_supprimee: false },
               select: { dev_id: true, dev_numdevis: true },
             },
-            vehicle: {
+            inv_vehicle: {
               select: {
-                licensePlate: true,
-                color: true,
-                year: true,
-                clientId: true,
-                baseId: true,
-                entryDate: true,
-                brand: {
-                  select: { name: true }
+                veh_licensePlate: true,
+                veh_color: true,
+                veh_year: true,
+                veh_clientId: true,
+                veh_baseId: true,
+                veh_entryDate: true,
+                veh_brand: {
+                  select: { bra_name: true }
                 },
-                model: {
-                  select: { name: true }
+                veh_model: {
+                  select: { mod_name: true }
                 },
-                client: {
-                  select: { name: true }
+                veh_client: {
+                  select: { cli_name: true }
                 },
-                base: {
-                  select: { location: true }
+                veh_base: {
+                  select: { bas_location: true }
                 }
               }
             }
           },
-          orderBy: { createdAt: "desc" },
+          orderBy: { inv_createdAt: "desc" },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { veh_createdAt: "desc" },
       take: search ? 10 : 100,
-    });
-
+      });
+    
     return NextResponse.json({ vehicles });
   } catch (error) {
     logError("Failed to fetch vehicles", error);
@@ -245,42 +245,42 @@ export async function POST(request: NextRequest) {
     const vehicle = await prisma.vehicle_veh.create({
       data: {
         veh_licensePlate: cleanPlate,
-        normalizedPlate: normalizePlate(cleanPlate), // 🔥 IMPORTANT
+        veh_normalizedPlate: normalizePlate(cleanPlate), // 🔥 IMPORTANT
 
-        brandId: brandId || null,
-        modelId: modelId || null,
-        year: parseOptionalInt(year),
+        veh_brandId: brandId || null,
+        veh_modelId: modelId || null,
+        veh_year: parseOptionalInt(year),
         // color: normalizeOptionalString(color),
 
-        color: normalizeOptionalString(color),
-        version: normalizeOptionalString(version),
+        veh_color: normalizeOptionalString(color),
+        veh_version: normalizeOptionalString(version),
 
-        bodyType: bodyType?.trim() || null,
-        gearboxType: gearboxType?.trim() || null,
-        energy: energy?.trim() || null,
+        veh_bodyType: bodyType?.trim() || null,
+        veh_gearboxType: gearboxType?.trim() || null,
+        veh_energy: energy?.trim() || null,
 
-        firstRegistrationDate: parseOptionalDate(firstRegistrationDate),
+        veh_firstRegistrationDate: parseOptionalDate(firstRegistrationDate),
         // energy: energy ?? null,
-        doorsCount: parseOptionalInt(doorsCount),
+        veh_doorsCount: parseOptionalInt(doorsCount),
         // bodyType: bodyType ?? null,
-        realPowerHp: parseOptionalInt(realPowerHp),
-        fiscalPowerCv: parseOptionalInt(fiscalPowerCv),
+        veh_realPowerHp: parseOptionalInt(realPowerHp),
+        veh_fiscalPowerCv: parseOptionalInt(fiscalPowerCv),
         // gearboxType: gearboxType ?? null,
         // version: normalizeOptionalString(version),
-        registrationCardDate: parseOptionalDate(registrationCardDate),
+        veh_registrationCardDate: parseOptionalDate(registrationCardDate),
 
-        clientId: finalClientId!,
-        baseId: finalBaseId!,
+        veh_clientId: finalClientId!,
+        veh_baseId: finalBaseId!,
 
-        entryDate: entryDate ? new Date(entryDate) : new Date(),
-        exitDate: exitDate ? new Date(exitDate) : null,
+        veh_entryDate: entryDate ? new Date(entryDate) : new Date(),
+        veh_exitDate: exitDate ? new Date(exitDate) : null,
 
-        handledById: session.user.id,
+        veh_handledById: session.user.id,
       },
       include: {
-        client: true,
-        base: { select: { id: true, location: true } },
-        handledBy: { select: { name: true, email: true } },
+        veh_client: true,
+        veh_base: { select: { bas_id: true, bas_location: true } },
+        veh_handledBy: { select: { usr_name: true, usr_email: true } },
       },
     });
 

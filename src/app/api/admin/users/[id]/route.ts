@@ -20,13 +20,13 @@ export async function PUT(
     const { id } = await params
     const body = await request.json()
     const { 
-      name, 
-      email, 
-      password: oldPassword,
+      usr_name: name, 
+      usr_email: email, 
+      usr_password: oldPassword,
       newPassword,
-      role, 
-      clientId, 
-      baseId 
+      usr_role: role, 
+      usr_clientId: clientId, 
+      usr_baseId: baseId 
     } = body
 
     // Validation
@@ -47,10 +47,10 @@ export async function PUT(
     }
 
     // Check if email already exists (excluding current user)
-    const existingUser = await prisma.user.findFirst({
+    const existingUser = await prisma.user_usr.findFirst({
       where: {
-        email: email.trim().toLowerCase(),
-        id: { not: id }
+        usr_email: email.trim().toLowerCase(),
+        usr_id: { not: id }
       }
     })
     
@@ -72,9 +72,9 @@ export async function PUT(
       }
 
       // Récupérer l'utilisateur actuel pour vérifier l'ancien mot de passe
-      const currentUser = await prisma.user.findUnique({
-        where: { id },
-        select: { password: true }
+      const currentUser = await prisma.user_usr.findUnique({
+        where: { usr_id : id },
+        select: { usr_password: true }
       })
 
       if (!currentUser) {
@@ -82,7 +82,7 @@ export async function PUT(
       }
 
       // Vérifier que l'ancien mot de passe est correct
-      const isOldPasswordCorrect = await bcrypt.compare(oldPassword, currentUser.password)
+      const isOldPasswordCorrect = await bcrypt.compare(oldPassword, currentUser.usr_password)
       if (!isOldPasswordCorrect) {
         return NextResponse.json(
           { error: "L'ancien mot de passe est incorrect" }, 
@@ -102,12 +102,12 @@ export async function PUT(
 
     // If CLIENT role, validate that baseId belongs to the selected client
     if (role === 'CLIENT' && clientId && baseId) {
-      const base = await prisma.base.findUnique({
-        where: { id: baseId },
-        select: { clientId: true }
+      const base = await prisma.base_bas.findUnique({
+        where: { bas_id: baseId },
+        select: { bas_clientId: true }
       })
 
-      if (!base || base.clientId !== clientId) {
+      if (!base || base.bas_clientId !== clientId) {
         return NextResponse.json(
           { error: 'L\'agence sélectionnée n\'appartient pas au client choisi' },
           { status: 400 }
@@ -117,39 +117,40 @@ export async function PUT(
 
     // Prepare update data
     const updateData: any = {
-      name: name.trim(),
-      email: email.trim().toLowerCase(),
-      role,
-      clientId: clientId || null,
-      baseId: baseId || null
+      usr_name: name.trim(),
+      usr_email: email.trim().toLowerCase(),
+      usr_role: role,
+      usr_clientId: clientId || null,
+      usr_baseId: baseId || null
     }
 
     // On ajoute le nouveau mot de passe hashé uniquement s'il y en a un
     if (hashedNewPassword) {
-      updateData.password = hashedNewPassword
+      updateData.usr_password = hashedNewPassword
     }
 
     // Update user
-    const user = await prisma.user.update({
-      where: { id },
+    const user = await prisma.user_usr.update({
+    where: { usr_id: id },
       data: updateData,
       select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        clientId: true,
-        baseId: true,
-        createdAt: true,
-        updatedAt: true,
-        client: {
-          select: { name: true }
+        usr_id: true,
+        usr_name: true,
+        usr_email: true,
+        usr_role: true,
+        usr_clientId: true,
+        usr_baseId: true,
+        usr_createdAt: true,
+        usr_updatedAt: true,
+
+        usr_client: {
+          select: { cli_name: true }
         },
-        base: {
-          select: { location: true }
+        usr_base: {
+          select: { bas_location: true }
         }
       }
-    })
+    });
 
     return NextResponse.json(user)
   } catch (error) {
@@ -223,16 +224,16 @@ export async function DELETE(
       )
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id },
-      select: { isSystemAccount: true }
+    const user = await prisma.user_usr.findUnique({
+      where: { usr_id: id },
+      select: { usr_isSystemAccount: true }
     })
 
     if (!user) {
       return NextResponse.json({ error: 'Utilisateur introuvable' }, { status: 404 })
     }
 
-    if (user.isSystemAccount) {
+    if (user.usr_isSystemAccount) {
       return NextResponse.json(
         { error: 'Impossible de supprimer un compte système' },
         { status: 403 }
@@ -240,8 +241,8 @@ export async function DELETE(
     }
 
     //  DELETE avec gestion d'erreur métier
-    await prisma.user.delete({
-      where: { id }
+    await prisma.user_usr.delete({
+      where: { usr_id: id }
     })
 
     return NextResponse.json({ success: true })

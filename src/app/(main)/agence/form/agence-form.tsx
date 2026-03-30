@@ -11,7 +11,7 @@ import { Spinner } from "@/src/shared/components/spinner"
 type Props = {
   mode: "create" | "edit"
   data: Partial<Agence>
-  clients: { id: string; name: string }[]
+  clients: { cli_id: string; cli_name: string }[]
   loading?: boolean
   onClose: () => void
   onSubmit: () => void
@@ -33,14 +33,14 @@ export function AgenceForm({ mode, data, clients, loading, onClose, onSubmit, on
     <form onSubmit={handleSubmit}>
       <div className="mb-4 flex flex-col gap-2">
         <Label>Client</Label>
-        <Select value={data.clientId || ""} onValueChange={(v) => onChange({ ...data, clientId: v })}>
+        <Select value={data.bas_clientId || ""} onValueChange={(v) => onChange({ ...data, bas_clientId: v })}>
           <SelectTrigger className="w-full !h-12" ref={inputRef as any}>
             <SelectValue placeholder="Sélectionnez un client" />
           </SelectTrigger>
           <SelectContent className="z-[2000]">
             {clients.map((c) => (
-              <SelectItem key={c.id} value={c.id}>
-                {c.name}
+              <SelectItem key={c.cli_id} value={c.cli_id}>
+                {c.cli_name}
               </SelectItem>
             ))}
           </SelectContent>
@@ -51,8 +51,8 @@ export function AgenceForm({ mode, data, clients, loading, onClose, onSubmit, on
         <Label>Emplacement</Label>
         <Input
           className="h-12"
-          value={data.location || ""}
-          onChange={(e) => onChange({ ...data, location: e.target.value })}
+          value={data.bas_location || ""}
+          onChange={(e) => onChange({ ...data, bas_location: e.target.value })}
           placeholder="Emplacement"
         />
       </div>

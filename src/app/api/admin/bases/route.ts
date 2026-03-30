@@ -12,10 +12,10 @@ export async function GET() {
       return NextResponse.json({ error: 'Accès administrateur requis' }, { status: 403 })
     }
 
-    const bases = await prisma.base.findMany({
+    const bases = await prisma.base_bas.findMany({
       include: {
-        client: {
-          select: { name: true }
+        bas_client: {
+          select: { cli_name: true }
         },
         _count: {
           select: {
@@ -24,8 +24,8 @@ export async function GET() {
         }
       },
       orderBy: [
-        { client: { name: 'asc' } },
-        { location: 'asc' }
+        { bas_client: { cli_name: 'asc' } },
+        { bas_location: 'asc' }
       ]
     })
 
@@ -46,28 +46,28 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { clientId, location } = body
+    const { bas_clientId : clientId, bas_location : location } = body
 
     if (!clientId || !location?.trim()) {
       return NextResponse.json({ error: 'Client et localisation requis' }, { status: 400 })
     }
 
     // Verify client exists
-    const clientExists = await prisma.client.findUnique({
-      where: { id: clientId },
+    const clientExists = await prisma.client_cli.findUnique({
+      where: { cli_id: clientId },
     });
     if (!clientExists) {
       return NextResponse.json({ error: 'Client invalide' }, { status: 400 });
     }
 
-    const base = await prisma.base.create({
+    const base = await prisma.base_bas.create({
       data: {
-        clientId,
-        location: location.trim()
+        bas_clientId : clientId,
+        bas_location: location.trim()
       },
       include: {
-        client: {
-          select: { name: true }
+        bas_client: {
+          select: { cli_name: true }
         },
         _count: {
           select: {

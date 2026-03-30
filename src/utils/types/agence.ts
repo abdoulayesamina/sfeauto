@@ -1,17 +1,17 @@
 import { z } from "zod"
 
 export const AgenceSchema = z.object({
-  id: z.string(),
+  bas_id: z.string(),
 
-  location: z.string(),
+  bas_location: z.string(),
 
-  createdAt: z.string().datetime().optional(),
-  updatedAt: z.string().datetime().optional(),
+  bas_createdAt: z.string().datetime().optional(),
+  bas_updatedAt: z.string().datetime().optional(),
 
-  clientId: z.string(),
+  bas_clientId: z.string(),
 
-  client: z.object({
-    name: z.string(),
+  bas_client: z.object({
+    cli_name: z.string(),
   }),
 
   _count: z.object({

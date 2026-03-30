@@ -19,13 +19,13 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const clientId = searchParams.get("clientId");
 
-    const bases = await prisma.base.findMany({
-      where: clientId ? { clientId } : undefined,
+    const bases = await prisma.base_bas.findMany({
+      where: clientId ? { bas_clientId : clientId } : undefined,
       include: {
-        client: true,
+        bas_client: true,
       },
       orderBy: {
-        location: "asc",
+        bas_location: "asc",
       },
     });
 

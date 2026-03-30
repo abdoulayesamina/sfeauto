@@ -149,31 +149,31 @@ export async function GET(
 
     if (mapped.brandName) {
 
-      brand = await prisma.brand.findUnique({
-        where: { name: mapped.brandName },
+      brand = await prisma.brand_bra.findUnique({
+        where: { bra_name: mapped.brandName },
       })
 
       if (!brand) {
-        brand = await prisma.brand.create({
-          data: { name: mapped.brandName },
+        brand = await prisma.brand_bra.create({
+          data: { bra_name: mapped.brandName },
         })
       }
     }
 
     if (brand && mapped.modelName) {
 
-      model = await prisma.model.findFirst({
+      model = await prisma.model_mod.findFirst({
         where: {
-          name: mapped.modelName,
-          brandId: brand.id,
+          mod_name: mapped.modelName,
+          mod_brandId: brand.bra_id,
         },
       })
 
       if (!model) {
-        model = await prisma.model.create({
+        model = await prisma.model_mod.create({
           data: {
-            name: mapped.modelName,
-            brandId: brand.id,
+            mod_name: mapped.modelName,
+            mod_brandId: brand.bra_id,
           },
         })
       }
@@ -184,10 +184,10 @@ export async function GET(
       source: "api",
       data: {
 
-        brandId: brand?.id,
+        brandId: brand?.bra_id,
         brandName: mapped.brandName,
 
-        modelId: model?.id,
+        modelId: model?.mod_id,
         modelName: mapped.modelName,
 
         year: mapped.year,

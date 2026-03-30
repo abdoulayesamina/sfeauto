@@ -70,16 +70,16 @@ export function SectionCards({user} : {user?: any} ) {
 
     const enCours = interventions.filter(
       (i) =>
-        i.status === "CONFIRMED_IN_PLANNING" ||
-        i.status === "FIXING_STARTED"
+        i.inv_status === "CONFIRMED_IN_PLANNING" ||
+        i.inv_status === "FIXING_STARTED"
     )
 
     const terminees = interventions.filter(
-      (i) => i.status === "FIXING_FINISHED"
+      (i) => i.inv_status === "FIXING_FINISHED"
     )
 
     const attenteDePiece = interventions.filter(
-      (i) => i.status === "WAITING_FOR_PARTS"
+      (i) => i.inv_status === "WAITING_FOR_PARTS"
     )
 
     setNombreInterventionsEnCours(enCours.length)
@@ -134,12 +134,13 @@ export function SectionCards({user} : {user?: any} ) {
     console.log("Liste des vehicules : ", vehicles?.vehicles);
     
     if(!clientId && agenceId){
-      const ag = agences.find(a=>a.id === agenceId)
-      clientIdChanged(ag?.clientId ?? "")
+      const ag = agences.find(a=>a.bas_id === agenceId)
+      clientIdChanged(ag?.bas_clientId ?? "")
     }
+
     if(agenceId){
       const interventions = vehicles?.vehicles.
-      filter((v : any) => v.base.id === agenceId).
+      filter((v : any) => v.veh_base.bas_id === agenceId).
       flatMap((v : any) => v.invoices);
       
       updateInterventionsStats(interventions)
@@ -169,8 +170,7 @@ export function SectionCards({user} : {user?: any} ) {
   const clientIdChanged = (id:string)=>{
     
     setClientId(id)
-    const agenceFiltered = id ? agences.filter((a)=>a.clientId === id) : agences
-    console.log("Les agences : ", agenceFiltered);
+    const agenceFiltered = id ? agences.filter((a)=>a.bas_clientId === id) : agences
     setAgencesFiltered(agenceFiltered)
   }
 
@@ -180,9 +180,9 @@ export function SectionCards({user} : {user?: any} ) {
     setSelectedInvoice({
       ...inv,
       vehicle: {
-        ...inv.vehicle,
-        brand: inv.vehicle?.brand?.name ?? "",
-        model: inv.vehicle?.model?.name ?? "",
+        ...inv.inv_vehicle,
+        veh_brand: inv.inv_vehicle?.veh_brand?.bra_name ?? "",
+        veh_model: inv.inv_vehicle?.veh_model?.mod_name ?? "",
       }
     });
     setOpenDetailModal(true);
@@ -223,8 +223,8 @@ export function SectionCards({user} : {user?: any} ) {
             </SelectTrigger>
             <SelectContent className="z-[2000]">
               {clients.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {c.name}
+                <SelectItem key={c.cli_id} value={c.cli_id}>
+                  {c.cli_name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -246,8 +246,8 @@ export function SectionCards({user} : {user?: any} ) {
             </SelectTrigger>
             <SelectContent className="z-[2000]">
               {agencesFiltered.map((b) => (
-                <SelectItem key={b.id} value={b.id}>
-                  {b.location}
+                <SelectItem key={b.bas_id} value={b.bas_id}>
+                  {b.bas_location}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -402,33 +402,33 @@ export function SectionCards({user} : {user?: any} ) {
                   </div>
                 ) : (
                   displayedInvoices.map((inv) => {
-                    const status = STATUS_UI_MAP[inv.status as "CONFIRMED_IN_PLANNING" | "WAITING_FOR_PARTS" | "FIXING_STARTED" | "FIXING_FINISHED"]
+                    const status = STATUS_UI_MAP[inv.inv_status as "CONFIRMED_IN_PLANNING" | "WAITING_FOR_PARTS" | "FIXING_STARTED" | "FIXING_FINISHED"]
                     const statusMeta = getStatusMeta(status)
                     
                     return(
                       <div
-                        key={inv.id}
+                        key={inv.inv_id}
                         className="group p-5 flex flex-col-reverse lg:flex-row lg:items-center gap-5 hover:bg-gray-50 transition rounded-2xl"
                       >
                         <div className="flex items-center gap-5 flex-1">
                           <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 
                                           flex items-center justify-center text-sm font-semibold text-gray-700 shadow-sm">
-                            {inv.vehicle?.brand?.name[0] ?? ""}
-                            {inv.vehicle?.model?.name[0] ?? ""}
+                            {inv.inv_vehicle?.veh_brand?.bra_name[0] ?? ""}
+                            {inv.inv_vehicle?.veh_model?.mod_name[0] ?? ""}
                           </div>
 
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between flex-wrap lg:justify-start gap-3">
                               <div className="font-semibold text-gray-900 truncate">
-                                {inv.vehicle?.brand?.name ?? ""} {inv.vehicle?.model?.name ?? ""}
+                                {inv.inv_vehicle?.veh_brand?.bra_name ?? ""} {inv.inv_vehicle?.veh_model?.mod_name ?? ""}
                               </div>
                               <span className="flex items-center gap-3">
                                 <span className="text-xs bg-gray-100 px-2 py-0.5 rounded-md text-gray-600">
-                                  {inv.vehicle?.year ?? ""}
+                                  {inv.inv_vehicle?.veh_year ?? ""}
                                 </span>
 
                                 <span className="text-xs bg-slate-100 px-2 py-0.5 rounded-md text-gray-600">
-                                  {inv.vehicle?.color ?? ""}
+                                  {inv.inv_vehicle?.veh_color ?? ""}
                                 </span>
                               </span>
                             </div>
@@ -436,12 +436,12 @@ export function SectionCards({user} : {user?: any} ) {
                             <div className="text-sm text-gray-600 mt-1">
                               Plaque :{" "}
                               <span className="font-medium text-gray-800">
-                                {inv.vehicle?.licensePlate ?? ""}
+                                {inv.inv_vehicle?.veh_licensePlate ?? ""}
                               </span>
                             </div>
 
                             <div className="text-sm mt-1 text-gray-500 truncate">
-                              {inv.workDescription ?? ""}
+                              {inv.inv_workDescription ?? ""}
                             </div>
                           </div>
                         </div>
@@ -455,7 +455,7 @@ export function SectionCards({user} : {user?: any} ) {
                           </span>
 
                           <div className="text-xs text-gray-400">
-                            {new Date(inv.updatedAt).toLocaleDateString("fr-FR")}
+                            {new Date(inv.inv_updatedAt).toLocaleDateString("fr-FR")}
                           </div>
                           <button
                             className="flex items-center gap-1 text-blue-600 text-[12px] font-medium hover:underline"
