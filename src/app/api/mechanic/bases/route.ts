@@ -8,7 +8,6 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth()
 
-    // Only mechanics and admins can access this endpoint
     if (!session?.user || (session.user.role !== 'MECHANIC' && session.user.role !== 'ADMIN')) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
     }
@@ -16,26 +15,36 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const clientId = searchParams.get('clientId')
 
-    const bases = await prisma.base.findMany({
-      where: clientId ? { clientId } : undefined,
+    const bases = await prisma.base_bas.findMany({
+      where: clientId ? { bas_clientId: clientId } : undefined,
       select: {
-        id: true,
-        location: true,
-        client: {
+        bas_id: true,
+        bas_location: true,
+        bas_client: {
           select: {
-            id: true,
-            name: true
+            cli_id: true,
+            cli_name: true
           }
         }
       },
       orderBy: [
-        { client: { name: 'asc' } },
-        { location: 'asc' }
+        { bas_client: { cli_name: 'asc' } },
+        { bas_location: 'asc' }
       ]
     })
 
-    return NextResponse.json(bases)
+    const formattedBases = bases.map((base) => ({
+      id: base.bas_id,
+      location: base.bas_location,
+      client: base.bas_client
+        ? {
+            id: base.bas_client.cli_id,
+            name: base.bas_client.cli_name
+          }
+        : null
+    }))
 
+    return NextResponse.json(formattedBases)
   } catch (error) {
     logError('Failed to fetch bases', error)
     return NextResponse.json(

@@ -18,52 +18,55 @@ export async function GET(request: NextRequest) {
     const baseId = searchParams.get('baseId')
     const uiStatus = searchParams.get('status')
 
+    console.log(
+      'Requête reçue avec les paramètres : search=',
+      search,
+      ' clientId=',
+      clientId,
+      ' baseId=',
+      baseId,
+      ' uiStatus=',
+      uiStatus
+    )
 
-    console.log("Requête reçue avec les paramètres : search=", search, " clientId=", clientId, " baseId=", baseId, " uiStatus=", uiStatus)
-
-    // Build where clause for filters
     const whereClause: any = {}
 
-    // Filter by status
     if (uiStatus && uiStatus !== 'ALL') {
       if (uiStatus === 'EN_COURS') {
-        whereClause.status = {
+        whereClause.inv_status = {
           in: ['CONFIRMED_IN_PLANNING', 'FIXING_STARTED']
         }
       } else if (uiStatus === 'TERMINEE') {
-        whereClause.status = 'FIXING_FINISHED'
+        whereClause.inv_status = 'FIXING_FINISHED'
       } else if (uiStatus === 'ATTENTE_PIECES') {
-        whereClause.status = 'WAITING_FOR_PARTS'
+        whereClause.inv_status = 'WAITING_FOR_PARTS'
       }
     }
 
-    // Filter by base
     if (baseId) {
-      whereClause.vehicle = {
-        ...whereClause.vehicle,
-        baseId
+      whereClause.inv_vehicle = {
+        ...whereClause.inv_vehicle,
+        veh_baseId: baseId
       }
     }
 
-    // Filter by client
     if (clientId) {
-      whereClause.vehicle = {
-        ...whereClause.vehicle,
-        clientId
+      whereClause.inv_vehicle = {
+        ...whereClause.inv_vehicle,
+        veh_clientId: clientId
       }
     }
 
-    // Search by accord number or license plate (optional)
     if (search) {
       whereClause.OR = [
         {
-          accordNumber: {
+          inv_accordNumber: {
             contains: search
           }
         },
         {
-          vehicle: {
-            licensePlate: {
+          inv_vehicle: {
+            veh_licensePlate: {
               contains: search
             }
           }
@@ -71,82 +74,90 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    console.log("Affichage de tout les données avant fetch: ", whereClause)
+    console.log('Affichage de tout les données avant fetch: ', whereClause)
 
-    const interventions = await prisma.invoice.findMany({
+    const interventions = await prisma.invoice_inv.findMany({
       where: whereClause,
-
       include: {
-        vehicle: {
+        inv_vehicle: {
           include: {
-            client: {
-              select: { id: true, name: true }
+            veh_client: {
+              select: { cli_id: true, cli_name: true }
             },
-            base: {
-              select: { id: true, location: true }
+            veh_base: {
+              select: { bas_id: true, bas_location: true }
             },
-            brand: { select: { name: true } },
-            model: { select: { name: true } },
+            veh_brand: { select: { bra_name: true } },
+            veh_model: { select: { mod_name: true } }
           }
         },
-        handledBy: {
-          select: { name: true, email: true }
+        inv_handledBy: {
+          select: { usr_name: true, usr_email: true }
         },
         history: {
           include: {
-            user: {
-              select: { name: true }
+            sth_user: {
+              select: { usr_name: true }
             }
           },
           orderBy: {
-            changedAt: 'asc'
+            sth_changedAt: 'asc'
           }
         }
       },
       orderBy: [
-        { status: 'asc' },  // In-progress jobs first
-        { createdAt: 'desc' }
+        { inv_status: 'asc' },
+        { inv_createdAt: 'desc' }
       ],
-      take: 100  // Limit results for performance
+      take: 100
     })
 
-    console.log("Interventions récupérées : ", interventions);
+    console.log('Interventions récupérées : ', interventions)
 
-    // Serialize dates for client
-    const serialized = interventions.map(inv => ({
-      id: inv.id,
-      accordNumber: inv.accordNumber,
-      dateOfConfirmation: inv.dateOfConfirmation?.toISOString() ?? null,
-      invoiceConfirmed: inv.invoiceConfirmed,
-      status: inv.status,
-      statusUpdatedAt: inv.statusUpdatedAt.toISOString(),
-      workDescription: inv.workDescription,
-      didOrderParts: inv.didOrderParts,
-      ordersDetails: inv.ordersDetails,
-      comments: inv.comments,
-      createdAt: inv.createdAt.toISOString(),
+    const serialized = interventions.map((inv) => ({
+      id: inv.inv_id,
+      accordNumber: inv.inv_accordNumber,
+      dateOfConfirmation: inv.inv_dateOfConfirmation?.toISOString() ?? null,
+      invoiceConfirmed: inv.inv_invoiceConfirmed,
+      status: inv.inv_status,
+      statusUpdatedAt: inv.inv_statusUpdatedAt.toISOString(),
+      workDescription: inv.inv_workDescription,
+      didOrderParts: inv.inv_didOrderParts,
+      ordersDetails: inv.inv_ordersDetails,
+      comments: inv.inv_comments,
+      createdAt: inv.inv_createdAt.toISOString(),
       vehicle: {
-        id: inv.vehicle.id,
-        licensePlate: inv.vehicle.licensePlate,
-        brand: inv.vehicle.brand?.name,
-        model: inv.vehicle.model?.name,
-        year: inv.vehicle.year,
-        color: inv.vehicle.color,
-        client: inv.vehicle.client,
-        base: inv.vehicle.base
+        id: inv.inv_vehicle.veh_id,
+        licensePlate: inv.inv_vehicle.veh_licensePlate,
+        brand: inv.inv_vehicle.veh_brand?.bra_name ?? null,
+        model: inv.inv_vehicle.veh_model?.mod_name ?? null,
+        year: inv.inv_vehicle.veh_year,
+        color: inv.inv_vehicle.veh_color,
+        client: {
+          id: inv.inv_vehicle.veh_client.cli_id,
+          name: inv.inv_vehicle.veh_client.cli_name
+        },
+        base: {
+          id: inv.inv_vehicle.veh_base.bas_id,
+          location: inv.inv_vehicle.veh_base.bas_location
+        }
       },
-      handledBy: inv.handledBy,
-      statusHistory: inv.history.map(h => ({
-        id: h.id,
-        previousStatus: h.previousStatus,
-        newStatus: h.newStatus,
-        changedAt: h.changedAt.toISOString(),
-        changedBy: h.changedById
+      handledBy: inv.inv_handledBy
+        ? {
+            name: inv.inv_handledBy.usr_name,
+            email: inv.inv_handledBy.usr_email
+          }
+        : null,
+      statusHistory: inv.history.map((h) => ({
+        id: h.sth_id,
+        previousStatus: h.sth_previousStatus,
+        newStatus: h.sth_newStatus,
+        changedAt: h.sth_changedAt.toISOString(),
+        changedBy: h.sth_changedById
       }))
     }))
 
     return NextResponse.json(serialized)
-
   } catch (error) {
     logError('ffffFailed to fetch interventions', error)
     return NextResponse.json(
