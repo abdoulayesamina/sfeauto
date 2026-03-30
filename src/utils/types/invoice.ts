@@ -1,20 +1,20 @@
 import { z } from "zod"
 
 export const InvoiceSchema = z.object({
-  id: z.string().optional(),
-  accordNumber: z.string(),
-  dateOfConfirmation: z.string().datetime().optional(),
-  invoiceConfirmed: z.boolean(),
-  status: z.enum(['CONFIRMED_IN_PLANNING', 'WAITING_FOR_PARTS', 'FIXING_STARTED', 'FIXING_FINISHED']),
-  statusUpdatedAt: z.string().datetime().optional(),
-  workDescription: z.string(),
-  didOrderParts: z.boolean(),
-  ordersDetails: z.string(),
-  comments: z.string(),
-  createdAt: z.string().datetime().optional(),
-  updatedAt: z.string().datetime().optional(),
-  vehicleId: z.string(),
-  handledById: z.string()
+  inv_id: z.string().optional(),
+  inv_accordNumber: z.string(),
+  inv_dateOfConfirmation: z.string().datetime().optional(),
+  inv_invoiceConfirmed: z.boolean(),
+  inv_status: z.enum(['CONFIRMED_IN_PLANNING', 'WAITING_FOR_PARTS', 'FIXING_STARTED', 'FIXING_FINISHED']),
+  inv_statusUpdatedAt: z.string().datetime().optional(),
+  inv_workDescription: z.string(),
+  inv_didOrderParts: z.boolean(),
+  inv_ordersDetails: z.string(),
+  inv_comments: z.string(),
+  inv_createdAt: z.string().datetime().optional(),
+  inv_updatedAt: z.string().datetime().optional(),
+  inv_vehicleId: z.string(),
+  inv_handledById: z.string()
 })
 
 export type Invoice = z.infer<typeof InvoiceSchema>
