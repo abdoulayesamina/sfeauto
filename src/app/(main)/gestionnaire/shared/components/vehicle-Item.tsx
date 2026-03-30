@@ -16,6 +16,7 @@ import { useInterventionApi } from "../useIntervention.api"
 import { toUIStatus, getStatusMeta } from "@/src/utils/constants/intervention-status"
 import { groupInterventionsByStatus } from "@/src/utils/constants/groupInterventionsByStatus"
 import { formatLicensePlate } from "@/src/utils/formatters"
+import { toast } from "sonner"
 
 type VehicleItemProps = {
   vehicle?: Vehicule
@@ -107,7 +108,7 @@ export function VehicleItem({
       veh_images: data.images || [],
     }).catch((e) => {
       console.error("Error creating intervention:", e)
-      return null
+      return toast.error("Erreur : "+e.message)
     })
 
     // setLocalInterventions((prev) => [newIntervention, ...prev])
@@ -122,9 +123,9 @@ export function VehicleItem({
   // }, [localInterventions])
 
   const groupedBadges = useMemo(() => {
-    if (!vehicle?.veh_invoices?.length) return []
-    return groupInterventionsByStatus(vehicle.veh_invoices)
-  }, [vehicle?.veh_invoices])
+    if (!vehicle?.invoices?.length) return []
+    return groupInterventionsByStatus(vehicle.invoices)
+  }, [vehicle?.invoices])
   /* ----------------------------- UI ----------------------------- */
   return (
     <>
@@ -146,7 +147,7 @@ export function VehicleItem({
               {formatLicensePlate(vehicle.veh_licensePlate || "")}
             </span>
             <span className="text-gray-500">
-              {vehicle.veh_brand?.name} {vehicle.veh_model?.name} · {vehicle.veh_year}
+              {vehicle.veh_brand?.bra_name} {vehicle.veh_model?.mod_name} · {vehicle.veh_year}
             </span>
           </div>
 
@@ -211,7 +212,7 @@ export function VehicleItem({
       >
         <InterventionForm
           vehicleId={vehicle.veh_id ?? ""}
-          vehicleDisplayText={`${vehicle.veh_licensePlate} - ${vehicle.veh_brand?.name} ${vehicle.veh_model?.name}`}
+          vehicleDisplayText={`${vehicle.veh_licensePlate} - ${vehicle.veh_brand?.bra_name} ${vehicle.veh_model?.mod_name}`}
           defaultAccordNumber="ACC-2026-001"
           onSubmit={handleSubmitIntervention}
           onClose={() => setInterventionModalOpen(false)}

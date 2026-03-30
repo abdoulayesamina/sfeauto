@@ -38,7 +38,6 @@ export async function POST(request: NextRequest) {
     }
 
     const form = await request.formData();
-
     const vehicleId = asString(form.get("vehicleId"));
     const accordNumberRaw = asString(form.get("accordNumber"));
     const dateOfConfirmation = asString(form.get("dateOfConfirmation"));

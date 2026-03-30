@@ -73,7 +73,7 @@ export function VehiclePreview({
   const mappedInvoices = useMemo(() => {
     return (localInvoices ?? []).map((inv) => ({
       ...inv,
-      uiStatus: toUIStatus(inv?.status),
+      uiStatus: toUIStatus(inv?.inv_status),
     }));
   }, [localInvoices]);
 
@@ -95,15 +95,15 @@ export function VehiclePreview({
   const handleViewDetail = (invoice: any) => {
     setSelectedInvoice({
       ...invoice,
-      vehicle: {
-        licensePlate,
-        brand,
-        model,
-        year,
-        color,
-        entryDate: entreeDate,
-        client: { name: client },
-        base: { location: agence },
+      vehicle:{
+        veh_licensePlate: licensePlate,
+        veh_brand: brand,
+        veh_model: model,
+        veh_year: year,
+        veh_color: color,
+        veh_entryDate: entreeDate,
+        veh_client: { cli_name: client },
+        veh_base: { bas_location: agence },
       },
     });
     setOpenDetailModal(true);
@@ -177,16 +177,16 @@ export function VehiclePreview({
           const devisId = inv?.devis?.dev_id ?? null;
 
           return (
-            <div key={inv.id} className="rounded-xl border bg-white p-5 shadow-sm hover:shadow-md transition">
+            <div key={inv.inv_id} className="rounded-xl border bg-white p-5 shadow-sm hover:shadow-md transition">
               <div className="flex flex-col-reverse lg:flex-row justify-between items-start gap-4">
                 <div>
-                  <p className="font-semibold text-zinc-800">{inv?.workDescription ?? "—"}</p>
+                  <p className="font-semibold text-zinc-800">{inv?.inv_workDescription ?? "—"}</p>
                   <div className="flex flex-wrap gap-4 mt-2 text-sm text-zinc-500">
                     <span>
-                      <strong>N° Accord :</strong> {inv?.accordNumber ?? "—"}
+                      <strong>N° Accord :</strong> {inv?.inv_accordNumber ?? "—"}
                     </span>
                     <span>
-                      Confirmé le : {inv?.dateOfConfirmation ? new Date(inv.dateOfConfirmation).toLocaleDateString() : "—"}
+                      Confirmé le : {inv?.inv_dateOfConfirmation ? new Date(inv.inv_dateOfConfirmation).toLocaleDateString() : "—"}
                     </span>
                   </div>
                 </div>
