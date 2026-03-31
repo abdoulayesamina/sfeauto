@@ -95,7 +95,7 @@ export function VehiclePreview({
   const handleViewDetail = (invoice: any) => {
     setSelectedInvoice({
       ...invoice,
-      inv_vehicle:{
+      inv_vehicle: {
         veh_licensePlate: licensePlate,
         veh_brand: brand,
         veh_model: model,
@@ -282,15 +282,24 @@ export function VehiclePreview({
         <CreateDevisModal
           open={openDevisModal}
           onClose={() => setOpenDevisModal(false)}
-          invoiceId={invoiceForDevis.id}
+          invoiceId={invoiceForDevis?.inv_id ?? invoiceForDevis?.id ?? ""}
           onCreated={(devis) => {
-            const created = devis?.devis ?? devis;
-            const dev_id = created?.dev_id;
-            const dev_numdevis = created?.dev_numdevis;
-            setDetectDevis(true);
+            const created = devis?.devis ?? devis
+            const dev_id = created?.dev_id
+            const dev_numdevis = created?.dev_numdevis
+
+            setDetectDevis(true)
+
             setLocalInvoices((prev) =>
-              prev.map((x) => (x.id === invoiceForDevis.id ? { ...x, devis: { dev_id, dev_numdevis } } : x))
-            );
+              prev.map((x) =>
+                (x.inv_id ?? x.id) === (invoiceForDevis?.inv_id ?? invoiceForDevis?.id)
+                  ? {
+                    ...x,
+                    devis: { dev_id, dev_numdevis },
+                  }
+                  : x
+              )
+            )
           }}
         />
       )}
