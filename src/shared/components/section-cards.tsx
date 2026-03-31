@@ -179,7 +179,7 @@ export function SectionCards({user} : {user?: any} ) {
   function handleViewDetail(inv: any): void {
     setSelectedInvoice({
       ...inv,
-      vehicle: {
+      inv_vehicle: {
         ...inv.inv_vehicle,
         veh_brand: inv.inv_vehicle?.veh_brand?.bra_name ?? "",
         veh_model: inv.inv_vehicle?.veh_model?.mod_name ?? "",
