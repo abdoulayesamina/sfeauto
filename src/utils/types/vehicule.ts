@@ -31,13 +31,13 @@ export const VehiculeSchema = z.object({
   veh_modelId: z.string().nullable().optional(),
 
   veh_brand: z.object({
-    id: z.string(),
-    name: z.string()
+    bra_id: z.string(),
+    bra_name: z.string()
   }).optional(),
 
   veh_model:z.object({
-    id: z.string(),
-    name: z.string()
+    mod_id: z.string(),
+    mod_name: z.string()
   }).optional(),
 
   veh_year: z
@@ -82,7 +82,7 @@ export const VehiculeSchema = z.object({
 
     
 
-  veh_invoices: z.array(InvoiceSchema).optional(),
+  invoices: z.array(InvoiceSchema).optional(),
 });
 
 export type Vehicule = z.infer<typeof VehiculeSchema>;

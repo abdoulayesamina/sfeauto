@@ -25,15 +25,15 @@ type Props = {
 export default function IntervDetailGes({ selectedIntervention, onClose }: Props) {
   if (!selectedIntervention) return null
 
-  const uiStatus: UIStatus = toUIStatus(selectedIntervention?.status)
+  const uiStatus: UIStatus = toUIStatus(selectedIntervention?.inv_status)
 
-  const history = selectedIntervention?.statusHistory ?? []
+  const history = selectedIntervention?.inv_statusHistory ?? []
 
   const {
     photos,
     loading: photosLoading,
     error: photosError,
-  } = useInvoicePhotos(selectedIntervention?.id)
+  } = useInvoicePhotos(selectedIntervention?.inv_id)
 
   // Lightbox
   const [viewerOpen, setViewerOpen] = useState(false)
@@ -56,11 +56,11 @@ export default function IntervDetailGes({ selectedIntervention, onClose }: Props
       <div className="border-b bg-black/90 rounded-xl p-6 text-white">
         <h2 className="text-xl font-bold">
           Intervention –{" "}
-          {selectedIntervention?.vehicle?.licensePlate ||
-            selectedIntervention?.licensePlate}
+          {selectedIntervention?.inv_vehicle?.veh_licensePlate ||
+            selectedIntervention?.inv_licensePlate}
         </h2>
         <p className="text-sm text-gray-400">
-          Accord N° {selectedIntervention?.accordNumber || "-"}
+          Accord N° {selectedIntervention?.inv_accordNumber || "-"}
         </p>
       </div>
 
@@ -74,26 +74,26 @@ export default function IntervDetailGes({ selectedIntervention, onClose }: Props
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
           <p>
             <span className="font-medium">Immatriculation :</span>{" "}
-            {selectedIntervention?.vehicle?.licensePlate}
+            {selectedIntervention?.inv_vehicle?.veh_licensePlate}
           </p>
           <p>
             <span className="font-medium">Modèle :</span>{" "}
-            {selectedIntervention?.vehicle?.brand}{" "}
-            {selectedIntervention?.vehicle?.model}
+            {selectedIntervention?.inv_vehicle?.veh_brand}{" "}
+            {selectedIntervention?.inv_vehicle?.veh_model}
           </p>
           <p>
             <span className="font-medium">Année :</span>{" "}
-            {selectedIntervention?.vehicle?.year}
+            {selectedIntervention?.inv_vehicle?.veh_year}
           </p>
           <p>
             <span className="font-medium">Couleur :</span>{" "}
-            {selectedIntervention?.vehicle?.color}
+            {selectedIntervention?.inv_vehicle?.veh_color}
           </p>
           <p>
             <span className="font-medium">Date d’entrée :</span>{" "}
-            {selectedIntervention?.vehicle?.entryDate
+            {selectedIntervention?.inv_vehicle?.veh_entryDate
               ? new Date(
-                selectedIntervention.vehicle.entryDate
+                selectedIntervention.inv_vehicle.veh_entryDate
               ).toLocaleDateString("fr-FR")
               : "-"}
           </p>
@@ -107,7 +107,7 @@ export default function IntervDetailGes({ selectedIntervention, onClose }: Props
           </div>
           <div>
             <p className="font-semibold">
-              {selectedIntervention?.vehicle?.client?.name}
+              {selectedIntervention?.inv_vehicle?.veh_client?.cli_name}
             </p>
             <p className="text-sm text-gray-500">Client</p>
           </div>
@@ -119,7 +119,7 @@ export default function IntervDetailGes({ selectedIntervention, onClose }: Props
           </div>
           <div>
             <p className="font-semibold">
-              {selectedIntervention?.vehicle?.base?.location}
+              {selectedIntervention?.inv_vehicle?.veh_base?.bas_location}
             </p>
             <p className="text-sm text-gray-500">Base</p>
           </div>
@@ -134,12 +134,12 @@ export default function IntervDetailGes({ selectedIntervention, onClose }: Props
             </div>
             <p className="font-semibold">Accord client</p>
           </div>
-          <p className="text-sm">{selectedIntervention?.accordNumber || "-"}</p>
+          <p className="text-sm">{selectedIntervention?.inv_accordNumber || "-"}</p>
           <p className="text-xs text-gray-500 mt-1">
             Confirmé le{" "}
-            {selectedIntervention?.dateOfConfirmation
+            {selectedIntervention?.inv_dateOfConfirmation
               ? new Date(
-                selectedIntervention.dateOfConfirmation
+                selectedIntervention.inv_dateOfConfirmation
               ).toLocaleDateString("fr-FR")
               : "-"}
           </p>
@@ -159,8 +159,8 @@ export default function IntervDetailGes({ selectedIntervention, onClose }: Props
           </p>
           <p className="text-xs text-gray-500 mt-1">
             Mis à jour le{" "}
-            {selectedIntervention?.statusUpdatedAt
-              ?(new Date( selectedIntervention.statusUpdatedAt).toLocaleDateString("fr-FR") +" à "+ new Date( selectedIntervention.statusUpdatedAt).toLocaleTimeString("fr-FR"))
+            {selectedIntervention?.inv_statusUpdatedAt
+              ?(new Date( selectedIntervention.inv_statusUpdatedAt).toLocaleDateString("fr-FR") +" à "+ new Date( selectedIntervention.inv_statusUpdatedAt).toLocaleTimeString("fr-FR"))
               : "-"}
           </p>
         </div>
@@ -171,7 +171,7 @@ export default function IntervDetailGes({ selectedIntervention, onClose }: Props
           <FileText /> Description du travail
         </p>
         <p className="text-gray-600 text-sm">
-          {selectedIntervention?.workDescription || "Aucune description fournie"}
+          {selectedIntervention?.inv_workDescription || "Aucune description fournie"}
         </p>
       </div>
 
@@ -281,33 +281,33 @@ export default function IntervDetailGes({ selectedIntervention, onClose }: Props
         <p className="font-semibold mb-2">Détails complémentaires</p>
         <p>
           <span className="font-medium">Pièces commandées :</span>{" "}
-          {selectedIntervention?.didOrderParts ? "Oui" : "Non"}
+          {selectedIntervention?.inv_didOrderParts ? "Oui" : "Non"}
         </p>
         <p>
           <span className="font-medium">Commentaires :</span>{" "}
-          {selectedIntervention?.comments || "-"}
+          {selectedIntervention?.inv_comments || "-"}
         </p>
-        {selectedIntervention?.ordersDetails && (
+        {selectedIntervention?.inv_ordersDetails && (
           <p>
             <span className="font-medium">Détails de commande :</span>{" "}
-            {selectedIntervention.ordersDetails}
+            {selectedIntervention.inv_ordersDetails}
           </p>
         )}
         <p>
           <span className="font-medium">Géré par :</span>{" "}
-          {selectedIntervention?.handledBy?.name} (
-          {selectedIntervention?.handledBy?.email})
+          {selectedIntervention?.inv_handledBy?.usr_name} (
+          {selectedIntervention?.inv_handledBy?.usr_email})
         </p>
         <p>
           <span className="font-medium">Créé le :</span>{" "}
-          {selectedIntervention?.createdAt
-            ? new Date(selectedIntervention.createdAt).toLocaleDateString("fr-FR")
+          {selectedIntervention?.inv_createdAt
+            ? new Date(selectedIntervention.inv_createdAt).toLocaleDateString("fr-FR")
             : "-"}
         </p>
         <p>
           <span className="font-medium">Mis à jour le :</span>{" "}
-          {selectedIntervention?.updatedAt
-            ? new Date(selectedIntervention.updatedAt).toLocaleDateString("fr-FR")
+          {selectedIntervention?.inv_updatedAt
+            ? new Date(selectedIntervention.inv_updatedAt).toLocaleDateString("fr-FR")
             : "-"}
         </p>
       </div>

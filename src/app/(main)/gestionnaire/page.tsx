@@ -153,9 +153,9 @@ export default function GestionnairePage() {
 
       if (statut && statut !== "all") {
         if (statut === "SANS_INTERVENTION") {
-          if (v.veh_invoices && v.veh_invoices.length > 0) return false
+          if (v.invoices && v.invoices.length > 0) return false
         } else {
-          const lastInvoice = v.veh_invoices?.[v.veh_invoices.length - 1]
+          const lastInvoice = v.invoices?.[v.invoices.length - 1]
           if (!lastInvoice) return false
           if (lastInvoice.inv_status !== statut) return false
         }
@@ -265,18 +265,18 @@ export default function GestionnairePage() {
               // }
               enCours={
                 filteredVehicles.filter((v) => {
-                  const invoices = v.veh_invoices || []
+                  const invoices = v.invoices || []
                   return invoices.length > 0 && invoices.some(i => i.inv_status !== "FIXING_FINISHED")
                 }).length
               }
               // termine={filteredVehicles.filter((v) => v.invoices?.some((i) => i.status === "FIXING_FINISHED")).length}
               termine={
                 filteredVehicles.filter((v) => {
-                  const invoices = v.veh_invoices || []
+                  const invoices = v.invoices || []
                   return invoices.length > 0 && invoices.every(i => i.inv_status === "FIXING_FINISHED")
                 }).length
               }
-              sansIntervention={filteredVehicles.filter((v) => !v.veh_invoices || v.veh_invoices.length === 0).length}
+              sansIntervention={filteredVehicles.filter((v) => !v.invoices || v.invoices.length === 0).length}
               // Somme de tout les Invoice de tous les véhicules dont le base.location est "Paris Test Agency"
               // test={filteredVehicles.filter((v) => v.base?.location === "Paris Test Agency").reduce((sum, v) => {
               //   const invoices = Array.isArray(v.invoices) ? v.invoices : []
@@ -336,7 +336,7 @@ export default function GestionnairePage() {
             agence={selectedVehicle.veh_base?.bas_location ?? ""}
             entreeDate={selectedVehicle.veh_entryDate ?? ""}
             color={selectedVehicle.veh_color ?? ""}
-            invoices={selectedVehicle.veh_invoices ?? []}
+            invoices={selectedVehicle.invoices ?? []}
             enReparation={1}
             termine={0}
             onNewIntervention={handleNewInterventionFromVehiculePreview}
