@@ -11,7 +11,6 @@ export const DevisSchema = z.object({
     dev_cli_id: z.string(),
     dev_veh_id: z.string(),
     dev_invoice_id: z.string().nullable().optional(),
-    dev_user: z.string().nullable().optional(),
 
     // --- Données devis ---
     dev_adressefacturation: z.string().nullable().optional(),
@@ -34,10 +33,10 @@ export const DevisSchema = z.object({
     articles: z.array(z.unknown()).optional(),
 
     // --- Relations (si exposées) ---
-    client: ClientSchema.optional(),
-    vehicle: VehiculeSchema.optional(),
-    invoice: InvoiceSchema.nullable().optional(),
-    user: UserSchema.nullable().optional(),
+    dev_client: ClientSchema.optional(),
+    dev_vehicle: VehiculeSchema.optional(),
+    dev_invoice: InvoiceSchema.nullable().optional(),
+    dev_user: UserSchema.nullable().optional(),
 });
 
 

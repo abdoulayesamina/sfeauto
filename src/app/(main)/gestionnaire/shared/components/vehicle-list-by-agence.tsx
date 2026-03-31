@@ -17,7 +17,7 @@ export function VehicleListByAgence({
 
   return (
     <>
-      {agences.map((agence: any) => {
+      {agences.map((agence: any) => { 
         const vehiculesAgence = vehicles.filter(
           (v: any) => v.veh_base?.bas_id === agence.bas_id
         )

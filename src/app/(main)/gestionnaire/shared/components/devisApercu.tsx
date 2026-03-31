@@ -147,13 +147,13 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
                                     <div className="w-[10px] h-[10px] border-black border-r-[2px] border-b-[2px] absolute bottom-0 right-0"></div>
                                 </div>
                                 <p className="font-semibold uppercase">
-                                    {devis.client?.name ?? "Client"}
+                                    {devis.dev_client?.cli_name ?? "Client"}
                                 </p>
-                                <p>{devis.client?.email}</p>
-                                <p>{devis.client?.phone}</p>
+                                <p>{devis.dev_client?.cli_email}</p>
+                                <p>{devis.dev_client?.cli_phone}</p>
                             </div>
                             <div className="text-[12px] bg-gray-100 p-2 w-full max-w-[50%] text-center ">
-                                <span className="font-semibold">N° d'accord : </span> {devis.invoice?.accordNumber ?? "—"}
+                                <span className="font-semibold">N° d'accord : </span> {devis.dev_invoice?.inv_accordNumber ?? "—"}
                             </div>
                         </div>
                     </div>
@@ -171,8 +171,8 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
 
                         <div className="border flex flex-col p-1 text-[12px] justify-between">
                             <div className="grid grid-cols-2 gap-2">
-                                <p>Client : {devis?.client?.cli_numClient ?? "..."}</p>
-                                <p>TVA intra : {devis?.client?.cli_tvaIntraCommunautaire ?? "..."}</p>
+                                <p>Client : {devis?.dev_client?.cli_numClient ?? "..."}</p>
+                                <p>TVA intra : {devis?.dev_client?.cli_tvaIntraCommunautaire ?? "..."}</p>
                             </div>
                             <div className="grid grid-cols-2 gap-2">
                                 <p>Règlement : —</p>
@@ -191,14 +191,14 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
                         </div>
                         <div className="mb-6 grid grid-cols-2 gap-4 text-[12px]">
                             <div>
-                                <p><span className="font-semibold">Immatriculation :</span> {devis.vehicle?.licensePlate}</p>
-                                <p><span className="font-semibold">Marque :</span> {devis.vehicle?.brand?.name}</p>
-                                <p><span className="font-semibold">Modèle :</span> {devis.vehicle?.model?.name}</p>
+                                <p><span className="font-semibold">Immatriculation :</span> {devis.dev_vehicle?.veh_licensePlate}</p>
+                                <p><span className="font-semibold">Marque :</span> {devis.dev_vehicle?.veh_brand?.bra_name}</p>
+                                <p><span className="font-semibold">Modèle :</span> {devis.dev_vehicle?.veh_model?.mod_name}</p>
                             </div>
 
                             <div>
-                                <p><span className="font-semibold">Couleur :</span> {devis.vehicle?.color}</p>
-                                <p><span className="font-semibold">Kilométrage :</span> {devis.vehicle?.version}</p> {/** <---- kilometrage */}
+                                <p><span className="font-semibold">Couleur :</span> {devis.dev_vehicle?.veh_color}</p>
+                                <p><span className="font-semibold">Kilométrage :</span> {devis.dev_vehicle?.veh_version}</p> {/** <---- kilometrage */}
                             </div>
                         </div>
                     </div>
@@ -225,7 +225,7 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
                                 </div>
 
                                 <div className="col-span-4 p-1 border-r-[2px] border-black">
-                                    {line.article?.art_name}
+                                    {line.dea_article?.art_name}
                                 </div>
 
                                 <div className="col-span-2 text-right p-1 bg-[#ffcc99] border-r-[2px] border-black">

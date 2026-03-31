@@ -30,7 +30,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       where: { dev_id },
       include: {
         dev_client: true,
-        dev_vehicle: true,
+        dev_vehicle: {include : {veh_brand: true, veh_model: true}},
         dev_invoice: true,
         dev_user: true,
         articles: {
