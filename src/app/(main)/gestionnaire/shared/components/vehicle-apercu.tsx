@@ -95,7 +95,7 @@ export function VehiclePreview({
   const handleViewDetail = (invoice: any) => {
     setSelectedInvoice({
       ...invoice,
-      vehicle:{
+      inv_vehicle:{
         veh_licensePlate: licensePlate,
         veh_brand: brand,
         veh_model: model,
