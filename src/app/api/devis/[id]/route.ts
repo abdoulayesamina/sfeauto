@@ -13,15 +13,23 @@ function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
-export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const session = await auth();
-    if (!session || !["MANAGER", "ADMIN", "MECHANIC"].includes(session.user.role)) {
+
+    if (
+      !session?.user ||
+      !["MANAGER", "ADMIN", "MECHANIC"].includes(session.user.role)
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
     const dev_id = Number(id);
+
     if (isNaN(dev_id)) {
       return NextResponse.json({ error: "ID devis invalide" }, { status: 400 });
     }
@@ -30,8 +38,13 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       where: { dev_id },
       include: {
         dev_client: true,
-        dev_vehicle: {include : {veh_brand: true, veh_model: true}},
-        dev_invoice: true,
+        dev_vehicle: {
+          include: {
+            veh_brand: true,
+            veh_model: true,
+          },
+        },
+        dev_intervention: true,
         dev_user: true,
         articles: {
           include: {
@@ -52,19 +65,30 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     return NextResponse.json({ devis });
   } catch (error) {
     logError("Failed to fetch devis by id", error);
-    return NextResponse.json({ error: "Échec récupération devis" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Échec récupération devis" },
+      { status: 500 }
+    );
   }
 }
 
-export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const session = await auth();
-    if (!session || (session.user.role !== "MANAGER" && session.user.role !== "ADMIN")) {
+
+    if (
+      !session?.user ||
+      !["MANAGER", "ADMIN"].includes(session.user.role)
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
     const dev_id = Number(id);
+
     if (isNaN(dev_id)) {
       return NextResponse.json({ error: "ID devis invalide" }, { status: 400 });
     }
@@ -167,6 +191,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         }
 
         const lineTva = it?.tva != null ? asNumber(it.tva) : effectiveDevTva;
+
         if (isNaN(lineTva) || lineTva < 0) {
           return NextResponse.json(
             { error: `TVA invalide art_id=${artId}` },
@@ -197,6 +222,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       totalTVA = Number(current.dev_totaltva ?? 0);
     }
 
+    totalHT = round2(totalHT);
+    totalTVA = round2(totalTVA);
     const totalTTC = round2(totalHT + totalTVA);
 
     const devis = await prisma.$transaction(async (tx) => {
@@ -217,13 +244,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             : {}),
         },
         include: {
-          dev_invoice: {
+          dev_intervention: {
             select: {
-              inv_id: true,
-              inv_accordNumber: true,
-              inv_workDescription: true,
-              inv_status: true,
-              inv_dateOfConfirmation: true,
+              int_id: true,
+              int_accordNumber: true,
+              int_workDescription: true,
+              int_status: true,
+              int_dateOfConfirmation: true,
             },
           },
           dev_vehicle: {
@@ -250,19 +277,30 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ devis });
   } catch (error) {
     logError("Failed to patch devis", error);
-    return NextResponse.json({ error: "Échec de la mise à jour du devis" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Échec de la mise à jour du devis" },
+      { status: 500 }
+    );
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const session = await auth();
-    if (!session || (session.user.role !== "MANAGER" && session.user.role !== "ADMIN")) {
+
+    if (
+      !session?.user ||
+      !["MANAGER", "ADMIN"].includes(session.user.role)
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
     const dev_id = Number(id);
+
     if (isNaN(dev_id)) {
       return NextResponse.json({ error: "ID devis invalide" }, { status: 400 });
     }
@@ -275,6 +313,9 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     return NextResponse.json({ message: "Devis supprimé" });
   } catch (error) {
     logError("Failed to delete devis", error);
-    return NextResponse.json({ error: "Échec suppression devis" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Échec suppression devis" },
+      { status: 500 }
+    );
   }
 }

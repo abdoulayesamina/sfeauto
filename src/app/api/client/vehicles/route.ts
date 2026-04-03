@@ -8,7 +8,7 @@ export async function GET() {
   try {
     const session = await auth();
 
-    if (!session) {
+    if (!session?.user) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
@@ -43,18 +43,31 @@ export async function GET() {
             bas_clientId: true,
           },
         },
-        invoices: {
+        veh_brand: {
           select: {
-            inv_id: true,
-            inv_status: true,
-            inv_invoiceConfirmed: true,
-            inv_workDescription: true,
-            inv_accordNumber: true,
-            inv_dateOfConfirmation: true,
-            inv_createdAt: true,
+            bra_id: true,
+            bra_name: true,
+          },
+        },
+        veh_model: {
+          select: {
+            mod_id: true,
+            mod_name: true,
+          },
+        },
+        interventions: {
+          select: {
+            int_id: true,
+            int_status: true,
+            int_interventionConfirmed: true,
+            int_workDescription: true,
+            int_accordNumber: true,
+            int_dateOfConfirmation: true,
+            int_createdAt: true,
+            int_updatedAt: true,
           },
           orderBy: {
-            inv_createdAt: "desc",
+            int_createdAt: "desc",
           },
         },
       },
@@ -71,12 +84,13 @@ export async function GET() {
     };
 
     vehicles.forEach((vehicle) => {
-      if (vehicle.invoices.length === 0) {
+      if (vehicle.interventions.length === 0) {
         stats.noIntervention++;
       } else {
-        const hasInProgress = vehicle.invoices.some(
-          (i) => i.inv_status !== "FIXING_FINISHED"
+        const hasInProgress = vehicle.interventions.some(
+          (i) => i.int_status !== "FIXING_FINISHED"
         );
+
         if (hasInProgress) {
           stats.inProgress++;
         } else {
@@ -109,23 +123,42 @@ export async function GET() {
       handledById: v.veh_handledById,
       brandId: v.veh_brandId,
       modelId: v.veh_modelId,
+
       client: {
         id: v.veh_client.cli_id,
         name: v.veh_client.cli_name,
       },
+
       base: {
         id: v.veh_base.bas_id,
         location: v.veh_base.bas_location,
         clientId: v.veh_base.bas_clientId,
       },
-      invoices: v.invoices.map((inv) => ({
-        id: inv.inv_id,
-        status: inv.inv_status,
-        invoiceConfirmed: inv.inv_invoiceConfirmed,
-        workDescription: inv.inv_workDescription,
-        accordNumber: inv.inv_accordNumber,
-        dateOfConfirmation: inv.inv_dateOfConfirmation?.toISOString() ?? null,
-        createdAt: inv.inv_createdAt.toISOString(),
+
+      brand: v.veh_brand
+        ? {
+            id: v.veh_brand.bra_id,
+            name: v.veh_brand.bra_name,
+          }
+        : null,
+
+      model: v.veh_model
+        ? {
+            id: v.veh_model.mod_id,
+            name: v.veh_model.mod_name,
+          }
+        : null,
+
+      interventions: v.interventions.map((intervention) => ({
+        id: intervention.int_id,
+        status: intervention.int_status,
+        interventionConfirmed: intervention.int_interventionConfirmed,
+        workDescription: intervention.int_workDescription,
+        accordNumber: intervention.int_accordNumber,
+        dateOfConfirmation:
+          intervention.int_dateOfConfirmation?.toISOString() ?? null,
+        createdAt: intervention.int_createdAt.toISOString(),
+        updatedAt: intervention.int_updatedAt.toISOString(),
       })),
     }));
 
