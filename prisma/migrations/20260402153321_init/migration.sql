@@ -1,113 +1,97 @@
-/*
-  Warnings:
+-- CreateTable
+CREATE TABLE `famille_fam` (
+    `fam_id` INTEGER NOT NULL AUTO_INCREMENT,
+    `fam_name` VARCHAR(191) NOT NULL,
 
-  - You are about to alter the column `art_price` on the `article_art` table. The data in that column could be lost. The data in that column will be cast from `Int` to `Decimal(65,30)`.
-  - You are about to alter the column `rem_prixremise` on the `remise_rem` table. The data in that column could be lost. The data in that column will be cast from `Int` to `Decimal(65,30)`.
-  - You are about to alter the column `rem_pourcentage` on the `remise_rem` table. The data in that column could be lost. The data in that column will be cast from `Int` to `Decimal(65,30)`.
-  - You are about to drop the column `dev_user` on the `te_devis_dev` table. All the data in the column will be lost.
-  - You are about to drop the `base` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `changehistory` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `client` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `invoice` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `invoicephoto` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `statushistory` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `user` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `vehicle` table. If the table is not empty, all the data it contains will be lost.
-  - Added the required column `art_reference` to the `article_art` table without a default value. This is not possible if the table is not empty.
+    INDEX `famille_fam_fam_name_idx`(`fam_name`),
+    PRIMARY KEY (`fam_id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-*/
--- DropForeignKey
-ALTER TABLE `base` DROP FOREIGN KEY `Base_clientId_fkey`;
+-- CreateTable
+CREATE TABLE `collection_col` (
+    `col_id` INTEGER NOT NULL AUTO_INCREMENT,
+    `col_name` VARCHAR(191) NOT NULL,
+    `col_familleId` INTEGER NOT NULL,
 
--- DropForeignKey
-ALTER TABLE `changehistory` DROP FOREIGN KEY `ChangeHistory_changedBy_fkey`;
+    INDEX `collection_col_col_name_idx`(`col_name`),
+    INDEX `collection_col_col_familleId_idx`(`col_familleId`),
+    PRIMARY KEY (`col_id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
--- DropForeignKey
-ALTER TABLE `changehistory` DROP FOREIGN KEY `ChangeHistory_invoiceId_fkey`;
+-- CreateTable
+CREATE TABLE `article_art` (
+    `art_id` INTEGER NOT NULL AUTO_INCREMENT,
+    `art_reference` VARCHAR(100) NOT NULL,
+    `art_name` VARCHAR(191) NOT NULL,
+    `art_price` DECIMAL(65, 30) NOT NULL,
+    `art_collectionId` INTEGER NOT NULL,
 
--- DropForeignKey
-ALTER TABLE `invoice` DROP FOREIGN KEY `Invoice_handledById_fkey`;
+    INDEX `article_art_art_name_idx`(`art_name`),
+    INDEX `article_art_art_collectionId_idx`(`art_collectionId`),
+    PRIMARY KEY (`art_id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
--- DropForeignKey
-ALTER TABLE `invoice` DROP FOREIGN KEY `Invoice_vehicleId_fkey`;
+-- CreateTable
+CREATE TABLE `remise_rem` (
+    `rem_id` INTEGER NOT NULL AUTO_INCREMENT,
+    `rem_prixremise` DECIMAL(65, 30) NULL,
+    `rem_pourcentage` DECIMAL(65, 30) NULL,
+    `rem_articleId` INTEGER NOT NULL,
 
--- DropForeignKey
-ALTER TABLE `invoicephoto` DROP FOREIGN KEY `InvoicePhoto_invoiceId_fkey`;
+    UNIQUE INDEX `remise_rem_rem_articleId_key`(`rem_articleId`),
+    INDEX `remise_rem_rem_prixremise_idx`(`rem_prixremise`),
+    INDEX `remise_rem_rem_pourcentage_idx`(`rem_pourcentage`),
+    INDEX `remise_rem_rem_articleId_idx`(`rem_articleId`),
+    PRIMARY KEY (`rem_id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
--- DropForeignKey
-ALTER TABLE `invoicephoto` DROP FOREIGN KEY `InvoicePhoto_uploadedById_fkey`;
+-- CreateTable
+CREATE TABLE `te_devis_dev` (
+    `dev_id` INTEGER NOT NULL AUTO_INCREMENT,
+    `dev_cli_id` VARCHAR(191) NOT NULL,
+    `dev_veh_id` VARCHAR(191) NOT NULL,
+    `dev_intervention_id` VARCHAR(191) NULL,
+    `dev_user_id` VARCHAR(191) NULL,
+    `dev_adressefacturation` TEXT NULL,
+    `dev_numdevis` VARCHAR(191) NOT NULL,
+    `dev_datecreation` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `dev_totalht` DECIMAL(14, 2) NOT NULL,
+    `dev_totaltva` DECIMAL(14, 2) NOT NULL,
+    `dev_totalttc` DECIMAL(14, 2) NOT NULL,
+    `dev_tva` DECIMAL(5, 2) NULL,
+    `dev_supprimee` BOOLEAN NOT NULL DEFAULT false,
+    `dev_accordNumber` VARCHAR(191) NULL,
+    `dev_dateAccord` DATETIME(3) NULL,
 
--- DropForeignKey
-ALTER TABLE `statushistory` DROP FOREIGN KEY `StatusHistory_changedById_fkey`;
+    UNIQUE INDEX `te_devis_dev_dev_intervention_id_key`(`dev_intervention_id`),
+    UNIQUE INDEX `te_devis_dev_dev_numdevis_key`(`dev_numdevis`),
+    UNIQUE INDEX `te_devis_dev_dev_accordNumber_key`(`dev_accordNumber`),
+    INDEX `te_devis_dev_dev_cli_id_idx`(`dev_cli_id`),
+    INDEX `te_devis_dev_dev_veh_id_idx`(`dev_veh_id`),
+    INDEX `te_devis_dev_dev_intervention_id_idx`(`dev_intervention_id`),
+    INDEX `te_devis_dev_dev_user_id_idx`(`dev_user_id`),
+    INDEX `te_devis_dev_dev_datecreation_idx`(`dev_datecreation`),
+    INDEX `te_devis_dev_dev_supprimee_idx`(`dev_supprimee`),
+    PRIMARY KEY (`dev_id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
--- DropForeignKey
-ALTER TABLE `statushistory` DROP FOREIGN KEY `StatusHistory_invoiceId_fkey`;
+-- CreateTable
+CREATE TABLE `te_devisart_dea` (
+    `dea_id` INTEGER NOT NULL AUTO_INCREMENT,
+    `dea_dev_id` INTEGER NOT NULL,
+    `dea_art_id` INTEGER NULL,
+    `dea_art_designation` VARCHAR(191) NOT NULL,
+    `dea_art_reference` VARCHAR(191) NULL,
+    `dea_prixunitaire` DECIMAL(14, 2) NOT NULL,
+    `dea_quantite` INTEGER NOT NULL,
+    `dea_tva` DECIMAL(5, 2) NULL,
+    `dea_pourcentageremise` INTEGER NULL,
+    `dea_prixtotalht` DECIMAL(14, 2) NOT NULL,
 
--- DropForeignKey
-ALTER TABLE `te_devis_dev` DROP FOREIGN KEY `te_devis_dev_dev_cli_id_fkey`;
-
--- DropForeignKey
-ALTER TABLE `te_devis_dev` DROP FOREIGN KEY `te_devis_dev_dev_invoice_id_fkey`;
-
--- DropForeignKey
-ALTER TABLE `te_devis_dev` DROP FOREIGN KEY `te_devis_dev_dev_user_fkey`;
-
--- DropForeignKey
-ALTER TABLE `te_devis_dev` DROP FOREIGN KEY `te_devis_dev_dev_veh_id_fkey`;
-
--- DropForeignKey
-ALTER TABLE `user` DROP FOREIGN KEY `User_baseId_fkey`;
-
--- DropForeignKey
-ALTER TABLE `user` DROP FOREIGN KEY `User_clientId_fkey`;
-
--- DropForeignKey
-ALTER TABLE `vehicle` DROP FOREIGN KEY `Vehicle_baseId_fkey`;
-
--- DropForeignKey
-ALTER TABLE `vehicle` DROP FOREIGN KEY `Vehicle_clientId_fkey`;
-
--- DropForeignKey
-ALTER TABLE `vehicle` DROP FOREIGN KEY `Vehicle_handledById_fkey`;
-
--- DropIndex
-DROP INDEX `te_devis_dev_dev_user_idx` ON `te_devis_dev`;
-
--- AlterTable
-ALTER TABLE `article_art` ADD COLUMN `art_reference` VARCHAR(100) NOT NULL,
-    MODIFY `art_price` DECIMAL(65, 30) NOT NULL;
-
--- AlterTable
-ALTER TABLE `remise_rem` MODIFY `rem_prixremise` DECIMAL(65, 30) NULL,
-    MODIFY `rem_pourcentage` DECIMAL(65, 30) NULL;
-
--- AlterTable
-ALTER TABLE `te_devis_dev` DROP COLUMN `dev_user`,
-    ADD COLUMN `dev_user_id` VARCHAR(191) NULL;
-
--- DropTable
-DROP TABLE `base`;
-
--- DropTable
-DROP TABLE `changehistory`;
-
--- DropTable
-DROP TABLE `client`;
-
--- DropTable
-DROP TABLE `invoice`;
-
--- DropTable
-DROP TABLE `invoicephoto`;
-
--- DropTable
-DROP TABLE `statushistory`;
-
--- DropTable
-DROP TABLE `user`;
-
--- DropTable
-DROP TABLE `vehicle`;
+    INDEX `te_devisart_dea_dea_dev_id_idx`(`dea_dev_id`),
+    INDEX `te_devisart_dea_dea_art_id_idx`(`dea_art_id`),
+    PRIMARY KEY (`dea_id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `client_cli` (
@@ -175,46 +159,46 @@ CREATE TABLE `vehicle_veh` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `invoice_inv` (
-    `inv_id` VARCHAR(191) NOT NULL,
-    `inv_accordNumber` VARCHAR(191) NULL,
-    `inv_dateOfConfirmation` DATETIME(3) NULL,
-    `inv_invoiceConfirmed` BOOLEAN NOT NULL DEFAULT false,
-    `inv_status` ENUM('CONFIRMED_IN_PLANNING', 'WAITING_FOR_PARTS', 'FIXING_STARTED', 'FIXING_FINISHED') NOT NULL DEFAULT 'CONFIRMED_IN_PLANNING',
-    `inv_statusUpdatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `inv_workDescription` VARCHAR(191) NULL,
-    `inv_didOrderParts` BOOLEAN NOT NULL DEFAULT false,
-    `inv_ordersDetails` VARCHAR(191) NULL,
-    `inv_comments` TEXT NULL,
-    `inv_createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `inv_updatedAt` DATETIME(3) NOT NULL,
-    `inv_vehicleId` VARCHAR(191) NOT NULL,
-    `inv_handledById` VARCHAR(191) NULL,
+CREATE TABLE `intervention_int` (
+    `int_id` VARCHAR(191) NOT NULL,
+    `int_accordNumber` VARCHAR(191) NULL,
+    `int_dateOfConfirmation` DATETIME(3) NULL,
+    `int_interventionConfirmed` BOOLEAN NOT NULL DEFAULT false,
+    `int_status` ENUM('CONFIRMED_IN_PLANNING', 'WAITING_FOR_PARTS', 'FIXING_STARTED', 'FIXING_FINISHED') NOT NULL DEFAULT 'CONFIRMED_IN_PLANNING',
+    `int_statusUpdatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `int_workDescription` VARCHAR(191) NULL,
+    `int_didOrderParts` BOOLEAN NOT NULL DEFAULT false,
+    `int_ordersDetails` VARCHAR(191) NULL,
+    `int_comments` TEXT NULL,
+    `int_createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `int_updatedAt` DATETIME(3) NOT NULL,
+    `int_vehicleId` VARCHAR(191) NOT NULL,
+    `int_handledById` VARCHAR(191) NULL,
 
-    UNIQUE INDEX `invoice_inv_inv_accordNumber_key`(`inv_accordNumber`),
-    INDEX `invoice_inv_inv_accordNumber_idx`(`inv_accordNumber`),
-    INDEX `invoice_inv_inv_vehicleId_idx`(`inv_vehicleId`),
-    INDEX `invoice_inv_inv_handledById_idx`(`inv_handledById`),
-    INDEX `invoice_inv_inv_invoiceConfirmed_idx`(`inv_invoiceConfirmed`),
-    INDEX `invoice_inv_inv_status_idx`(`inv_status`),
-    PRIMARY KEY (`inv_id`)
+    UNIQUE INDEX `intervention_int_int_accordNumber_key`(`int_accordNumber`),
+    INDEX `intervention_int_int_accordNumber_idx`(`int_accordNumber`),
+    INDEX `intervention_int_int_vehicleId_idx`(`int_vehicleId`),
+    INDEX `intervention_int_int_handledById_idx`(`int_handledById`),
+    INDEX `intervention_int_int_interventionConfirmed_idx`(`int_interventionConfirmed`),
+    INDEX `intervention_int_int_status_idx`(`int_status`),
+    PRIMARY KEY (`int_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `invoicephoto_ivp` (
-    `ivp_id` VARCHAR(191) NOT NULL,
-    `ivp_invoiceId` VARCHAR(191) NOT NULL,
-    `ivp_blobName` VARCHAR(191) NOT NULL,
-    `ivp_url` VARCHAR(191) NOT NULL,
-    `ivp_contentType` VARCHAR(191) NULL,
-    `ivp_size` INTEGER NULL,
-    `ivp_createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `ivp_uploadedById` VARCHAR(191) NULL,
+CREATE TABLE `interventionphoto_itp` (
+    `itp_id` VARCHAR(191) NOT NULL,
+    `itp_interventionId` VARCHAR(191) NOT NULL,
+    `itp_blobName` VARCHAR(191) NOT NULL,
+    `itp_url` VARCHAR(191) NOT NULL,
+    `itp_contentType` VARCHAR(191) NULL,
+    `itp_size` INTEGER NULL,
+    `itp_createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `itp_uploadedById` VARCHAR(191) NULL,
 
-    UNIQUE INDEX `invoicephoto_ivp_ivp_blobName_key`(`ivp_blobName`),
-    INDEX `invoicephoto_ivp_ivp_invoiceId_idx`(`ivp_invoiceId`),
-    INDEX `invoicephoto_ivp_ivp_createdAt_idx`(`ivp_createdAt`),
-    PRIMARY KEY (`ivp_id`)
+    UNIQUE INDEX `interventionphoto_itp_itp_blobName_key`(`itp_blobName`),
+    INDEX `interventionphoto_itp_itp_interventionId_idx`(`itp_interventionId`),
+    INDEX `interventionphoto_itp_itp_createdAt_idx`(`itp_createdAt`),
+    PRIMARY KEY (`itp_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
@@ -223,10 +207,10 @@ CREATE TABLE `statushistory_sth` (
     `sth_previousStatus` ENUM('CONFIRMED_IN_PLANNING', 'WAITING_FOR_PARTS', 'FIXING_STARTED', 'FIXING_FINISHED') NOT NULL,
     `sth_newStatus` ENUM('CONFIRMED_IN_PLANNING', 'WAITING_FOR_PARTS', 'FIXING_STARTED', 'FIXING_FINISHED') NOT NULL,
     `sth_changedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `sth_invoiceId` VARCHAR(191) NOT NULL,
+    `sth_interventionId` VARCHAR(191) NOT NULL,
     `sth_changedById` VARCHAR(191) NOT NULL,
 
-    INDEX `statushistory_sth_sth_invoiceId_idx`(`sth_invoiceId`),
+    INDEX `statushistory_sth_sth_interventionId_idx`(`sth_interventionId`),
     INDEX `statushistory_sth_sth_changedById_idx`(`sth_changedById`),
     INDEX `statushistory_sth_sth_changedAt_idx`(`sth_changedAt`),
     PRIMARY KEY (`sth_id`)
@@ -235,7 +219,7 @@ CREATE TABLE `statushistory_sth` (
 -- CreateTable
 CREATE TABLE `changehistory_chg` (
     `chg_id` VARCHAR(191) NOT NULL,
-    `chg_invoiceId` VARCHAR(191) NOT NULL,
+    `chg_interventionId` VARCHAR(191) NOT NULL,
     `chg_changedBy` VARCHAR(191) NOT NULL,
     `chg_changedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `chg_fieldName` VARCHAR(191) NOT NULL,
@@ -243,7 +227,7 @@ CREATE TABLE `changehistory_chg` (
     `chg_newValue` VARCHAR(191) NULL,
     `chg_changeType` VARCHAR(191) NOT NULL,
 
-    INDEX `changehistory_chg_chg_invoiceId_idx`(`chg_invoiceId`),
+    INDEX `changehistory_chg_chg_interventionId_idx`(`chg_interventionId`),
     INDEX `changehistory_chg_chg_changedAt_idx`(`chg_changedAt`),
     PRIMARY KEY (`chg_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -290,8 +274,14 @@ CREATE TABLE `model_mod` (
     PRIMARY KEY (`mod_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
--- CreateIndex
-CREATE INDEX `te_devis_dev_dev_user_id_idx` ON `te_devis_dev`(`dev_user_id`);
+-- AddForeignKey
+ALTER TABLE `collection_col` ADD CONSTRAINT `collection_col_col_familleId_fkey` FOREIGN KEY (`col_familleId`) REFERENCES `famille_fam`(`fam_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `article_art` ADD CONSTRAINT `article_art_art_collectionId_fkey` FOREIGN KEY (`art_collectionId`) REFERENCES `collection_col`(`col_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `remise_rem` ADD CONSTRAINT `remise_rem_rem_articleId_fkey` FOREIGN KEY (`rem_articleId`) REFERENCES `article_art`(`art_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `te_devis_dev` ADD CONSTRAINT `te_devis_dev_dev_cli_id_fkey` FOREIGN KEY (`dev_cli_id`) REFERENCES `client_cli`(`cli_id`) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -300,10 +290,16 @@ ALTER TABLE `te_devis_dev` ADD CONSTRAINT `te_devis_dev_dev_cli_id_fkey` FOREIGN
 ALTER TABLE `te_devis_dev` ADD CONSTRAINT `te_devis_dev_dev_veh_id_fkey` FOREIGN KEY (`dev_veh_id`) REFERENCES `vehicle_veh`(`veh_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `te_devis_dev` ADD CONSTRAINT `te_devis_dev_dev_invoice_id_fkey` FOREIGN KEY (`dev_invoice_id`) REFERENCES `invoice_inv`(`inv_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `te_devis_dev` ADD CONSTRAINT `te_devis_dev_dev_intervention_id_fkey` FOREIGN KEY (`dev_intervention_id`) REFERENCES `intervention_int`(`int_id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `te_devis_dev` ADD CONSTRAINT `te_devis_dev_dev_user_id_fkey` FOREIGN KEY (`dev_user_id`) REFERENCES `user_usr`(`usr_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `te_devisart_dea` ADD CONSTRAINT `te_devisart_dea_dea_dev_id_fkey` FOREIGN KEY (`dea_dev_id`) REFERENCES `te_devis_dev`(`dev_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `te_devisart_dea` ADD CONSTRAINT `te_devisart_dea_dea_art_id_fkey` FOREIGN KEY (`dea_art_id`) REFERENCES `article_art`(`art_id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `base_bas` ADD CONSTRAINT `base_bas_bas_clientId_fkey` FOREIGN KEY (`bas_clientId`) REFERENCES `client_cli`(`cli_id`) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -324,25 +320,25 @@ ALTER TABLE `vehicle_veh` ADD CONSTRAINT `vehicle_veh_veh_baseId_fkey` FOREIGN K
 ALTER TABLE `vehicle_veh` ADD CONSTRAINT `vehicle_veh_veh_handledById_fkey` FOREIGN KEY (`veh_handledById`) REFERENCES `user_usr`(`usr_id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `invoice_inv` ADD CONSTRAINT `invoice_inv_inv_vehicleId_fkey` FOREIGN KEY (`inv_vehicleId`) REFERENCES `vehicle_veh`(`veh_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `intervention_int` ADD CONSTRAINT `intervention_int_int_vehicleId_fkey` FOREIGN KEY (`int_vehicleId`) REFERENCES `vehicle_veh`(`veh_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `invoice_inv` ADD CONSTRAINT `invoice_inv_inv_handledById_fkey` FOREIGN KEY (`inv_handledById`) REFERENCES `user_usr`(`usr_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `intervention_int` ADD CONSTRAINT `intervention_int_int_handledById_fkey` FOREIGN KEY (`int_handledById`) REFERENCES `user_usr`(`usr_id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `invoicephoto_ivp` ADD CONSTRAINT `invoicephoto_ivp_ivp_invoiceId_fkey` FOREIGN KEY (`ivp_invoiceId`) REFERENCES `invoice_inv`(`inv_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `interventionphoto_itp` ADD CONSTRAINT `interventionphoto_itp_itp_interventionId_fkey` FOREIGN KEY (`itp_interventionId`) REFERENCES `intervention_int`(`int_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `invoicephoto_ivp` ADD CONSTRAINT `invoicephoto_ivp_ivp_uploadedById_fkey` FOREIGN KEY (`ivp_uploadedById`) REFERENCES `user_usr`(`usr_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `interventionphoto_itp` ADD CONSTRAINT `interventionphoto_itp_itp_uploadedById_fkey` FOREIGN KEY (`itp_uploadedById`) REFERENCES `user_usr`(`usr_id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `statushistory_sth` ADD CONSTRAINT `statushistory_sth_sth_invoiceId_fkey` FOREIGN KEY (`sth_invoiceId`) REFERENCES `invoice_inv`(`inv_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `statushistory_sth` ADD CONSTRAINT `statushistory_sth_sth_interventionId_fkey` FOREIGN KEY (`sth_interventionId`) REFERENCES `intervention_int`(`int_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `statushistory_sth` ADD CONSTRAINT `statushistory_sth_sth_changedById_fkey` FOREIGN KEY (`sth_changedById`) REFERENCES `user_usr`(`usr_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `changehistory_chg` ADD CONSTRAINT `changehistory_chg_chg_invoiceId_fkey` FOREIGN KEY (`chg_invoiceId`) REFERENCES `invoice_inv`(`inv_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `changehistory_chg` ADD CONSTRAINT `changehistory_chg_chg_interventionId_fkey` FOREIGN KEY (`chg_interventionId`) REFERENCES `intervention_int`(`int_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `changehistory_chg` ADD CONSTRAINT `changehistory_chg_chg_changedBy_fkey` FOREIGN KEY (`chg_changedBy`) REFERENCES `user_usr`(`usr_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
