@@ -596,10 +596,10 @@ export async function POST(request: NextRequest) {
 //           },
 //         },
 
-//         invoices: {
+//         interventions: {
 //           select: {
 //             id: true,
-//             invoiceConfirmed: true,
+//             interventionConfirmed: true,
 //             status: true,
 //             accordNumber: true,
 //             dateOfConfirmation: true,

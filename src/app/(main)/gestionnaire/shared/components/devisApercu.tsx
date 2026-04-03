@@ -153,7 +153,7 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
                                 <p>{devis.dev_client?.cli_phone}</p>
                             </div>
                             <div className="text-[12px] bg-gray-100 p-2 w-full max-w-[50%] text-center ">
-                                <span className="font-semibold">N° d'accord : </span> {devis.dev_invoice?.int_accordNumber ?? "—"}
+                                <span className="font-semibold">N° d'accord : </span> {devis.dev_intervention?.int_accordNumber ?? "—"}
                             </div>
                         </div>
                     </div>
@@ -351,7 +351,7 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
     "dev_id": 9,
     "dev_cli_id": "cmjr2fv850004kwficf1hjwuv",
     "dev_veh_id": "cmky3uibp0000jcfij7kvpvlb",
-    "dev_invoice_id": "cml6mgnaz00034owfpbp0ooyv",
+    "dev_intervention_id": "cml6mgnaz00034owfpbp0ooyv",
     "dev_user": "cmk6rgnuc0001qwwf573net4d",
     "dev_adressefacturation": null,
     "dev_numdevis": "DV-2026-353819",
@@ -398,11 +398,11 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
         "baseId": "cmjr2g264000gkwfiv2po0hik",
         "handledById": "cmk3twnnz0000s0fi89s42a4i"
     },
-    "invoice": {
+    "intervention": {
         "id": "cml6mgnaz00034owfpbp0ooyv",
         "accordNumber": null,
         "dateOfConfirmation": "2026-02-02T00:00:00.000Z",
-        "invoiceConfirmed": true,
+        "interventionConfirmed": true,
         "status": "WAITING_FOR_PARTS",
         "statusUpdatedAt": "2026-02-03T13:16:04.474Z",
         "workDescription": "ssss",

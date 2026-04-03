@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
       accordNumber: intervention.int_accordNumber,
       dateOfConfirmation:
         intervention.int_dateOfConfirmation?.toISOString() ?? null,
-      invoiceConfirmed: intervention.int_interventionConfirmed,
+      interventionConfirmed: intervention.int_interventionConfirmed,
       status: intervention.int_status,
       statusUpdatedAt: intervention.int_statusUpdatedAt.toISOString(),
       workDescription: intervention.int_workDescription,

@@ -10,7 +10,7 @@ type WorkStatus =
 
 export type AgenceIntervention = {
   id: string
-  invoiceConfirmed: boolean
+  interventionConfirmed: boolean
   status: WorkStatus
   accordNumber: string | null
   dateOfConfirmation: string | null

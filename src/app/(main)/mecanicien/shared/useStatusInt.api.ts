@@ -11,7 +11,7 @@ type UpdateStatusResult =
 
 type UseStatusIntReturn = {
   updateStatus: (
-    invoiceId: string,
+    interventionId: string,
     newStatus: StatusUI
   ) => Promise<UpdateStatusResult>
   loading: boolean
@@ -23,7 +23,7 @@ export function useStatusInt(): UseStatusIntReturn {
   const [error, setError] = useState<string | null>(null)
 
   const updateStatus = async (
-    invoiceId: string,
+    interventionId: string,
     newStatus: StatusUI
   ): Promise<UpdateStatusResult> => {
     setLoading(true)
@@ -32,7 +32,7 @@ export function useStatusInt(): UseStatusIntReturn {
     const workStatus: WorkStatus = UI_TO_WORKSTATUS[newStatus]
 
     try {
-      const res = await fetch(`/api/invoices/${invoiceId}/status`, {
+      const res = await fetch(`/api/interventions/${interventionId}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: workStatus }),

@@ -231,7 +231,7 @@ export async function GET(request: NextRequest) {
 
     const interventions = rows.map((item) => ({
       id: item.int_id,
-      invoiceConfirmed: item.int_interventionConfirmed,
+      interventionConfirmed: item.int_interventionConfirmed,
       status: item.int_status,
       accordNumber: item.int_accordNumber,
       dateOfConfirmation: item.int_dateOfConfirmation?.toISOString() ?? null,

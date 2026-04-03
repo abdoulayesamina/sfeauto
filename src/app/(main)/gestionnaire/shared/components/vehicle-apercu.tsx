@@ -49,6 +49,9 @@ export function VehiclePreview({
   onNewIntervention,
   reloadInterventionList,
 }: VehiclePreviewProps) {
+
+
+
   const { data: session } = useSession();
   const role = session?.user?.role ?? null;
 
@@ -57,13 +60,13 @@ export function VehiclePreview({
   const [selectedIntervention, setSelectedIntervention] = useState<any>();
 
   const [openDevisModal, setOpenDevisModal] = useState(false);
-  const [invoiceForDevis, setInterventionForDevis] = useState<any>(null);
+  const [interventionForDevis, setInterventionForDevis] = useState<any>(null);
 
   const [openApercu, setOpenApercu] = useState(false);
   const [targetDevisIdForApercu, setTargetDevisIdForApercu] = useState<any>(null);
 
   const [openEditModal, setOpenEditModal] = useState(false);
-  const [invoiceForEdit, setInterventionForEdit] = useState<any>(null);
+  const [interventionForEdit, setInterventionForEdit] = useState<any>(null);
 
   const [localInterventions, setLocalInterventions] = useState<any[]>(interventions);
   const [filteredInterventions, setFilteredInterventions] = useState<any[]>([]);
@@ -85,6 +88,7 @@ export function VehiclePreview({
     const next = mappedInterventions.filter((inv) =>
       filteredStatus === "EN_COURS" ? inv.uiStatus !== "TERMINEE" : inv.uiStatus === "TERMINEE"
     );
+    console.log("Filtered interventions:", next);
     setFilteredInterventions(next);
   }, [mappedInterventions, filteredStatus, detectDevis]);
 
@@ -92,9 +96,9 @@ export function VehiclePreview({
     if (detectDevis) setDetectDevis(false);
   }, [detectDevis]);
 
-  const handleViewDetail = (invoice: any) => {
+  const handleViewDetail = (intervention: any) => {
     setSelectedIntervention({
-      ...invoice,
+      ...intervention,
       int_vehicle: {
         veh_licensePlate: licensePlate,
         veh_brand: brand,
@@ -109,13 +113,13 @@ export function VehiclePreview({
     setOpenDetailModal(true);
   };
 
-  const handleCreateDevis = (invoice: any) => {
-    setInterventionForDevis(invoice);
+  const handleCreateDevis = (intervention: any) => {
+    setInterventionForDevis(intervention);
     setOpenDevisModal(true);
   };
 
-  const handleEditIntervention = (invoice: any) => {
-    setInterventionForEdit(invoice);
+  const handleEditIntervention = (intervention: any) => {
+    setInterventionForEdit(intervention);
     setOpenEditModal(true);
   };
 
@@ -265,24 +269,24 @@ export function VehiclePreview({
         )}
       </Modal>
 
-      {invoiceForEdit && (
+      {interventionForEdit && (
         <EditInterventionModal
           open={openEditModal}
           onClose={() => setOpenEditModal(false)}
-          invoice={invoiceForEdit}
+          intervention={interventionForEdit}
           onUpdated={(updated) => {
             const updatedIntervention = updated?.intervention ?? updated;
             setLocalInterventions((prev) => prev.map((x) => (x.id === updatedIntervention.id ? { ...x, ...updatedIntervention } : x)));
           }}
-          reloadInvoiceList={reloadInterventionList}
+          reloadInterventionList={reloadInterventionList}
         />
       )}
 
-      {invoiceForDevis && (
+      {interventionForDevis && (
         <CreateDevisModal
           open={openDevisModal}
           onClose={() => setOpenDevisModal(false)}
-          invoiceId={invoiceForDevis?.int_id ?? invoiceForDevis?.id ?? ""}
+          interventionId={interventionForDevis?.int_id ?? interventionForDevis?.id ?? ""}
           onCreated={(devis) => {
             const created = devis?.devis ?? devis
             const dev_id = created?.dev_id
@@ -292,7 +296,7 @@ export function VehiclePreview({
 
             setLocalInterventions((prev) =>
               prev.map((x) =>
-                (x.int_id ?? x.id) === (invoiceForDevis?.int_id ?? invoiceForDevis?.id)
+                (x.int_id ?? x.id) === (interventionForDevis?.int_id ?? interventionForDevis?.id)
                   ? {
                     ...x,
                     devis: { dev_id, dev_numdevis },

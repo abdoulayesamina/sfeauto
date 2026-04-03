@@ -2,9 +2,9 @@
 
 // import { useEffect, useRef, useState } from "react"
 
-// const API_URL = process.env.NEXT_PUBLIC_API_URL + "/invoices"
+// const API_URL = process.env.NEXT_PUBLIC_API_URL + "/interventions"
 
-// export type InvoicePhoto = {
+// export type InterventionPhoto = {
 //   id: string
 //   blobName: string
 //   url: string
@@ -14,8 +14,8 @@
 //   createdAt: string
 // }
 
-// export function useInvoicePhotos(invoiceId?: string) {
-//   const [photos, setPhotos] = useState<InvoicePhoto[]>([])
+// export function useInterventionPhotos(interventionId?: string) {
+//   const [photos, setPhotos] = useState<InterventionPhoto[]>([])
 //   const [loading, setLoading] = useState(false)
 //   const [error, setError] = useState<string | null>(null)
 
@@ -26,7 +26,7 @@
 //     setPhotos([])
 //     setError(null)
 
-//     if (!invoiceId || invoiceId === "undefined" || invoiceId === "null") {
+//     if (!interventionId || interventionId === "undefined" || interventionId === "null") {
 //       setLoading(false)
 //       return
 //     }
@@ -39,7 +39,7 @@
 //     const run = async () => {
 //       setLoading(true)
 //       try {
-//         const res = await fetch(`${API_URL}/${invoiceId}/photos`, {
+//         const res = await fetch(`${API_URL}/${interventionId}/photos`, {
 //           method: "GET",
 //           cache: "no-store",
 //           signal: controller.signal,
@@ -64,7 +64,7 @@
 //     return () => {
 //       controller.abort()
 //     }
-//   }, [invoiceId])
+//   }, [interventionId])
 
 //   return { photos, loading, error }
 // }
@@ -73,9 +73,9 @@
 
 import { useEffect, useRef, useState, useCallback } from "react"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL + "/invoices"
+const API_URL = process.env.NEXT_PUBLIC_API_URL + "/interventions"
 
-export type InvoicePhoto = {
+export type InterventionPhoto = {
   id: string
   blobName: string
   url: string
@@ -86,18 +86,18 @@ export type InvoicePhoto = {
 }
 
 
-export function useInvoicePhotos(invoiceId?: string) {
-  const [photos, setPhotos] = useState<InvoicePhoto[]>([])
+export function useInterventionPhotos(interventionId?: string) {
+  const [photos, setPhotos] = useState<InterventionPhoto[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const fetchPhotos = async () => {
-    if (!invoiceId) return
+    if (!interventionId) return
 
     setLoading(true)
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/invoices/${invoiceId}/photos`,
+        `${process.env.NEXT_PUBLIC_API_URL}/interventions/${interventionId}/photos`,
         { cache: "no-store" }
       )
 
@@ -115,21 +115,21 @@ export function useInvoicePhotos(invoiceId?: string) {
 
   useEffect(() => {
     fetchPhotos()
-  }, [invoiceId])
+  }, [interventionId])
 
   return { photos, loading, error, refetch: fetchPhotos }
 }
 
 
-// export function useInvoicePhotos(invoiceId?: string) {
-//   const [photos, setPhotos] = useState<InvoicePhoto[]>([])
+// export function useInterventionPhotos(interventionId?: string) {
+//   const [photos, setPhotos] = useState<InterventionPhoto[]>([])
 //   const [loading, setLoading] = useState(false)
 //   const [error, setError] = useState<string | null>(null)
 
 //   const abortRef = useRef<AbortController | null>(null)
 
 //   const fetchPhotos = useCallback(async () => {
-//     if (!invoiceId || invoiceId === "undefined" || invoiceId === "null") {
+//     if (!interventionId || interventionId === "undefined" || interventionId === "null") {
 //       setPhotos([])
 //       setLoading(false)
 //       return
@@ -143,7 +143,7 @@ export function useInvoicePhotos(invoiceId?: string) {
 //     setError(null)
 
 //     try {
-//       const res = await fetch(`${API_URL}/${invoiceId}/photos`, {
+//       const res = await fetch(`${API_URL}/${interventionId}/photos`, {
 //         method: "GET",
 //         cache: "no-store",
 //         signal: controller.signal,
@@ -160,7 +160,7 @@ export function useInvoicePhotos(invoiceId?: string) {
 //     } finally {
 //       if (!controller.signal.aborted) setLoading(false)
 //     }
-//   }, [invoiceId])
+//   }, [interventionId])
 
 //   useEffect(() => {
 //     setPhotos([])

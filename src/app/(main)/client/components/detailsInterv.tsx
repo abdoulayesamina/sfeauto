@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react"
 import { Car, User, MapPin, Wrench, Images, X, CheckCircle } from "lucide-react"
 import { Button } from "@/src/shared/components/ui/button"
 import { errorAlert } from "@/src/lib/alerts"
-import { useInvoicePhotos } from "../../gestionnaire/shared/hooks/useInvoicePhotos.api"
+import { useInterventionPhotos } from "../../gestionnaire/shared/hooks/useInterventionPhotos.api"
 
 type Props = {
   selectedIntervention: any
@@ -52,7 +52,7 @@ export default function InterventionDetailClient({ selectedIntervention, onClose
     photos,
     loading: photosLoading,
     error: photosError,
-  } = useInvoicePhotos(selectedIntervention.id)
+  } = useInterventionPhotos(selectedIntervention.id)
 
   const [viewerOpen, setViewerOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)

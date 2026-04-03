@@ -39,7 +39,7 @@ export async function POST(
         dev_id: true,
         dev_supprimee: true,
         dev_accordNumber: true,
-        dev_invoice: {
+        dev_intervention: {
           select: {
             int_accordNumber: true,
           },
@@ -55,21 +55,21 @@ export async function POST(
       return NextResponse.json({ error: "Devis déjà validé" }, { status: 409 });
     }
 
-    const invoiceAccord = normalizeAccordNumber(current.dev_invoice?.int_accordNumber);
+    const interventionAccord = normalizeAccordNumber(current.dev_intervention?.int_accordNumber);
 
-    if (!invoiceAccord) {
+    if (!interventionAccord) {
       return NextResponse.json(
         { error: "Impossible de valider : l’intervention liée n’a pas de numéro d’accord" },
         { status: 400 }
       );
     }
 
-    if (dev_accordNumber !== invoiceAccord) {
+    if (dev_accordNumber !== interventionAccord) {
       return NextResponse.json(
         {
           error: "Numéro d’accord invalide : il doit être identique à celui de l’intervention",
           code: "ACCORD_NUMBER_MISMATCH",
-          details: { expected: invoiceAccord, provided: dev_accordNumber },
+          details: { expected: interventionAccord, provided: dev_accordNumber },
         },
         { status: 409 }
       );
@@ -98,7 +98,7 @@ export async function POST(
         dev_dateAccord: new Date(),
       },
       include: {
-        dev_invoice: {
+        dev_intervention: {
           select: {
             int_id: true,
             int_accordNumber: true,

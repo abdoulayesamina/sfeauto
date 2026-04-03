@@ -12,7 +12,7 @@ export type DevisItemInput = {
 };
 
 export type CreateDevisPayload = {
-  invoiceId: string;
+  interventionId: string;
   dev_tva?: number;
   items: DevisItemInput[];
 };

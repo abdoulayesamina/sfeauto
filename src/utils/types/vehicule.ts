@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { InvoiceSchema } from "./invoice";
+import { InterventionSchema } from "./intervention";
 
 export const VehicleEnergySchema = z.enum([
   "GAZOLE",
@@ -82,7 +82,7 @@ export const VehiculeSchema = z.object({
 
     
 
-  interventions: z.array(InvoiceSchema).optional(),
+  interventions: z.array(InterventionSchema).optional(),
 });
 
 export type Vehicule = z.infer<typeof VehiculeSchema>;

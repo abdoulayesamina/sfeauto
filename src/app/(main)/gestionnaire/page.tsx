@@ -185,6 +185,7 @@ export default function GestionnairePage() {
   const handleSubmitIntervention = async (data: any) => {
     setLoading(true)
     try {
+      console.log("Creating intervention with data:", data)
       await createIntervention({
         veh_vehicleId: selectedVehicle?.veh_id ?? "",
         veh_accordNumber: data.numeroAccord,
@@ -205,7 +206,7 @@ export default function GestionnairePage() {
       setInterventionModalOpen(false)
       toast.success("Intervention créée")
     } catch (e: any) {
-      toast.error("Intervention", e.message)
+      toast.error("Intervention : "+ e.message)
       setLoading(false)
     }
   }

@@ -180,6 +180,8 @@ export async function POST(request: NextRequest) {
 
     const uploadedBlobNames: string[] = [];
 
+    console.log("Handled by : ", session.user)
+
     try {
       const result = await prisma.$transaction(async (tx) => {
         const intervention = await tx.intervention_int.create({

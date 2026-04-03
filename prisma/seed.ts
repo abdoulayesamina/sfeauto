@@ -19,7 +19,7 @@ async function main() {
 
   // Clear all existing data in correct order (respecting foreign keys)
   await prisma.statusHistory.deleteMany();
-  await prisma.invoice.deleteMany();
+  await prisma.intervention.deleteMany();
   await prisma.vehicle.deleteMany();
   await prisma.user.deleteMany();
   await prisma.base.deleteMany();
@@ -222,14 +222,14 @@ async function main() {
     },
   });
 
-  await prisma.invoice.create({
+  await prisma.intervention.create({
     data: {
       vehicleId: v1.id,
       workDescription: "Réparation pare-chocs avant suite à accrochage parking. Débosselage et peinture complète.",
       didOrderParts: true,
       ordersDetails: "Pare-chocs avant Clio V (ref: 620226835R)\nPeinture Blanc Glacier QNJ",
       comments: "Véhicule prioritaire - client VIP",
-      invoiceConfirmed: true,
+      interventionConfirmed: true,
       accordNumber: "EUR-2025-0001",
       dateOfConfirmation: new Date("2025-01-11"),
       status: "FIXING_FINISHED",
@@ -237,14 +237,14 @@ async function main() {
     },
   });
 
-  await prisma.invoice.create({
+  await prisma.intervention.create({
     data: {
       vehicleId: v1.id,
       workDescription: "Révision des 30 000 km + changement plaquettes frein avant",
       didOrderParts: true,
       ordersDetails: "Kit plaquettes AV (ref: 410601186R)\nFiltre huile\nFiltre air\nHuile 5W30 5L",
       comments: "Prévoir 3h de main d'oeuvre",
-      invoiceConfirmed: true,
+      interventionConfirmed: true,
       accordNumber: "EUR-2025-0015",
       dateOfConfirmation: new Date("2025-02-01"),
       status: "WAITING_FOR_PARTS",
@@ -267,14 +267,14 @@ async function main() {
     },
   });
 
-  await prisma.invoice.create({
+  await prisma.intervention.create({
     data: {
       vehicleId: v2.id,
       workDescription: "Remplacement pare-brise fissuré (impact autoroute)",
       didOrderParts: true,
       ordersDetails: "Pare-brise Peugeot 3008 avec capteur pluie (ref: 8115PZ)",
       comments: "Calibration caméra ADAS nécessaire après pose",
-      invoiceConfirmed: true,
+      interventionConfirmed: true,
       accordNumber: "EUR-2025-0008",
       dateOfConfirmation: new Date("2025-01-21"),
       status: "FIXING_STARTED",
@@ -297,13 +297,13 @@ async function main() {
     },
   });
 
-  await prisma.invoice.create({
+  await prisma.intervention.create({
     data: {
       vehicleId: v3.id,
       workDescription: "Diagnostic voyant moteur allumé + réparation système AdBlue",
       didOrderParts: false,
       comments: "Code défaut P20E8 - Pompe AdBlue probablement défaillante",
-      invoiceConfirmed: true,
+      interventionConfirmed: true,
       accordNumber: "EUR-2025-0022",
       dateOfConfirmation: new Date("2025-02-06"),
       status: "CONFIRMED_IN_PLANNING",
@@ -326,14 +326,14 @@ async function main() {
     },
   });
 
-  await prisma.invoice.create({
+  await prisma.intervention.create({
     data: {
       vehicleId: v4.id,
       workDescription: "Réparation aile arrière gauche + feu arrière suite à accrochage",
       didOrderParts: true,
       ordersDetails: "Feu arrière gauche (ref: 81561-K0190)\nAile ARG à réparer",
       comments: "Peinture à raccorder sur portière",
-      invoiceConfirmed: true,
+      interventionConfirmed: true,
       accordNumber: "EUR-2025-0019",
       dateOfConfirmation: new Date("2025-01-26"),
       status: "FIXING_STARTED",
@@ -375,14 +375,14 @@ async function main() {
     },
   });
 
-  await prisma.invoice.create({
+  await prisma.intervention.create({
     data: {
       vehicleId: v6.id,
       workDescription: "Réparation jante alu rayée + changement pneu crevé AVD",
       didOrderParts: true,
       ordersDetails: "Pneu Michelin Primacy 4 225/45R17\nRénovation jante AMG",
       comments: "Client a roulé sur trottoir",
-      invoiceConfirmed: true,
+      interventionConfirmed: true,
       accordNumber: "HER-2025-0003",
       dateOfConfirmation: new Date("2025-01-16"),
       status: "FIXING_FINISHED",
@@ -405,13 +405,13 @@ async function main() {
     },
   });
 
-  await prisma.invoice.create({
+  await prisma.intervention.create({
     data: {
       vehicleId: v7.id,
       workDescription: "Climatisation HS - Diagnostic et recharge gaz réfrigérant",
       didOrderParts: false,
       comments: "Vérifier absence de fuite avant recharge",
-      invoiceConfirmed: true,
+      interventionConfirmed: true,
       accordNumber: "HER-2025-0011",
       dateOfConfirmation: new Date("2025-02-02"),
       status: "FIXING_STARTED",
@@ -434,14 +434,14 @@ async function main() {
     },
   });
 
-  await prisma.invoice.create({
+  await prisma.intervention.create({
     data: {
       vehicleId: v8.id,
       workDescription: "Remplacement rétroviseur extérieur droit arraché",
       didOrderParts: true,
       ordersDetails: "Rétroviseur complet électrique chauffant rabattable (ref: 8Y0857410)",
       comments: "Commande urgente - délai 48h",
-      invoiceConfirmed: true,
+      interventionConfirmed: true,
       accordNumber: "HER-2025-0018",
       dateOfConfirmation: new Date("2025-02-09"),
       status: "WAITING_FOR_PARTS",
@@ -483,13 +483,13 @@ async function main() {
     },
   });
 
-  await prisma.invoice.create({
+  await prisma.intervention.create({
     data: {
       vehicleId: v10.id,
       workDescription: "Diagnostic batterie hybride + mise à jour logiciel groupe motopropulseur",
       didOrderParts: false,
       comments: "Passage chez BMW pour diagnostic approfondi si nécessaire",
-      invoiceConfirmed: true,
+      interventionConfirmed: true,
       accordNumber: "SIX-2025-0005",
       dateOfConfirmation: new Date("2025-01-19"),
       status: "FIXING_FINISHED",
@@ -512,14 +512,14 @@ async function main() {
     },
   });
 
-  await prisma.invoice.create({
+  await prisma.intervention.create({
     data: {
       vehicleId: v11.id,
       workDescription: "Embrayage patine - Remplacement kit embrayage complet",
       didOrderParts: true,
       ordersDetails: "Kit embrayage LuK + volant moteur bimasse",
       comments: "Prévoir 6h de main d'oeuvre minimum",
-      invoiceConfirmed: true,
+      interventionConfirmed: true,
       accordNumber: "SIX-2025-0014",
       dateOfConfirmation: new Date("2025-02-04"),
       status: "WAITING_FOR_PARTS",
@@ -546,14 +546,14 @@ async function main() {
     },
   });
 
-  await prisma.invoice.create({
+  await prisma.intervention.create({
     data: {
       vehicleId: v12.id,
       workDescription: "Réparation carrosserie porte AVG + aile AVG suite collision",
       didOrderParts: true,
       ordersDetails: "Porte AVG (occasion garantie)\nTraitement anticorrosion\nPeinture Bleu code PN4HD",
       comments: "Expertise assurance validée",
-      invoiceConfirmed: true,
+      interventionConfirmed: true,
       accordNumber: "AVI-2025-0007",
       dateOfConfirmation: new Date("2025-01-23"),
       status: "FIXING_STARTED",
@@ -576,13 +576,13 @@ async function main() {
     },
   });
 
-  await prisma.invoice.create({
+  await prisma.intervention.create({
     data: {
       vehicleId: v13.id,
       workDescription: "Problème charge batterie - Diagnostic prise de charge + connecteur",
       didOrderParts: false,
       comments: "Véhicule ne charge plus sur borne rapide",
-      invoiceConfirmed: true,
+      interventionConfirmed: true,
       accordNumber: "AVI-2025-0020",
       dateOfConfirmation: new Date("2025-02-07"),
       status: "CONFIRMED_IN_PLANNING",
@@ -624,14 +624,14 @@ async function main() {
     },
   });
 
-  await prisma.invoice.create({
+  await prisma.intervention.create({
     data: {
       vehicleId: v15.id,
       workDescription: "Révision complète + changement courroie distribution",
       didOrderParts: true,
       ordersDetails: "Kit distribution complet avec pompe à eau\nKit filtres\nHuile 5W40",
       comments: "Kilométrage: 89 500 km",
-      invoiceConfirmed: true,
+      interventionConfirmed: true,
       accordNumber: "ENT-2025-0009",
       dateOfConfirmation: new Date("2025-01-29"),
       status: "FIXING_FINISHED",
@@ -654,14 +654,14 @@ async function main() {
     },
   });
 
-  await prisma.invoice.create({
+  await prisma.intervention.create({
     data: {
       vehicleId: v16.id,
       workDescription: "Amortisseurs arrière HS - Remplacement + géométrie",
       didOrderParts: true,
       ordersDetails: "2x Amortisseurs AR Sachs\nKit coupelles + butées",
       comments: "Véhicule fait 120 000 km - vérifier aussi l'avant",
-      invoiceConfirmed: true,
+      interventionConfirmed: true,
       accordNumber: "ENT-2025-0016",
       dateOfConfirmation: new Date("2025-02-05"),
       status: "FIXING_STARTED",
@@ -684,13 +684,13 @@ async function main() {
     },
   });
 
-  await prisma.invoice.create({
+  await prisma.intervention.create({
     data: {
       vehicleId: v17.id,
       workDescription: "Voyant ESP allumé - Diagnostic capteur angle volant",
       didOrderParts: false,
       comments: "Effacement codes + test route à prévoir",
-      invoiceConfirmed: true,
+      interventionConfirmed: true,
       accordNumber: "ENT-2025-0021",
       dateOfConfirmation: new Date("2025-02-10"),
       status: "CONFIRMED_IN_PLANNING",

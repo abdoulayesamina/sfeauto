@@ -1,43 +1,20 @@
-// src/utils/types/intervention.ts
-export interface CreateInterventionData {
-  vehicleId: string          
-  accordNumber: string       
-  dateOfConfirmation: string
-  workDescription?: string  
-  didOrderParts?: boolean   
-  ordersDetails?: string     
-  comments?: string      
-  status?: "FIXING_STARTED" | "WAITING_FOR_PARTS" // ✅ Ajouté
-    
-}
-import z from "zod";
-import { UserSchema } from "./user";
-import { VehiculeSchema } from "./vehicule";
-import { AgenceSchema } from "./agence";
-
-export const StatusHistoryItemSchema = z.object({
-  id: z.string(),
-  previousStatus: z.string(),
-  newStatus: z.string(),
-  changedAt: z.string(),
-  changedBy: UserSchema.pick({ name: true }), 
-})
-
+import { z } from "zod"
 
 export const InterventionSchema = z.object({
-  id: z.string(),
-  accordNumber: z.string(),
-  dateOfConfirmation: z.string(),
-  status: z.string(),
-  statusUpdatedAt: z.string(),
-  workDescription: z.string(),
-  didOrderParts: z.boolean(),
-  ordersDetails: z.nullable(z.any()),
-  comments: z.nullable(z.any()),
-  createdAt: z.string(),
-  vehicle: VehiculeSchema,
-  handledBy: AgenceSchema.pick({location : true}), 
-  statusHistory: z.array(StatusHistoryItemSchema),
+  int_id: z.string().optional(),
+  int_accordNumber: z.string(),
+  int_dateOfConfirmation: z.string().datetime().optional(),
+  int_interventionConfirmed: z.boolean(),
+  int_status: z.enum(['CONFIRMED_IN_PLANNING', 'WAITING_FOR_PARTS', 'FIXING_STARTED', 'FIXING_FINISHED']),
+  int_statusUpdatedAt: z.string().datetime().optional(),
+  int_workDescription: z.string(),
+  int_didOrderParts: z.boolean(),
+  int_ordersDetails: z.string(),
+  int_comments: z.string(),
+  int_createdAt: z.string().datetime().optional(),
+  int_updatedAt: z.string().datetime().optional(),
+  int_vehicleId: z.string(),
+  int_handledById: z.string()
 })
 
 export type Intervention = z.infer<typeof InterventionSchema>

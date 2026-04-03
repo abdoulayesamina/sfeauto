@@ -45,9 +45,9 @@ export async function POST(req: Request) {
     const body = await req.json();
 
     // Compatibilité front existant :
-    // on accepte invoiceId mais il correspond désormais à int_id
+    // on accepte interventionId mais il correspond désormais à int_id
     const interventionId: string | undefined =
-      body?.interventionId ?? body?.invoiceId;
+      body?.interventionId ?? body?.interventionId;
 
     const devTvaDefault =
       body?.dev_tva != null ? asNumber(body.dev_tva) : DEFAULT_TVA_PERCENT;

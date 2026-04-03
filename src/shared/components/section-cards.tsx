@@ -55,7 +55,7 @@ export function SectionCards({user} : {user?: any} ) {
   const [interventionsEnAttenteDePiece, setInterventionsEnAttenteDePiece] = useState<any[]>([]);
 
   const [selectedStat, setSelectedStat] = useState<"total" | "encours" | "terminees" | "attente" | null>(null);
-  const [displayedInvoices, setDisplayedInvoices] = useState<any[]>([]);
+  const [displayedInterventions, setDisplayedInterventions] = useState<any[]>([]);
   
   // const [interventionsParAgence, setInterventionsParAgence] = useState(0);
   // const [interventionsParAgence, setInterventionsParAgence] = useState<{[key: string]: number}>({});
@@ -66,7 +66,7 @@ export function SectionCards({user} : {user?: any} ) {
     setTotalInterventions(interventions)
 
     setSelectedStat("total")
-    setDisplayedInvoices(interventions)
+    setDisplayedInterventions(interventions)
 
     const enCours = interventions.filter(
       (i) =>
@@ -155,7 +155,7 @@ export function SectionCards({user} : {user?: any} ) {
 
   const resetStats = () => {
     setSelectedStat("total")
-    setDisplayedInvoices([])
+    setDisplayedInterventions([])
     setNombreTotalInterventions(0)
     setNombreInterventionsEnCours(0)
     setNombreInterventionsTerminees(0)
@@ -175,9 +175,9 @@ export function SectionCards({user} : {user?: any} ) {
   }
 
   const [openDetailModal, setOpenDetailModal] = useState(false);
-  const [selectedInvoice, setSelectedInvoice] = useState<any>();
+  const [selectedIntervention, setSelectedIntervention] = useState<any>();
   function handleViewDetail(inv: any): void {
-    setSelectedInvoice({
+    setSelectedIntervention({
       ...inv,
       int_vehicle: {
         ...inv.int_vehicle,
@@ -317,10 +317,10 @@ export function SectionCards({user} : {user?: any} ) {
               onClick={() => {
                 setSelectedStat(c.key as any);
 
-                if (c.key === "total") setDisplayedInvoices(totalInterventions);
-                if (c.key === "encours") setDisplayedInvoices(interventionsEnCours);
-                if (c.key === "terminees") setDisplayedInvoices(interventionsTerminees);
-                if (c.key === "attente") setDisplayedInvoices(interventionsEnAttenteDePiece);
+                if (c.key === "total") setDisplayedInterventions(totalInterventions);
+                if (c.key === "encours") setDisplayedInterventions(interventionsEnCours);
+                if (c.key === "terminees") setDisplayedInterventions(interventionsTerminees);
+                if (c.key === "attente") setDisplayedInterventions(interventionsEnAttenteDePiece);
               }}
               className={`cursor-pointer transform transition-all hover:-translate-y-1 hover:scale-[1.02]
               @container/card group relative overflow-hidden rounded-3xl border border-gray-200/60
@@ -381,7 +381,7 @@ export function SectionCards({user} : {user?: any} ) {
 
             {/* Liste */}
             <div className="divide-y min-h-[420px] max-h-[420px] overflow-auto">
-              { displayedInvoices.length === 0 ? (
+              { displayedInterventions.length === 0 ? (
                   <div className="py-16 flex flex-col items-center justify-center text-center">
                     
                     {/* Icône */}
@@ -401,7 +401,7 @@ export function SectionCards({user} : {user?: any} ) {
                     </p>
                   </div>
                 ) : (
-                  displayedInvoices.map((inv) => {
+                  displayedInterventions.map((inv) => {
                     const status = STATUS_UI_MAP[inv.int_status as "CONFIRMED_IN_PLANNING" | "WAITING_FOR_PARTS" | "FIXING_STARTED" | "FIXING_FINISHED"]
                     const statusMeta = getStatusMeta(status)
                     
@@ -476,8 +476,8 @@ export function SectionCards({user} : {user?: any} ) {
       )}
 
       <Modal open={openDetailModal} onClose={() => setOpenDetailModal(false)} modalTitle="Détail de l'intervention">
-        {selectedInvoice && (
-          <IntervDetailGes selectedIntervention={selectedInvoice} onClose={() => setOpenDetailModal(false)} />
+        {selectedIntervention && (
+          <IntervDetailGes selectedIntervention={selectedIntervention} onClose={() => setOpenDetailModal(false)} />
         )}
       </Modal>
     </div>

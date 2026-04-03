@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { errorAlert, successAlert } from "@/src/lib/alerts";
 
-export type InvoicePatchPayload = Partial<{
+export type InterventionPatchPayload = Partial<{
   accordNumber: string | null;
   dateOfConfirmation: string | null; // ISO ou YYYY-MM-DD
   workDescription: string | null;
@@ -12,15 +12,15 @@ export type InvoicePatchPayload = Partial<{
   comments: string | null;
 }>;
 
-export function useInvoiceApi() {
+export function useInterventionApi() {
   const [loading, setLoading] = useState(false);
 
-  const patchInvoice = async (id: string, payload: InvoicePatchPayload) => {
+  const patchIntervention = async (id: string, payload: InterventionPatchPayload) => {
     setLoading(true);
     try {
       if (!id) throw new Error("ID intervention manquant");
 
-      const res = await fetch(`/api/invoices/${id}`, {
+      const res = await fetch(`/api/interventions/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -41,5 +41,5 @@ export function useInvoiceApi() {
     }
   };
 
-  return { patchInvoice, loading };
+  return { patchIntervention, loading };
 }

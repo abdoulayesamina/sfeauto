@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { errorAlert, successAlert } from "@/src/lib/alerts"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL + "/invoices"
+const API_URL = process.env.NEXT_PUBLIC_API_URL + "/interventions"
 
 export function useInterventionApi() {
   const [loading, setLoading] = useState(false)
@@ -10,7 +10,7 @@ export function useInterventionApi() {
     setLoading(true)
     try {
       const images: File[] = payload.veh_images || []
-
+      console.log("Voici le payload de l'intervention à créer :", payload)
       const fd = new FormData()
       fd.append("vehicleId", payload.veh_vehicleId)
       fd.append("accordNumber", payload.veh_accordNumber ?? "")

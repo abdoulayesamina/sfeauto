@@ -9,7 +9,7 @@ import {
   HISTORY_LABELS,
 } from "@/src/utils/constants/intervention-status"
 import { errorAlert } from "@/src/lib/alerts"
-import { useInvoicePhotos } from "../hooks/useInvoicePhotos.api"
+import { useInterventionPhotos } from "../hooks/useInterventionPhotos.api"
 
 type UIStatus =
   | "CONFIRMEE"
@@ -33,7 +33,7 @@ export default function IntervDetailGes({ selectedIntervention, onClose }: Props
     photos,
     loading: photosLoading,
     error: photosError,
-  } = useInvoicePhotos(selectedIntervention?.int_id)
+  } = useInterventionPhotos(selectedIntervention?.int_id)
 
   // Lightbox
   const [viewerOpen, setViewerOpen] = useState(false)

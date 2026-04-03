@@ -66,7 +66,7 @@ export default function AgencePage() {
   const vehicleCards = useMemo(() => {
     const map = new Map<
       string,
-      { vehicle: any; interventions: any[]; counts: Counts; lastInvoice: any | null }
+      { vehicle: any; interventions: any[]; counts: Counts; lastIntervention: any | null }
     >()
 
     for (const inv of interventions) {
@@ -78,19 +78,19 @@ export default function AgencePage() {
           vehicle: v,
           interventions: [],
           counts: { CONFIRMEE: 0, EN_COURS: 0, ATTENTE_PIECES: 0, TERMINEE: 0 },
-          lastInvoice: null,
+          lastIntervention: null,
         })
       }
 
       const row = map.get(v.id)!
       row.interventions.push(inv)
 
-      if (!row.lastInvoice) {
-        row.lastInvoice = inv
+      if (!row.lastIntervention) {
+        row.lastIntervention = inv
       } else {
-        const a = new Date(row.lastInvoice.createdAt ?? 0).getTime()
+        const a = new Date(row.lastIntervention.createdAt ?? 0).getTime()
         const b = new Date(inv.createdAt ?? 0).getTime()
-        if (b > a) row.lastInvoice = inv
+        if (b > a) row.lastIntervention = inv
       }
 
       const ui = toUIStatus(inv.status)
@@ -247,7 +247,7 @@ export default function AgencePage() {
           <div className="space-y-4">
             {filteredVehicles.length > 0 ? (
               filteredVehicles.map((row) => {
-                const representative = row.lastInvoice || row.interventions[0] || null
+                const representative = row.lastIntervention || row.interventions[0] || null
                 if (!representative) return null
 
                 const interventionForCard = {

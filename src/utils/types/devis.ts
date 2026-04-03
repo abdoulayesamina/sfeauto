@@ -2,7 +2,7 @@ import z from "zod";
 import { ArticleSchema } from "./article";
 import { ClientSchema } from "./client";
 import { VehiculeSchema } from "./vehicule";
-import { InvoiceSchema } from "./invoice";
+import { InterventionSchema } from "./intervention";
 import { UserSchema } from "./user";
 
 export const DevisSchema = z.object({
@@ -10,7 +10,7 @@ export const DevisSchema = z.object({
     // --- Liens métier ---
     dev_cli_id: z.string(),
     dev_veh_id: z.string(),
-    dev_invoice_id: z.string().nullable().optional(),
+    dev_intervention_id: z.string().nullable().optional(),
 
     // --- Données devis ---
     dev_adressefacturation: z.string().nullable().optional(),
@@ -35,7 +35,7 @@ export const DevisSchema = z.object({
     // --- Relations (si exposées) ---
     dev_client: ClientSchema.optional(),
     dev_vehicle: VehiculeSchema.optional(),
-    dev_invoice: InvoiceSchema.nullable().optional(),
+    dev_intervention: InterventionSchema.nullable().optional(),
     dev_user: UserSchema.nullable().optional(),
 });
 
