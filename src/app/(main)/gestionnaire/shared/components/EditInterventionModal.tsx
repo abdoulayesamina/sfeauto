@@ -36,7 +36,7 @@ export function EditInterventionModal({ open, onClose, invoice, onUpdated, reloa
   const { patchInvoice, loading } = useInvoiceApi();
 
   const { photos, loading: photosLoading, error: photosError, refetch } =
-    useInvoicePhotos(invoice?.inv_id);
+    useInvoicePhotos(invoice?.int_id);
 
 
   const [piecesCommande, setPiecesCommande] = useState<PiecesCommande>("non");
@@ -54,15 +54,15 @@ export function EditInterventionModal({ open, onClose, invoice, onUpdated, reloa
   useEffect(() => {
     if (!open || !invoice) return;
 
-    setWorkDescription(invoice.inv_workDescription);
-    setAccordNumber(invoice.inv_accordNumber ?? "");
-    setDateOfConfirmation(toDateInputValue(invoice.inv_dateOfConfirmation));
+    setWorkDescription(invoice.int_workDescription);
+    setAccordNumber(invoice.int_accordNumber ?? "");
+    setDateOfConfirmation(toDateInputValue(invoice.int_dateOfConfirmation));
 
-    const didOrder = Boolean(invoice.inv_didOrderParts);
+    const didOrder = Boolean(invoice.int_didOrderParts);
     setPiecesCommande(didOrder ? "oui" : "non");
 
-    setOrdersDetails(invoice.inv_ordersDetails ?? "");
-    setComments(invoice.inv_comments ?? "");
+    setOrdersDetails(invoice.int_ordersDetails ?? "");
+    setComments(invoice.int_comments ?? "");
 
     setImages([]);
     setImagesBlob([]);
@@ -72,13 +72,13 @@ export function EditInterventionModal({ open, onClose, invoice, onUpdated, reloa
 
 
   useEffect(() => {
-    if (open && invoice?.inv_id) {
+    if (open && invoice?.int_id) {
       refetch()
     }
-  }, [open, invoice?.inv_id])
+  }, [open, invoice?.int_id])
 
 
-  const canSave = useMemo(() => Boolean(invoice?.inv_id), [invoice?.inv_id]);
+  const canSave = useMemo(() => Boolean(invoice?.int_id), [invoice?.int_id]);
 
   //   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   //   if (!e.target.files) return
@@ -198,7 +198,7 @@ export function EditInterventionModal({ open, onClose, invoice, onUpdated, reloa
 
   async function handleSave(e?: React.FormEvent) {
     e?.preventDefault();
-    if (!invoice?.inv_id) return;
+    if (!invoice?.int_id) return;
 
     const didOrderParts = piecesCommande === "oui";
 
@@ -213,7 +213,7 @@ export function EditInterventionModal({ open, onClose, invoice, onUpdated, reloa
       comments: comments.trim() || null,
     };
 
-    const res = await patchInvoice(invoice.inv_id, payload);
+    const res = await patchInvoice(invoice.int_id, payload);
 
     if (!res.ok) return;
 
@@ -226,7 +226,7 @@ export function EditInterventionModal({ open, onClose, invoice, onUpdated, reloa
       });
 
       await fetch(
-        `/api/invoices/${invoice.inv_id}/photos`,
+        `/api/invoices/${invoice.int_id}/photos`,
         {
           method: "POST",
           body: formData,

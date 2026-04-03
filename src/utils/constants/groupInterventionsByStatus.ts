@@ -11,12 +11,12 @@ export type BadgeGroup = {
 
 
 export function groupInterventionsByStatus(
-  interventions: { inv_status: string }[]
+  interventions: { int_status: string }[]
 ): BadgeGroup[] {
   const map = new Map<string, BadgeGroup>()
 
   for (const interv of interventions) {
-    const uiStatus = toUIStatus(interv.inv_status)
+    const uiStatus = toUIStatus(interv.int_status)
     const key = String(uiStatus)
 
     const existing = map.get(key)

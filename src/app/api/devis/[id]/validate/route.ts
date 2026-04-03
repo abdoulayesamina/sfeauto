@@ -41,7 +41,7 @@ export async function POST(
         dev_accordNumber: true,
         dev_invoice: {
           select: {
-            inv_accordNumber: true,
+            int_accordNumber: true,
           },
         },
       },
@@ -55,7 +55,7 @@ export async function POST(
       return NextResponse.json({ error: "Devis déjà validé" }, { status: 409 });
     }
 
-    const invoiceAccord = normalizeAccordNumber(current.dev_invoice?.inv_accordNumber);
+    const invoiceAccord = normalizeAccordNumber(current.dev_invoice?.int_accordNumber);
 
     if (!invoiceAccord) {
       return NextResponse.json(
@@ -100,11 +100,11 @@ export async function POST(
       include: {
         dev_invoice: {
           select: {
-            inv_id: true,
-            inv_accordNumber: true,
-            inv_workDescription: true,
-            inv_status: true,
-            inv_dateOfConfirmation: true,
+            int_id: true,
+            int_accordNumber: true,
+            int_workDescription: true,
+            int_status: true,
+            int_dateOfConfirmation: true,
           },
         },
         dev_vehicle: {

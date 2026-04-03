@@ -66,7 +66,7 @@ export default function GestionnairePage() {
     try {
       setLoading(true)
       const [v, c, a] = await Promise.all([
-        getVehicles({ includeInvoices: true }),
+        getVehicles({ includeInterventions: true }),
         getClients(),
         getAgences(),
       ])
@@ -154,11 +154,11 @@ export default function GestionnairePage() {
 
       if (statut && statut !== "all") {
         if (statut === "SANS_INTERVENTION") {
-          if (v.invoices && v.invoices.length > 0) return false
+          if (v.interventions && v.interventions.length > 0) return false
         } else {
-          const lastInvoice = v.invoices?.[v.invoices.length - 1]
-          if (!lastInvoice) return false
-          if (lastInvoice.inv_status !== statut) return false
+          const lastIntervention = v.interventions?.[v.interventions.length - 1]
+          if (!lastIntervention) return false
+          if (lastIntervention.int_status !== statut) return false
         }
       }
 
@@ -262,23 +262,23 @@ export default function GestionnairePage() {
             <VehicleStats
               total={filteredVehicles.length}
               // enCours={
-              //   filteredVehicles.filter((v) => v.invoices?.some((i) => i.status !== "FIXING_FINISHED")).length
+              //   filteredVehicles.filter((v) => v.intervention?.some((i) => i.status !== "FIXING_FINISHED")).length
               // }
               enCours={
                 filteredVehicles.filter((v) => {
-                  const invoices = v.invoices || []
-                  return invoices.length > 0 && invoices.some(i => i.inv_status !== "FIXING_FINISHED")
+                  const intervention = v.interventions || []
+                  return intervention.length > 0 && intervention.some(i => i.int_status !== "FIXING_FINISHED")
                 }).length
               }
-              // termine={filteredVehicles.filter((v) => v.invoices?.some((i) => i.status === "FIXING_FINISHED")).length}
+              // termine={filteredVehicles.filter((v) => v.interventions?.some((i) => i.status === "FIXING_FINISHED")).length}
               termine={
                 filteredVehicles.filter((v) => {
-                  const invoices = v.invoices || []
-                  return invoices.length > 0 && invoices.every(i => i.inv_status === "FIXING_FINISHED")
+                  const interventions = v.interventions || []
+                  return interventions.length > 0 && interventions.every(i => i.int_status === "FIXING_FINISHED")
                 }).length
               }
-              sansIntervention={filteredVehicles.filter((v) => !v.invoices || v.invoices.length === 0).length}
-              // Somme de tout les Invoice de tous les véhicules dont le base.location est "Paris Test Agency"
+              sansIntervention={filteredVehicles.filter((v) => !v.interventions || v.interventions.length === 0).length}
+              // Somme de tout les Intervention de tous les véhicules dont le base.location est "Paris Test Agency"
               // test={filteredVehicles.filter((v) => v.base?.location === "Paris Test Agency").reduce((sum, v) => {
               //   const invoices = Array.isArray(v.invoices) ? v.invoices : []
               //   return sum + invoices.reduce((invSum, i) => invSum , 0)
@@ -337,11 +337,11 @@ export default function GestionnairePage() {
             agence={selectedVehicle.veh_base?.bas_location ?? ""}
             entreeDate={selectedVehicle.veh_entryDate ?? ""}
             color={selectedVehicle.veh_color ?? ""}
-            invoices={selectedVehicle.invoices ?? []}
+            interventions={selectedVehicle.interventions ?? []}
             enReparation={1}
             termine={0}
             onNewIntervention={handleNewInterventionFromVehiculePreview}
-            reloadInvoiceList={loadAll}
+            reloadInterventionList={loadAll}
           />
         )}
       </Modal>

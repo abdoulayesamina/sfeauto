@@ -82,7 +82,7 @@ export const VehiculeSchema = z.object({
 
     
 
-  invoices: z.array(InvoiceSchema).optional(),
+  interventions: z.array(InvoiceSchema).optional(),
 });
 
 export type Vehicule = z.infer<typeof VehiculeSchema>;

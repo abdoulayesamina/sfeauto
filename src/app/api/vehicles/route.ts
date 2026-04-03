@@ -220,6 +220,25 @@ export async function GET(request: NextRequest) {
                 dev_dateAccord: true,
               },
             },
+
+            int_vehicle: {
+              select: {
+                veh_id: true,
+                veh_licensePlate: true,
+                veh_brand: {
+                  select: {
+                    bra_name: true,
+                  },
+                },
+                veh_model: {
+                  select: {
+                    mod_name: true,
+                  },
+                },
+                veh_year: true,
+                veh_color: true
+              },
+            },
           },
           orderBy: {
             int_createdAt: "desc",

@@ -64,12 +64,12 @@ export function VehicleItem({
 
   // State local pour les interventions (refresh instantané)
   // const [localInterventions, setLocalInterventions] = useState<any[]>(
-  //   vehicle?.invoices ?? []
+  //   vehicle?.interventions ?? []
   // )
 
   // Quand le vehicle change, on resynchronise le state local
   // useEffect(() => {  
-  //   setLocalInterventions(vehicle?.invoices ?? [])
+  //   setLocalInterventions(vehicle?.interventions ?? [])
   // }, [vehicle])
 
 
@@ -123,9 +123,9 @@ export function VehicleItem({
   // }, [localInterventions])
 
   const groupedBadges = useMemo(() => {
-    if (!vehicle?.invoices?.length) return []
-    return groupInterventionsByStatus(vehicle.invoices)
-  }, [vehicle?.invoices])
+    if (!vehicle?.interventions?.length) return []
+    return groupInterventionsByStatus(vehicle.interventions)
+  }, [vehicle?.interventions])
   /* ----------------------------- UI ----------------------------- */
   return (
     <>

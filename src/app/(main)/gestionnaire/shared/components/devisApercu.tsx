@@ -153,7 +153,7 @@ export function DevisApercu({ devisId, onClose }: DevisApercuProps) {
                                 <p>{devis.dev_client?.cli_phone}</p>
                             </div>
                             <div className="text-[12px] bg-gray-100 p-2 w-full max-w-[50%] text-center ">
-                                <span className="font-semibold">N° d'accord : </span> {devis.dev_invoice?.inv_accordNumber ?? "—"}
+                                <span className="font-semibold">N° d'accord : </span> {devis.dev_invoice?.int_accordNumber ?? "—"}
                             </div>
                         </div>
                     </div>
