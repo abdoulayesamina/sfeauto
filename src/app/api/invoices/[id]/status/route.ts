@@ -1,197 +1,287 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/auth'
-import { prisma } from '@/src/lib/prisma'
-import { WorkStatus } from '@/generated/prisma'
-import { logError } from '@/src/lib/logger'
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
+import { prisma } from "@/src/lib/prisma";
+import {
+  intervention_status,
+  statushistory_newStatus,
+  statushistory_previousStatus,
+} from "@/generated/prisma";
+import { logError } from "@/src/lib/logger";
 
-function isValidStatusTransition(
-  currentStatus: WorkStatus,
-  newStatus: WorkStatus
-): boolean {
-  const transitions: Record<WorkStatus, WorkStatus[]> = {
-    CONFIRMED_IN_PLANNING: [
-      'WAITING_FOR_PARTS',
-      'FIXING_STARTED',
-      'FIXING_FINISHED'
-    ],
-    WAITING_FOR_PARTS: [
-      'CONFIRMED_IN_PLANNING',
-      'FIXING_STARTED',
-      'FIXING_FINISHED'
-    ],
-    FIXING_STARTED: [
-      'CONFIRMED_IN_PLANNING',
-      'WAITING_FOR_PARTS',
-      'FIXING_FINISHED'
-    ],
-    FIXING_FINISHED: [
-      'FIXING_STARTED',
-      'WAITING_FOR_PARTS',
-      'CONFIRMED_IN_PLANNING'
-    ],
-  }
+type Ctx = { params: Promise<{ id: string }> | { id: string } };
 
-  if (currentStatus === newStatus) return true
-  return transitions[currentStatus]?.includes(newStatus) ?? false
+function isPromise<T>(v: unknown): v is Promise<T> {
+  return !!v && typeof v === "object" && typeof (v as any).then === "function";
 }
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+async function getParamId(ctx: Ctx): Promise<string> {
+  const p = isPromise<{ id: string }>(ctx.params) ? await ctx.params : ctx.params;
+  return p?.id;
+}
+
+function isValidStatus(value: unknown): value is intervention_status {
+  return typeof value === "string" && Object.values(intervention_status).includes(value as intervention_status);
+}
+
+function isValidStatusTransition(
+  currentStatus: intervention_status,
+  newStatus: intervention_status
+): boolean {
+  const transitions: Record<intervention_status, intervention_status[]> = {
+    CONFIRMED_IN_PLANNING: [
+      intervention_status.WAITING_FOR_PARTS,
+      intervention_status.FIXING_STARTED,
+      intervention_status.FIXING_FINISHED,
+    ],
+    WAITING_FOR_PARTS: [
+      intervention_status.CONFIRMED_IN_PLANNING,
+      intervention_status.FIXING_STARTED,
+      intervention_status.FIXING_FINISHED,
+    ],
+    FIXING_STARTED: [
+      intervention_status.CONFIRMED_IN_PLANNING,
+      intervention_status.WAITING_FOR_PARTS,
+      intervention_status.FIXING_FINISHED,
+    ],
+    FIXING_FINISHED: [
+      intervention_status.FIXING_STARTED,
+      intervention_status.WAITING_FOR_PARTS,
+      intervention_status.CONFIRMED_IN_PLANNING,
+    ],
+  };
+
+  if (currentStatus === newStatus) return true;
+  return transitions[currentStatus]?.includes(newStatus) ?? false;
+}
+
+function toHistoryPreviousStatus(value: intervention_status): statushistory_previousStatus {
+  return value as unknown as statushistory_previousStatus;
+}
+
+function toHistoryNewStatus(value: intervention_status): statushistory_newStatus {
+  return value as unknown as statushistory_newStatus;
+}
+
+export async function PATCH(request: NextRequest, context: Ctx) {
   try {
-    const { id } = await params
-    console.log('[PATCH /status] Called with invoiceId:', id)
+    const id = await getParamId(context);
 
-    const session = await auth()
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
-    }
-
-    if (session.user.role !== 'MECHANIC' && session.user.role !== 'ADMIN') {
+    if (!id || typeof id !== "string") {
       return NextResponse.json(
-        { error: 'Seuls les mécaniciens ou admins peuvent modifier le statut' },
-        { status: 403 }
-      )
-    }
-
-    const body = await request.json()
-    const { status: newStatus } = body
-
-    if (!newStatus || !Object.values(WorkStatus).includes(newStatus)) {
-      return NextResponse.json(
-        { error: 'Valeur de statut invalide' },
+        { error: "ID d'intervention invalide" },
         { status: 400 }
-      )
+      );
     }
 
-    const invoice = await prisma.invoice_inv.findUnique({
-      where: { inv_id: id },
+    const session = await auth();
+
+    if (!session?.user) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    }
+
+    if (session.user.role !== "MECHANIC" && session.user.role !== "ADMIN") {
+      return NextResponse.json(
+        { error: "Seuls les mécaniciens ou admins peuvent modifier le statut" },
+        { status: 403 }
+      );
+    }
+
+    const body = await request.json();
+    const newStatus = body?.status;
+
+    if (!isValidStatus(newStatus)) {
+      return NextResponse.json(
+        { error: "Valeur de statut invalide" },
+        { status: 400 }
+      );
+    }
+
+    const intervention = await prisma.intervention_int.findUnique({
+      where: { int_id: id },
       include: {
-        inv_vehicle: {
+        int_vehicle: {
           include: {
-            veh_client: { select: { cli_id: true, cli_name: true } },
-            veh_base: { select: { bas_id: true, bas_location: true } }
-          }
+            veh_client: {
+              select: {
+                cli_id: true,
+                cli_name: true,
+              },
+            },
+            veh_base: {
+              select: {
+                bas_id: true,
+                bas_location: true,
+              },
+            },
+          },
         },
-        inv_handledBy: { select: { usr_id: true, usr_name: true } },
+        int_handledBy: {
+          select: {
+            usr_id: true,
+            usr_name: true,
+          },
+        },
         history: {
           include: {
-            sth_user: { select: { usr_name: true } }
+            sth_user: {
+              select: {
+                usr_name: true,
+              },
+            },
           },
-          orderBy: { sth_changedAt: 'asc' }
-        }
-      }
-    })
+          orderBy: {
+            sth_changedAt: "asc",
+          },
+        },
+      },
+    });
 
-    if (!invoice) {
+    if (!intervention) {
       return NextResponse.json(
         { error: `Aucune intervention trouvée avec l'id ${id}` },
         { status: 404 }
-      )
+      );
     }
 
-    if (!invoice.inv_accordNumber) {
+    if (!intervention.int_accordNumber) {
       return NextResponse.json(
-        { error: "Veuillez attribuer un numéro d'accord avant de modifier le statut de cette intervention." },
+        {
+          error:
+            "Veuillez attribuer un numéro d'accord avant de modifier le statut de cette intervention.",
+        },
         { status: 403 }
-      )
+      );
     }
 
-    if (!isValidStatusTransition(invoice.inv_status as WorkStatus, newStatus)) {
+    if (!isValidStatusTransition(intervention.int_status, newStatus)) {
       return NextResponse.json(
-        { error: `Transition de statut invalide de ${invoice.inv_status} vers ${newStatus}` },
+        {
+          error: `Transition de statut invalide de ${intervention.int_status} vers ${newStatus}`,
+        },
         { status: 400 }
-      )
+      );
     }
 
-    const statusChanged = invoice.inv_status !== newStatus
+    const statusChanged = intervention.int_status !== newStatus;
 
     await prisma.$transaction(async (tx) => {
       if (statusChanged) {
         await tx.statushistory_sth.create({
           data: {
-            sth_invoiceId: id,
-            sth_previousStatus: invoice.inv_status,
-            sth_newStatus: newStatus,
-            sth_changedById: session.user.id
-          }
-        })
+            sth_interventionId: id,
+            sth_previousStatus: toHistoryPreviousStatus(intervention.int_status),
+            sth_newStatus: toHistoryNewStatus(newStatus),
+            sth_changedById: session.user.id,
+          },
+        });
+
+        await tx.changehistory_chg.create({
+          data: {
+            chg_interventionId: id,
+            chg_changedBy: session.user.id,
+            chg_fieldName: "status",
+            chg_oldValue: intervention.int_status,
+            chg_newValue: newStatus,
+            chg_changeType: "status_updated",
+          },
+        });
       }
 
-      await tx.invoice_inv.update({
-        where: { inv_id: id },
+      await tx.intervention_int.update({
+        where: { int_id: id },
         data: {
-          inv_status: newStatus,
-          inv_statusUpdatedAt: new Date()
-        }
-      })
-    })
-
-    const updated = await prisma.invoice_inv.findUnique({
-      where: { inv_id: id },
-      include: {
-        inv_vehicle: {
-          include: {
-            veh_client: { select: { cli_id: true, cli_name: true } },
-            veh_base: { select: { bas_id: true, bas_location: true } }
-          }
+          int_status: newStatus,
+          int_statusUpdatedAt: new Date(),
         },
-        inv_handledBy: { select: { usr_id: true, usr_name: true, usr_email: true } },
+      });
+    });
+
+    const updated = await prisma.intervention_int.findUnique({
+      where: { int_id: id },
+      include: {
+        int_vehicle: {
+          include: {
+            veh_client: {
+              select: {
+                cli_id: true,
+                cli_name: true,
+              },
+            },
+            veh_base: {
+              select: {
+                bas_id: true,
+                bas_location: true,
+              },
+            },
+          },
+        },
+        int_handledBy: {
+          select: {
+            usr_id: true,
+            usr_name: true,
+            usr_email: true,
+          },
+        },
         history: {
           include: {
-            sth_user: { select: { usr_name: true } }
+            sth_user: {
+              select: {
+                usr_name: true,
+              },
+            },
           },
-          orderBy: { sth_changedAt: 'asc' }
-        }
-      }
-    })
+          orderBy: {
+            sth_changedAt: "asc",
+          },
+        },
+      },
+    });
 
     if (!updated) {
       return NextResponse.json(
-        { error: 'Intervention non trouvée après mise à jour' },
+        { error: "Intervention non trouvée après mise à jour" },
         { status: 404 }
-      )
+      );
     }
 
     const serialized = {
-      id: updated.inv_id,
-      accordNumber: updated.inv_accordNumber,
-      dateOfConfirmation: updated.inv_dateOfConfirmation?.toISOString(),
-      status: updated.inv_status,
-      statusUpdatedAt: updated.inv_statusUpdatedAt.toISOString(),
-      workDescription: updated.inv_workDescription,
-      didOrderParts: updated.inv_didOrderParts,
-      ordersDetails: updated.inv_ordersDetails,
-      comments: updated.inv_comments,
-      createdAt: updated.inv_createdAt.toISOString(),
-      vehicle: updated.inv_vehicle
+      id: updated.int_id,
+      accordNumber: updated.int_accordNumber,
+      dateOfConfirmation: updated.int_dateOfConfirmation?.toISOString(),
+      status: updated.int_status,
+      statusUpdatedAt: updated.int_statusUpdatedAt.toISOString(),
+      workDescription: updated.int_workDescription,
+      didOrderParts: updated.int_didOrderParts,
+      ordersDetails: updated.int_ordersDetails,
+      comments: updated.int_comments,
+      createdAt: updated.int_createdAt.toISOString(),
+      vehicle: updated.int_vehicle
         ? {
-            id: updated.inv_vehicle.veh_id,
-            licensePlate: updated.inv_vehicle.veh_licensePlate,
-            brand: updated.inv_vehicle.veh_brandId,
-            model: updated.inv_vehicle.veh_modelId,
-            year: updated.inv_vehicle.veh_year,
-            color: updated.inv_vehicle.veh_color,
-            client: updated.inv_vehicle.veh_client
+            id: updated.int_vehicle.veh_id,
+            licensePlate: updated.int_vehicle.veh_licensePlate,
+            brand: updated.int_vehicle.veh_brandId,
+            model: updated.int_vehicle.veh_modelId,
+            year: updated.int_vehicle.veh_year,
+            color: updated.int_vehicle.veh_color,
+            client: updated.int_vehicle.veh_client
               ? {
-                  id: updated.inv_vehicle.veh_client.cli_id,
-                  name: updated.inv_vehicle.veh_client.cli_name,
+                  id: updated.int_vehicle.veh_client.cli_id,
+                  name: updated.int_vehicle.veh_client.cli_name,
                 }
               : null,
-            base: updated.inv_vehicle.veh_base
+            base: updated.int_vehicle.veh_base
               ? {
-                  id: updated.inv_vehicle.veh_base.bas_id,
-                  location: updated.inv_vehicle.veh_base.bas_location,
+                  id: updated.int_vehicle.veh_base.bas_id,
+                  location: updated.int_vehicle.veh_base.bas_location,
                 }
               : null,
           }
         : null,
-      handledBy: updated.inv_handledBy
+      handledBy: updated.int_handledBy
         ? {
-            id: updated.inv_handledBy.usr_id,
-            name: updated.inv_handledBy.usr_name,
-            email: updated.inv_handledBy.usr_email,
+            id: updated.int_handledBy.usr_id,
+            name: updated.int_handledBy.usr_name,
+            email: updated.int_handledBy.usr_email,
           }
         : null,
       statusHistory: updated.history.map((h) => ({
@@ -205,16 +295,15 @@ export async function PATCH(
               name: h.sth_user.usr_name,
             }
           : null,
-      }))
-    }
+      })),
+    };
 
-    return NextResponse.json(serialized)
+    return NextResponse.json(serialized);
   } catch (error: any) {
-    logError('Failed to update invoice status', error)
-    console.error('[PATCH /status] Error:', error)
+    logError("Failed to update intervention status", error);
     return NextResponse.json(
-      { error: 'Erreur serveur inconnue' },
+      { error: "Erreur serveur inconnue" },
       { status: 500 }
-    )
+    );
   }
 }

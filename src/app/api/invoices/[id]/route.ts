@@ -14,6 +14,21 @@ async function getParamId(ctx: Ctx): Promise<string> {
   return p?.id;
 }
 
+function normalizeNullableString(value: unknown): string | null {
+  if (typeof value !== "string") return value == null ? null : String(value);
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
+}
+
+function parseNullableDate(value: unknown): Date | null {
+  if (value === null || value === undefined || value === "") return null;
+  const d = new Date(String(value));
+  if (Number.isNaN(d.getTime())) {
+    throw new Error("INVALID_DATE");
+  }
+  return d;
+}
+
 export async function PATCH(request: NextRequest, context: Ctx) {
   try {
     const session = await auth();
@@ -30,27 +45,77 @@ export async function PATCH(request: NextRequest, context: Ctx) {
 
     const body = await request.json();
 
-    const currentInvoice = await prisma.invoice_inv.findUnique({
-      where: { inv_id: id },
+    const currentIntervention = await prisma.intervention_int.findUnique({
+      where: { int_id: id },
+      include: {
+        photos: {
+          select: {
+            itp_id: true,
+            itp_url: true,
+          },
+        },
+      },
     });
 
-    if (!currentInvoice) {
+    if (!currentIntervention) {
       return NextResponse.json({ error: "Intervention non trouvée" }, { status: 404 });
     }
 
-    if (body.dateOfConfirmation) {
-      const confirmationDate = new Date(body.dateOfConfirmation);
-      const today = new Date();
-      today.setHours(23, 59, 59, 999);
-      if (confirmationDate > today) {
+    let parsedDateFromBody: Date | null | undefined = undefined;
+
+    if ("dateOfConfirmation" in body) {
+      try {
+        parsedDateFromBody = parseNullableDate(body.dateOfConfirmation);
+      } catch {
+        return NextResponse.json({ error: "Date de confirmation invalide" }, { status: 400 });
+      }
+
+      if (parsedDateFromBody) {
+        const today = new Date();
+        today.setHours(23, 59, 59, 999);
+
+        if (parsedDateFromBody > today) {
+          return NextResponse.json(
+            { error: "La date de confirmation ne peut pas être dans le futur" },
+            { status: 400 }
+          );
+        }
+      }
+    }
+
+    const normalizedAccordNumber =
+      "accordNumber" in body ? normalizeNullableString(body.accordNumber) : undefined;
+
+    if (normalizedAccordNumber) {
+      const existing = await prisma.intervention_int.findFirst({
+        where: {
+          int_accordNumber: normalizedAccordNumber,
+          NOT: { int_id: id },
+        },
+        select: {
+          int_id: true,
+          int_createdAt: true,
+        },
+      });
+
+      if (existing) {
         return NextResponse.json(
-          { error: "La date de confirmation ne peut pas être dans le futur" },
-          { status: 400 }
+          {
+            error: "Numéro d’accord déjà utilisé",
+            code: "ACCORD_NUMBER_ALREADY_EXISTS",
+            details: {
+              accordNumber: normalizedAccordNumber,
+              interventionId: existing.int_id,
+              createdAt: existing.int_createdAt,
+            },
+          },
+          { status: 409 }
         );
       }
     }
 
     const changeHistoryEntries: any[] = [];
+
     const fieldsToTrack = [
       "accordNumber",
       "dateOfConfirmation",
@@ -61,85 +126,145 @@ export async function PATCH(request: NextRequest, context: Ctx) {
     ] as const;
 
     const fieldMap = {
-      accordNumber: "inv_accordNumber",
-      dateOfConfirmation: "inv_dateOfConfirmation",
-      workDescription: "inv_workDescription",
-      didOrderParts: "inv_didOrderParts",
-      ordersDetails: "inv_ordersDetails",
-      comments: "inv_comments",
+      accordNumber: "int_accordNumber",
+      dateOfConfirmation: "int_dateOfConfirmation",
+      workDescription: "int_workDescription",
+      didOrderParts: "int_didOrderParts",
+      ordersDetails: "int_ordersDetails",
+      comments: "int_comments",
     } as const;
 
     for (const field of fieldsToTrack) {
-      if (field in body) {
-        const prismaField = fieldMap[field];
-        let oldValue = currentInvoice[prismaField as keyof typeof currentInvoice];
-        let newValue = body[field];
+      if (!(field in body)) continue;
 
-        if (field === "dateOfConfirmation") {
-          oldValue = oldValue ? new Date(oldValue as any).toISOString() : null;
-          newValue = newValue ? new Date(newValue).toISOString() : null;
-        }
+      const prismaField = fieldMap[field];
 
-        if (String(oldValue) !== String(newValue)) {
-          changeHistoryEntries.push({
-            chg_invoiceId: id,
-            chg_changedBy: session.user.id,
-            chg_fieldName: field,
-            chg_oldValue: oldValue ? String(oldValue) : null,
-            chg_newValue: newValue ? String(newValue) : null,
-            chg_changeType: "updated",
-          });
-        }
+      let oldValue = currentIntervention[prismaField as keyof typeof currentIntervention] as any;
+      let newValue: any = body[field];
+
+      if (field === "accordNumber" || field === "workDescription" || field === "ordersDetails" || field === "comments") {
+        oldValue = oldValue ? String(oldValue) : null;
+        newValue = normalizeNullableString(newValue);
+      }
+
+      if (field === "dateOfConfirmation") {
+        oldValue = oldValue ? new Date(oldValue).toISOString() : null;
+        newValue = parsedDateFromBody ? parsedDateFromBody.toISOString() : null;
+      }
+
+      if (field === "didOrderParts") {
+        oldValue = Boolean(oldValue);
+        newValue = Boolean(newValue);
+      }
+
+      if (String(oldValue) !== String(newValue)) {
+        changeHistoryEntries.push({
+          chg_interventionId: id,
+          chg_changedBy: session.user.id,
+          chg_fieldName: field,
+          chg_oldValue: oldValue !== null && oldValue !== undefined ? String(oldValue) : null,
+          chg_newValue: newValue !== null && newValue !== undefined ? String(newValue) : null,
+          chg_changeType: "updated",
+        });
       }
     }
 
-    const wasUnapproved = !currentInvoice.inv_invoiceConfirmed;
-    const hasAccordNumber =
-      ("accordNumber" in body ? body.accordNumber : currentInvoice.inv_accordNumber) ?? null;
-    const hasDate =
-      ("dateOfConfirmation" in body
-        ? body.dateOfConfirmation
-        : currentInvoice.inv_dateOfConfirmation) ?? null;
+    const finalAccordNumber =
+      normalizedAccordNumber !== undefined
+        ? normalizedAccordNumber
+        : currentIntervention.int_accordNumber;
 
-    const nowApproved = Boolean(hasAccordNumber && hasDate);
+    const finalDateOfConfirmation =
+      parsedDateFromBody !== undefined
+        ? parsedDateFromBody
+        : currentIntervention.int_dateOfConfirmation;
+
+    const finalDidOrderParts =
+      "didOrderParts" in body
+        ? Boolean(body.didOrderParts)
+        : currentIntervention.int_didOrderParts;
+
+    const wasUnapproved = !currentIntervention.int_interventionConfirmed;
+    const nowApproved = Boolean(finalAccordNumber && finalDateOfConfirmation);
 
     if (wasUnapproved && nowApproved) {
       changeHistoryEntries.push({
-        chg_invoiceId: id,
+        chg_interventionId: id,
         chg_changedBy: session.user.id,
-        chg_fieldName: "invoiceConfirmed",
+        chg_fieldName: "interventionConfirmed",
         chg_oldValue: "false",
         chg_newValue: "true",
         chg_changeType: "approved",
       });
     }
 
-    const updateData: any = {};
-    if ("accordNumber" in body) updateData.inv_accordNumber = body.accordNumber || null;
-    if ("dateOfConfirmation" in body) {
-      updateData.inv_dateOfConfirmation = body.dateOfConfirmation
-        ? new Date(body.dateOfConfirmation)
-        : null;
+    let nextStatus = currentIntervention.int_status;
+
+    const isAlreadyInProgressOrDone =
+      currentIntervention.int_status === "FIXING_STARTED" ||
+      currentIntervention.int_status === "FIXING_FINISHED";
+
+    if (!isAlreadyInProgressOrDone && nowApproved) {
+      nextStatus = finalDidOrderParts ? "WAITING_FOR_PARTS" : "CONFIRMED_IN_PLANNING";
     }
-    if ("workDescription" in body) updateData.inv_workDescription = body.workDescription ?? null;
-    if ("didOrderParts" in body) updateData.inv_didOrderParts = Boolean(body.didOrderParts);
-    if ("ordersDetails" in body) updateData.inv_ordersDetails = body.ordersDetails ?? null;
-    if ("comments" in body) updateData.inv_comments = body.comments ?? null;
 
-    updateData.inv_invoiceConfirmed = nowApproved;
-    updateData.inv_updatedAt = new Date();
+    const statusChanged = nextStatus !== currentIntervention.int_status;
 
-    const updatedInvoice = await prisma.invoice_inv.update({
-      where: { inv_id: id },
+    if (statusChanged) {
+      changeHistoryEntries.push({
+        chg_interventionId: id,
+        chg_changedBy: session.user.id,
+        chg_fieldName: "status",
+        chg_oldValue: currentIntervention.int_status,
+        chg_newValue: nextStatus,
+        chg_changeType: "status_updated",
+      });
+    }
+
+    const updateData: any = {};
+
+    if ("accordNumber" in body) {
+      updateData.int_accordNumber = normalizedAccordNumber;
+    }
+
+    if ("dateOfConfirmation" in body) {
+      updateData.int_dateOfConfirmation = parsedDateFromBody ?? null;
+    }
+
+    if ("workDescription" in body) {
+      updateData.int_workDescription = normalizeNullableString(body.workDescription);
+    }
+
+    if ("didOrderParts" in body) {
+      updateData.int_didOrderParts = Boolean(body.didOrderParts);
+    }
+
+    if ("ordersDetails" in body) {
+      updateData.int_ordersDetails = normalizeNullableString(body.ordersDetails);
+    }
+
+    if ("comments" in body) {
+      updateData.int_comments = normalizeNullableString(body.comments);
+    }
+
+    updateData.int_interventionConfirmed = nowApproved;
+
+    if (statusChanged) {
+      updateData.int_status = nextStatus;
+      updateData.int_statusUpdatedAt = new Date();
+    }
+
+    const updatedIntervention = await prisma.intervention_int.update({
+      where: { int_id: id },
       data: updateData,
       include: {
-        inv_vehicle: {
+        int_vehicle: {
           include: {
             veh_client: true,
             veh_base: true,
           },
         },
-        inv_handledBy: {
+        int_handledBy: {
           select: {
             usr_name: true,
             usr_email: true,
@@ -147,23 +272,47 @@ export async function PATCH(request: NextRequest, context: Ctx) {
         },
         photos: {
           select: {
-            ivp_id: true,
-            ivp_url: true,
+            itp_id: true,
+            itp_url: true,
           },
         },
       },
     });
 
     if (changeHistoryEntries.length > 0) {
-      await prisma.changehistory_chg.createMany({ data: changeHistoryEntries });
+      await prisma.changehistory_chg.createMany({
+        data: changeHistoryEntries,
+      });
+    }
+
+    if (statusChanged) {
+      await prisma.statushistory_sth.create({
+        data: {
+          sth_interventionId: id,
+          sth_previousStatus: currentIntervention.int_status,
+          sth_newStatus: nextStatus,
+          sth_changedById: session.user.id,
+        },
+      });
     }
 
     return NextResponse.json({
-      invoice: updatedInvoice,
+      intervention: updatedIntervention,
       changes: changeHistoryEntries.length,
     });
   } catch (error: any) {
-    logError("Failed to update invoice", error);
+    if (error?.code === "P2002") {
+      return NextResponse.json(
+        {
+          error: "Numéro d’accord déjà utilisé",
+          code: "ACCORD_NUMBER_ALREADY_EXISTS",
+        },
+        { status: 409 }
+      );
+    }
+
+    logError("Failed to update intervention", error);
+
     return NextResponse.json(
       { error: "Échec de la mise à jour de l'intervention" },
       { status: 500 }

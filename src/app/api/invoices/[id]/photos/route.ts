@@ -1,167 +1,239 @@
-import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/src/lib/prisma"
-import { auth } from "@/auth"
-import { randomUUID } from "crypto"
-import { getContainerClient, getSasUrlForBlob } from "@/src/lib/azureBlob"
-import { logError } from "@/src/lib/logger"
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/src/lib/prisma";
+import { auth } from "@/auth";
+import { randomUUID } from "crypto";
+import { getContainerClient, getSasUrlForBlob } from "@/src/lib/azureBlob";
+import { logError } from "@/src/lib/logger";
 
-export const runtime = "nodejs"
+export const runtime = "nodejs";
 
-export async function GET(
-  _req: NextRequest,
-  ctx: { params: Promise<{ id: string }> }
-) {
+const MAX_FILE_SIZE = 8 * 1024 * 1024;
+const ALLOWED_PREFIX = "image/";
+
+type Ctx = { params: Promise<{ id: string }> | { id: string } };
+
+function isPromise<T>(v: unknown): v is Promise<T> {
+  return !!v && typeof v === "object" && typeof (v as any).then === "function";
+}
+
+async function getParamId(ctx: Ctx): Promise<string> {
+  const p = isPromise<{ id: string }>(ctx.params) ? await ctx.params : ctx.params;
+  return p?.id;
+}
+
+export async function GET(_req: NextRequest, ctx: Ctx) {
   try {
-    const session = await auth()
+    const session = await auth();
+
     if (!session || !["MANAGER", "MECHANIC", "CLIENT", "AGENCE", "ADMIN"].includes(session.user.role)) {
-      return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    const { id: invoiceId } = await ctx.params
+    const interventionId = await getParamId(ctx);
 
-    if (!invoiceId || invoiceId === "undefined" || invoiceId === "null") {
-      return NextResponse.json({ error: "invoiceId invalide" }, { status: 400 })
+    if (!interventionId || interventionId === "undefined" || interventionId === "null") {
+      return NextResponse.json({ error: "interventionId invalide" }, { status: 400 });
     }
 
-    const invoice = await prisma.invoice_inv.findUnique({
-      where: { inv_id: invoiceId },
-      select: { inv_id: true },
-    })
-
-    if (!invoice) {
-      return NextResponse.json({ error: "Intervention introuvable" }, { status: 404 })
-    }
-
-    const photos = await prisma.invoicephoto_ivp.findMany({
-      where: { ivp_invoiceId: invoiceId },
-      orderBy: { ivp_createdAt: "desc" },
+    const intervention = await prisma.intervention_int.findUnique({
+      where: { int_id: interventionId },
       select: {
-        ivp_id: true,
-        ivp_blobName: true,
-        ivp_url: true,
-        ivp_contentType: true,
-        ivp_size: true,
-        ivp_createdAt: true,
+        int_id: true,
+        int_vehicle: {
+          select: {
+            veh_baseId: true,
+          },
+        },
       },
-    })
+    });
+
+    if (!intervention) {
+      return NextResponse.json({ error: "Intervention introuvable" }, { status: 404 });
+    }
+
+    if (session.user.role === "AGENCE") {
+      const userBaseId = session.user.baseId;
+      if (!userBaseId) {
+        return NextResponse.json({ error: "Compte agence sans baseId" }, { status: 403 });
+      }
+
+      if (intervention.int_vehicle.veh_baseId !== userBaseId) {
+        return NextResponse.json(
+          { error: "Vous ne pouvez pas consulter les photos d’une autre agence" },
+          { status: 403 }
+        );
+      }
+    }
+
+    const photos = await prisma.interventionphoto_itp.findMany({
+      where: { itp_interventionId: interventionId },
+      orderBy: { itp_createdAt: "desc" },
+      select: {
+        itp_id: true,
+        itp_blobName: true,
+        itp_url: true,
+        itp_contentType: true,
+        itp_size: true,
+        itp_createdAt: true,
+      },
+    });
 
     return NextResponse.json({
       photos: photos.map((p) => ({
-        id: p.ivp_id,
-        blobName: p.ivp_blobName,
-        url: p.ivp_url,
-        contentType: p.ivp_contentType,
-        size: p.ivp_size,
-        createdAt: p.ivp_createdAt,
-        sasUrl: getSasUrlForBlob(p.ivp_blobName),
+        id: p.itp_id,
+        blobName: p.itp_blobName,
+        url: p.itp_url,
+        contentType: p.itp_contentType,
+        size: p.itp_size,
+        createdAt: p.itp_createdAt,
+        sasUrl: getSasUrlForBlob(p.itp_blobName),
       })),
-    })
+    });
   } catch (e: any) {
     return NextResponse.json(
       { error: e?.message || "Erreur serveur" },
       { status: 500 }
-    )
+    );
   }
 }
 
-export async function POST(
-  request: NextRequest,
-  ctx: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, ctx: Ctx) {
   try {
-    const session = await auth()
-    const role = session?.user?.role
+    const session = await auth();
+    const role = session?.user?.role;
 
     if (!session || !["MANAGER", "AGENCE", "ADMIN", "MECHANIC"].includes(role as string)) {
-      return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    const { id: invoiceId } = await ctx.params
+    const interventionId = await getParamId(ctx);
 
-    if (!invoiceId || invoiceId === "undefined" || invoiceId === "null") {
-      return NextResponse.json({ error: "invoiceId invalide" }, { status: 400 })
+    if (!interventionId || interventionId === "undefined" || interventionId === "null") {
+      return NextResponse.json({ error: "interventionId invalide" }, { status: 400 });
     }
 
-    const invoice = await prisma.invoice_inv.findUnique({
-      where: { inv_id: invoiceId },
-      select: { inv_id: true },
-    })
+    const intervention = await prisma.intervention_int.findUnique({
+      where: { int_id: interventionId },
+      select: {
+        int_id: true,
+        int_vehicle: {
+          select: {
+            veh_baseId: true,
+          },
+        },
+      },
+    });
 
-    if (!invoice) {
-      return NextResponse.json({ error: "Intervention introuvable" }, { status: 404 })
+    if (!intervention) {
+      return NextResponse.json({ error: "Intervention introuvable" }, { status: 404 });
     }
 
-    const contentType = request.headers.get("content-type") || ""
+    if (role === "AGENCE") {
+      const userBaseId = session.user.baseId;
+      if (!userBaseId) {
+        return NextResponse.json({ error: "Compte agence sans baseId" }, { status: 403 });
+      }
+
+      if (intervention.int_vehicle.veh_baseId !== userBaseId) {
+        return NextResponse.json(
+          { error: "Vous ne pouvez pas ajouter des photos à une intervention d’une autre agence" },
+          { status: 403 }
+        );
+      }
+    }
+
+    const contentType = request.headers.get("content-type") || "";
     if (!contentType.includes("multipart/form-data")) {
       return NextResponse.json(
         { error: "Utilisez multipart/form-data" },
         { status: 400 }
-      )
+      );
     }
 
-    const form = await request.formData()
-    const files = (form.getAll("files") as File[]) ?? []
+    const form = await request.formData();
+    const files = (form.getAll("files") as File[]) ?? [];
 
     if (!files.length) {
-      return NextResponse.json({ error: "Aucun fichier reçu" }, { status: 400 })
+      return NextResponse.json({ error: "Aucun fichier reçu" }, { status: 400 });
     }
 
-    const container = getContainerClient()
-    await container.createIfNotExists()
+    const container = getContainerClient();
+    await container.createIfNotExists();
 
-    const createdPhotos: any[] = []
+    const createdPhotos: any[] = [];
+    const uploadedBlobNames: string[] = [];
 
-    for (const file of files) {
-      if (!(file instanceof File)) continue
+    try {
+      for (const file of files) {
+        if (!(file instanceof File)) continue;
 
-      if (!file.type?.startsWith("image/")) {
-        return NextResponse.json({ error: "Type non supporté" }, { status: 400 })
+        if (!file.type?.startsWith(ALLOWED_PREFIX)) {
+          return NextResponse.json({ error: "Type non supporté" }, { status: 400 });
+        }
+
+        if (file.size > MAX_FILE_SIZE) {
+          return NextResponse.json(
+            { error: "Fichier trop lourd (8MB max)" },
+            { status: 400 }
+          );
+        }
+
+        const ext = file.name.includes(".") ? file.name.split(".").pop() : "jpg";
+        const blobName = `intervention/${interventionId}/${randomUUID()}.${ext}`;
+
+        const blockBlob = container.getBlockBlobClient(blobName);
+        const buffer = Buffer.from(await file.arrayBuffer());
+
+        await blockBlob.uploadData(buffer, {
+          blobHTTPHeaders: {
+            blobContentType: file.type || "application/octet-stream",
+          },
+        });
+
+        uploadedBlobNames.push(blobName);
+
+        const row = await prisma.interventionphoto_itp.create({
+          data: {
+            itp_interventionId: interventionId,
+            itp_blobName: blobName,
+            itp_url: blockBlob.url,
+            itp_contentType: file.type || null,
+            itp_size: file.size,
+            itp_uploadedById: session.user.id ?? null,
+          },
+        });
+
+        createdPhotos.push({
+          id: row.itp_id,
+          blobName: row.itp_blobName,
+          url: row.itp_url,
+          contentType: row.itp_contentType,
+          size: row.itp_size,
+          createdAt: row.itp_createdAt,
+          sasUrl: getSasUrlForBlob(blobName),
+        });
       }
 
-      if (file.size > 8 * 1024 * 1024) {
-        return NextResponse.json({ error: "Fichier trop lourd (8MB max)" }, { status: 400 })
+      return NextResponse.json({ photos: createdPhotos }, { status: 201 });
+    } catch (err: any) {
+      try {
+        await Promise.all(
+          uploadedBlobNames.map(async (blobName) => {
+            const blobClient = container.getBlockBlobClient(blobName);
+            await blobClient.deleteIfExists();
+          })
+        );
+      } catch (cleanupErr: any) {
+        logError("Cleanup Azure blobs failed", cleanupErr);
       }
 
-      const ext = file.name.includes(".") ? file.name.split(".").pop() : "jpg"
-      const blobName = `invoice/${invoiceId}/${randomUUID()}.${ext}`
-
-      const blockBlob = container.getBlockBlobClient(blobName)
-      const buffer = Buffer.from(await file.arrayBuffer())
-
-      await blockBlob.uploadData(buffer, {
-        blobHTTPHeaders: {
-          blobContentType: file.type || "application/octet-stream",
-        },
-      })
-
-      const row = await prisma.invoicephoto_ivp.create({
-        data: {
-          ivp_invoiceId: invoiceId,
-          ivp_blobName: blobName,
-          ivp_url: blockBlob.url,
-          ivp_contentType: file.type || null,
-          ivp_size: file.size,
-          ivp_uploadedById: session.user.id,
-        },
-      })
-
-      createdPhotos.push({
-        id: row.ivp_id,
-        blobName: row.ivp_blobName,
-        url: row.ivp_url,
-        contentType: row.ivp_contentType,
-        size: row.ivp_size,
-        createdAt: row.ivp_createdAt,
-        sasUrl: getSasUrlForBlob(blobName),
-      })
+      throw err;
     }
-
-    return NextResponse.json({ photos: createdPhotos }, { status: 201 })
   } catch (error: any) {
-    logError("Failed to upload photos (edit)", error)
+    logError("Failed to upload photos (edit)", error);
     return NextResponse.json(
       { error: "Erreur upload photos" },
       { status: 500 }
-    )
+    );
   }
 }

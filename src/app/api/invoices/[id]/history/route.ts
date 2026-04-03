@@ -3,12 +3,30 @@ import { prisma } from "@/src/lib/prisma";
 import { auth } from "@/auth";
 import { logError } from "@/src/lib/logger";
 
+type Ctx = { params: Promise<{ id: string }> | { id: string } };
+
+function isPromise<T>(v: unknown): v is Promise<T> {
+  return !!v && typeof v === "object" && typeof (v as any).then === "function";
+}
+
+async function getParamId(ctx: Ctx): Promise<string> {
+  const p = isPromise<{ id: string }>(ctx.params) ? await ctx.params : ctx.params;
+  return p?.id;
+}
+
 export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  _request: NextRequest,
+  context: Ctx
 ) {
   try {
-    const { id } = await context.params;
+    const id = await getParamId(context);
+
+    if (!id || typeof id !== "string") {
+      return NextResponse.json(
+        { error: "ID d'intervention invalide" },
+        { status: 400 }
+      );
+    }
 
     const session = await auth();
 
@@ -16,20 +34,62 @@ export async function GET(
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    const invoice = await prisma.invoice_inv.findUnique({
-      where: { inv_id: id },
-      select: { inv_id: true },
+    const intervention = await prisma.intervention_int.findUnique({
+      where: { int_id: id },
+      select: {
+        int_id: true,
+        int_vehicle: {
+          select: {
+            veh_baseId: true,
+            veh_clientId: true,
+          },
+        },
+      },
     });
 
-    if (!invoice) {
+    if (!intervention) {
       return NextResponse.json(
         { error: "Intervention non trouvée" },
         { status: 404 }
       );
     }
 
+    if (session.user.role === "AGENCE") {
+      const userBaseId = session.user.baseId;
+      if (!userBaseId) {
+        return NextResponse.json(
+          { error: "Compte agence sans baseId" },
+          { status: 403 }
+        );
+      }
+
+      if (intervention.int_vehicle.veh_baseId !== userBaseId) {
+        return NextResponse.json(
+          { error: "Vous ne pouvez pas consulter l'historique d’une autre agence" },
+          { status: 403 }
+        );
+      }
+    }
+
+    if (session.user.role === "CLIENT") {
+      const userClientId = session.user.clientId;
+      if (!userClientId) {
+        return NextResponse.json(
+          { error: "Compte client sans clientId" },
+          { status: 403 }
+        );
+      }
+
+      if (intervention.int_vehicle.veh_clientId !== userClientId) {
+        return NextResponse.json(
+          { error: "Vous ne pouvez pas consulter l'historique d’un autre client" },
+          { status: 403 }
+        );
+      }
+    }
+
     const history = await prisma.changehistory_chg.findMany({
-      where: { chg_invoiceId: id },
+      where: { chg_interventionId: id },
       include: {
         chg_user: {
           select: {
@@ -44,7 +104,7 @@ export async function GET(
     return NextResponse.json(
       history.map((item) => ({
         id: item.chg_id,
-        invoiceId: item.chg_invoiceId,
+        interventionId: item.chg_interventionId,
         changedAt: item.chg_changedAt,
         fieldName: item.chg_fieldName,
         oldValue: item.chg_oldValue,

@@ -14,10 +14,20 @@ function asString(v: FormDataEntryValue | null): string | null {
   if (!v) return null;
   return typeof v === "string" ? v : null;
 }
+
 function asBool(v: FormDataEntryValue | null): boolean {
   const s = asString(v);
   if (!s) return false;
   return ["true", "1", "yes", "oui", "on"].includes(s.toLowerCase());
+}
+
+function parseOptionalDate(value: string | null): Date | null {
+  if (!value?.trim()) return null;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) {
+    throw new Error("INVALID_DATE");
+  }
+  return d;
 }
 
 export async function POST(request: NextRequest) {
@@ -32,32 +42,67 @@ export async function POST(request: NextRequest) {
     const contentType = request.headers.get("content-type") || "";
     if (!contentType.includes("multipart/form-data")) {
       return NextResponse.json(
-        { error: "Format invalide : utilisez multipart/form-data (FormData) pour envoyer l’intervention + photos." },
+        {
+          error:
+            "Format invalide : utilisez multipart/form-data (FormData) pour envoyer l’intervention + photos.",
+        },
         { status: 400 }
       );
     }
 
     const form = await request.formData();
+
     const vehicleId = asString(form.get("vehicleId"));
     const accordNumberRaw = asString(form.get("accordNumber"));
-    const dateOfConfirmation = asString(form.get("dateOfConfirmation"));
-    const workDescription = asString(form.get("workDescription"));
+    const dateOfConfirmationRaw = asString(form.get("dateOfConfirmation"));
+    const workDescriptionRaw = asString(form.get("workDescription"));
     const didOrderParts = asBool(form.get("didOrderParts"));
-    const ordersDetails = asString(form.get("ordersDetails"));
-    const comments = asString(form.get("comments"));
+    const ordersDetailsRaw = asString(form.get("ordersDetails"));
+    const commentsRaw = asString(form.get("comments"));
 
     const files = (form.getAll("photos") as File[]) ?? [];
 
     if (!vehicleId) {
-      return NextResponse.json({ error: "L'identifiant du véhicule est requis" }, { status: 400 });
+      return NextResponse.json(
+        { error: "L'identifiant du véhicule est requis" },
+        { status: 400 }
+      );
     }
 
     const accordNumber = accordNumberRaw?.trim() ? accordNumberRaw.trim() : null;
+    const workDescription = workDescriptionRaw?.trim() ? workDescriptionRaw.trim() : null;
+    const ordersDetails = ordersDetailsRaw?.trim() ? ordersDetailsRaw.trim() : null;
+    const comments = commentsRaw?.trim() ? commentsRaw.trim() : null;
     const hasAccordNumber = Boolean(accordNumber);
+
+    let confirmationDate: Date | null = null;
+    try {
+      confirmationDate = parseOptionalDate(dateOfConfirmationRaw);
+    } catch {
+      return NextResponse.json(
+        { error: "Date de confirmation invalide" },
+        { status: 400 }
+      );
+    }
+
+    if (confirmationDate) {
+      const today = new Date();
+      today.setHours(23, 59, 59, 999);
+
+      if (confirmationDate > today) {
+        return NextResponse.json(
+          { error: "La date de confirmation ne peut pas être dans le futur" },
+          { status: 400 }
+        );
+      }
+    }
 
     const vehicle = await prisma.vehicle_veh.findUnique({
       where: { veh_id: vehicleId },
-      select: { veh_id: true, veh_baseId: true },
+      select: {
+        veh_id: true,
+        veh_baseId: true,
+      },
     });
 
     if (!vehicle) {
@@ -67,8 +112,12 @@ export async function POST(request: NextRequest) {
     if (role === "AGENCE") {
       const userBaseId = session.user.baseId;
       if (!userBaseId) {
-        return NextResponse.json({ error: "Compte agence sans baseId" }, { status: 403 });
+        return NextResponse.json(
+          { error: "Compte agence sans baseId" },
+          { status: 403 }
+        );
       }
+
       if (vehicle.veh_baseId !== userBaseId) {
         return NextResponse.json(
           { error: "Vous ne pouvez pas créer d’intervention pour une autre agence" },
@@ -77,34 +126,32 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const invoiceConfirmed = true;
+    for (const f of files) {
+      if (!(f instanceof File)) continue;
 
-    if (dateOfConfirmation) {
-      const confirmationDate = new Date(dateOfConfirmation);
-      const today = new Date();
-      today.setHours(23, 59, 59, 999);
-      if (confirmationDate > today) {
+      if (!f.type?.startsWith(ALLOWED_PREFIX)) {
         return NextResponse.json(
-          { error: "La date de confirmation ne peut pas être dans le futur" },
+          { error: `Type non supporté: ${f.type || "unknown"}` },
+          { status: 400 }
+        );
+      }
+
+      if (f.size > MAX_FILE_SIZE) {
+        return NextResponse.json(
+          { error: `Fichier trop lourd: ${f.name}` },
           { status: 400 }
         );
       }
     }
 
-    for (const f of files) {
-      if (!(f instanceof File)) continue;
-      if (!f.type?.startsWith(ALLOWED_PREFIX)) {
-        return NextResponse.json({ error: `Type non supporté: ${f.type || "unknown"}` }, { status: 400 });
-      }
-      if (f.size > MAX_FILE_SIZE) {
-        return NextResponse.json({ error: `Fichier trop lourd: ${f.name}` }, { status: 400 });
-      }
-    }
-
     if (hasAccordNumber) {
-      const existing = await prisma.invoice_inv.findFirst({
-        where: { inv_accordNumber: accordNumber },
-        select: { inv_id: true, inv_vehicleId: true, inv_createdAt: true },
+      const existing = await prisma.intervention_int.findFirst({
+        where: { int_accordNumber: accordNumber },
+        select: {
+          int_id: true,
+          int_vehicleId: true,
+          int_createdAt: true,
+        },
       });
 
       if (existing) {
@@ -114,14 +161,19 @@ export async function POST(request: NextRequest) {
             code: "ACCORD_NUMBER_ALREADY_EXISTS",
             details: {
               accordNumber,
-              invoiceId: existing.inv_id,
-              createdAt: existing.inv_createdAt,
+              interventionId: existing.int_id,
+              createdAt: existing.int_createdAt,
             },
           },
           { status: 409 }
         );
       }
     }
+
+    const interventionConfirmed = true;
+    const status = didOrderParts
+      ? "WAITING_FOR_PARTS"
+      : "CONFIRMED_IN_PLANNING";
 
     const container = getContainerClient();
     await container.createIfNotExists();
@@ -130,45 +182,61 @@ export async function POST(request: NextRequest) {
 
     try {
       const result = await prisma.$transaction(async (tx) => {
-        const invoice = await tx.invoice_inv.create({
+        const intervention = await tx.intervention_int.create({
           data: {
-            inv_vehicleId: vehicleId,
-            inv_accordNumber: hasAccordNumber ? accordNumber : null,
-            inv_dateOfConfirmation: dateOfConfirmation ? new Date(dateOfConfirmation) : null,
-            inv_invoiceConfirmed: invoiceConfirmed,
-            inv_status: invoiceConfirmed && didOrderParts ? "WAITING_FOR_PARTS" : "CONFIRMED_IN_PLANNING",
-            inv_workDescription: workDescription,
-            inv_didOrderParts: didOrderParts || false,
-            inv_ordersDetails: ordersDetails,
-            inv_comments: comments,
-            inv_handledById: session.user.id,
+            int_vehicleId: vehicleId,
+            int_accordNumber: accordNumber,
+            int_dateOfConfirmation: confirmationDate,
+            int_interventionConfirmed: interventionConfirmed,
+            int_status: status,
+            int_statusUpdatedAt: new Date(),
+            int_workDescription: workDescription,
+            int_didOrderParts: didOrderParts,
+            int_ordersDetails: ordersDetails,
+            int_comments: comments,
+            int_handledById: session.user.id ?? null,
           },
           include: {
-            inv_vehicle: { include: { veh_client: true, veh_base: true } },
-            inv_handledBy: { select: { usr_id: true, usr_name: true, usr_email: true } },
+            int_vehicle: {
+              include: {
+                veh_client: true,
+                veh_base: true,
+              },
+            },
+            int_handledBy: {
+              select: {
+                usr_id: true,
+                usr_name: true,
+                usr_email: true,
+              },
+            },
           },
         });
 
         await tx.changehistory_chg.create({
           data: {
-            chg_invoiceId: invoice.inv_id,
+            chg_interventionId: intervention.int_id,
             chg_changedBy: session.user.id,
             chg_fieldName: "created",
+            chg_oldValue: null,
             chg_newValue: JSON.stringify({
-              invoiceConfirmed,
-              accordNumber: hasAccordNumber ? accordNumber : null,
-              dateOfConfirmation: dateOfConfirmation || null,
-              workDescription: workDescription || null,
-              didOrderParts: didOrderParts || false,
+              interventionConfirmed,
+              accordNumber,
+              dateOfConfirmation: dateOfConfirmationRaw || null,
+              workDescription,
+              didOrderParts,
+              ordersDetails,
+              comments,
+              status,
             }),
             chg_changeType: "created",
           },
         });
 
-        if (invoiceConfirmed && didOrderParts) {
+        if (didOrderParts) {
           await tx.statushistory_sth.create({
             data: {
-              sth_invoiceId: invoice.inv_id,
+              sth_interventionId: intervention.int_id,
               sth_previousStatus: "CONFIRMED_IN_PLANNING",
               sth_newStatus: "WAITING_FOR_PARTS",
               sth_changedById: session.user.id,
@@ -181,26 +249,31 @@ export async function POST(request: NextRequest) {
         for (const file of files) {
           if (!(file instanceof File)) continue;
 
-          const ext = file.name.includes(".") ? file.name.split(".").pop() : "jpg";
-          const blobName = `invoice/${invoice.inv_id}/${randomUUID()}.${ext}`;
+          const ext = file.name.includes(".")
+            ? file.name.split(".").pop()
+            : "jpg";
+
+          const blobName = `intervention/${intervention.int_id}/${randomUUID()}.${ext}`;
 
           const blockBlob = container.getBlockBlobClient(blobName);
           const buffer = Buffer.from(await file.arrayBuffer());
 
           await blockBlob.uploadData(buffer, {
-            blobHTTPHeaders: { blobContentType: file.type || "application/octet-stream" },
+            blobHTTPHeaders: {
+              blobContentType: file.type || "application/octet-stream",
+            },
           });
 
           uploadedBlobNames.push(blobName);
 
-          const row = await tx.invoicephoto_ivp.create({
+          const row = await tx.interventionphoto_itp.create({
             data: {
-              ivp_invoiceId: invoice.inv_id,
-              ivp_blobName: blobName,
-              ivp_url: blockBlob.url,
-              ivp_contentType: file.type || null,
-              ivp_size: file.size,
-              ivp_uploadedById: session.user.id,
+              itp_interventionId: intervention.int_id,
+              itp_blobName: blobName,
+              itp_url: blockBlob.url,
+              itp_contentType: file.type || null,
+              itp_size: file.size,
+              itp_uploadedById: session.user.id ?? null,
             },
           });
 
@@ -210,7 +283,7 @@ export async function POST(request: NextRequest) {
           });
         }
 
-        return { invoice, photos: createdPhotos };
+        return { intervention, photos: createdPhotos };
       });
 
       const message = hasAccordNumber
@@ -220,8 +293,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           message,
-          meta: { accordNumberProvided: hasAccordNumber, accordNumber },
-          invoice: result.invoice,
+          meta: {
+            accordNumberProvided: hasAccordNumber,
+            accordNumber,
+          },
+          intervention: result.intervention,
           photos: result.photos,
         },
         { status: 201 }
@@ -237,15 +313,26 @@ export async function POST(request: NextRequest) {
       } catch (cleanupErr: any) {
         logError("Cleanup Azure blobs failed", cleanupErr);
       }
+
       throw err;
     }
   } catch (error: any) {
-    if (error?.code === "P2003") {
-      logError("Failed to create invoice - invalid vehicle", error);
-      return NextResponse.json({ error: "Véhicule invalide" }, { status: 400 });
+    if (error?.code === "P2002") {
+      return NextResponse.json(
+        {
+          error: "Numéro d’accord déjà utilisé",
+          code: "ACCORD_NUMBER_ALREADY_EXISTS",
+        },
+        { status: 409 }
+      );
     }
 
-    logError("Failed to create invoice", error);
+    if (error?.code === "P2003") {
+      logError("Failed to create intervention - invalid foreign key", error);
+      return NextResponse.json({ error: "Donnée liée invalide" }, { status: 400 });
+    }
+
+    logError("Failed to create intervention", error);
     return NextResponse.json(
       { error: "Échec de la création de l'intervention" },
       { status: 500 }
