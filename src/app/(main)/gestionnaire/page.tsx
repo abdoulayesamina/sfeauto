@@ -280,8 +280,8 @@ export default function GestionnairePage() {
               sansIntervention={filteredVehicles.filter((v) => !v.interventions || v.interventions.length === 0).length}
               // Somme de tout les Intervention de tous les véhicules dont le base.location est "Paris Test Agency"
               // test={filteredVehicles.filter((v) => v.base?.location === "Paris Test Agency").reduce((sum, v) => {
-              //   const invoices = Array.isArray(v.invoices) ? v.invoices : []
-              //   return sum + invoices.reduce((invSum, i) => invSum , 0)
+              //   const interventions = Array.isArray(v.interventions) ? v.interventions : []
+              //   return sum + interventions.reduce((invSum, i) => invSum , 0)
               // }, 0) }
             />
 

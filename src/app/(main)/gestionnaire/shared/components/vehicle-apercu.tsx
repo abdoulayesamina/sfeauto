@@ -271,7 +271,7 @@ export function VehiclePreview({
           onClose={() => setOpenEditModal(false)}
           invoice={invoiceForEdit}
           onUpdated={(updated) => {
-            const updatedIntervention = updated?.invoice ?? updated;
+            const updatedIntervention = updated?.intervention ?? updated;
             setLocalInterventions((prev) => prev.map((x) => (x.id === updatedIntervention.id ? { ...x, ...updatedIntervention } : x)));
           }}
           reloadInvoiceList={reloadInterventionList}

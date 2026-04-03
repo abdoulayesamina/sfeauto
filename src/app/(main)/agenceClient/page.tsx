@@ -66,7 +66,7 @@ export default function AgencePage() {
   const vehicleCards = useMemo(() => {
     const map = new Map<
       string,
-      { vehicle: any; invoices: any[]; counts: Counts; lastInvoice: any | null }
+      { vehicle: any; interventions: any[]; counts: Counts; lastInvoice: any | null }
     >()
 
     for (const inv of interventions) {
@@ -76,14 +76,14 @@ export default function AgencePage() {
       if (!map.has(v.id)) {
         map.set(v.id, {
           vehicle: v,
-          invoices: [],
+          interventions: [],
           counts: { CONFIRMEE: 0, EN_COURS: 0, ATTENTE_PIECES: 0, TERMINEE: 0 },
           lastInvoice: null,
         })
       }
 
       const row = map.get(v.id)!
-      row.invoices.push(inv)
+      row.interventions.push(inv)
 
       if (!row.lastInvoice) {
         row.lastInvoice = inv
@@ -102,7 +102,7 @@ export default function AgencePage() {
 
     return Array.from(map.values()).map((x) => ({
       ...x,
-      vehicle: { ...x.vehicle, invoices: x.invoices },
+      vehicle: { ...x.vehicle, interventions: x.interventions },
     }))
   }, [interventions])
 
@@ -247,7 +247,7 @@ export default function AgencePage() {
           <div className="space-y-4">
             {filteredVehicles.length > 0 ? (
               filteredVehicles.map((row) => {
-                const representative = row.lastInvoice || row.invoices[0] || null
+                const representative = row.lastInvoice || row.interventions[0] || null
                 if (!representative) return null
 
                 const interventionForCard = {

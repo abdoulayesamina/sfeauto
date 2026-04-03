@@ -47,15 +47,15 @@ export default function ClientPage() {
 
   const handleViewInterventions = (v: any) => {
     setVehiculeSelect(v)
-    setInterventionVehicule(Array.isArray(v.invoices) ? v.invoices : [])
+    setInterventionVehicule(Array.isArray(v.interventions) ? v.interventions : [])
     setOpenInterventionModal(true)
   }
 
   const handleViewDetailsFromVehicle = (v: any) => {
-    const invoices: Invoice[] = Array.isArray(v.invoices) ? v.invoices : []
-    if (!invoices.length) return
+    const interventions: Invoice[] = Array.isArray(v.interventions) ? v.interventions : []
+    if (!interventions.length) return
 
-    const last = invoices[invoices.length - 1]
+    const last = interventions[interventions.length - 1]
     setVehiculeSelect(v)
     setInterventionVehicule([{ ...last, vehicle: v }])
     setOpenDetailModal(true)
@@ -67,7 +67,7 @@ export default function ClientPage() {
     return (Array.isArray(vehicles) ? vehicles : [])
       .map((v) => ({
         ...v,
-        invoices: Array.isArray(v.invoices) ? v.invoices : [],
+        interventions: Array.isArray(v.interventions) ? v.interventions : [],
       }))
       .filter((v) => {
         // filtre texte
@@ -78,36 +78,36 @@ export default function ClientPage() {
         const searchMatch =
           !q || plate.includes(q) || brand.includes(q) || model.includes(q)
 
-        // filtre statut (match si au moins 1 invoice correspond)
+        // filtre statut (match si au moins 1 intervention correspond)
         // let statusMatch = true
         // if (filterStatus !== "ALL") {
-        //   statusMatch = v.invoices.some((i: Invoice) => toUIStatus(i.status) === filterStatus)
+        //   statusMatch = v.interventions.some((i: Invoice) => toUIStatus(i.status) === filterStatus)
         // }
 
         let statusMatch = true
 
         if (filterStatus === "CONFIRMEE") {
           statusMatch =
-            v.invoices.length > 0 &&
-            v.invoices.some((i: Invoice) => toUIStatus(i.int_status) === "CONFIRMEE")
+            v.interventions.length > 0 &&
+            v.interventions.some((i: Invoice) => toUIStatus(i.int_status) === "CONFIRMEE")
         }
 
         if (filterStatus === "EN_COURS") {
           statusMatch =
-            v.invoices.length > 0 &&
-            v.invoices.some((i: Invoice) => toUIStatus(i.int_status) === "EN_COURS")
+            v.interventions.length > 0 &&
+            v.interventions.some((i: Invoice) => toUIStatus(i.int_status) === "EN_COURS")
         }
 
         if (filterStatus === "ATTENTE_PIECES") {
           statusMatch =
-            v.invoices.length > 0 &&
-            v.invoices.some((i: Invoice) => toUIStatus(i.int_status) === "ATTENTE_PIECES")
+            v.interventions.length > 0 &&
+            v.interventions.some((i: Invoice) => toUIStatus(i.int_status) === "ATTENTE_PIECES")
         }
 
         if (filterStatus === "TERMINEE") {
           statusMatch =
-            v.invoices.length > 0 &&
-            v.invoices.every((i: Invoice) => toUIStatus(i.int_status) === "TERMINEE")
+            v.interventions.length > 0 &&
+            v.interventions.every((i: Invoice) => toUIStatus(i.int_status) === "TERMINEE")
         }
 
 
@@ -120,25 +120,25 @@ export default function ClientPage() {
 
     const enCours = vehicles.filter(
       (v) =>
-        Array.isArray(v.invoices) &&
-        v.invoices.some((i: Invoice) => toUIStatus(i.int_status) === "EN_COURS")
+        Array.isArray(v.interventions) &&
+        v.interventions.some((i: Invoice) => toUIStatus(i.int_status) === "EN_COURS")
     ).length
 
     const confirmee = vehicles.filter(
       (v) =>
-        Array.isArray(v.invoices) &&
-        v.invoices.some((i: Invoice) => toUIStatus(i.int_status) === "CONFIRMEE")
+        Array.isArray(v.interventions) &&
+        v.interventions.some((i: Invoice) => toUIStatus(i.int_status) === "CONFIRMEE")
     ).length
 
     const termine = vehicles.filter(
       (v) =>
-        Array.isArray(v.invoices) &&
-        v.invoices.length > 0 &&
-        v.invoices.every((i: Invoice) => toUIStatus(i.int_status) === "TERMINEE")
+        Array.isArray(v.interventions) &&
+        v.interventions.length > 0 &&
+        v.interventions.every((i: Invoice) => toUIStatus(i.int_status) === "TERMINEE")
     ).length
 
     const sansIntervention = vehicles.filter(
-      (v) => !Array.isArray(v.invoices) || v.invoices.length === 0
+      (v) => !Array.isArray(v.interventions) || v.interventions.length === 0
     ).length
 
     return { total, enCours, confirmee, termine, sansIntervention }

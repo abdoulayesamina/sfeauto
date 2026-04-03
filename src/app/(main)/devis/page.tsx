@@ -85,7 +85,7 @@ export default function DevisPage() {
       const plate = String(d?.vehicle?.licensePlate ?? "").toLowerCase();
       const brand = String(d?.vehicle?.brand?.name ?? "").toLowerCase();
       const model = String(d?.vehicle?.model?.name ?? "").toLowerCase();
-      const desc = String(d?.invoice?.workDescription ?? "").toLowerCase();
+      const desc = String(d?.intervention?.workDescription ?? "").toLowerCase();
       const accord = String(d?.dev_accordNumber ?? "").toLowerCase();
 
       return (
@@ -134,9 +134,9 @@ export default function DevisPage() {
       },
     },
     {
-      accessorKey: "invoice",
+      accessorKey: "intervention",
       header: "Intervention",
-      cell: ({ row }) => row.original?.invoice?.workDescription ?? "—",
+      cell: ({ row }) => row.original?.intervention?.workDescription ?? "—",
     },
     {
       accessorKey: "dev_totalttc",

@@ -25,14 +25,14 @@ function computeCounts(intervention: any) {
     }
   }
 
-  const invoices = Array.isArray(intervention?.vehicle?.invoices) ? intervention.vehicle.invoices : []
+  const interventions = Array.isArray(intervention?.vehicle?.interventions) ? intervention.vehicle.interventions : []
 
   let confirmee = 0,
     enCours = 0,
     attentePieces = 0,
     terminee = 0
 
-  for (const inv of invoices) {
+  for (const inv of interventions) {
     const ui = toUIStatus(inv.status)
     if (ui === "CONFIRMEE") confirmee++
     else if (ui === "EN_COURS") enCours++
