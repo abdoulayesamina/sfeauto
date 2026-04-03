@@ -104,6 +104,7 @@ export default function GestionnairePage() {
 
   const handleSearch = async () => {
     if (!search.trim()) {
+      toast.info("Vous devez entrer une plaque d'immatriculation pour lancer la recherche.")
       await loadAll()
       setVehiculeNotFound(false)
       return

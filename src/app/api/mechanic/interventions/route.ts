@@ -112,7 +112,7 @@ export async function GET(request: NextRequest) {
       take: 100
     })
 
-    console.log('Interventions récupérées : ', interventions)
+    // console.log('Interventions récupérées : ', interventions)
 
     const serialized = interventions.map((inv) => ({
       id: inv.inv_id,
