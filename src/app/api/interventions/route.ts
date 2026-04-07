@@ -180,7 +180,16 @@ export async function POST(request: NextRequest) {
 
     const uploadedBlobNames: string[] = [];
 
-    console.log("Handled by : ", session.user)
+    console.log("chg_newValue : ", JSON.stringify({
+      interventionConfirmed,
+      accordNumber,
+      dateOfConfirmation: dateOfConfirmationRaw || null,
+      workDescription,
+      didOrderParts,
+      ordersDetails,
+      comments,
+      status,
+    }));
 
     try {
       const result = await prisma.$transaction(async (tx) => {
