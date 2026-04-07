@@ -167,20 +167,20 @@ export function AddVehiculeForm({
         veh_realPowerHp: v.realPowerHp ?? prev.veh_realPowerHp,
         veh_fiscalPowerCv: v.fiscalPowerCv ?? prev.veh_fiscalPowerCv,
         veh_gearboxType: v.gearboxType ?? prev.veh_gearboxType,
-        veh_firstRegistrationDate: v.veh_firstRegistrationDate
-          ? new Date(v.veh_firstRegistrationDate).toISOString()
+        veh_firstRegistrationDate: v.firstRegistrationDate
+          ? new Date(v.firstRegistrationDate).toISOString()
           : prev.veh_firstRegistrationDate,
-        veh_registrationCardDate: v.veh_registrationCardDate
-          ? new Date(v.veh_registrationCardDate).toISOString()
+        veh_registrationCardDate: v.registrationCardDate
+          ? new Date(v.registrationCardDate).toISOString()
           : prev.veh_registrationCardDate,
-        veh_version: v.veh_version ?? prev.veh_version,
+        veh_version: v.version ?? prev.veh_version,
       }))
 
       await new Promise((r) => setTimeout(r, 0))
 
       setVehicule((prev) => ({
         ...prev,
-        veh_modelId: v.veh_modelId ?? prev.veh_modelId,
+        veh_modelId: v.modelId ?? prev.veh_modelId,
       }))
 
       toast.success("Véhicule trouvé et pré-rempli")
