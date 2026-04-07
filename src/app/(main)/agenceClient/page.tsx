@@ -1,77 +1,92 @@
-"use client"
+"use client";
 
-import { useEffect, useMemo, useState } from "react"
-import { Building2 } from "lucide-react"
+import { useEffect, useMemo, useState } from "react";
+import { Building2 } from "lucide-react";
 
-import { Modal } from "@/src/shared/components/modal"
-import { Button } from "@/src/shared/components/ui/button"
-import { toUIStatus } from "@/src/utils/constants/intervention-status"
+import { Modal } from "@/src/shared/components/modal";
+import { Button } from "@/src/shared/components/ui/button";
+import { toUIStatus } from "@/src/utils/constants/intervention-status";
 
-import { useAgenceClient } from "./shared/useAgenceClient"
-import { useInterventionApi } from "../gestionnaire/shared/useIntervention.api"
-import { InterventionForm } from "../gestionnaire/form/intervention-form"
+import { useAgenceClient } from "./shared/useAgenceClient";
+import { useInterventionApi } from "../gestionnaire/shared/useIntervention.api";
+import { InterventionForm } from "../gestionnaire/form/intervention-form";
 
-import SearchFilters from "../client/components/SearchFilters"
-import InterventionCard from "../client/components/InterventionCard"
-import EmptyState from "../client/components/EmptyState"
-import VehicleInterventionsModal from "../client/components/VehicleInterventionsModal"
-import InterventionDetailClient from "../client/components/detailsInterv"
+import SearchFilters from "../client/components/SearchFilters";
+import InterventionCard from "../client/components/InterventionCard";
+import EmptyState from "../client/components/EmptyState";
+import VehicleInterventionsModal from "../client/components/VehicleInterventionsModal";
+import InterventionDetailClient from "../client/components/detailsInterv";
 
-type UIStatus = "ALL" | "CONFIRMEE" | "EN_COURS" | "TERMINEE" | "ATTENTE_PIECES"
+type UIStatus =
+  | "ALL"
+  | "CONFIRMEE"
+  | "EN_COURS"
+  | "TERMINEE"
+  | "ATTENTE_PIECES";
 
 type Counts = {
-  CONFIRMEE: number
-  EN_COURS: number
-  ATTENTE_PIECES: number
-  TERMINEE: number
-}
+  CONFIRMEE: number;
+  EN_COURS: number;
+  ATTENTE_PIECES: number;
+  TERMINEE: number;
+};
 
 export default function AgencePage() {
-  const { listInterventions } = useAgenceClient()
-  const { createIntervention, loading: creating } = useInterventionApi()
+  const { listInterventions } = useAgenceClient();
+  const { createIntervention, loading: creating } = useInterventionApi();
 
-  const [interventions, setInterventions] = useState<any[]>([])
-  const [filterStatus, setFilterStatus] = useState<UIStatus>("ALL")
-  const [searchQuery, setSearchQuery] = useState("")
-  const [isLoading, setIsLoading] = useState(true)
+  const [interventions, setInterventions] = useState<any[]>([]);
+  const [filterStatus, setFilterStatus] = useState<UIStatus>("ALL");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
-  const [openVehicleModal, setOpenVehicleModal] = useState(false)
-  const [vehiculeSelect, setVehiculeSelect] = useState<any>(null)
-  const [interventionsVehicule, setInterventionsVehicule] = useState<any[]>([])
+  const [openVehicleModal, setOpenVehicleModal] = useState(false);
+  const [vehiculeSelect, setVehiculeSelect] = useState<any>(null);
+  const [interventionsVehicule, setInterventionsVehicule] = useState<any[]>([]);
 
-  const [openDetailModal, setOpenDetailModal] = useState(false)
-  const [detailIntervention, setDetailIntervention] = useState<any>(null)
+  const [openDetailModal, setOpenDetailModal] = useState(false);
+  const [detailIntervention, setDetailIntervention] = useState<any>(null);
 
-  const [openCreateIntervention, setOpenCreateIntervention] = useState(false)
+  const [openCreateIntervention, setOpenCreateIntervention] = useState(false);
 
   const reloadInterventions = async () => {
-    const data = await listInterventions({ take: 500, skip: 0 })
-    setInterventions(Array.isArray(data?.interventions) ? data.interventions : [])
-  }
+    const data = await listInterventions({ take: 500, skip: 0 });
+    setInterventions(
+      Array.isArray(data?.interventions) ? data.interventions : [],
+    );
+  };
 
   useEffect(() => {
     const fetchInterventions = async () => {
       try {
-        setIsLoading(true)
-        await reloadInterventions()
+        setIsLoading(true);
+        await reloadInterventions();
       } catch (err: any) {
-        console.error("Erreur récupération interventions agence :", err?.message)
+        console.error(
+          "Erreur récupération interventions agence :",
+          err?.message,
+        );
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
-    fetchInterventions()
-  }, [])
+    };
+    fetchInterventions();
+  }, []);
 
   const vehicleCards = useMemo(() => {
     const map = new Map<
       string,
-      { vehicle: any; interventions: any[]; counts: Counts; lastIntervention: any | null }
-    >()
+      {
+        vehicle: any;
+        interventions: any[];
+        counts: Counts;
+        lastIntervention: any | null;
+      }
+    >();
 
     for (const inv of interventions) {
-      const v = inv?.vehicle
-      if (!v?.id) continue
+      const v = inv?.vehicle;
+      if (!v?.id) continue;
 
       if (!map.has(v.id)) {
         map.set(v.id, {
@@ -79,86 +94,95 @@ export default function AgencePage() {
           interventions: [],
           counts: { CONFIRMEE: 0, EN_COURS: 0, ATTENTE_PIECES: 0, TERMINEE: 0 },
           lastIntervention: null,
-        })
+        });
       }
 
-      const row = map.get(v.id)!
-      row.interventions.push(inv)
+      const row = map.get(v.id)!;
+      row.interventions.push(inv);
 
       if (!row.lastIntervention) {
-        row.lastIntervention = inv
+        row.lastIntervention = inv;
       } else {
-        const a = new Date(row.lastIntervention.createdAt ?? 0).getTime()
-        const b = new Date(inv.createdAt ?? 0).getTime()
-        if (b > a) row.lastIntervention = inv
+        const a = new Date(row.lastIntervention.createdAt ?? 0).getTime();
+        const b = new Date(inv.createdAt ?? 0).getTime();
+        if (b > a) row.lastIntervention = inv;
       }
 
-      const ui = toUIStatus(inv.status)
-      if (ui === "CONFIRMEE") row.counts.CONFIRMEE += 1
-      if (ui === "EN_COURS") row.counts.EN_COURS += 1
-      if (ui === "ATTENTE_PIECES") row.counts.ATTENTE_PIECES += 1
-      if (ui === "TERMINEE") row.counts.TERMINEE += 1
+      const ui = toUIStatus(inv.status);
+      if (ui === "CONFIRMEE") row.counts.CONFIRMEE += 1;
+      if (ui === "EN_COURS") row.counts.EN_COURS += 1;
+      if (ui === "ATTENTE_PIECES") row.counts.ATTENTE_PIECES += 1;
+      if (ui === "TERMINEE") row.counts.TERMINEE += 1;
     }
 
     return Array.from(map.values()).map((x) => ({
       ...x,
       vehicle: { ...x.vehicle, interventions: x.interventions },
-    }))
-  }, [interventions])
+    }));
+  }, [interventions]);
 
   const filteredVehicles = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase()
+    const q = searchQuery.trim().toLowerCase();
 
     return vehicleCards.filter((row) => {
-      const v = row.vehicle || {}
+      const v = row.vehicle || {};
 
       const statusMatch =
         filterStatus === "ALL" ||
         (filterStatus === "CONFIRMEE" && row.counts.CONFIRMEE > 0) ||
         (filterStatus === "EN_COURS" && row.counts.EN_COURS > 0) ||
         (filterStatus === "ATTENTE_PIECES" && row.counts.ATTENTE_PIECES > 0) ||
-        (filterStatus === "TERMINEE" && row.counts.TERMINEE > 0)
+        (filterStatus === "TERMINEE" && row.counts.TERMINEE > 0);
 
-      const plate = String(v.licensePlate || "").toLowerCase()
-      const brand = String(v.brand ?? "").toLowerCase()
-      const model = String(v.model || "").toLowerCase()
+      const plate = String(v.licensePlate || "").toLowerCase();
+      const brand = String(v.brand ?? "").toLowerCase();
+      const model = String(v.model || "").toLowerCase();
 
-      const searchMatch = !q || plate.includes(q) || brand.includes(q) || model.includes(q)
+      const searchMatch =
+        !q || plate.includes(q) || brand.includes(q) || model.includes(q);
 
-      return statusMatch && searchMatch
-    })
-  }, [vehicleCards, filterStatus, searchQuery])
+      return statusMatch && searchMatch;
+    });
+  }, [vehicleCards, filterStatus, searchQuery]);
 
   const stats = useMemo(() => {
-    const total = interventions.length
-    const confirmee = interventions.filter((i) => toUIStatus(i.status) === "CONFIRMEE").length
-    const enCours = interventions.filter((i) => toUIStatus(i.status) === "EN_COURS").length
-    const termine = interventions.filter((i) => toUIStatus(i.status) === "TERMINEE").length
-    const attentePieces = interventions.filter((i) => toUIStatus(i.status) === "ATTENTE_PIECES").length
-    return { total, confirmee, enCours, termine, attentePieces }
-  }, [interventions])
+    const total = interventions.length;
+    const confirmee = interventions.filter(
+      (i) => toUIStatus(i.status) === "CONFIRMEE",
+    ).length;
+    const enCours = interventions.filter(
+      (i) => toUIStatus(i.status) === "EN_COURS",
+    ).length;
+    const termine = interventions.filter(
+      (i) => toUIStatus(i.status) === "TERMINEE",
+    ).length;
+    const attentePieces = interventions.filter(
+      (i) => toUIStatus(i.status) === "ATTENTE_PIECES",
+    ).length;
+    return { total, confirmee, enCours, termine, attentePieces };
+  }, [interventions]);
 
   const handleViewInterventions = (vehicleRow: any) => {
-    const v = vehicleRow?.vehicle ?? vehicleRow
-    setVehiculeSelect(v)
+    const v = vehicleRow?.vehicle ?? vehicleRow;
+    setVehiculeSelect(v);
 
     const list = interventions
       .filter((inv) => inv?.vehicle?.id === v?.id)
-      .map((inv) => ({ ...inv, vehicle: v }))
+      .map((inv) => ({ ...inv, vehicle: v }));
 
-    setInterventionsVehicule(list)
-    setOpenVehicleModal(true)
-  }
+    setInterventionsVehicule(list);
+    setOpenVehicleModal(true);
+  };
 
   const handleViewDetails = (intervention: any, vehicle?: any) => {
-    const v = vehicle ?? intervention?.vehicle ?? vehiculeSelect ?? null
-    setVehiculeSelect(v)
-    setDetailIntervention({ ...intervention, vehicle: v })
-    setOpenDetailModal(true)
-  }
+    const v = vehicle ?? intervention?.vehicle ?? vehiculeSelect ?? null;
+    setVehiculeSelect(v);
+    setDetailIntervention({ ...intervention, vehicle: v });
+    setOpenDetailModal(true);
+  };
 
   const handleCreateIntervention = async (data: any) => {
-    if (!vehiculeSelect?.id) return
+    if (!vehiculeSelect?.id) return;
 
     await createIntervention({
       vehicleId: vehiculeSelect.id,
@@ -169,19 +193,19 @@ export default function AgencePage() {
       ordersDetails: data.detailsCommande || null,
       comments: data.commentaires || null,
       images: data.images || [],
-    })
+    });
 
-    await reloadInterventions()
+    await reloadInterventions();
 
     if (vehiculeSelect?.id) {
       const list = interventions
         .filter((inv) => inv?.vehicle?.id === vehiculeSelect?.id)
-        .map((inv) => ({ ...inv, vehicle: vehiculeSelect }))
-      setInterventionsVehicule(list)
+        .map((inv) => ({ ...inv, vehicle: vehiculeSelect }));
+      setInterventionsVehicule(list);
     }
 
-    setOpenCreateIntervention(false)
-  }
+    setOpenCreateIntervention(false);
+  };
 
   if (isLoading) {
     return (
@@ -190,12 +214,14 @@ export default function AgencePage() {
           <div className="flex items-center justify-center h-96">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-              <p className="mt-4 text-gray-600">Chargement des interventions...</p>
+              <p className="mt-4 text-gray-600">
+                Chargement des interventions...
+              </p>
             </div>
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -207,8 +233,12 @@ export default function AgencePage() {
               <Building2 size={24} />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Espace Agence</h1>
-              <p className="text-gray-600">Véhicules & interventions de votre agence</p>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Espace Agence
+              </h1>
+              <p className="text-gray-600">
+                Véhicules & interventions de votre agence
+              </p>
             </div>
           </div>
         </div>
@@ -247,25 +277,27 @@ export default function AgencePage() {
           <div className="space-y-4">
             {filteredVehicles.length > 0 ? (
               filteredVehicles.map((row) => {
-                const representative = row.lastIntervention || row.interventions[0] || null
-                if (!representative) return null
+                const representative =
+                  row.lastIntervention || row.interventions[0] || null;
+                if (!representative) return null;
 
                 const interventionForCard = {
                   ...representative,
                   vehicle: row.vehicle,
                   counts: row.counts,
-                }
+                };
 
                 return (
                   <InterventionCard
                     key={row.vehicle.id}
                     intervention={interventionForCard}
                     onViewInterventions={() => handleViewInterventions(row)}
-                    onViewDetails={() => handleViewDetails(representative, row.vehicle)}
+                    onViewDetails={() =>
+                      handleViewDetails(representative, row.vehicle)
+                    }
                     hideDetailsButton={true}
-
                   />
-                )
+                );
               })
             ) : (
               <EmptyState searchQuery={searchQuery} />
@@ -274,7 +306,9 @@ export default function AgencePage() {
         ) : (
           <div className="space-y-4">
             <div className="flex justify-end">
-              <Button onClick={() => setOpenCreateIntervention(true)}>+ Nouvelle intervention</Button>
+              <Button onClick={() => setOpenCreateIntervention(true)}>
+                + Nouvelle intervention
+              </Button>
             </div>
 
             <VehicleInterventionsModal
@@ -290,8 +324,8 @@ export default function AgencePage() {
         <Modal
           open={openDetailModal}
           onClose={() => {
-            setOpenDetailModal(false)
-            setDetailIntervention(null)
+            setOpenDetailModal(false);
+            setDetailIntervention(null);
           }}
           modalTitle="Détail complet de l'intervention"
           className="max-w-4xl"
@@ -300,8 +334,8 @@ export default function AgencePage() {
             <InterventionDetailClient
               selectedIntervention={detailIntervention}
               onClose={() => {
-                setOpenDetailModal(false)
-                setDetailIntervention(null)
+                setOpenDetailModal(false);
+                setDetailIntervention(null);
               }}
             />
           )}
@@ -315,8 +349,9 @@ export default function AgencePage() {
           {vehiculeSelect && (
             <InterventionForm
               vehicleId={vehiculeSelect.id}
-              vehicleDisplayText={`${vehiculeSelect.licensePlate} - ${vehiculeSelect.brand?.name ?? ""} ${vehiculeSelect.model?.name ?? ""
-                }`}
+              vehicleDisplayText={`${vehiculeSelect.licensePlate} - ${vehiculeSelect.brand?.name ?? ""} ${
+                vehiculeSelect.model?.name ?? ""
+              }`}
               defaultAccordNumber="ACC-2026-001"
               onSubmit={handleCreateIntervention}
               onClose={() => setOpenCreateIntervention(false)}
@@ -326,5 +361,5 @@ export default function AgencePage() {
         </Modal>
       </div>
     </div>
-  )
+  );
 }
