@@ -272,7 +272,7 @@ model changehistory_chg {
   chg_changedAt      DateTime @default(now())
   chg_fieldName      String
   chg_oldValue       String?
-  chg_newValue       String?
+  chg_newValue       String? @db.Text 
   chg_changeType     String
 
   chg_intervention intervention_int @relation(fields: [chg_interventionId], references: [int_id], onDelete: Cascade)
