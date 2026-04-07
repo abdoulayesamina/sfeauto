@@ -23,7 +23,7 @@ export default function EmptyState({ searchQuery }: EmptyStateProps) {
         ) : (
           <>
             <AlertCircle className="mx-auto text-gray-400 mb-4" size={48} />
-            <h3 className="text-lg font-semibold text-gray-700 mb-2">Aucune intervention enregistrée</h3>
+            <h3 className="text-lg font-semibold text-gray-700 mb-2">Aucune intervention</h3>
             <p className="text-gray-500">
               Vous n'avez pas encore d'intervention avec ce filtre de statut
             </p>

@@ -22,6 +22,7 @@ export default function ClientPage() {
   const [vehicles, setVehicles] = useState<any[]>([])
   const [interventionsVehicule, setInterventionVehicule] = useState<any[]>([])
   const [vehiculeSelect, setVehiculeSelect] = useState<any>(null)
+  const [vehiculeSelectDetails, setVehiculeSelectDetails] = useState<any>(null)
 
   const [filterStatus, setFilterStatus] = useState<UIStatus>("ALL")
   const [openInterventionModal, setOpenInterventionModal] = useState(false)
@@ -70,10 +71,11 @@ export default function ClientPage() {
         interventions: Array.isArray(v.interventions) ? v.interventions : [],
       }))
       .filter((v) => {
+        console.log("Voici le V en Questionnnnn !! : ", v)
         // filtre texte
         const plate = String(v.licensePlate ?? "").toLowerCase()
-        const brand = String(v.brand ?? "").toLowerCase()
-        const model = String(v.model ?? "").toLowerCase()
+        const brand = String(v.brand?.name ?? "").toLowerCase()
+        const model = String(v.model?.name ?? "").toLowerCase()
 
         const searchMatch =
           !q || plate.includes(q) || brand.includes(q) || model.includes(q)
@@ -89,25 +91,24 @@ export default function ClientPage() {
         if (filterStatus === "CONFIRMEE") {
           statusMatch =
             v.interventions.length > 0 &&
-            v.interventions.some((i: Intervention) => toUIStatus(i.int_status) === "CONFIRMEE")
+            v.interventions.some((i: any) => toUIStatus(i.status) === "CONFIRMEE")
         }
-
         if (filterStatus === "EN_COURS") {
           statusMatch =
             v.interventions.length > 0 &&
-            v.interventions.some((i: Intervention) => toUIStatus(i.int_status) === "EN_COURS")
+            v.interventions.some((i: any) => toUIStatus(i.status) === "EN_COURS" )
         }
 
         if (filterStatus === "ATTENTE_PIECES") {
           statusMatch =
             v.interventions.length > 0 &&
-            v.interventions.some((i: Intervention) => toUIStatus(i.int_status) === "ATTENTE_PIECES")
+            v.interventions.some((i: any) => toUIStatus(i.status) === "ATTENTE_PIECES")
         }
 
         if (filterStatus === "TERMINEE") {
           statusMatch =
             v.interventions.length > 0 &&
-            v.interventions.every((i: Intervention) => toUIStatus(i.int_status) === "TERMINEE")
+            v.interventions.every((i: any) => toUIStatus(i.status) === "TERMINEE")
         }
 
 
@@ -219,8 +220,8 @@ export default function ClientPage() {
             // si ton modal appelle onViewDetails(intervention, vehicle)
             onViewDetails={(intervention: any, vehicle?: any) => {
               const v = vehicle ?? vehiculeSelect
-              setVehiculeSelect(v)
-              setInterventionVehicule([{ ...intervention, vehicle: v }])
+              setVehiculeSelectDetails([{ ...intervention, vehicle: v }])
+              // setInterventionVehicule([{ ...intervention, vehicle: v }])
               setOpenDetailModal(true)
             }}
           />
@@ -233,9 +234,9 @@ export default function ClientPage() {
           modalTitle="Détail complet de l'intervention"
           className="max-w-4xl"
         >
-          {interventionsVehicule[0] && (
+          {vehiculeSelectDetails && (
             <InterventionDetailClient
-              selectedIntervention={interventionsVehicule[0]}
+              selectedIntervention={vehiculeSelectDetails[0]}
               onClose={() => setOpenDetailModal(false)}
             />
           )}
