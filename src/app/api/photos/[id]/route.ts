@@ -22,8 +22,8 @@ export async function DELETE(
     }
 
     // 1️⃣ Récupérer la photo
-    const photo = await prisma.interventionphoto.findUnique({
-      where: { id },
+    const photo = await prisma.interventionphoto_itp.findUnique({
+      where: { itp_id: id },
     })
 
     if (!photo) {
@@ -32,13 +32,13 @@ export async function DELETE(
 
     // 2️⃣ Supprimer le blob Azure
     const container = getContainerClient()
-    const blobClient = container.getBlockBlobClient(photo.blobName)
+    const blobClient = container.getBlockBlobClient(photo.itp_blobName)
 
     await blobClient.deleteIfExists()
 
     // 3️⃣ Supprimer en base
-    await prisma.interventionphoto.delete({
-      where: { id },
+    await prisma.interventionphoto_itp.delete({
+      where: { itp_id: id },
     })
 
     return NextResponse.json({ success: true })
