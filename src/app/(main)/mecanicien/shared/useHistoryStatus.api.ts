@@ -4,21 +4,21 @@ import { useState, useEffect } from "react"
 
 /**
  * Hook pour récupérer l'historique des statuts d'une facture
- * @param invoiceId - l'ID de la facture sélectionnée
+ * @param interventionId - l'ID de la facture sélectionnée
  */
-export function useHistoryStatus(invoiceId: string | undefined) {
+export function useHistoryStatus(interventionId: string | undefined) {
   const [history, setHistory] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!invoiceId) return
+    if (!interventionId) return
 
     setLoading(true)
     setError(null)
 
     // Appel au endpoint existant
-    fetch(`/api/invoices`, {
+    fetch(`/api/interventions`, {
       credentials: "include", // important pour envoyer les cookies de session
     })
       .then(async (res) => {
@@ -30,14 +30,14 @@ export function useHistoryStatus(invoiceId: string | undefined) {
 
         const data = await res.json()
 
-        // Cherche l'intervention correspondant à invoiceId
-        const invoice = data.find((inv: any) => inv.id === invoiceId)
+        // Cherche l'intervention correspondant à interventionId
+        const intervention = data.find((inv: any) => inv.id === interventionId)
 
-        if (!invoice) {
+        if (!intervention) {
           setHistory([])
         } else {
           // Tri au cas où l'API ne renvoie pas l'ordre exact
-          const sortedHistory = (invoice.statusHistory || []).sort(
+          const sortedHistory = (intervention.statusHistory || []).sort(
             (a: any, b: any) => new Date(a.changedAt).getTime() - new Date(b.changedAt).getTime()
           )
           setHistory(sortedHistory)
@@ -48,7 +48,7 @@ export function useHistoryStatus(invoiceId: string | undefined) {
         setError(err.message || "Impossible de charger l'historique")
       })
       .finally(() => setLoading(false))
-  }, [invoiceId])
+  }, [interventionId])
 
   return { history, loading, error }
 }

@@ -35,18 +35,30 @@ export async function POST(req: Request) {
   try {
     const session = await auth();
 
-    if (!session || !["MANAGER", "ADMIN", "MECHANIC"].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !["MANAGER", "ADMIN", "MECHANIC"].includes(session.user.role)
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await req.json();
-    const invoiceId: string | undefined = body?.invoiceId;
+
+    // Compatibilité front existant :
+    // on accepte interventionId mais il correspond désormais à int_id
+    const interventionId: string | undefined =
+      body?.interventionId ?? body?.interventionId;
+
     const devTvaDefault =
       body?.dev_tva != null ? asNumber(body.dev_tva) : DEFAULT_TVA_PERCENT;
+
     const items = Array.isArray(body?.items) ? body.items : [];
 
-    if (!invoiceId || typeof invoiceId !== "string") {
-      return NextResponse.json({ error: "invoiceId requis" }, { status: 400 });
+    if (!interventionId || typeof interventionId !== "string") {
+      return NextResponse.json(
+        { error: "interventionId requis" },
+        { status: 400 }
+      );
     }
 
     if (!items.length) {
@@ -60,10 +72,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "dev_tva invalide" }, { status: 400 });
     }
 
-    const invoice = await prisma.invoice_inv.findUnique({
-      where: { inv_id: invoiceId },
+    const intervention = await prisma.intervention_int.findUnique({
+      where: { int_id: interventionId },
       include: {
-        inv_vehicle: {
+        int_vehicle: {
           include: {
             veh_client: true,
           },
@@ -71,15 +83,15 @@ export async function POST(req: Request) {
       },
     });
 
-    if (!invoice) {
+    if (!intervention) {
       return NextResponse.json(
-        { error: "Intervention (Invoice) introuvable" },
+        { error: "Intervention introuvable" },
         { status: 404 }
       );
     }
 
-    const vehicle = invoice.inv_vehicle;
-    const client = invoice.inv_vehicle?.veh_client;
+    const vehicle = intervention.int_vehicle;
+    const client = intervention.int_vehicle?.veh_client;
 
     if (!vehicle || !client) {
       return NextResponse.json(
@@ -118,7 +130,7 @@ export async function POST(req: Request) {
 
     const existingDevis = await prisma.te_devis_dev.findFirst({
       where: {
-        dev_invoice_id: invoiceId,
+        dev_intervention_id: interventionId,
         dev_supprimee: false,
       },
       select: { dev_id: true, dev_numdevis: true },
@@ -208,7 +220,10 @@ export async function POST(req: Request) {
       });
     }
 
+    totalHT = round2(totalHT);
+    totalTVA = round2(totalTVA);
     const totalTTC = round2(totalHT + totalTVA);
+
     const devNum = await generateDevisNumber();
 
     const result = await prisma.$transaction(async (tx) => {
@@ -216,7 +231,7 @@ export async function POST(req: Request) {
         data: {
           dev_cli_id: client.cli_id,
           dev_veh_id: vehicle.veh_id,
-          dev_invoice_id: invoice.inv_id,
+          dev_intervention_id: intervention.int_id,
           dev_user_id: session.user.id,
           dev_adressefacturation: client.cli_adresseFacturation ?? null,
           dev_numdevis: devNum,
@@ -231,6 +246,25 @@ export async function POST(req: Request) {
         },
         include: {
           articles: true,
+          dev_intervention: {
+            select: {
+              int_id: true,
+              int_accordNumber: true,
+              int_status: true,
+            },
+          },
+          dev_vehicle: {
+            select: {
+              veh_id: true,
+              veh_licensePlate: true,
+            },
+          },
+          dev_client: {
+            select: {
+              cli_id: true,
+              cli_name: true,
+            },
+          },
         },
       });
 
@@ -239,7 +273,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ devis: result }, { status: 201 });
   } catch (error) {
-    logError("Failed to create devis from invoice", error);
+    logError("Failed to create devis from intervention", error);
     return NextResponse.json(
       { error: "Échec de la création du devis" },
       { status: 500 }
@@ -251,7 +285,10 @@ export async function GET() {
   try {
     const session = await auth();
 
-    if (!session || (session.user.role !== "MANAGER" && session.user.role !== "ADMIN")) {
+    if (
+      !session?.user ||
+      !["MANAGER", "ADMIN"].includes(session.user.role)
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -259,13 +296,13 @@ export async function GET() {
       where: { dev_supprimee: false },
       orderBy: { dev_id: "desc" },
       include: {
-        dev_invoice: {
+        dev_intervention: {
           select: {
-            inv_id: true,
-            inv_accordNumber: true,
-            inv_dateOfConfirmation: true,
-            inv_workDescription: true,
-            inv_status: true,
+            int_id: true,
+            int_accordNumber: true,
+            int_dateOfConfirmation: true,
+            int_workDescription: true,
+            int_status: true,
           },
         },
         dev_vehicle: {
@@ -274,6 +311,16 @@ export async function GET() {
             veh_licensePlate: true,
             veh_brandId: true,
             veh_modelId: true,
+            veh_brand: {
+              select: {
+                bra_name: true,
+              },
+            },
+            veh_model: {
+              select: {
+                mod_name: true,
+              },
+            },
           },
         },
         dev_client: {
@@ -282,7 +329,24 @@ export async function GET() {
             cli_name: true,
           },
         },
-        articles: true,
+        dev_user: {
+          select: {
+            usr_id: true,
+            usr_name: true,
+            usr_email: true,
+          },
+        },
+        articles: {
+          include: {
+            dea_article: {
+              select: {
+                art_id: true,
+                art_name: true,
+                art_reference: true,
+              },
+            },
+          },
+        },
       },
     });
 

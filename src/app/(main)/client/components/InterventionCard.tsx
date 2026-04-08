@@ -25,14 +25,14 @@ function computeCounts(intervention: any) {
     }
   }
 
-  const invoices = Array.isArray(intervention?.vehicle?.invoices) ? intervention.vehicle.invoices : []
+  const interventions = Array.isArray(intervention?.vehicle?.interventions) ? intervention.vehicle.interventions : []
 
   let confirmee = 0,
     enCours = 0,
     attentePieces = 0,
     terminee = 0
 
-  for (const inv of invoices) {
+  for (const inv of interventions) {
     const ui = toUIStatus(inv.status)
     if (ui === "CONFIRMEE") confirmee++
     else if (ui === "EN_COURS") enCours++
@@ -65,36 +65,14 @@ export default function InterventionCard({
   const counts = computeCounts(intervention)
 
   const totalInterventions =
-    counts.CONFIRMEE + counts.EN_COURS + counts.ATTENTE_PIECES + counts.TERMINEE
-
-  const [brandModel, setBrandModel] = useState("")
-
-  useEffect(() => {
-    if (!v?.brandId && !v?.modelId) {
-      setBrandModel("")
-      return
-    }
-
-    const getNames = async () => {
-      try {
-        const brandName = v.brandId ? await getBrandNameById(v.brandId) : ""
-        const modelName = v.modelId ? await getModelNameById(v.modelId) : ""
-        setBrandModel(`${brandName} ${modelName}`.trim())
-      } catch (err) {
-        setBrandModel("...")
-      }
-    }
-
-    getNames()
-  }, [v.brandId, v.modelId])
+  counts.CONFIRMEE + counts.EN_COURS + counts.ATTENTE_PIECES + counts.TERMINEE
 
   return (
     <div
-      onClick={onViewDetails}
-      className="bg-white border rounded-2xl p-5 shadow-sm cursor-pointer hover:shadow-md transition
-        hover:border-[#F5963A]
-"
-      role="button"
+      // onClick={onViewDetails}
+      className="bg-white border rounded-2xl p-5 shadow-sm hover:shadow-md transition
+      hover:border-[#F5963A]"
+      // role="button"
       tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -107,7 +85,7 @@ export default function InterventionCard({
         <div className="min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
             <h3 className="text-lg font-bold text-gray-900 truncate">{v?.licensePlate || "—"}</h3>
-            {brandModel && <p className="text-gray-500 text-sm truncate">{brandModel}</p>}
+            {<p className="text-gray-500 text-sm truncate">{v?.brand?.name} {v?.model?.name}</p>}
             {v?.year != null && <p className="text-gray-400 text-sm">· {v.year}</p>}
           </div>
 

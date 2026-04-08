@@ -22,6 +22,7 @@ import {
   XCircle,
   CheckCircle2,
   Clock,
+  SearchX,
 } from "lucide-react";
 import { useBases } from "./shared/useBases.api";
 import { useStatusInt } from "./shared/useStatusInt.api";
@@ -142,6 +143,27 @@ export default function MecanicienPage() {
     setFilteredInterventions(filtered);
   }, [interventions, filterStatus]);
 
+  const onSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = String(e.target.value).toLowerCase().trim();
+    if (value === "") {
+      const filtered = interventions.filter(
+        (inv: any) => STATUS_UI_MAP[inv.status] === filterStatus,
+      );
+      setFilteredInterventions(filtered);
+      return;
+    }
+    const filtered = interventions.filter((inv: any) => {
+      const plate = String(inv.vehicle.licensePlate ?? "").toLowerCase();
+      const accord = String(inv.accordNumber ?? "").toLowerCase();
+      return plate.includes(value) || accord.includes(value);
+    });
+    const filteredAfterTrim = filtered.filter(
+      (inv: any) => STATUS_UI_MAP[inv.status] === filterStatus,
+    );
+    setFilteredInterventions(filteredAfterTrim);
+
+  };
+
   return (
     <div className="bg-zinc-50 min-h-screen p-4 sm:p-8">
       <div className="bg-white rounded-2xl shadow-sm p-6 flex flex-col gap-6">
@@ -185,8 +207,8 @@ export default function MecanicienPage() {
           <div className="flex items-center gap-2">
             <Input
               placeholder="Rechercher plaque ou accord..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              // value={search}
+              onChange={(e:any) => onSearchChange(e)}
             />
             <Button size="icon" variant="outline">
               <Search size={18} />
@@ -221,6 +243,21 @@ export default function MecanicienPage() {
         {/* Liste */}
         <div className="space-y-4">
           {loading && <p>Chargement...</p>}
+          {!loading && filteredInterventions.length === 0 && (
+            <div className="py-16 flex flex-col items-center justify-center text-center">
+                    
+              {/* Icône */}
+              <div className="h-16 w-16 rounded-2xl bg-gradient-to-br 
+                              from-gray-100 to-gray-200 flex items-center justify-center shadow-sm">
+                <SearchX/>
+              </div>
+
+              {/* Titre */}
+              <h3 className="mt-4 text-sm text-gray-900">
+                Aucune intervention
+              </h3>
+            </div>
+          )}
           {!loading &&
             filteredInterventions.map((inv) => {
               const uiStatus = STATUS_UI_MAP[inv.status];

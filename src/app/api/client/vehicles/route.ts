@@ -8,16 +8,14 @@ export async function GET() {
   try {
     const session = await auth();
 
-    if (!session) {
+    if (!session?.user) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    // Only clients can use this endpoint
     if (session.user.role !== "CLIENT") {
       return NextResponse.json({ error: "Accès interdit" }, { status: 403 });
     }
 
-    // Get client ID from session
     const clientId = session.user.clientId;
 
     if (!clientId) {
@@ -27,46 +25,57 @@ export async function GET() {
       );
     }
 
-    // Fetch all vehicles for this client
-    const vehicles = await prisma.vehicle.findMany({
+    const vehicles = await prisma.vehicle_veh.findMany({
       where: {
-        clientId: clientId,
+        veh_clientId: clientId,
       },
       include: {
-        client: {
+        veh_client: {
           select: {
-            id: true,
-            name: true,
+            cli_id: true,
+            cli_name: true,
           },
         },
-        base: {
+        veh_base: {
           select: {
-            id: true,
-            location: true,
-            clientId: true,
+            bas_id: true,
+            bas_location: true,
+            bas_clientId: true,
           },
         },
-        invoices: {
+        veh_brand: {
           select: {
-            id: true,
-            status: true,
-            invoiceConfirmed: true,
-            workDescription: true,
-            accordNumber: true,
-            dateOfConfirmation: true,
-            createdAt: true,
+            bra_id: true,
+            bra_name: true,
+          },
+        },
+        veh_model: {
+          select: {
+            mod_id: true,
+            mod_name: true,
+          },
+        },
+        interventions: {
+          select: {
+            int_id: true,
+            int_status: true,
+            int_interventionConfirmed: true,
+            int_workDescription: true,
+            int_accordNumber: true,
+            int_dateOfConfirmation: true,
+            int_createdAt: true,
+            int_updatedAt: true,
           },
           orderBy: {
-            createdAt: "desc",
+            int_createdAt: "desc",
           },
         },
       },
       orderBy: {
-        createdAt: "desc",
+        veh_createdAt: "desc",
       },
     });
 
-    // Calculate stats
     const stats = {
       total: vehicles.length,
       inProgress: 0,
@@ -75,12 +84,13 @@ export async function GET() {
     };
 
     vehicles.forEach((vehicle) => {
-      if (vehicle.invoices.length === 0) {
+      if (vehicle.interventions.length === 0) {
         stats.noIntervention++;
       } else {
-        const hasInProgress = vehicle.invoices.some(
-          (i) => i.status !== "FIXING_FINISHED"
+        const hasInProgress = vehicle.interventions.some(
+          (i) => i.int_status !== "FIXING_FINISHED"
         );
+
         if (hasInProgress) {
           stats.inProgress++;
         } else {
@@ -89,38 +99,92 @@ export async function GET() {
       }
     });
 
-    // Serialize dates
     const serializedVehicles = vehicles.map((v) => ({
-      ...v,
-      entryDate: v.entryDate.toISOString(),
-      exitDate: v.exitDate?.toISOString() ?? null,
-      createdAt: v.createdAt.toISOString(),
-      updatedAt: v.updatedAt.toISOString(),
-      invoices: v.invoices.map((inv) => ({
-        ...inv,
-        createdAt: inv.createdAt.toISOString(),
-        dateOfConfirmation: inv.dateOfConfirmation?.toISOString() ?? null,
+      id: v.veh_id,
+      licensePlate: v.veh_licensePlate,
+      normalizedPlate: v.veh_normalizedPlate,
+      year: v.veh_year,
+      color: v.veh_color,
+      firstRegistrationDate: v.veh_firstRegistrationDate?.toISOString() ?? null,
+      energy: v.veh_energy,
+      doorsCount: v.veh_doorsCount,
+      bodyType: v.veh_bodyType,
+      realPowerHp: v.veh_realPowerHp,
+      fiscalPowerCv: v.veh_fiscalPowerCv,
+      gearboxType: v.veh_gearboxType,
+      version: v.veh_version,
+      registrationCardDate: v.veh_registrationCardDate?.toISOString() ?? null,
+      entryDate: v.veh_entryDate.toISOString(),
+      exitDate: v.veh_exitDate?.toISOString() ?? null,
+      createdAt: v.veh_createdAt.toISOString(),
+      updatedAt: v.veh_updatedAt.toISOString(),
+      clientId: v.veh_clientId,
+      baseId: v.veh_baseId,
+      handledById: v.veh_handledById,
+      brandId: v.veh_brandId,
+      modelId: v.veh_modelId,
+
+      client: {
+        id: v.veh_client.cli_id,
+        name: v.veh_client.cli_name,
+      },
+
+      base: {
+        id: v.veh_base.bas_id,
+        location: v.veh_base.bas_location,
+        clientId: v.veh_base.bas_clientId,
+      },
+
+      brand: v.veh_brand
+        ? {
+            id: v.veh_brand.bra_id,
+            name: v.veh_brand.bra_name,
+          }
+        : null,
+
+      model: v.veh_model
+        ? {
+            id: v.veh_model.mod_id,
+            name: v.veh_model.mod_name,
+          }
+        : null,
+
+      interventions: v.interventions.map((intervention) => ({
+        id: intervention.int_id,
+        status: intervention.int_status,
+        interventionConfirmed: intervention.int_interventionConfirmed,
+        workDescription: intervention.int_workDescription,
+        accordNumber: intervention.int_accordNumber,
+        dateOfConfirmation:
+          intervention.int_dateOfConfirmation?.toISOString() ?? null,
+        createdAt: intervention.int_createdAt.toISOString(),
+        updatedAt: intervention.int_updatedAt.toISOString(),
       })),
     }));
 
-    // Get bases for this client (for filter dropdown)
-    const bases = await prisma.base.findMany({
+    const bases = await prisma.base_bas.findMany({
       where: {
-        clientId: clientId,
+        bas_clientId: clientId,
       },
       select: {
-        id: true,
-        location: true,
-        clientId: true,
+        bas_id: true,
+        bas_location: true,
+        bas_clientId: true,
       },
       orderBy: {
-        location: "asc",
+        bas_location: "asc",
       },
     });
 
+    const formattedBases = bases.map((base) => ({
+      id: base.bas_id,
+      location: base.bas_location,
+      clientId: base.bas_clientId,
+    }));
+
     return NextResponse.json({
       vehicles: serializedVehicles,
-      bases,
+      bases: formattedBases,
       stats,
     });
   } catch (error) {

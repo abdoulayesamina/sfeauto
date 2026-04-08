@@ -105,7 +105,7 @@ export function InterventionForm({
 
     const formData = new FormData(e.currentTarget as HTMLFormElement)
     const data = Object.fromEntries(formData.entries())
-
+ 
     onSubmit?.({
       ...data,
       vehicleId,

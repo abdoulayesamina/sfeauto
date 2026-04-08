@@ -23,11 +23,11 @@ type VehiclePreviewProps = {
   agence: string;
   entreeDate: string;
   color: string;
-  invoices: any[];
+  interventions: any[];
   enReparation?: number;
   termine?: number;
   onNewIntervention: () => void;
-  reloadInvoiceList: () => void;
+  reloadInterventionList: () => void;
 };
 
 const DEFAULT_META = {
@@ -45,88 +45,92 @@ export function VehiclePreview({
   agence,
   entreeDate,
   color,
-  invoices,
+  interventions,
   onNewIntervention,
-  reloadInvoiceList,
+  reloadInterventionList,
 }: VehiclePreviewProps) {
+
+
+
   const { data: session } = useSession();
   const role = session?.user?.role ?? null;
 
   const [filteredStatus, setFilteredStatus] = useState<"EN_COURS" | "TERMINEE">("EN_COURS");
   const [openDetailModal, setOpenDetailModal] = useState(false);
-  const [selectedInvoice, setSelectedInvoice] = useState<any>();
+  const [selectedIntervention, setSelectedIntervention] = useState<any>();
 
   const [openDevisModal, setOpenDevisModal] = useState(false);
-  const [invoiceForDevis, setInvoiceForDevis] = useState<any>(null);
+  const [interventionForDevis, setInterventionForDevis] = useState<any>(null);
 
   const [openApercu, setOpenApercu] = useState(false);
   const [targetDevisIdForApercu, setTargetDevisIdForApercu] = useState<any>(null);
 
   const [openEditModal, setOpenEditModal] = useState(false);
-  const [invoiceForEdit, setInvoiceForEdit] = useState<any>(null);
+  const [interventionForEdit, setInterventionForEdit] = useState<any>(null);
 
-  const [localInvoices, setLocalInvoices] = useState<any[]>(invoices);
-  const [filteredInvoices, setFilteredInvoices] = useState<any[]>([]);
+  const [localInterventions, setLocalInterventions] = useState<any[]>(interventions);
+  const [filteredInterventions, setFilteredInterventions] = useState<any[]>([]);
 
   const [detectDevis, setDetectDevis] = useState(false);
 
-  const mappedInvoices = useMemo(() => {
-    return (localInvoices ?? []).map((inv) => ({
+  const mappedInterventions = useMemo(() => {
+    return (localInterventions ?? []).map((inv) => ({
       ...inv,
-      uiStatus: toUIStatus(inv?.status),
+      uiStatus: toUIStatus(inv?.int_status),
     }));
-  }, [localInvoices]);
+  }, [localInterventions]);
 
   useEffect(() => {
-    setLocalInvoices(invoices ?? []);
-  }, [invoices]);
+    setLocalInterventions(interventions ?? []);
+  }, [interventions]);
 
   useEffect(() => {
-    const next = mappedInvoices.filter((inv) =>
+    const next = mappedInterventions.filter((inv) =>
       filteredStatus === "EN_COURS" ? inv.uiStatus !== "TERMINEE" : inv.uiStatus === "TERMINEE"
     );
-    setFilteredInvoices(next);
-  }, [mappedInvoices, filteredStatus, detectDevis]);
+    console.log("Filtered interventions:", next);
+    setFilteredInterventions(next);
+  }, [mappedInterventions, filteredStatus, detectDevis]);
 
   useEffect(() => {
     if (detectDevis) setDetectDevis(false);
   }, [detectDevis]);
 
-  const handleViewDetail = (invoice: any) => {
-    setSelectedInvoice({
-      ...invoice,
-      vehicle: {
-        licensePlate,
-        brand,
-        model,
-        year,
-        color,
-        entryDate: entreeDate,
-        client: { name: client },
-        base: { location: agence },
+  const handleViewDetail = (intervention: any) => {
+    setSelectedIntervention({
+      ...intervention,
+      int_vehicle: {
+        veh_licensePlate: licensePlate,
+        veh_brand: brand,
+        veh_model: model,
+        veh_year: year,
+        veh_color: color,
+        veh_entryDate: entreeDate,
+        veh_client: { cli_name: client },
+        veh_base: { bas_location: agence },
       },
     });
     setOpenDetailModal(true);
   };
 
-  const handleCreateDevis = (invoice: any) => {
-    setInvoiceForDevis(invoice);
+  const handleCreateDevis = (intervention: any) => {
+    setInterventionForDevis(intervention);
     setOpenDevisModal(true);
   };
 
-  const handleEditIntervention = (invoice: any) => {
-    setInvoiceForEdit(invoice);
+  const handleEditIntervention = (intervention: any) => {
+    setInterventionForEdit(intervention);
     setOpenEditModal(true);
   };
 
   const countEnCours = useMemo(
-    () => (mappedInvoices ?? []).filter((i) => i.uiStatus !== "TERMINEE").length,
-    [mappedInvoices]
+    () => (mappedInterventions ?? []).filter((i) => i.uiStatus !== "TERMINEE").length,
+    [mappedInterventions]
   );
 
   const countTerminee = useMemo(
-    () => (mappedInvoices ?? []).filter((i) => i.uiStatus === "TERMINEE").length,
-    [mappedInvoices]
+    () => (mappedInterventions ?? []).filter((i) => i.uiStatus === "TERMINEE").length,
+    [mappedInterventions]
   );
 
   return (
@@ -171,22 +175,22 @@ export function VehiclePreview({
       </div>
 
       <div className="mt-6 space-y-4 p-2 min-h-[350px] max-h-[350px] overflow-auto">
-        {filteredInvoices.map((inv) => {
+        {filteredInterventions.map((inv) => {
           const meta = getStatusMeta(inv?.uiStatus) ?? DEFAULT_META;
           const hasDevis = Boolean(inv?.devis?.dev_id);
           const devisId = inv?.devis?.dev_id ?? null;
 
           return (
-            <div key={inv.id} className="rounded-xl border bg-white p-5 shadow-sm hover:shadow-md transition">
+            <div key={inv.int_id} className="rounded-xl border bg-white p-5 shadow-sm hover:shadow-md transition">
               <div className="flex flex-col-reverse lg:flex-row justify-between items-start gap-4">
                 <div>
-                  <p className="font-semibold text-zinc-800">{inv?.workDescription ?? "—"}</p>
+                  <p className="font-semibold text-zinc-800">{inv?.int_workDescription ?? "—"}</p>
                   <div className="flex flex-wrap gap-4 mt-2 text-sm text-zinc-500">
                     <span>
-                      <strong>N° Accord :</strong> {inv?.accordNumber ?? "—"}
+                      <strong>N° Accord :</strong> {inv?.int_accordNumber ?? "—"}
                     </span>
                     <span>
-                      Confirmé le : {inv?.dateOfConfirmation ? new Date(inv.dateOfConfirmation).toLocaleDateString() : "—"}
+                      Confirmé le : {inv?.int_dateOfConfirmation ? new Date(inv.int_dateOfConfirmation).toLocaleDateString() : "—"}
                     </span>
                   </div>
                 </div>
@@ -260,37 +264,46 @@ export function VehiclePreview({
       </div>
 
       <Modal open={openDetailModal} onClose={() => setOpenDetailModal(false)} modalTitle="Détail de l'intervention">
-        {selectedInvoice && (
-          <IntervDetailGes selectedIntervention={selectedInvoice} onClose={() => setOpenDetailModal(false)} />
+        {selectedIntervention && (
+          <IntervDetailGes selectedIntervention={selectedIntervention} onClose={() => setOpenDetailModal(false)} />
         )}
       </Modal>
 
-      {invoiceForEdit && (
+      {interventionForEdit && (
         <EditInterventionModal
           open={openEditModal}
           onClose={() => setOpenEditModal(false)}
-          invoice={invoiceForEdit}
+          intervention={interventionForEdit}
           onUpdated={(updated) => {
-            const updatedInvoice = updated?.invoice ?? updated;
-            setLocalInvoices((prev) => prev.map((x) => (x.id === updatedInvoice.id ? { ...x, ...updatedInvoice } : x)));
+            const updatedIntervention = updated?.intervention ?? updated;
+            setLocalInterventions((prev) => prev.map((x) => (x.id === updatedIntervention.id ? { ...x, ...updatedIntervention } : x)));
           }}
-          reloadInvoiceList={reloadInvoiceList}
+          reloadInterventionList={reloadInterventionList}
         />
       )}
 
-      {invoiceForDevis && (
+      {interventionForDevis && (
         <CreateDevisModal
           open={openDevisModal}
           onClose={() => setOpenDevisModal(false)}
-          invoiceId={invoiceForDevis.id}
+          interventionId={interventionForDevis?.int_id ?? interventionForDevis?.id ?? ""}
           onCreated={(devis) => {
-            const created = devis?.devis ?? devis;
-            const dev_id = created?.dev_id;
-            const dev_numdevis = created?.dev_numdevis;
-            setDetectDevis(true);
-            setLocalInvoices((prev) =>
-              prev.map((x) => (x.id === invoiceForDevis.id ? { ...x, devis: { dev_id, dev_numdevis } } : x))
-            );
+            const created = devis?.devis ?? devis
+            const dev_id = created?.dev_id
+            const dev_numdevis = created?.dev_numdevis
+
+            setDetectDevis(true)
+
+            setLocalInterventions((prev) =>
+              prev.map((x) =>
+                (x.int_id ?? x.id) === (interventionForDevis?.int_id ?? interventionForDevis?.id)
+                  ? {
+                    ...x,
+                    devis: { dev_id, dev_numdevis },
+                  }
+                  : x
+              )
+            )
           }}
         />
       )}

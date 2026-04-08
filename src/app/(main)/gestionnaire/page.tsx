@@ -66,7 +66,7 @@ export default function GestionnairePage() {
     try {
       setLoading(true)
       const [v, c, a] = await Promise.all([
-        getVehicles({ includeInvoices: true }),
+        getVehicles({ includeInterventions: true }),
         getClients(),
         getAgences(),
       ])
@@ -104,6 +104,7 @@ export default function GestionnairePage() {
 
   const handleSearch = async () => {
     if (!search.trim()) {
+      toast.info("Vous devez entrer une plaque d'immatriculation pour lancer la recherche.")
       await loadAll()
       setVehiculeNotFound(false)
       return
@@ -111,9 +112,7 @@ export default function GestionnairePage() {
 
     try {
       const { normalized } = searchSmart(search)
-
       const data = await searchVehicles(normalized)
-
       const vv = normalizeVehicles(data)
 
       setVehicles(vv)
@@ -124,6 +123,7 @@ export default function GestionnairePage() {
     } catch (e: any) {
       toast.error("Recherche", e.message)
     }
+
   }
 
   const handleCreateVehicle = async (data: Partial<Vehicule>) => {
@@ -149,16 +149,16 @@ export default function GestionnairePage() {
     const list = Array.isArray(vehicles) ? vehicles : []
 
     const filtered = list.filter((v) => {
-      if (clientId && v.client?.id !== clientId) return false
-      if (agenceId && v.base?.id !== agenceId) return false
+      if (clientId && v.veh_client?.cli_id !== clientId) return false
+      if (agenceId && v.veh_base?.bas_id !== agenceId) return false
 
       if (statut && statut !== "all") {
         if (statut === "SANS_INTERVENTION") {
-          if (v.invoices && v.invoices.length > 0) return false
+          if (v.interventions && v.interventions.length > 0) return false
         } else {
-          const lastInvoice = v.invoices?.[v.invoices.length - 1]
-          if (!lastInvoice) return false
-          if (lastInvoice.status !== statut) return false
+          const lastIntervention = v.interventions?.[v.interventions.length - 1]
+          if (!lastIntervention) return false
+          if (lastIntervention.int_status !== statut) return false
         }
       }
 
@@ -170,7 +170,7 @@ export default function GestionnairePage() {
   useEffect(() => {
     if (!selectedVehicle) return
 
-    const updatedVehicle = vehicles.find(v => v.id === selectedVehicle.id)
+    const updatedVehicle = vehicles.find(v => v.veh_id === selectedVehicle.veh_id)
     if (updatedVehicle) {
       setSelectedVehicle(updatedVehicle)
     }
@@ -178,22 +178,23 @@ export default function GestionnairePage() {
 
   const filteredAgences = useMemo(() => {
     const list = Array.isArray(agences) ? agences : []
-    if (clientId) return list.filter((a) => a.clientId === clientId)
+    if (clientId) return list.filter((a) => a.bas_clientId === clientId)
     return list
   }, [agences, clientId])
 
   const handleSubmitIntervention = async (data: any) => {
     setLoading(true)
     try {
+      console.log("Creating intervention with data:", data)
       await createIntervention({
-        vehicleId: selectedVehicle?.id ?? "",
-        accordNumber: data.numeroAccord,
-        dateOfConfirmation: data.dateConfirmation,
-        workDescription: data.descriptionTravaux,
-        didOrderParts: data.piecesCommande === "oui",
-        ordersDetails: data.detailsCommande || null,
-        comments: data.commentaires || null,
-        images: data.images || [],
+        veh_vehicleId: selectedVehicle?.veh_id ?? "",
+        veh_accordNumber: data.numeroAccord,
+        veh_dateOfConfirmation: data.dateConfirmation,
+        veh_workDescription: data.descriptionTravaux,
+        veh_didOrderParts: data.piecesCommande === "oui",
+        veh_ordersDetails: data.detailsCommande || null,
+        veh_comments: data.commentaires || null,
+        veh_images: data.images || [],
       })
 
       await loadAll()
@@ -205,7 +206,7 @@ export default function GestionnairePage() {
       setInterventionModalOpen(false)
       toast.success("Intervention créée")
     } catch (e: any) {
-      toast.error("Intervention", e.message)
+      toast.error("Intervention : "+ e.message)
       setLoading(false)
     }
   }
@@ -262,27 +263,27 @@ export default function GestionnairePage() {
             <VehicleStats
               total={filteredVehicles.length}
               // enCours={
-              //   filteredVehicles.filter((v) => v.invoices?.some((i) => i.status !== "FIXING_FINISHED")).length
+              //   filteredVehicles.filter((v) => v.intervention?.some((i) => i.status !== "FIXING_FINISHED")).length
               // }
               enCours={
                 filteredVehicles.filter((v) => {
-                  const invoices = v.invoices || []
-                  return invoices.length > 0 && invoices.some(i => i.status !== "FIXING_FINISHED")
+                  const intervention = v.interventions || []
+                  return intervention.length > 0 && intervention.some(i => i.int_status !== "FIXING_FINISHED")
                 }).length
               }
-              // termine={filteredVehicles.filter((v) => v.invoices?.some((i) => i.status === "FIXING_FINISHED")).length}
+              // termine={filteredVehicles.filter((v) => v.interventions?.some((i) => i.status === "FIXING_FINISHED")).length}
               termine={
                 filteredVehicles.filter((v) => {
-                  const invoices = v.invoices || []
-                  return invoices.length > 0 && invoices.every(i => i.status === "FIXING_FINISHED")
+                  const interventions = v.interventions || []
+                  return interventions.length > 0 && interventions.every(i => i.int_status === "FIXING_FINISHED")
                 }).length
               }
-              sansIntervention={filteredVehicles.filter((v) => !v.invoices || v.invoices.length === 0).length}
-            // Somme de tout les Invoice de tous les véhicules dont le base.location est "Paris Test Agency"
-            // test={filteredVehicles.filter((v) => v.base?.location === "Paris Test Agency").reduce((sum, v) => {
-            //   const invoices = Array.isArray(v.invoices) ? v.invoices : []
-            //   return sum + invoices.reduce((invSum, i) => invSum , 0)
-            // }, 0) }
+              sansIntervention={filteredVehicles.filter((v) => !v.interventions || v.interventions.length === 0).length}
+              // Somme de tout les Intervention de tous les véhicules dont le base.location est "Paris Test Agency"
+              // test={filteredVehicles.filter((v) => v.base?.location === "Paris Test Agency").reduce((sum, v) => {
+              //   const interventions = Array.isArray(v.interventions) ? v.interventions : []
+              //   return sum + interventions.reduce((invSum, i) => invSum , 0)
+              // }, 0) }
             />
 
             {/* LISTE VEHICULES */}
@@ -317,7 +318,7 @@ export default function GestionnairePage() {
       >
         <AddVehiculeForm
           mode="create"
-          data={{ licensePlate: preFillLicensePlate } as Vehicule}
+          data={{ veh_licensePlate: preFillLicensePlate } as Vehicule}
           onSubmit={handleCreateVehicle}
           onClose={() => setOpenCreateVehiculeModal(false)}
           loading={loading}
@@ -329,19 +330,19 @@ export default function GestionnairePage() {
         {selectedVehicle && (
           <VehiclePreview
             // licensePlate={selectedVehicle.licensePlate}
-            licensePlate={formatLicensePlate(selectedVehicle.licensePlate || "")}
-            brand={selectedVehicle.brand?.name ?? ""}
-            model={selectedVehicle.model?.name ?? ""}
-            year={selectedVehicle.year ?? 0}
-            client={selectedVehicle.client?.name ?? ""}
-            agence={selectedVehicle.base?.location ?? ""}
-            entreeDate={selectedVehicle.entryDate ?? ""}
-            color={selectedVehicle.color ?? ""}
-            invoices={selectedVehicle.invoices ?? []}
+            licensePlate={formatLicensePlate(selectedVehicle.veh_licensePlate || "")}
+            brand={selectedVehicle.veh_brand?.bra_name ?? ""}
+            model={selectedVehicle.veh_model?.mod_name ?? ""}
+            year={selectedVehicle.veh_year ?? 0}
+            client={selectedVehicle.veh_client?.cli_name ?? ""}
+            agence={selectedVehicle.veh_base?.bas_location ?? ""}
+            entreeDate={selectedVehicle.veh_entryDate ?? ""}
+            color={selectedVehicle.veh_color ?? ""}
+            interventions={selectedVehicle.interventions ?? []}
             enReparation={1}
             termine={0}
             onNewIntervention={handleNewInterventionFromVehiculePreview}
-            reloadInvoiceList={loadAll}
+            reloadInterventionList={loadAll}
           />
         )}
       </Modal>
@@ -353,9 +354,9 @@ export default function GestionnairePage() {
         modalTitle="Créer une intervention"
       >
         <InterventionForm
-          vehicleId={selectedVehicle?.id ?? ""}
+          vehicleId={selectedVehicle?.veh_id ?? ""}
           // vehicleDisplayText={`${selectedVehicle?.licensePlate} - ${selectedVehicle?.brand?.name ?? ""} ${selectedVehicle?.model?.name ?? ""}`}
-          vehicleDisplayText={`${formatLicensePlate(selectedVehicle?.licensePlate || "")} - ${selectedVehicle?.brand?.name ?? ""} ${selectedVehicle?.model?.name ?? ""}`}
+          vehicleDisplayText={`${formatLicensePlate(selectedVehicle?.veh_licensePlate || "")} - ${selectedVehicle?.veh_brand?.bra_name ?? ""} ${selectedVehicle?.veh_model?.mod_name ?? ""}`}
           defaultAccordNumber="ACC-2026-001"
           onSubmit={handleSubmitIntervention}
           onClose={() => setInterventionModalOpen(false)}

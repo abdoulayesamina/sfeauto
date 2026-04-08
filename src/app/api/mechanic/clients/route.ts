@@ -13,18 +13,22 @@ export async function GET() {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
     }
 
-    const clients = await prisma.client.findMany({
+    const clients = await prisma.client_cli.findMany({
       select: {
-        id: true,
-        name: true
+        cli_id: true,
+        cli_name: true
       },
       orderBy: {
-        name: 'asc'
+        cli_name: 'asc'
       }
     })
 
-    return NextResponse.json(clients)
+    const formattedClients = clients.map((client) => ({
+      id: client.cli_id,
+      name: client.cli_name
+    }))
 
+    return NextResponse.json(formattedClients)
   } catch (error) {
     logError('Failed to fetch clients', error)
     return NextResponse.json(

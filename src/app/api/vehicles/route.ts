@@ -1,11 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
-
 import { auth } from "@/auth";
 import { logError } from "@/src/lib/logger";
 import { prisma } from "@/src/lib/prisma";
-import { normalizePlate } from "@/src/lib/normalizePlate"; // ✅ BON IMPORT
+import { normalizePlate } from "@/src/lib/normalizePlate";
 
-// Helpers
+const BODY_TYPES = [
+  "BERLINE",
+  "SUV",
+  "BREAK",
+  "COUPE",
+  "CABRIOLET",
+  "MONOSPACE",
+  "PICKUP",
+  "UTILITAIRE",
+  "AUTRE",
+] as const;
+
+const ENERGIES = [
+  "GAZOLE",
+  "ESSENCE",
+  "HYBRIDE",
+  "ELECTRIQUE",
+  "GPL",
+] as const;
+
+const GEARBOX_TYPES = ["BVM", "BVA"] as const;
+
 function parseOptionalInt(value: unknown): number | null {
   if (value === undefined || value === null || value === "") return null;
   const n = typeof value === "number" ? value : parseInt(String(value), 10);
@@ -15,13 +35,24 @@ function parseOptionalInt(value: unknown): number | null {
 function parseOptionalDate(value: unknown): Date | null {
   if (value === undefined || value === null || value === "") return null;
   const d = new Date(String(value));
-  return isNaN(d.getTime()) ? null : d;
+  return Number.isNaN(d.getTime()) ? null : d;
 }
 
 function normalizeOptionalString(value: unknown): string | null {
   if (value === undefined || value === null) return null;
   const s = String(value).trim();
   return s.length ? s : null;
+}
+
+function parseOptionalEnum<T extends readonly string[]>(
+  value: unknown,
+  allowed: T
+): T[number] | null {
+  const normalized = normalizeOptionalString(value);
+  if (!normalized) return null;
+  return (allowed as readonly string[]).includes(normalized)
+    ? (normalized as T[number])
+    : null;
 }
 
 // ============================
@@ -31,7 +62,10 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
 
-    if (!session?.user || !["MANAGER", "AGENCE", "MECHANIC", "ADMIN"].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !["MANAGER", "AGENCE", "MECHANIC", "ADMIN"].includes(session.user.role)
+    ) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
@@ -43,38 +77,39 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const search = searchParams.get("search");
+    const rawSearch = searchParams.get("search");
+    const search = normalizeOptionalString(rawSearch);
+    const normalizedSearch = search ? normalizePlate(search) : null;
 
-    const normalizedSearch = search ? normalizePlate(search) : null; // ✅ AJOUT
+    const orFilters: Array<Record<string, unknown>> = [];
 
-    const baseFilter =
-      session.user.role === "AGENCE"
-        ? { baseId: session.user.baseId ?? "" }
-        : {};
+    if (search) {
+      orFilters.push({
+        veh_licensePlate: {
+          contains: search,
+        },
+      });
+
+      if (normalizedSearch) {
+        orFilters.push({
+          veh_normalizedPlate: {
+            contains: normalizedSearch,
+          },
+        });
+      }
+    }
 
     const vehicles = await prisma.vehicle_veh.findMany({
       where: {
-        ...baseFilter,
-        ...(search
-          ? {
-            OR: [
-              {
-                veh_licensePlate: {
-                  contains: search
-                }
-              },
-              {
-                veh_normalizedPlate: {
-                  contains: normalizedSearch ?? ""
-                }
-              }
-            ]
-          }
+        ...(session.user.role === "AGENCE"
+          ? { veh_baseId: session.user.baseId! }
           : {}),
+        ...(orFilters.length > 0 ? { OR: orFilters } : {}),
       },
       select: {
         veh_id: true,
         veh_licensePlate: true,
+        veh_normalizedPlate: true,
         veh_brandId: true,
         veh_modelId: true,
 
@@ -95,63 +130,148 @@ export async function GET(request: NextRequest) {
         veh_createdAt: true,
         veh_updatedAt: true,
 
-        veh_client: { select: { cli_id: true, cli_name: true } },
-        veh_base: { select: { bas_id: true, bas_location: true, bas_clientId: true } },
-
-        veh_brand: { select: { bra_id: true, bra_name: true } },
-        veh_model: { select: { mod_id: true, mod_name: true } },
-
-        invoices: {
+        veh_client: {
           select: {
-            inv_id: true,
-            inv_vehicleId: true,
-            inv_invoiceConfirmed: true,
-            inv_status: true,
-            inv_accordNumber: true,
-            inv_dateOfConfirmation: true,
-            inv_statusUpdatedAt: true,
-            inv_workDescription: true,
-            inv_didOrderParts: true,
-            inv_ordersDetails: true,
-            inv_comments: true,
-            inv_createdAt: true,
-            inv_updatedAt: true,
-            photos: { select: { ivp_id: true, ivp_url: true } },
-            inv_handledBy: { select: { usr_name: true, usr_email: true } },
-            devis: {
-              where: { dev_supprimee: false },
-              select: { dev_id: true, dev_numdevis: true },
-            },
-            inv_vehicle: {
+            cli_id: true,
+            cli_name: true,
+            cli_email: true,
+            cli_phone: true,
+            cli_adresseFacturation: true,
+            cli_numClient: true,
+            cli_tvaIntraCommunautaire: true,
+          },
+        },
+
+        veh_base: {
+          select: {
+            bas_id: true,
+            bas_location: true,
+            bas_clientId: true,
+          },
+        },
+
+        veh_brand: {
+          select: {
+            bra_id: true,
+            bra_name: true,
+          },
+        },
+
+        veh_model: {
+          select: {
+            mod_id: true,
+            mod_name: true,
+          },
+        },
+
+        veh_handledBy: {
+          select: {
+            usr_id: true,
+            usr_name: true,
+            usr_email: true,
+          },
+        },
+
+        interventions: {
+          select: {
+            int_id: true,
+            int_accordNumber: true,
+            int_dateOfConfirmation: true,
+            int_interventionConfirmed: true,
+            int_status: true,
+            int_statusUpdatedAt: true,
+            int_workDescription: true,
+            int_didOrderParts: true,
+            int_ordersDetails: true,
+            int_comments: true,
+            int_createdAt: true,
+            int_updatedAt: true,
+
+            int_handledBy: {
               select: {
+                usr_id: true,
+                usr_name: true,
+                usr_email: true,
+              },
+            },
+
+            photos: {
+              select: {
+                itp_id: true,
+                itp_url: true,
+                itp_blobName: true,
+                itp_contentType: true,
+                itp_size: true,
+                itp_createdAt: true,
+              },
+            },
+
+            devis: {
+              select: {
+                dev_id: true,
+                dev_numdevis: true,
+                dev_datecreation: true,
+                dev_totalht: true,
+                dev_totaltva: true,
+                dev_totalttc: true,
+                dev_tva: true,
+                dev_supprimee: true,
+                dev_accordNumber: true,
+                dev_dateAccord: true,
+              },
+            },
+
+            int_vehicle: {
+              select: {
+                veh_id: true,
                 veh_licensePlate: true,
-                veh_color: true,
-                veh_year: true,
-                veh_clientId: true,
-                veh_baseId: true,
-                veh_entryDate: true,
                 veh_brand: {
-                  select: { bra_name: true }
+                  select: {
+                    bra_name: true,
+                  },
                 },
                 veh_model: {
-                  select: { mod_name: true }
+                  select: {
+                    mod_name: true,
+                  },
                 },
-                veh_client: {
-                  select: { cli_name: true }
-                },
-                veh_base: {
-                  select: { bas_location: true }
-                }
-              }
-            }
+                veh_year: true,
+                veh_color: true
+              },
+            },
           },
-          orderBy: { inv_createdAt: "desc" },
+          orderBy: {
+            int_createdAt: "desc",
+          },
+        },
+
+        devis: {
+          where: {
+            dev_supprimee: false,
+          },
+          select: {
+            dev_id: true,
+            dev_numdevis: true,
+            dev_intervention_id: true,
+            dev_datecreation: true,
+            dev_totalht: true,
+            dev_totaltva: true,
+            dev_totalttc: true,
+            dev_tva: true,
+            dev_accordNumber: true,
+            dev_dateAccord: true,
+          },
+          orderBy: {
+            dev_datecreation: "desc",
+          },
         },
       },
-      orderBy: { veh_createdAt: "desc" },
+      orderBy: {
+        veh_createdAt: "desc",
+      },
       take: search ? 10 : 100,
-      });
-    
+    });
+
     return NextResponse.json({ vehicles });
   } catch (error) {
     logError("Failed to fetch vehicles", error);
@@ -169,7 +289,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
 
-    if (!session?.user || !["MANAGER", "AGENCE"].includes(session.user.role)) {
+    if (!session?.user || !["MANAGER", "AGENCE", "MECHANIC"].includes(session.user.role)) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
@@ -183,90 +303,135 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     const {
-      licensePlate,
-      brandId,
-      modelId,
-      year,
-      color,
-      clientId,
-      baseId,
-      entryDate,
-      exitDate,
-      firstRegistrationDate,
-      energy,
-      doorsCount,
-      bodyType,
-      realPowerHp,
-      fiscalPowerCv,
-      gearboxType,
-      version,
-      registrationCardDate,
+      veh_licensePlate: licensePlate,
+      veh_brandId: brandId,
+      veh_modelId: modelId,
+      veh_year: year,
+      veh_color: color,
+      veh_clientId: clientId,
+      veh_baseId: baseId,
+      veh_entryDate: entryDate,
+      veh_exitDate: exitDate,
+      veh_firstRegistrationDate: firstRegistrationDate,
+      veh_energy: energy,
+      veh_doorsCount: doorsCount,
+      veh_bodyType: bodyType,
+      veh_realPowerHp: realPowerHp,
+      veh_fiscalPowerCv: fiscalPowerCv,
+      veh_gearboxType: gearboxType,
+      veh_version: version,
+      veh_registrationCardDate: registrationCardDate,
     } = body;
 
-    if (!String(brandId ?? "").trim()) {
-      return NextResponse.json({ error: "Marque requise" }, { status: 400 });
-    }
-    if (!String(modelId ?? "").trim()) {
-      return NextResponse.json({ error: "Modèle requise" }, { status: 400 });
-    }
-
     if (!String(licensePlate ?? "").trim()) {
-      return NextResponse.json({ error: "Immatriculation requise" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Immatriculation requise" },
+        { status: 400 }
+      );
     }
 
-    const cleanPlate = String(licensePlate).trim(); // ✅ AJOUT
+    const cleanPlate = String(licensePlate).trim();
 
-    let finalBaseId: string | null = baseId ? String(baseId) : null;
-    let finalClientId: string | null = clientId ? String(clientId) : null;
+    let finalBaseId = normalizeOptionalString(baseId);
+    let finalClientId = normalizeOptionalString(clientId);
 
     if (session.user.role === "AGENCE") {
       finalBaseId = session.user.baseId!;
+
       const base = await prisma.base_bas.findUnique({
         where: { bas_id: finalBaseId },
-        select: { bas_clientId: true },
+        select: {
+          bas_id: true,
+          bas_clientId: true,
+        },
       });
 
       if (!base) {
-        return NextResponse.json({ error: "Base agence introuvable" }, { status: 400 });
+        return NextResponse.json(
+          { error: "Base agence introuvable" },
+          { status: 400 }
+        );
       }
 
       finalClientId = base.bas_clientId;
     }
 
     if (session.user.role === "MANAGER") {
-      if (!String(finalClientId ?? "").trim() || !String(finalBaseId ?? "").trim()) {
+      if (!finalBaseId || !finalClientId) {
         return NextResponse.json(
-          { error: "Immatriculation, client et agence requis" },
+          { error: "Client et agence requis" },
+          { status: 400 }
+        );
+      }
+
+      const base = await prisma.base_bas.findUnique({
+        where: { bas_id: finalBaseId },
+        select: {
+          bas_id: true,
+          bas_clientId: true,
+        },
+      });
+
+      if (!base) {
+        return NextResponse.json(
+          { error: "Agence introuvable" },
+          { status: 400 }
+        );
+      }
+
+      if (base.bas_clientId !== finalClientId) {
+        return NextResponse.json(
+          { error: "Cette agence n'appartient pas au client sélectionné" },
           { status: 400 }
         );
       }
     }
 
+    const parsedBodyType = parseOptionalEnum(bodyType, BODY_TYPES);
+    const parsedEnergy = parseOptionalEnum(energy, ENERGIES);
+    const parsedGearboxType = parseOptionalEnum(gearboxType, GEARBOX_TYPES);
+
+    if (normalizeOptionalString(bodyType) && !parsedBodyType) {
+      return NextResponse.json(
+        { error: "Type de carrosserie invalide" },
+        { status: 400 }
+      );
+    }
+
+    if (normalizeOptionalString(energy) && !parsedEnergy) {
+      return NextResponse.json(
+        { error: "Type d'énergie invalide" },
+        { status: 400 }
+      );
+    }
+
+    if (normalizeOptionalString(gearboxType) && !parsedGearboxType) {
+      return NextResponse.json(
+        { error: "Type de boîte invalide" },
+        { status: 400 }
+      );
+    }
+
     const vehicle = await prisma.vehicle_veh.create({
       data: {
         veh_licensePlate: cleanPlate,
-        veh_normalizedPlate: normalizePlate(cleanPlate), // 🔥 IMPORTANT
+        veh_normalizedPlate: normalizePlate(cleanPlate),
 
-        veh_brandId: brandId || null,
-        veh_modelId: modelId || null,
+        veh_brandId: normalizeOptionalString(brandId),
+        veh_modelId: normalizeOptionalString(modelId),
+
         veh_year: parseOptionalInt(year),
-        // color: normalizeOptionalString(color),
-
         veh_color: normalizeOptionalString(color),
         veh_version: normalizeOptionalString(version),
 
-        veh_bodyType: bodyType?.trim() || null,
-        veh_gearboxType: gearboxType?.trim() || null,
-        veh_energy: energy?.trim() || null,
+        veh_bodyType: parsedBodyType,
+        veh_gearboxType: parsedGearboxType,
+        veh_energy: parsedEnergy,
 
         veh_firstRegistrationDate: parseOptionalDate(firstRegistrationDate),
-        // energy: energy ?? null,
         veh_doorsCount: parseOptionalInt(doorsCount),
-        // bodyType: bodyType ?? null,
         veh_realPowerHp: parseOptionalInt(realPowerHp),
         veh_fiscalPowerCv: parseOptionalInt(fiscalPowerCv),
-        // gearboxType: gearboxType ?? null,
-        // version: normalizeOptionalString(version),
         veh_registrationCardDate: parseOptionalDate(registrationCardDate),
 
         veh_clientId: finalClientId!,
@@ -278,9 +443,37 @@ export async function POST(request: NextRequest) {
         veh_handledById: session.user.id,
       },
       include: {
-        veh_client: true,
-        veh_base: { select: { bas_id: true, bas_location: true } },
-        veh_handledBy: { select: { usr_name: true, usr_email: true } },
+        veh_client: {
+          select: {
+            cli_id: true,
+            cli_name: true,
+          },
+        },
+        veh_base: {
+          select: {
+            bas_id: true,
+            bas_location: true,
+          },
+        },
+        veh_brand: {
+          select: {
+            bra_id: true,
+            bra_name: true,
+          },
+        },
+        veh_model: {
+          select: {
+            mod_id: true,
+            mod_name: true,
+          },
+        },
+        veh_handledBy: {
+          select: {
+            usr_id: true,
+            usr_name: true,
+            usr_email: true,
+          },
+        },
       },
     });
 
@@ -403,10 +596,10 @@ export async function POST(request: NextRequest) {
 //           },
 //         },
 
-//         invoices: {
+//         interventions: {
 //           select: {
 //             id: true,
-//             invoiceConfirmed: true,
+//             interventionConfirmed: true,
 //             status: true,
 //             accordNumber: true,
 //             dateOfConfirmation: true,

@@ -14,11 +14,11 @@ import { TotalsCard } from "./edit-devis/TotalsCard.tsx";
 type Props = {
   open: boolean;
   onClose: () => void;
-  invoiceId: string;
+  interventionId: string;
   onCreated?: (devis: any) => void;
 };
 
-export function CreateDevisModal({ open, onClose, invoiceId, onCreated }: Props) {
+export function CreateDevisModal({ open, onClose, interventionId, onCreated }: Props) {
   const { createDevis, loading, error } = useDevisApi();
   const { articles, fetching } = useArticles(open);
 
@@ -26,10 +26,10 @@ export function CreateDevisModal({ open, onClose, invoiceId, onCreated }: Props)
   const [lines, setLines] = useState<LineRow[]>([{ art_id: 0, quantite: 1, reference: "" }]);
 
   const canSubmit = useMemo(() => {
-    if (!invoiceId) return false;
+    if (!interventionId) return false;
     if (!lines.length) return false;
     return lines.every((l) => l.art_id > 0 && l.quantite > 0);
-  }, [invoiceId, lines]);
+  }, [interventionId, lines]);
 
   const { totalHT, totalTTC } = useMemo(() => {
     return calcTotals(lines, articles, devTva);
@@ -44,7 +44,7 @@ export function CreateDevisModal({ open, onClose, invoiceId, onCreated }: Props)
     if (!canSubmit) return;
 
     const payload = {
-      invoiceId,
+      interventionId,
       dev_tva: devTva,
       items: lines.map((l) => ({
         art_id: l.art_id,

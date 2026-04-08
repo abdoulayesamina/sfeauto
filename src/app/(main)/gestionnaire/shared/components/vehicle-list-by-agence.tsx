@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { VehicleItem } from "./vehicle-Item"
 
 export function VehicleListByAgence({
@@ -7,23 +8,30 @@ export function VehicleListByAgence({
   onSelect,
   reloadVehicles,
 }: any) {
+
+  // useEffect(() => {
+  //   console.log("🚗 Vehicles :", vehicles);
+  //   console.log("🏢 Agences :", agences);
+  //   console.log("👤 Clients :", clients);
+  // }, [vehicles, agences, clients]);
+
   return (
     <>
-      {agences.map((agence: any) => {
+      {agences.map((agence: any) => { 
         const vehiculesAgence = vehicles.filter(
-          (v: any) => v.base?.id === agence.id
+          (v: any) => v.veh_base?.bas_id === agence.bas_id
         )
 
         return (
           <div 
-            key={agence.id} 
+            key={agence.bas_id} 
             className="mt-8 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm transition-all hover:shadow-md"
           >
             {/* Header de l'agence */}
             <div className="flex items-center justify-between px-5 py-4 border-b bg-gradient-to-r from-slate-50 to-white rounded-t-2xl">
               <div className="flex items-center gap-2">
                 <span className="text-lg font-semibold text-gray-800">
-                  {agence.location}
+                  {agence.bas_location}
                 </span>
 
                 <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded-full">

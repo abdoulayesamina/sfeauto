@@ -16,6 +16,7 @@ import { useInterventionApi } from "../useIntervention.api"
 import { toUIStatus, getStatusMeta } from "@/src/utils/constants/intervention-status"
 import { groupInterventionsByStatus } from "@/src/utils/constants/groupInterventionsByStatus"
 import { formatLicensePlate } from "@/src/utils/formatters"
+import { toast } from "sonner"
 
 type VehicleItemProps = {
   vehicle?: Vehicule
@@ -63,12 +64,12 @@ export function VehicleItem({
 
   // State local pour les interventions (refresh instantané)
   // const [localInterventions, setLocalInterventions] = useState<any[]>(
-  //   vehicle?.invoices ?? []
+  //   vehicle?.interventions ?? []
   // )
 
   // Quand le vehicle change, on resynchronise le state local
   // useEffect(() => {  
-  //   setLocalInterventions(vehicle?.invoices ?? [])
+  //   setLocalInterventions(vehicle?.interventions ?? [])
   // }, [vehicle])
 
 
@@ -78,36 +79,36 @@ export function VehicleItem({
   }
 
   const clientName = useMemo(() => {
-    return clients.find((c) => c.id === vehicle.client?.id)?.name ?? "—"
-  }, [clients, vehicle.client?.id])
+    return clients.find((c) => c.cli_id === vehicle.veh_client?.cli_id)?.cli_name ?? "—"
+  }, [clients, vehicle.veh_client?.cli_id])
 
   const agenceName = useMemo(() => {
-    return agences.find((a) => a.id === vehicle.base?.id)?.location ?? "—"
-  }, [agences, vehicle.base?.id])
+    return agences.find((a) => a.bas_id === vehicle.veh_base?.bas_id)?.bas_location ?? "—"
+  }, [agences, vehicle.veh_base?.bas_id])
 
   const entryDateText = useMemo(() => {
-    return vehicle.entryDate ? new Date(vehicle.entryDate).toLocaleDateString("fr-FR") : "—"
-  }, [vehicle.entryDate])
+    return vehicle.veh_entryDate ? new Date(vehicle.veh_entryDate).toLocaleDateString("fr-FR") : "—"
+  }, [vehicle.veh_entryDate])
 
   /* ----------------------------- ACTIONS ----------------------------- */
   const handleSubmitIntervention = async (data: any) => {
-    if (!vehicle.id) return
+    if (!vehicle.veh_id) return
 
     const status = data.piecesCommande === "oui" ? "WAITING_FOR_PARTS" : "FIXING_STARTED"
 
     const newIntervention = await createIntervention({
-      vehicleId: vehicle.id,
-      accordNumber: data.numeroAccord,
-      dateOfConfirmation: data.dateConfirmation,
-      workDescription: data.descriptionTravaux,
-      didOrderParts: data.piecesCommande === "oui",
-      ordersDetails: data.detailsCommande || null,
-      comments: data.commentaires || null,
-      status,
-      images: data.images || [],
+      veh_vehicleId: vehicle.veh_id,
+      veh_accordNumber: data.numeroAccord,
+      veh_dateOfConfirmation: data.dateConfirmation,
+      veh_workDescription: data.descriptionTravaux,
+      veh_didOrderParts: data.piecesCommande === "oui",
+      veh_ordersDetails: data.detailsCommande || null,
+      veh_comments: data.commentaires || null,
+      veh_status : status,
+      veh_images: data.images || [],
     }).catch((e) => {
       console.error("Error creating intervention:", e)
-      return null
+      return toast.error("Erreur : "+e.message)
     })
 
     // setLocalInterventions((prev) => [newIntervention, ...prev])
@@ -122,9 +123,9 @@ export function VehicleItem({
   // }, [localInterventions])
 
   const groupedBadges = useMemo(() => {
-    if (!vehicle?.invoices?.length) return []
-    return groupInterventionsByStatus(vehicle.invoices)
-  }, [vehicle?.invoices])
+    if (!vehicle?.interventions?.length) return []
+    return groupInterventionsByStatus(vehicle.interventions)
+  }, [vehicle?.interventions])
   /* ----------------------------- UI ----------------------------- */
   return (
     <>
@@ -143,10 +144,10 @@ export function VehicleItem({
           <div className="flex flex-col md:flex-row md:items-center gap-3">
             <span className="text-lg font-semibold text-gray-900">
               {/* {vehicle.licensePlate} */}
-              {formatLicensePlate(vehicle.licensePlate || "")}
+              {formatLicensePlate(vehicle.veh_licensePlate || "")}
             </span>
             <span className="text-gray-500">
-              {vehicle.brand?.name} {vehicle.model?.name} · {vehicle.year}
+              {vehicle.veh_brand?.bra_name} {vehicle.veh_model?.mod_name} · {vehicle.veh_year}
             </span>
           </div>
 
@@ -210,8 +211,8 @@ export function VehicleItem({
         modalTitle="Créer une intervention"
       >
         <InterventionForm
-          vehicleId={vehicle.id ?? ""}
-          vehicleDisplayText={`${vehicle.licensePlate} - ${vehicle.brand?.name} ${vehicle.model?.name}`}
+          vehicleId={vehicle.veh_id ?? ""}
+          vehicleDisplayText={`${vehicle.veh_licensePlate} - ${vehicle.veh_brand?.bra_name} ${vehicle.veh_model?.mod_name}`}
           defaultAccordNumber="ACC-2026-001"
           onSubmit={handleSubmitIntervention}
           onClose={() => setInterventionModalOpen(false)}

@@ -3,8 +3,8 @@ import { Vehicule } from "@/src/utils/types/vehicule"
 const API_URL = process.env.NEXT_PUBLIC_API_URL + "/vehicles"
 
 export function useManageApi() {
-  const getVehicles = async (options?: { includeInvoices?: boolean }): Promise<any> => {
-    const url = options?.includeInvoices ? `${API_URL}?includeInvoices=true` : API_URL
+  const getVehicles = async (options?: { includeInterventions?: boolean }): Promise<any> => {
+    const url = options?.includeInterventions ? `${API_URL}?includeInterventions=true` : API_URL
 
     const res = await fetch(url)
 

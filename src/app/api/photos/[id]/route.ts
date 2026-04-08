@@ -22,7 +22,7 @@ export async function DELETE(
     }
 
     // 1️⃣ Récupérer la photo
-    const photo = await prisma.invoicephoto.findUnique({
+    const photo = await prisma.interventionphoto.findUnique({
       where: { id },
     })
 
@@ -37,7 +37,7 @@ export async function DELETE(
     await blobClient.deleteIfExists()
 
     // 3️⃣ Supprimer en base
-    await prisma.invoicephoto.delete({
+    await prisma.interventionphoto.delete({
       where: { id },
     })
 

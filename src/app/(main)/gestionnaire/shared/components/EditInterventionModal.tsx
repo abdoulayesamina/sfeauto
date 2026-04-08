@@ -10,8 +10,8 @@ import { RadioGroup, RadioGroupItem } from "@/src/shared/components/ui/radio-gro
 import { Textarea } from "@/src/shared/components/ui/textarea";
 import { Modal } from "@/src/shared/components/modal";
 
-import { InvoicePatchPayload, useInvoiceApi } from "../hooks/useInvoiceApi.api";
-import { useInvoicePhotos } from "../hooks/useInvoicePhotos.api";
+import { InterventionPatchPayload, useInterventionApi } from "../hooks/useInterventionApi.api";
+import { useInterventionPhotos } from "../hooks/useInterventionPhotos.api";
 import { toast } from "sonner";
 
 
@@ -20,9 +20,9 @@ type PiecesCommande = "oui" | "non";
 type Props = {
   open: boolean;
   onClose: () => void;
-  invoice: any;
-  onUpdated?: (updatedInvoice: any) => void;
-  reloadInvoiceList?: () => void;
+  intervention: any;
+  onUpdated?: (updatedIntervention: any) => void;
+  reloadInterventionList?: () => void;
 };
 
 function toDateInputValue(d?: string | Date | null) {
@@ -32,11 +32,11 @@ function toDateInputValue(d?: string | Date | null) {
   return date.toISOString().slice(0, 10);
 }
 
-export function EditInterventionModal({ open, onClose, invoice, onUpdated, reloadInvoiceList }: Props) {
-  const { patchInvoice, loading } = useInvoiceApi();
+export function EditInterventionModal({ open, onClose, intervention, onUpdated, reloadInterventionList }: Props) {
+  const { patchIntervention, loading } = useInterventionApi();
 
   const { photos, loading: photosLoading, error: photosError, refetch } =
-    useInvoicePhotos(invoice?.id);
+    useInterventionPhotos(intervention?.int_id);
 
 
   const [piecesCommande, setPiecesCommande] = useState<PiecesCommande>("non");
@@ -52,33 +52,33 @@ export function EditInterventionModal({ open, onClose, invoice, onUpdated, reloa
   const [images, setImages] = useState<File[]>([]);
 
   useEffect(() => {
-    if (!open || !invoice) return;
+    if (!open || !intervention) return;
 
-    setWorkDescription(invoice.workDescription ?? "");
-    setAccordNumber(invoice.accordNumber ?? "");
-    setDateOfConfirmation(toDateInputValue(invoice.dateOfConfirmation));
+    setWorkDescription(intervention.int_workDescription);
+    setAccordNumber(intervention.int_accordNumber ?? "");
+    setDateOfConfirmation(toDateInputValue(intervention.int_dateOfConfirmation));
 
-    const didOrder = Boolean(invoice.didOrderParts);
+    const didOrder = Boolean(intervention.int_didOrderParts);
     setPiecesCommande(didOrder ? "oui" : "non");
 
-    setOrdersDetails(invoice.ordersDetails ?? "");
-    setComments(invoice.comments ?? "");
+    setOrdersDetails(intervention.int_ordersDetails ?? "");
+    setComments(intervention.int_comments ?? "");
 
     setImages([]);
     setImagesBlob([]);
 
 
-  }, [open, invoice]);
+  }, [open, intervention]);
 
 
   useEffect(() => {
-    if (open && invoice?.id) {
+    if (open && intervention?.int_id) {
       refetch()
     }
-  }, [open, invoice?.id])
+  }, [open, intervention?.int_id])
 
 
-  const canSave = useMemo(() => Boolean(invoice?.id), [invoice?.id]);
+  const canSave = useMemo(() => Boolean(intervention?.int_id), [intervention?.int_id]);
 
   //   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   //   if (!e.target.files) return
@@ -198,11 +198,11 @@ export function EditInterventionModal({ open, onClose, invoice, onUpdated, reloa
 
   async function handleSave(e?: React.FormEvent) {
     e?.preventDefault();
-    if (!invoice?.id) return;
+    if (!intervention?.int_id) return;
 
     const didOrderParts = piecesCommande === "oui";
 
-    const payload: InvoicePatchPayload = {
+    const payload: InterventionPatchPayload = {
       workDescription: workDescription.trim() || null,
       accordNumber: accordNumber.trim() || null,
       dateOfConfirmation: dateOfConfirmation
@@ -213,7 +213,7 @@ export function EditInterventionModal({ open, onClose, invoice, onUpdated, reloa
       comments: comments.trim() || null,
     };
 
-    const res = await patchInvoice(invoice.id, payload);
+    const res = await patchIntervention(intervention.int_id, payload);
 
     if (!res.ok) return;
 
@@ -226,7 +226,7 @@ export function EditInterventionModal({ open, onClose, invoice, onUpdated, reloa
       });
 
       await fetch(
-        `/api/invoices/${invoice.id}/photos`,
+        `/api/interventions/${intervention.int_id}/photos`,
         {
           method: "POST",
           body: formData,
@@ -234,8 +234,8 @@ export function EditInterventionModal({ open, onClose, invoice, onUpdated, reloa
       );
     }
 
-    onUpdated?.(res.data?.invoice ?? res.data);
-    reloadInvoiceList?.();
+    onUpdated?.(res.data?.intervention ?? res.data);
+    reloadInterventionList?.();
     onClose();
   }
 
@@ -243,10 +243,10 @@ export function EditInterventionModal({ open, onClose, invoice, onUpdated, reloa
   return (
     <Modal open={open} onClose={onClose} modalTitle="Modifier l’intervention" >
       <form onSubmit={handleSave} className="space-y-8 p-4 md:w-[650px]">
-        {invoice?.vehicle?.licensePlate && (
+        {intervention?.vehicle?.licensePlate && (
           <div className="space-y-2">
             <Label>Véhicule</Label>
-            <Input value={invoice.vehicle.licensePlate} readOnly className="h-15" />
+            <Input value={intervention.vehicle.licensePlate} readOnly className="h-15" />
           </div>
         )}
 

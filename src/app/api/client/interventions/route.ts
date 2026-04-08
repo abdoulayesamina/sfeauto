@@ -1,98 +1,125 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/auth'
-import { prisma } from '@/src/lib/prisma'
-import { logError } from '@/src/lib/logger'
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
+import { prisma } from "@/src/lib/prisma";
+import { logError } from "@/src/lib/logger";
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth()  
+    const session = await auth();
 
     // Only clients can access this endpoint
-    if (!session?.user || session.user.role !== 'CLIENT') {
-      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+    if (!session?.user || session.user.role !== "CLIENT") {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    const searchParams = request.nextUrl.searchParams
-    const search = searchParams.get('search')
+    const searchParams = request.nextUrl.searchParams;
+    const search = searchParams.get("search")?.trim();
 
-    if (!search?.trim()) {
-      return NextResponse.json({ error: 'Recherche requise' }, { status: 400 })
+    if (!search) {
+      return NextResponse.json({ error: "Recherche requise" }, { status: 400 });
     }
 
-    // Get client's clientId from session (secure JWT signed at login)
     if (!session.user.clientId) {
       return NextResponse.json(
-        { error: 'Aucun client associé à cet utilisateur' },
+        { error: "Aucun client associé à cet utilisateur" },
         { status: 403 }
-      )
+      );
     }
 
-    const searchQuery = search.trim().toUpperCase()
-
-    // Search interventions (client-scoped - only this client's vehicles)
-    const interventions = await prisma.invoice.findMany({
+    const interventions = await prisma.intervention_int.findMany({
       where: {
-        vehicle: {
-          clientId: session.user.clientId,  // CRITICAL: Only this client's vehicles (from signed JWT)
-          licensePlate: {
-            contains: searchQuery
-          }
-        }
+        int_vehicle: {
+          is: {
+            veh_clientId: session.user.clientId,
+            veh_licensePlate: {
+              contains: search,
+            },
+          },
+        },
       },
       include: {
-        vehicle: {
+        int_vehicle: {
           include: {
-            client: {
-              select: { name: true }
+            veh_client: {
+              select: {
+                cli_name: true,
+              },
             },
-            base: {
-              select: { id: true, location: true }
-            }
-          }
+            veh_base: {
+              select: {
+                bas_id: true,
+                bas_location: true,
+              },
+            },
+            veh_brand: {
+              select: {
+                bra_id: true,
+                bra_name: true,
+              },
+            },
+            veh_model: {
+              select: {
+                mod_id: true,
+                mod_name: true,
+              },
+            },
+          },
         },
-        handledBy: {
-          select: { name: true, email: true }
-        }
+        int_handledBy: {
+          select: {
+            usr_name: true,
+            usr_email: true,
+          },
+        },
       },
-      orderBy: [
-        { status: 'asc' },  // In-progress jobs first
-        { createdAt: 'desc' }
-      ]
-    })
+      orderBy: [{ int_status: "asc" }, { int_createdAt: "desc" }],
+    });
 
-    // Serialize dates for client
-    const serialized = interventions.map(inv => ({
-      id: inv.id,
-      accordNumber: inv.accordNumber,
-      dateOfConfirmation: inv.dateOfConfirmation?.toISOString() ?? null,
-      invoiceConfirmed: inv.invoiceConfirmed,
-      status: inv.status,
-      statusUpdatedAt: inv.statusUpdatedAt.toISOString(),
-      workDescription: inv.workDescription,
-      didOrderParts: inv.didOrderParts,
-      ordersDetails: inv.ordersDetails,
-      comments: inv.comments,
-      createdAt: inv.createdAt.toISOString(),
+    const serialized = interventions.map((intervention) => ({
+      id: intervention.int_id,
+      accordNumber: intervention.int_accordNumber,
+      dateOfConfirmation:
+        intervention.int_dateOfConfirmation?.toISOString() ?? null,
+      interventionConfirmed: intervention.int_interventionConfirmed,
+      status: intervention.int_status,
+      statusUpdatedAt: intervention.int_statusUpdatedAt.toISOString(),
+      workDescription: intervention.int_workDescription,
+      didOrderParts: intervention.int_didOrderParts,
+      ordersDetails: intervention.int_ordersDetails,
+      comments: intervention.int_comments,
+      createdAt: intervention.int_createdAt.toISOString(),
+      updatedAt: intervention.int_updatedAt.toISOString(),
       vehicle: {
-        id: inv.vehicle.id,
-        licensePlate: inv.vehicle.licensePlate,
-        brandId: inv.vehicle.brandId,
-        modelId: inv.vehicle.modelId,
-        year: inv.vehicle.year,
-        color: inv.vehicle.color,
-        client: inv.vehicle.client,
-        base: inv.vehicle.base
+        id: intervention.int_vehicle.veh_id,
+        licensePlate: intervention.int_vehicle.veh_licensePlate,
+        brandId: intervention.int_vehicle.veh_brandId,
+        modelId: intervention.int_vehicle.veh_modelId,
+        brand: intervention.int_vehicle.veh_brand?.bra_name ?? null,
+        model: intervention.int_vehicle.veh_model?.mod_name ?? null,
+        year: intervention.int_vehicle.veh_year,
+        color: intervention.int_vehicle.veh_color,
+        client: {
+          name: intervention.int_vehicle.veh_client.cli_name,
+        },
+        base: {
+          id: intervention.int_vehicle.veh_base.bas_id,
+          location: intervention.int_vehicle.veh_base.bas_location,
+        },
       },
-      handledBy: inv.handledBy
-    }))
+      handledBy: intervention.int_handledBy
+        ? {
+            name: intervention.int_handledBy.usr_name,
+            email: intervention.int_handledBy.usr_email,
+          }
+        : null,
+    }));
 
-    return NextResponse.json(serialized)
-
+    return NextResponse.json(serialized);
   } catch (error) {
-    logError('Failed to search interventions', error)
+    logError("Failed to search interventions", error);
     return NextResponse.json(
-      { error: 'Échec de la recherche des interventions' },
+      { error: "Échec de la recherche des interventions" },
       { status: 500 }
-    )
+    );
   }
 }
