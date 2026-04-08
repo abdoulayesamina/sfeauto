@@ -49,11 +49,22 @@ export default function AgencePage() {
 
   const [openCreateIntervention, setOpenCreateIntervention] = useState(false);
 
+  // const reloadInterventions = async () => {
+  //   const data = await listInterventions({ take: 500, skip: 0 });
+  //   setInterventions(
+  //     Array.isArray(data?.interventions) ? data.interventions : [],
+  //   );
+  // };
   const reloadInterventions = async () => {
     const data = await listInterventions({ take: 500, skip: 0 });
-    setInterventions(
-      Array.isArray(data?.interventions) ? data.interventions : [],
-    );
+
+    const list = Array.isArray(data?.interventions)
+      ? data.interventions
+      : [];
+
+    setInterventions(list);
+
+    return list;
   };
 
   useEffect(() => {
@@ -195,7 +206,19 @@ export default function AgencePage() {
       veh_images: data.images || [],
     });
 
-    await reloadInterventions();
+    // 🔥 récupère les nouvelles données
+    const freshData = await reloadInterventions();
+
+    // 🔥 met à jour la liste du véhicule ouvert
+    const list = freshData
+      .filter((inv: any) => inv?.vehicle?.id === vehiculeSelect?.id)
+      .map((inv: any) => ({
+        ...inv,
+        vehicle: vehiculeSelect,
+      }));
+
+    setInterventionsVehicule(list);
+
     setOpenCreateIntervention(false);
   };
 
