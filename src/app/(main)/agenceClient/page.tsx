@@ -185,27 +185,46 @@ export default function AgencePage() {
     if (!vehiculeSelect?.id) return;
 
     await createIntervention({
-      vehicleId: vehiculeSelect.id,
-      accordNumber: data.numeroAccord,
-      dateOfConfirmation: data.dateConfirmation,
-      workDescription: data.descriptionTravaux,
-      didOrderParts: data.piecesCommande === "oui",
-      ordersDetails: data.detailsCommande || null,
-      comments: data.commentaires || null,
-      images: data.images || [],
+      veh_vehicleId: vehiculeSelect.id,
+      veh_accordNumber: data.numeroAccord,
+      veh_dateOfConfirmation: data.dateConfirmation,
+      veh_workDescription: data.descriptionTravaux,
+      veh_didOrderParts: data.piecesCommande === "oui",
+      veh_ordersDetails: data.detailsCommande || null,
+      veh_comments: data.commentaires || null,
+      veh_images: data.images || [],
     });
 
     await reloadInterventions();
-
-    if (vehiculeSelect?.id) {
-      const list = interventions
-        .filter((inv) => inv?.vehicle?.id === vehiculeSelect?.id)
-        .map((inv) => ({ ...inv, vehicle: vehiculeSelect }));
-      setInterventionsVehicule(list);
-    }
-
     setOpenCreateIntervention(false);
   };
+
+  // const handleCreateIntervention = async (data: any) => {
+  //   console.log("vehiculeSelect:", vehiculeSelect);
+  //   if (!vehiculeSelect?.id) return;
+
+  //   await createIntervention({
+  //     vehicleId: vehiculeSelect.id,
+  //     accordNumber: data.numeroAccord,
+  //     dateOfConfirmation: data.dateConfirmation,
+  //     workDescription: data.descriptionTravaux,
+  //     didOrderParts: data.piecesCommande === "oui",
+  //     ordersDetails: data.detailsCommande || null,
+  //     comments: data.commentaires || null,
+  //     images: data.images || [],
+  //   });
+
+  //   await reloadInterventions();
+
+  //   if (vehiculeSelect?.id) {
+  //     const list = interventions
+  //       .filter((inv) => inv?.vehicle?.id === vehiculeSelect?.id)
+  //       .map((inv) => ({ ...inv, vehicle: vehiculeSelect }));
+  //     setInterventionsVehicule(list);
+  //   }
+
+  //   setOpenCreateIntervention(false);
+  // };
 
   if (isLoading) {
     return (
@@ -349,9 +368,8 @@ export default function AgencePage() {
           {vehiculeSelect && (
             <InterventionForm
               vehicleId={vehiculeSelect.id}
-              vehicleDisplayText={`${vehiculeSelect.licensePlate} - ${vehiculeSelect.brand?.name ?? ""} ${
-                vehiculeSelect.model?.name ?? ""
-              }`}
+              vehicleDisplayText={`${vehiculeSelect.licensePlate} - ${vehiculeSelect.brand?.name ?? ""} ${vehiculeSelect.model?.name ?? ""
+                }`}
               defaultAccordNumber="ACC-2026-001"
               onSubmit={handleCreateIntervention}
               onClose={() => setOpenCreateIntervention(false)}

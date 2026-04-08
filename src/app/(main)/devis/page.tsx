@@ -11,7 +11,7 @@ import { EditDevisModal } from "../gestionnaire/shared/components/edit-devis/Edi
 import { Modal } from "@/src/shared/components/modal";
 import { DevisApercu } from "../gestionnaire/shared/components/devisApercu";
 import { toast } from "sonner";
-import { formatLicensePlate } from "@/src/utils/formatters"
+import { formatLicensePlate } from "@/src/utils/formatters";
 
 function formatDate(d?: string | Date | null) {
   if (!d) return "—";
@@ -81,11 +81,11 @@ export default function DevisPage() {
 
     const filtered = rows.filter((d) => {
       const num = String(d?.dev_numdevis ?? "").toLowerCase();
-      const client = String(d?.client?.name ?? "").toLowerCase();
-      const plate = String(d?.vehicle?.licensePlate ?? "").toLowerCase();
-      const brand = String(d?.vehicle?.brand?.name ?? "").toLowerCase();
-      const model = String(d?.vehicle?.model?.name ?? "").toLowerCase();
-      const desc = String(d?.intervention?.workDescription ?? "").toLowerCase();
+      const client = String(d?.dev_client?.cli_name ?? "").toLowerCase();
+      const plate = String(d?.dev_vehicle?.veh_licensePlate ?? "").toLowerCase();
+      const brand = String(d?.dev_vehicle?.veh_brand?.bra_name ?? "").toLowerCase();
+      const model = String(d?.dev_vehicle?.veh_model?.mod_name ?? "").toLowerCase();
+      const desc = String(d?.dev_intervention?.int_workDescription ?? "").toLowerCase();
       const accord = String(d?.dev_accordNumber ?? "").toLowerCase();
 
       return (
@@ -111,22 +111,23 @@ export default function DevisPage() {
       ),
     },
     {
-      accessorKey: "client",
+      accessorKey: "dev_client",
       header: "Client",
-      cell: ({ row }) => row.original?.client?.name ?? "—",
+      cell: ({ row }) => row.original?.dev_client?.cli_name ?? "—",
     },
     {
-      accessorKey: "vehicle",
+      accessorKey: "dev_vehicle",
       header: "Véhicule",
       cell: ({ row }) => {
-        const v = row.original?.vehicle;
+        const v = row.original?.dev_vehicle;
         if (!v) return "—";
-        const brandModel = `${v.brand?.name ?? ""} ${v.model?.name ?? ""}`.trim();
+
+        const brandModel = `${v.veh_brand?.bra_name ?? ""} ${v.veh_model?.mod_name ?? ""}`.trim();
+
         return (
           <span>
-            {/* <span className="font-medium">{v.licensePlate}</span> */}
             <span className="font-medium">
-              {formatLicensePlate(v.licensePlate || "")}
+              {formatLicensePlate(v.veh_licensePlate || "")}
             </span>
             {brandModel ? ` — ${brandModel}` : ""}
           </span>
@@ -134,9 +135,10 @@ export default function DevisPage() {
       },
     },
     {
-      accessorKey: "intervention",
+      accessorKey: "dev_intervention",
       header: "Intervention",
-      cell: ({ row }) => row.original?.intervention?.workDescription ?? "—",
+      cell: ({ row }) =>
+        row.original?.dev_intervention?.int_workDescription ?? "—",
     },
     {
       accessorKey: "dev_totalttc",
