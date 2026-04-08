@@ -199,6 +199,7 @@ export default function AgencePage() {
     setOpenCreateIntervention(false);
   };
 
+  //Amadou
   // const handleCreateIntervention = async (data: any) => {
   //   console.log("vehiculeSelect:", vehiculeSelect);
   //   if (!vehiculeSelect?.id) return;
