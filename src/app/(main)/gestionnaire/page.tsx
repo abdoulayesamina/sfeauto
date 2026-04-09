@@ -127,7 +127,6 @@ export default function GestionnairePage() {
   }
 
   const handleCreateVehicle = async (data: Partial<Vehicule>) => {
-    debugger
     try {
       setLoading(true)
       await createVehicle(data)

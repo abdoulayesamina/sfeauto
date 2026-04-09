@@ -124,6 +124,7 @@ export async function GET(request: NextRequest) {
         veh_gearboxType: true,
         veh_version: true,
         veh_registrationCardDate: true,
+        veh_kilometrage: true,
 
         veh_entryDate: true,
         veh_exitDate: true,
@@ -313,6 +314,7 @@ export async function POST(request: NextRequest) {
       veh_entryDate: entryDate,
       veh_exitDate: exitDate,
       veh_firstRegistrationDate: firstRegistrationDate,
+      veh_kilometrage: kilometrage,
       veh_energy: energy,
       veh_doorsCount: doorsCount,
       veh_bodyType: bodyType,
@@ -423,6 +425,7 @@ export async function POST(request: NextRequest) {
         veh_year: parseOptionalInt(year),
         veh_color: normalizeOptionalString(color),
         veh_version: normalizeOptionalString(version),
+        veh_kilometrage: normalizeOptionalString(kilometrage),
 
         veh_bodyType: parsedBodyType,
         veh_gearboxType: parsedGearboxType,

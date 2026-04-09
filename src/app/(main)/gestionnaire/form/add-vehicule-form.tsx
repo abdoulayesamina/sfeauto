@@ -72,6 +72,7 @@ export function AddVehiculeForm({
     veh_modelId: undefined,
     veh_year: new Date().getFullYear(),
     veh_color: "",
+    veh_kilometrage: "",
 
     veh_firstRegistrationDate: undefined,
     veh_energy: undefined,
@@ -167,6 +168,7 @@ export function AddVehiculeForm({
         veh_realPowerHp: v.realPowerHp ?? prev.veh_realPowerHp,
         veh_fiscalPowerCv: v.fiscalPowerCv ?? prev.veh_fiscalPowerCv,
         veh_gearboxType: v.gearboxType ?? prev.veh_gearboxType,
+        veh_kilometrage: v.kilometrage ?? prev.veh_kilometrage,
         veh_firstRegistrationDate: v.firstRegistrationDate
           ? new Date(v.firstRegistrationDate).toISOString()
           : prev.veh_firstRegistrationDate,
@@ -204,6 +206,7 @@ export function AddVehiculeForm({
     if (!vehicule.veh_clientId) return alert("Veuillez sélectionner un client")
     if (!vehicule.veh_baseId) return alert("Veuillez sélectionner une agence")
     if (!vehicule.veh_licensePlate) return alert("Veuillez saisir l'immatriculation")
+    if(!vehicule.veh_kilometrage) return alert("Veuillez saisir le kilométrage")
     onSubmit(vehicule)
   }
   return (
@@ -455,6 +458,25 @@ export function AddVehiculeForm({
               setVehicule({
                 ...vehicule,
                 veh_fiscalPowerCv: e.target.value ? Number(e.target.value) : undefined,
+              })
+            }
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="kilometrage">Kilométrage <span className="text-red-500">*</span></Label>
+          <Input
+            id="kilometrage"
+            type="number"
+            placeholder="220"
+            className="h-12"
+            value={vehicule.veh_kilometrage ?? ""}
+            onChange={(e) =>
+              setVehicule({
+                ...vehicule,
+                veh_kilometrage: e.target.value ? String(e.target.value) : undefined,
               })
             }
           />

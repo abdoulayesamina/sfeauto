@@ -59,6 +59,7 @@ export const VehiculeSchema = z.object({
   veh_gearboxType: GearboxTypeSchema.optional(),
   veh_version: z.string().optional(),
   veh_registrationCardDate: z.string().datetime().optional(),
+  veh_kilometrage: z.string().optional(),
 
   veh_clientId: z.string().min(1, "Client obligatoire"),
   veh_baseId: z.string().min(1, "Agence obligatoire"),

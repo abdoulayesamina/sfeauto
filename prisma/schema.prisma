@@ -164,6 +164,9 @@ model vehicle_veh {
   veh_gearboxType           vehicle_gearboxType?
   veh_version               String?
   veh_registrationCardDate  DateTime?
+  veh_kilometrage              String?
+
+  
 
   veh_entryDate  DateTime  @default(now())
   veh_exitDate   DateTime?
