@@ -54,7 +54,8 @@ export function EditInterventionModal({ open, onClose, intervention, onUpdated, 
   useEffect(() => {
     if (!open || !intervention) return;
 
-    setWorkDescription(intervention.int_workDescription);
+    // setWorkDescription(intervention.int_workDescription);
+    setWorkDescription(intervention.int_workDescription ?? "");
     setAccordNumber(intervention.int_accordNumber ?? "");
     setDateOfConfirmation(toDateInputValue(intervention.int_dateOfConfirmation));
 
