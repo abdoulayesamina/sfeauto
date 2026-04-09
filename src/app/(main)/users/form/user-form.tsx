@@ -39,9 +39,9 @@ export function UserForm({
   loading,
 }: UserFormProps) {
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [oldPassword, setOldPassword] = useState("");                
-  const [newPassword, setNewPassword] = useState("");                
-  const [confirmNewPassword, setConfirmNewPassword] = useState("");  
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
 
   const roles = [
     { id: "ADMIN", name: "Administrateur" },
@@ -54,12 +54,12 @@ export function UserForm({
 
   const needsClientAndBase = value.usr_role === "CLIENT" || value.usr_role === "AGENCE"
   const filteredAgences = value.usr_clientId
-  ? agences.filter((a) => a.bas_clientId === value.usr_clientId)
-  : []
+    ? agences.filter((a) => a.bas_clientId === value.usr_clientId)
+    : []
 
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
-      inputRef.current?.focus();
+    inputRef.current?.focus();
   }, [mode]);
 
   const password = value.usr_password || "";
@@ -81,6 +81,7 @@ export function UserForm({
 
   return (
     <form
+      autoComplete="off"
       onSubmit={(e) => {
         e.preventDefault()
         onSubmit()
@@ -101,12 +102,13 @@ export function UserForm({
         <Label>Email</Label>
         <Input
           className="h-12"
+          autoComplete="off"
           value={value.usr_email || ""}
           onChange={(e) => onChange({ ...value, usr_email: e.target.value })}
         />
       </div>
 
-      
+
       {mode === "create" ? (
         <>
           <div>
@@ -114,6 +116,7 @@ export function UserForm({
             <Input
               className="h-12"
               type="password"
+              autoComplete="new-password"
               value={value.usr_password || ""}
               placeholder="Mot de passe"
               onChange={(e) => onChange({ ...value, usr_password: e.target.value })}
@@ -132,6 +135,7 @@ export function UserForm({
             <Input
               className="h-12"
               type="password"
+              autoComplete="new-password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
             />
@@ -148,12 +152,13 @@ export function UserForm({
             <Input
               className="h-12"
               type="password"
+              autoComplete="new-password"
               value={oldPassword}
               placeholder="Ancien mot de passe (laisser vide pour ne pas changer)"
               onChange={(e) => {
                 const val = e.target.value;
                 setOldPassword(val);
-                onChange({ ...value, usr_password: val }); 
+                onChange({ ...value, usr_password: val });
               }}
             />
           </div>
@@ -165,6 +170,7 @@ export function UserForm({
                 <Input
                   className="h-12"
                   type="password"
+                  autoComplete="new-password"
                   value={newPassword}
                   placeholder="Nouveau mot de passe"
                   onChange={(e) => {
@@ -174,7 +180,7 @@ export function UserForm({
                   }}
                 />
 
-                
+
                 <div className="text-sm mt-2 space-y-1">
                   <p className={newPassword.length >= 8 ? "text-green-500" : "text-red-500"}>• 8 caractères minimum</p>
                   <p className={/[A-Z]/.test(newPassword) ? "text-green-500" : "text-red-500"}>• Une majuscule</p>
@@ -188,6 +194,7 @@ export function UserForm({
                 <Input
                   className="h-12"
                   type="password"
+                  autoComplete="new-password"
                   value={confirmNewPassword}
                   onChange={(e) => setConfirmNewPassword(e.target.value)}
                 />
@@ -205,9 +212,9 @@ export function UserForm({
         <Select
           value={value.usr_role || ""}
 
-          onValueChange={(role : "CLIENT" | "AGENCE") => {
+          onValueChange={(role: "CLIENT" | "AGENCE") => {
 
-            const next: Partial<User> = { ...value, usr_role : role}
+            const next: Partial<User> = { ...value, usr_role: role }
 
             const willNeed = role === "CLIENT" || role === "AGENCE"
             if (!willNeed) {
@@ -241,8 +248,8 @@ export function UserForm({
               onValueChange={(clientId) =>
                 onChange({
                   ...value,
-                  usr_clientId : clientId,
-                  usr_baseId: null, 
+                  usr_clientId: clientId,
+                  usr_baseId: null,
                 })
               }
             >
@@ -263,7 +270,7 @@ export function UserForm({
             <Label>Agence</Label>
             <Select
               value={value.usr_baseId || ""}
-              onValueChange={(baseId) => onChange({ ...value, usr_baseId : baseId })}
+              onValueChange={(baseId) => onChange({ ...value, usr_baseId: baseId })}
               disabled={!value.usr_clientId}
             >
               <SelectTrigger className="h-12">
@@ -308,8 +315,8 @@ export function UserForm({
             (value.usr_role === "AGENCE" && (!value.usr_clientId || !value.usr_baseId)) ||
             loading ||
             (mode === "create" && !isPasswordValid) ||
-            (mode === "edit" && 
-              oldPassword.trim().length > 0 && 
+            (mode === "edit" &&
+              oldPassword.trim().length > 0 &&
               (!newPassword || !confirmNewPassword || newPassword !== confirmNewPassword)
             )
           }
