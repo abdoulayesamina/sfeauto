@@ -11,6 +11,7 @@ export function useInterventionApi() {
     try {
       const images: File[] = payload.veh_images || []
       console.log("Voici le payload de l'intervention à créer :", payload)
+
       const fd = new FormData()
       fd.append("vehicleId", payload.veh_vehicleId)
       fd.append("accordNumber", payload.veh_accordNumber ?? "")
@@ -33,7 +34,10 @@ export function useInterventionApi() {
       const result = await res.json()
 
       if (!res.ok) {
-        errorAlert("Erreur création intervention", result.error || "Erreur inconnue")
+        errorAlert(
+          "Erreur création intervention",
+          result.error || "Erreur inconnue"
+        )
         throw new Error(result.error || "Erreur inconnue")
       }
 
@@ -43,7 +47,6 @@ export function useInterventionApi() {
 
       return result
     } catch (e: any) {
-      errorAlert("Erreur", e.message)
       throw e
     } finally {
       setLoading(false)
