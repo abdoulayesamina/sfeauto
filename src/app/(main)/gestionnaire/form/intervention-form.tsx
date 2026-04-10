@@ -1,14 +1,19 @@
-import { Spinner } from "@/src/shared/components/spinner"
-import { Button } from "@/src/shared/components/ui/button"
-import { Input } from "@/src/shared/components/ui/input"
-import { Label } from "@/src/shared/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/src/shared/components/ui/radio-group"
-import { Textarea } from "@/src/shared/components/ui/textarea"
-import Image from "next/image"
-import { useEffect, useState } from "react"
-import { toast } from "sonner"
+"use client";
 
-type PiecesCommande = "oui" | "non"
+import { Spinner } from "@/src/shared/components/spinner";
+import { Button } from "@/src/shared/components/ui/button";
+import { Input } from "@/src/shared/components/ui/input";
+import { Label } from "@/src/shared/components/ui/label";
+import {
+  RadioGroup,
+  RadioGroupItem,
+} from "@/src/shared/components/ui/radio-group";
+import { Textarea } from "@/src/shared/components/ui/textarea";
+import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+
+type PiecesCommande = "oui" | "non";
 
 interface InterventionFormProps {
   vehicleId: string
@@ -29,100 +34,97 @@ export function InterventionForm({
   onClose,
   loading = false,
 }: InterventionFormProps) {
-  const [piecesCommande, setPiecesCommande] = useState<PiecesCommande>("non")
-  const [imagesBlob, setImagesBlob] = useState<string[]>([])
-  const [images, setImages] = useState<File[]>([])
+  const [piecesCommande, setPiecesCommande] =
+    useState<PiecesCommande>("non");
+
+  const [imagesBlob, setImagesBlob] = useState<string[]>([]);
+  const [images, setImages] = useState<File[]>([]);
+
+  // ✅ champs contrôlés
+  const [description, setDescription] = useState("");
+  const [numeroAccord, setNumeroAccord] = useState("");
+  const [dateConfirmation, setDateConfirmation] = useState("");
+  const [detailsCommande, setDetailsCommande] = useState("");
+  const [commentaires, setCommentaires] = useState("");
+
+  // 🔥 ref pour focus auto
+  const accordRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    console.log("Images selected:", imagesBlob)
-  }, [imagesBlob])
+    console.log("Images selected:", imagesBlob);
+  }, [imagesBlob]);
 
-  // const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   if (!e.target.files) return
-
-  //   const files = Array.from(e.target.files)
-  //   setImages(files)
-
-  //   const previews = files.map((file) => URL.createObjectURL(file))
-  //   setImagesBlob(previews)
-  // }
-
-  // const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   const files = Array.from(e.target.files || [])
-  //   if (!files.length) return
-
-  //   const previews = files.map(file => URL.createObjectURL(file))
-
-  //   setImages(prev => [...prev, ...files])          // File[]
-  //   setImagesBlob(prev => [...prev, ...previews])  // string[]
-  // }
+  // 🔥 focus automatique si champ rempli (ou après erreur)
+  useEffect(() => {
+    if (numeroAccord && accordRef.current) {
+      accordRef.current.focus();
+    }
+  }, [numeroAccord]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || [])
-    if (!files.length) return
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
 
-    const allowedTypes = ["image/png", "image/jpeg"]
-    const maxSize = 5 * 1024 * 1024 // 5MB
+    const allowedTypes = ["image/png", "image/jpeg"];
+    const maxSize = 5 * 1024 * 1024;
 
-    const validFiles: File[] = []
+    const validFiles: File[] = [];
 
-    let hasTypeError = false
-    let hasSizeError = false
+    let hasTypeError = false;
+    let hasSizeError = false;
 
     for (const file of files) {
       if (!allowedTypes.includes(file.type)) {
-        hasTypeError = true
-        continue
+        hasTypeError = true;
+        continue;
       }
 
       if (file.size > maxSize) {
-        hasSizeError = true
-        continue
+        hasSizeError = true;
+        continue;
       }
 
-      validFiles.push(file)
+      validFiles.push(file);
     }
 
-    // 🔥 messages
     if (hasTypeError) {
-      toast.error("Format non supporté (PNG / JPEG uniquement)")
+      toast.error("Format non supporté (PNG / JPEG uniquement)");
     }
 
     if (hasSizeError) {
-      toast.error("Certains fichiers dépassent 5MB")
+      toast.error("Certains fichiers dépassent 5MB");
     }
 
-    if (!validFiles.length) return
+    if (!validFiles.length) return;
 
-    const previews = validFiles.map(file => URL.createObjectURL(file))
+    const previews = validFiles.map((file) =>
+      URL.createObjectURL(file)
+    );
 
-    setImages(prev => [...prev, ...validFiles])
-    setImagesBlob(prev => [...prev, ...previews])
-  }
-
-
+    setImages((prev) => [...prev, ...validFiles]);
+    setImagesBlob((prev) => [...prev, ...previews]);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
-    const formData = new FormData(e.currentTarget as HTMLFormElement)
-    const data = Object.fromEntries(formData.entries())
- 
     onSubmit?.({
-      ...data,
-      vehicleId,
+      descriptionTravaux: description,
+      numeroAccord,
+      dateConfirmation,
+      detailsCommande,
+      commentaires,
       piecesCommande,
       images,
-    })
-  }
+      vehicleId,
+    });
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8 p-4">
-      <input type="hidden" name="vehicleId" value={vehicleId} />
       <div className="space-y-2">
         <Label>Véhicule</Label>
         <Input
-          name="vehiculeDisplay"
           value={vehicleDisplayText}
           className="h-15"
           readOnly
@@ -132,7 +134,8 @@ export function InterventionForm({
       <div className="space-y-2">
         <Label>Description des travaux</Label>
         <Textarea
-          name="descriptionTravaux"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
           placeholder="Décrivez les travaux à effectuer..."
           className="min-h-[120px]"
         />
@@ -156,20 +159,19 @@ export function InterventionForm({
         <Label>Photo</Label>
         <span
           className="text-sm text-gray-500 border p-2 rounded-md bg-gray-50 cursor-pointer hover:bg-gray-100"
-          onClick={() => {
+          onClick={() =>
             document.getElementById("InputImages")?.click()
-          }}
+          }
         >
           {imagesBlob.length > 0
             ? `${images.length} fichier(s) sélectionné(s)`
-            : "Sélectionner des images au format PNG ou JPEG . Max 5 Mo"}
+            : "Sélectionner des images PNG/JPEG (max 5MB)"}
         </span>
 
         <Input
           id="InputImages"
           type="file"
-          name="photoTravaux"
-          className="cursor-pointer hidden"
+          className="hidden"
           accept="image/png, image/jpeg"
           multiple
           onChange={handleFileChange}
@@ -190,10 +192,14 @@ export function InterventionForm({
               />
               <Button
                 type="button"
-                className="font-bold shadow-2xl bg-red-200 hover:bg-red-300 absolute top-2 right-2 text-black text-[10px] rounded-full w-8 h-8 flex items-center justify-center"
+                className="absolute top-2 right-2 text-[10px] rounded-full w-8 h-8 bg-red-200 hover:bg-red-300"
                 onClick={() => {
-                  setImages((prev) => prev.filter((_, i) => i !== index))
-                  setImagesBlob((prev) => prev.filter((_, i) => i !== index))
+                  setImages((prev) =>
+                    prev.filter((_, i) => i !== index)
+                  );
+                  setImagesBlob((prev) =>
+                    prev.filter((_, i) => i !== index)
+                  );
                 }}
               >
                 X
@@ -201,7 +207,9 @@ export function InterventionForm({
             </div>
           ))
         ) : (
-          <span className="text-gray-500 text-sm italic">Images</span>
+          <span className="text-gray-500 text-sm italic">
+            Images
+          </span>
         )}
       </div>
 
@@ -209,7 +217,9 @@ export function InterventionForm({
         <Label>Pièces commandées</Label>
         <RadioGroup
           value={piecesCommande}
-          onValueChange={(value) => setPiecesCommande(value as PiecesCommande)}
+          onValueChange={(value) =>
+            setPiecesCommande(value as PiecesCommande)
+          }
           className="flex gap-6"
         >
           <div className="flex items-center gap-2">
@@ -224,10 +234,13 @@ export function InterventionForm({
       </div>
 
       {piecesCommande === "oui" && (
-        <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+        <div className="space-y-2">
           <Label>Détails de la commande</Label>
           <Textarea
-            name="detailsCommande"
+            value={detailsCommande}
+            onChange={(e) =>
+              setDetailsCommande(e.target.value)
+            }
             placeholder="Listez les pièces commandées..."
             className="min-h-[120px]"
           />
@@ -237,7 +250,10 @@ export function InterventionForm({
       <div className="space-y-2">
         <Label>Commentaires</Label>
         <Textarea
-          name="commentaires"
+          value={commentaires}
+          onChange={(e) =>
+            setCommentaires(e.target.value)
+          }
           placeholder="Notes ou commentaires supplémentaires..."
           className="min-h-[100px]"
         />
@@ -247,18 +263,24 @@ export function InterventionForm({
         <div className="space-y-2">
           <Label>Numéro d’accord</Label>
           <Input
-            name="numeroAccord"
+            ref={accordRef}
+            value={numeroAccord}
+            onChange={(e) =>
+              setNumeroAccord(e.target.value)
+            }
             className="h-15"
             placeholder={defaultAccordNumber}
           />
-
         </div>
 
         <div className="space-y-2">
           <Label>Date de confirmation</Label>
           <Input
-            name="dateConfirmation"
             type="date"
+            value={dateConfirmation}
+            onChange={(e) =>
+              setDateConfirmation(e.target.value)
+            }
             className="h-15"
           />
         </div>
@@ -269,10 +291,10 @@ export function InterventionForm({
           Annuler
         </Button>
         <Button type="submit" disabled={loading}>
-          {loading ? <Spinner className="h-4 w-4" /> : ""}
+          {loading ? <Spinner className="h-4 w-4" /> : null}
           {loading ? "Création..." : "Créer l’intervention"}
         </Button>
       </div>
     </form>
-  )
+  );
 }
