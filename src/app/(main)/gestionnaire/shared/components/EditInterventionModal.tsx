@@ -44,6 +44,7 @@ export function EditInterventionModal({ open, onClose, intervention, onUpdated, 
   const [workDescription, setWorkDescription] = useState("");
   const [ordersDetails, setOrdersDetails] = useState("");
   const [comments, setComments] = useState("");
+  const [kilometrage, setKilometrage] = useState("");
 
   const [accordNumber, setAccordNumber] = useState("");
   const [dateOfConfirmation, setDateOfConfirmation] = useState("");
@@ -64,6 +65,7 @@ export function EditInterventionModal({ open, onClose, intervention, onUpdated, 
 
     setOrdersDetails(intervention.int_ordersDetails ?? "");
     setComments(intervention.int_comments ?? "");
+    setKilometrage(intervention.int_kilometrage ?? "");
 
     setImages([]);
     setImagesBlob([]);
@@ -76,6 +78,7 @@ export function EditInterventionModal({ open, onClose, intervention, onUpdated, 
     if (open && intervention?.int_id) {
       refetch()
     }
+    console.log("Intervention loaded in modal:", intervention)
   }, [open, intervention?.int_id])
 
 
@@ -198,9 +201,15 @@ export function EditInterventionModal({ open, onClose, intervention, onUpdated, 
   };
 
   async function handleSave(e?: React.FormEvent) {
+
+    
     e?.preventDefault();
     if (!intervention?.int_id) return;
-
+    
+    if(intervention.int_vehicle?.veh_kilometrage && kilometrage && intervention.int_vehicle.veh_kilometrage > parseInt(kilometrage)) {
+      toast.error("Le kilométrage de l'intervention ne peut pas être inférieur à celui du véhicule");
+      return;
+    }
     const didOrderParts = piecesCommande === "oui";
 
     const payload: InterventionPatchPayload = {
@@ -212,6 +221,7 @@ export function EditInterventionModal({ open, onClose, intervention, onUpdated, 
       didOrderParts,
       ordersDetails: didOrderParts ? (ordersDetails.trim() || null) : null,
       comments: comments.trim() || null,
+      kilometrage: kilometrage.trim() || null,
     };
 
     const res = await patchIntervention(intervention.int_id, payload);
@@ -244,10 +254,10 @@ export function EditInterventionModal({ open, onClose, intervention, onUpdated, 
   return (
     <Modal open={open} onClose={onClose} modalTitle="Modifier l’intervention" >
       <form onSubmit={handleSave} className="space-y-8 p-4 md:w-[650px]">
-        {intervention?.vehicle?.licensePlate && (
+        {intervention?.int_vehicle?.licensePlate && (
           <div className="space-y-2">
             <Label>Véhicule</Label>
-            <Input value={intervention.vehicle.licensePlate} readOnly className="h-15" />
+            <Input value={intervention.int_vehicle.licensePlate} readOnly className="h-15" />
           </div>
         )}
 
@@ -260,6 +270,22 @@ export function EditInterventionModal({ open, onClose, intervention, onUpdated, 
             placeholder="Décrivez les travaux à effectuer..."
             className="min-h-[120px]"
           />
+        </div>
+
+        <div>
+          <div className="bg-gray-100 p-3 rounded-md mb-4 text-[10px]">
+            <Label>Kilométrage du véhicule : {intervention?.int_vehicle?.veh_kilometrage}</Label>
+          </div>
+          <div className="space-y-2">
+            <Label>Kilométrage de l'intervention</Label>
+            <Input
+              type="number"
+              name="kilometrage"
+              value={kilometrage}
+              onChange={(e) => setKilometrage(e.target.value)}
+              className="h-15"
+            />
+          </div>
         </div>
 
         <div className="space-y-2">

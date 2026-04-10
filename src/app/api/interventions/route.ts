@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
     const didOrderParts = asBool(form.get("didOrderParts"));
     const ordersDetailsRaw = asString(form.get("ordersDetails"));
     const commentsRaw = asString(form.get("comments"));
+    const kilometrage = asString(form.get("kilometrage")) || "";
 
     const files = (form.getAll("photos") as File[]) ?? [];
 
@@ -102,11 +103,16 @@ export async function POST(request: NextRequest) {
       select: {
         veh_id: true,
         veh_baseId: true,
+        veh_kilometrage: true,
       },
     });
 
     if (!vehicle) {
       return NextResponse.json({ error: "Véhicule invalide" }, { status: 400 });
+    }
+
+    if(vehicle.veh_kilometrage && vehicle.veh_kilometrage > kilometrage) {
+      return NextResponse.json({ error: "Le kilométrage de l'intervention ne peut pas être inférieur au kilométrage actuel du véhicule" }, { status: 400 });
     }
 
     if (role === "AGENCE") {
@@ -199,6 +205,7 @@ export async function POST(request: NextRequest) {
             int_accordNumber: accordNumber,
             int_dateOfConfirmation: confirmationDate,
             int_interventionConfirmed: interventionConfirmed,
+            int_kilometrage: kilometrage,
             int_status: status,
             int_statusUpdatedAt: new Date(),
             int_workDescription: workDescription,

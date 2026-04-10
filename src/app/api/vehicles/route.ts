@@ -179,6 +179,7 @@ export async function GET(request: NextRequest) {
             int_accordNumber: true,
             int_dateOfConfirmation: true,
             int_interventionConfirmed: true,
+            int_kilometrage: true,
             int_status: true,
             int_statusUpdatedAt: true,
             int_workDescription: true,
@@ -237,7 +238,8 @@ export async function GET(request: NextRequest) {
                   },
                 },
                 veh_year: true,
-                veh_color: true
+                veh_color: true,
+                veh_kilometrage: true,
               },
             },
           },

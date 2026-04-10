@@ -210,6 +210,7 @@ model intervention_int {
   int_workDescription       String?
   int_didOrderParts         Boolean             @default(false)
   int_ordersDetails         String?
+  int_kilometrage           String?
   int_comments              String?             @db.Text
   int_createdAt             DateTime            @default(now())
   int_updatedAt             DateTime            @updatedAt

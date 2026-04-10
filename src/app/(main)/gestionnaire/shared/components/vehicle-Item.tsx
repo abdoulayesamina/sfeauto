@@ -95,25 +95,29 @@ export function VehicleItem({
     if (!vehicle.veh_id) return
 
     const status = data.piecesCommande === "oui" ? "WAITING_FOR_PARTS" : "FIXING_STARTED"
-
-    const newIntervention = await createIntervention({
-      veh_vehicleId: vehicle.veh_id,
-      veh_accordNumber: data.numeroAccord,
-      veh_dateOfConfirmation: data.dateConfirmation,
-      veh_workDescription: data.descriptionTravaux,
-      veh_didOrderParts: data.piecesCommande === "oui",
-      veh_ordersDetails: data.detailsCommande || null,
-      veh_comments: data.commentaires || null,
-      veh_status : status,
-      veh_images: data.images || [],
-    }).catch((e) => {
+    try{
+      const newIntervention = await createIntervention({
+        veh_vehicleId: vehicle.veh_id,
+        veh_accordNumber: data.numeroAccord,
+        veh_dateOfConfirmation: data.dateConfirmation,
+        veh_workDescription: data.descriptionTravaux,
+        veh_didOrderParts: data.piecesCommande === "oui",
+        veh_ordersDetails: data.detailsCommande || null,
+        veh_comments: data.commentaires || null,
+        veh_status : status,
+        veh_images: data.images || [],
+        veh_kilometrage: data.kilometrage || "",
+      })
+      setInterventionModalOpen(false)
+      reloadVehicles?.()
+    }catch(e:any) {
       console.error("Error creating intervention:", e)
       return toast.error("Erreur : "+e.message)
-    })
+    }     
+    
 
     // setLocalInterventions((prev) => [newIntervention, ...prev])
-    setInterventionModalOpen(false)
-    reloadVehicles?.()
+    
   }
 
   /* ----------------------------- BADGES GROUPES ----------------------------- */
@@ -211,6 +215,7 @@ export function VehicleItem({
         modalTitle="Créer une intervention"
       >
         <InterventionForm
+          kilometrage={vehicle.veh_kilometrage ?? ""}
           vehicleId={vehicle.veh_id ?? ""}
           vehicleDisplayText={`${vehicle.veh_licensePlate} - ${vehicle.veh_brand?.bra_name} ${vehicle.veh_model?.mod_name}`}
           defaultAccordNumber="ACC-2026-001"

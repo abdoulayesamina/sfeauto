@@ -204,6 +204,7 @@ export default function AgencePage() {
       veh_ordersDetails: data.detailsCommande || null,
       veh_comments: data.commentaires || null,
       veh_images: data.images || [],
+      veh_kilometrage: data.kilometrage || "",
     });
 
     // 🔥 récupère les nouvelles données
@@ -391,6 +392,7 @@ export default function AgencePage() {
         >
           {vehiculeSelect && (
             <InterventionForm
+              kilometrage={vehiculeSelect.veh_kilometrage ?? ""}
               vehicleId={vehiculeSelect.id}
               vehicleDisplayText={`${vehiculeSelect.licensePlate} - ${vehiculeSelect.brand?.name ?? ""} ${vehiculeSelect.model?.name ?? ""
                 }`}

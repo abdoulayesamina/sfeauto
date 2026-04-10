@@ -194,6 +194,7 @@ export default function GestionnairePage() {
         veh_ordersDetails: data.detailsCommande || null,
         veh_comments: data.commentaires || null,
         veh_images: data.images || [],
+        veh_kilometrage: data.kilometrage || "",
       })
 
       await loadAll()
@@ -292,6 +293,7 @@ export default function GestionnairePage() {
               clients={clients}
               agences={filteredAgences}
               onSelect={(v) => {
+                console.log("Selected vehicle:", v)
                 setSelectedVehicle(v)
                 setApercuVehiculeOpen(true)
               }}
@@ -354,6 +356,7 @@ export default function GestionnairePage() {
       >
         <InterventionForm
           vehicleId={selectedVehicle?.veh_id ?? ""}
+          kilometrage={selectedVehicle?.veh_kilometrage ?? ""}
           // vehicleDisplayText={`${selectedVehicle?.licensePlate} - ${selectedVehicle?.brand?.name ?? ""} ${selectedVehicle?.model?.name ?? ""}`}
           vehicleDisplayText={`${formatLicensePlate(selectedVehicle?.veh_licensePlate || "")} - ${selectedVehicle?.veh_brand?.bra_name ?? ""} ${selectedVehicle?.veh_model?.mod_name ?? ""}`}
           defaultAccordNumber="ACC-2026-001"

@@ -14,7 +14,8 @@ export const InterventionSchema = z.object({
   int_createdAt: z.string().datetime().optional(),
   int_updatedAt: z.string().datetime().optional(),
   int_vehicleId: z.string(),
-  int_handledById: z.string()
+  int_handledById: z.string(),
+  int_kilometrage: z.string().optional(),
 })
 
 export type Intervention = z.infer<typeof InterventionSchema>

@@ -19,6 +19,7 @@ export function useInterventionApi() {
       fd.append("didOrderParts", String(Boolean(payload.veh_didOrderParts)))
       fd.append("ordersDetails", payload.veh_ordersDetails ?? "")
       fd.append("comments", payload.veh_comments ?? "")
+      fd.append("kilometrage", payload.veh_kilometrage ?? "")
 
       for (const f of images) {
         fd.append("photos", f)

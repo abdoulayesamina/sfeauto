@@ -13,6 +13,7 @@ type PiecesCommande = "oui" | "non"
 interface InterventionFormProps {
   vehicleId: string
   vehicleDisplayText: string
+  kilometrage: string
   defaultAccordNumber?: string
   onSubmit?: (data: any) => void
   onClose?: () => void
@@ -20,6 +21,7 @@ interface InterventionFormProps {
 }
 
 export function InterventionForm({
+  kilometrage,
   vehicleId,
   vehicleDisplayText,
   defaultAccordNumber = "ACC-2026-001",
@@ -134,6 +136,20 @@ export function InterventionForm({
           placeholder="Décrivez les travaux à effectuer..."
           className="min-h-[120px]"
         />
+      </div>
+
+      <div>
+        <div className="bg-gray-100 p-3 rounded-md mb-4 text-[10px]">
+          <Label>Kilométrage du véhicule : {kilometrage}</Label>
+        </div>
+        <div className="space-y-2">
+          <Label>Kilométrage de l'intervention</Label>
+          <Input
+            type="number"
+            name="kilometrage"
+            className="h-15"
+          />
+        </div>
       </div>
 
       <div className="flex flex-col space-y-2">

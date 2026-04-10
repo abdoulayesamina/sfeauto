@@ -10,6 +10,7 @@ export type InterventionPatchPayload = Partial<{
   didOrderParts: boolean;
   ordersDetails: string | null;
   comments: string | null;
+  kilometrage: string | null;
 }>;
 
 export function useInterventionApi() {

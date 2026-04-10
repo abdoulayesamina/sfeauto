@@ -247,6 +247,10 @@ export async function PATCH(request: NextRequest, context: Ctx) {
       updateData.int_comments = normalizeNullableString(body.comments);
     }
 
+    if ("kilometrage" in body) {
+      updateData.int_kilometrage = normalizeNullableString(body.kilometrage);
+    }
+
     updateData.int_interventionConfirmed = nowApproved;
 
     if (statusChanged) {
