@@ -75,10 +75,15 @@ export default function ClientPage() {
     const q = searchQuery.trim().toLowerCase();
 
     return (Array.isArray(vehicles) ? vehicles : [])
-      .map((v) => ({
-        ...v,
-        interventions: Array.isArray(v.interventions) ? v.interventions : [],
-      }))
+      .map((v) => {
+        if (typeof v.licensePlate === "object" || typeof v.brand?.name === "object") {
+          console.warn("Malformed vehicle data detected for:", v.id, v);
+        }
+        return {
+          ...v,
+          interventions: Array.isArray(v.interventions) ? v.interventions : [],
+        };
+      })
       .filter((v) => {
         console.log("Voici le V en Questionnnnn !! : ", v);
         // filtre texte
@@ -139,7 +144,7 @@ export default function ClientPage() {
       (v) =>
         Array.isArray(v.interventions) &&
         v.interventions.some(
-          (i: Intervention) => toUIStatus(i.int_status) === "EN_COURS",
+          (i: Intervention) => toUIStatus(i.status) === "EN_COURS",
         ),
     ).length;
 
@@ -147,7 +152,7 @@ export default function ClientPage() {
       (v) =>
         Array.isArray(v.interventions) &&
         v.interventions.some(
-          (i: Intervention) => toUIStatus(i.int_status) === "CONFIRMEE",
+          (i: Intervention) => toUIStatus(i.status) === "CONFIRMEE",
         ),
     ).length;
 
@@ -156,7 +161,7 @@ export default function ClientPage() {
         Array.isArray(v.interventions) &&
         v.interventions.length > 0 &&
         v.interventions.every(
-          (i: Intervention) => toUIStatus(i.int_status) === "TERMINEE",
+          (i: Intervention) => toUIStatus(i.status) === "TERMINEE",
         ),
     ).length;
 
