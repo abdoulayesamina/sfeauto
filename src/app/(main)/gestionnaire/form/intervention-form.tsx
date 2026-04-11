@@ -46,6 +46,7 @@ export function InterventionForm({
   const [dateConfirmation, setDateConfirmation] = useState("");
   const [detailsCommande, setDetailsCommande] = useState("");
   const [commentaires, setCommentaires] = useState("");
+  const [mileage, setMileage] = useState(kilometrage);
 
   // 🔥 ref pour focus auto
   const accordRef = useRef<HTMLInputElement>(null);
@@ -117,6 +118,7 @@ export function InterventionForm({
       piecesCommande,
       images,
       vehicleId,
+      kilometrage: mileage,
     });
   };
 
@@ -150,6 +152,8 @@ export function InterventionForm({
           <Input
             type="number"
             name="kilometrage"
+            value={mileage}
+            onChange={(e) => setMileage(e.target.value)}
             className="h-15"
           />
         </div>
