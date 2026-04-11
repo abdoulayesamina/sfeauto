@@ -195,32 +195,34 @@ export default function AgencePage() {
   const handleCreateIntervention = async (data: any) => {
     if (!vehiculeSelect?.id) return;
 
-    await createIntervention({
-      veh_vehicleId: vehiculeSelect.id,
-      veh_accordNumber: data.numeroAccord,
-      veh_dateOfConfirmation: data.dateConfirmation,
-      veh_workDescription: data.descriptionTravaux,
-      veh_didOrderParts: data.piecesCommande === "oui",
-      veh_ordersDetails: data.detailsCommande || null,
-      veh_comments: data.commentaires || null,
-      veh_images: data.images || [],
-      veh_kilometrage: data.kilometrage || "",
-    });
+    try {
+      await createIntervention({
+        veh_vehicleId: vehiculeSelect.id,
+        veh_accordNumber: data.numeroAccord,
+        veh_dateOfConfirmation: data.dateConfirmation,
+        veh_workDescription: data.descriptionTravaux,
+        veh_didOrderParts: data.piecesCommande === "oui",
+        veh_ordersDetails: data.detailsCommande || null,
+        veh_comments: data.commentaires || null,
+        veh_images: data.images || [],
+        veh_kilometrage: data.kilometrage || "",
+      });
+      const freshData = await reloadInterventions();
 
-    // 🔥 récupère les nouvelles données
-    const freshData = await reloadInterventions();
+      const list = freshData
+        .filter((inv: any) => inv?.vehicle?.id === vehiculeSelect?.id)
+        .map((inv: any) => ({
+          ...inv,
+          vehicle: vehiculeSelect,
+        }));
 
-    // 🔥 met à jour la liste du véhicule ouvert
-    const list = freshData
-      .filter((inv: any) => inv?.vehicle?.id === vehiculeSelect?.id)
-      .map((inv: any) => ({
-        ...inv,
-        vehicle: vehiculeSelect,
-      }));
+      setInterventionsVehicule(list);
+      setOpenCreateIntervention(false);
 
-    setInterventionsVehicule(list);
+    } catch (e) {
 
-    setOpenCreateIntervention(false);
+      console.log("Erreur création intervention (gérée):", e);
+    }
   };
 
   //Amadou

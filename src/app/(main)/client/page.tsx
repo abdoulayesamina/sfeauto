@@ -75,10 +75,15 @@ export default function ClientPage() {
     const q = searchQuery.trim().toLowerCase();
 
     return (Array.isArray(vehicles) ? vehicles : [])
-      .map((v) => ({
-        ...v,
-        interventions: Array.isArray(v.interventions) ? v.interventions : [],
-      }))
+      .map((v) => {
+        if (typeof v.licensePlate === "object" || typeof v.brand?.name === "object") {
+          console.warn("Malformed vehicle data detected for:", v.id, v);
+        }
+        return {
+          ...v,
+          interventions: Array.isArray(v.interventions) ? v.interventions : [],
+        };
+      })
       .filter((v) => {
         console.log("Voici le V en Questionnnnn !! : ", v);
         // filtre texte
@@ -134,6 +139,11 @@ export default function ClientPage() {
 
   const stats = useMemo(() => {
     const total = vehicles.length;
+
+    if (vehicles.length > 0 && vehicles[0].interventions?.length > 0) {
+      console.log("DEBUG - Intervention properties:", Object.keys(vehicles[0].interventions[0]));
+      console.log("DEBUG - First intervention status:", vehicles[0].interventions[0].status, "int_status:", vehicles[0].interventions[0].int_status);
+    }
 
     const enCours = vehicles.filter(
       (v) =>
