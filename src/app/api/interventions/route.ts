@@ -111,8 +111,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Véhicule invalide" }, { status: 400 });
     }
 
-    if(vehicle.veh_kilometrage && vehicle.veh_kilometrage > kilometrage) {
-      return NextResponse.json({ error: "Le kilométrage de l'intervention ne peut pas être inférieur au kilométrage actuel du véhicule" }, { status: 400 });
+    const currentKm = parseInt(vehicle.veh_kilometrage || "0", 10);
+    const newKm = parseInt(kilometrage || "0", 10);
+
+    if (newKm < currentKm) {
+      return NextResponse.json(
+        {
+          error: `Le kilométrage de l'intervention (${newKm}) ne peut pas être inférieur au kilométrage actuel du véhicule (${currentKm})`,
+        },
+        { status: 400 }
+      );
     }
 
     if (role === "AGENCE") {
@@ -229,6 +237,12 @@ export async function POST(request: NextRequest) {
               },
             },
           },
+        });
+
+        // Mettre à jour le kilométrage du véhicule
+        await tx.vehicle_veh.update({
+          where: { veh_id: vehicleId },
+          data: { veh_kilometrage: String(newKm) },
         });
 
         await tx.changehistory_chg.create({
