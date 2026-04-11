@@ -81,7 +81,7 @@ export default function InterventionCard({
   const counts = computeCounts(intervention)
 
   const totalInterventions =
-  counts.CONFIRMEE + counts.EN_COURS + counts.ATTENTE_PIECES + counts.TERMINEE
+    counts.CONFIRMEE + counts.EN_COURS + counts.ATTENTE_PIECES + counts.TERMINEE
 
   return (
     <div
@@ -100,15 +100,12 @@ export default function InterventionCard({
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
-<<<<<<< HEAD
             <h3 className="text-lg font-bold text-gray-900 truncate">{v?.licensePlate || "—"}</h3>
             {<p className="text-gray-500 text-sm truncate">{v?.brand} {v?.model}</p>}
             {v?.year != null && <p className="text-gray-400 text-sm">· {v.year}</p>}
-=======
             <h3 className="text-lg font-bold text-gray-900 truncate">{displayValue(v?.licensePlate)}</h3>
             {<p className="text-gray-500 text-sm truncate">{displayValue(v?.brand)} {displayValue(v?.model)}</p>}
             {v?.year != null && <p className="text-gray-400 text-sm">· {displayValue(v.year)}</p>}
->>>>>>> 4f4c391 (probleme de page client)
           </div>
 
           <div className="mt-1 text-sm text-gray-500 flex flex-wrap gap-2">

@@ -144,7 +144,8 @@ export default function ClientPage() {
       (v) =>
         Array.isArray(v.interventions) &&
         v.interventions.some(
-          (i: Intervention) => toUIStatus(i.status) === "EN_COURS",
+          // (i: Intervention) => toUIStatus(i.status) === "EN_COURS"
+          (i: Intervention) => toUIStatus(i.int_status) === "EN_COURS"
         ),
     ).length;
 
@@ -152,7 +153,7 @@ export default function ClientPage() {
       (v) =>
         Array.isArray(v.interventions) &&
         v.interventions.some(
-          (i: Intervention) => toUIStatus(i.status) === "CONFIRMEE",
+          (i: Intervention) => toUIStatus(i.int_status) === "CONFIRMEE",
         ),
     ).length;
 
@@ -161,7 +162,7 @@ export default function ClientPage() {
         Array.isArray(v.interventions) &&
         v.interventions.length > 0 &&
         v.interventions.every(
-          (i: Intervention) => toUIStatus(i.status) === "TERMINEE",
+          (i: Intervention) => toUIStatus(i.int_status) === "TERMINEE",
         ),
     ).length;
 
