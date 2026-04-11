@@ -140,12 +140,16 @@ export default function ClientPage() {
   const stats = useMemo(() => {
     const total = vehicles.length;
 
+    if (vehicles.length > 0 && vehicles[0].interventions?.length > 0) {
+      console.log("DEBUG - Intervention properties:", Object.keys(vehicles[0].interventions[0]));
+      console.log("DEBUG - First intervention status:", vehicles[0].interventions[0].status, "int_status:", vehicles[0].interventions[0].int_status);
+    }
+
     const enCours = vehicles.filter(
       (v) =>
         Array.isArray(v.interventions) &&
         v.interventions.some(
-          // (i: Intervention) => toUIStatus(i.status) === "EN_COURS"
-          (i: Intervention) => toUIStatus(i.int_status) === "EN_COURS"
+          (i: Intervention) => toUIStatus(i.int_status) === "EN_COURS",
         ),
     ).length;
 
