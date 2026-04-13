@@ -276,7 +276,14 @@ export function VehiclePreview({
           intervention={interventionForEdit}
           onUpdated={(updated) => {
             const updatedIntervention = updated?.intervention ?? updated;
-            setLocalInterventions((prev) => prev.map((x) => (x.id === updatedIntervention.id ? { ...x, ...updatedIntervention } : x)));
+            // setLocalInterventions((prev) => prev.map((x) => (x.id === updatedIntervention.id ? { ...x, ...updatedIntervention } : x)));
+            setLocalInterventions((prev) =>
+              prev.map((x) =>
+                (x.int_id ?? x.id) === (updatedIntervention.int_id ?? updatedIntervention.id)
+                  ? { ...x, ...updatedIntervention }
+                  : x
+              )
+            );
           }}
           reloadInterventionList={reloadInterventionList}
         />

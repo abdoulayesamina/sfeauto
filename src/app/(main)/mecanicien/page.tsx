@@ -111,12 +111,19 @@ export default function MecanicienPage() {
 
   const { clients } = useClients();
   const { bases } = useBases(clientId);
+  const [filteredBases, setFilteredBases] = useState<any[]>([]);
+
+  useEffect(() => {
+    setFilteredBases(bases);
+  }, [bases]);
+
   const { interventions, setInterventions, loading } = useInterventions(
     undefined,
     clientId,
     baseId,
     search,
   );
+
   const {
     updateStatus,
     loading: statusLoading,
@@ -161,7 +168,6 @@ export default function MecanicienPage() {
       (inv: any) => STATUS_UI_MAP[inv.status] === filterStatus,
     );
     setFilteredInterventions(filteredAfterTrim);
-
   };
 
   return (
@@ -177,11 +183,28 @@ export default function MecanicienPage() {
         {/* Filtres */}
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-col sm:flex-row gap-3">
-            <Select onValueChange={setClientId}>
+            <Select
+              value={clientId || "all"}
+              onValueChange={(value) => {
+                if (value === "all") {
+                  setClientId("");
+                  setBaseId("");
+                  setFilteredBases(bases);
+                } else {
+                  setClientId(value);
+                  setBaseId("");
+                  const clientBases = bases.filter(
+                    (b) => b.client.id === value,
+                  );
+                  setFilteredBases(clientBases);
+                }
+              }}
+            >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Client" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="all">Tous les clients</SelectItem>{" "}
                 {clients.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
                     {c.name}
@@ -190,12 +213,31 @@ export default function MecanicienPage() {
               </SelectContent>
             </Select>
 
-            <Select onValueChange={setBaseId}>
+            <Select
+              value={baseId || "all"}
+              onValueChange={(value) => {
+                if (value === "all") {
+                  setBaseId("");
+                } else {
+                  setBaseId(value);
+                  const selectedBase = bases.find((b) => b.id === value);
+                  
+                  if (selectedBase && selectedBase.client.id !== clientId) {
+                    setClientId(selectedBase.client.id);
+                    const clientBases = bases.filter(
+                      (b) => b.client.id === selectedBase.client.id,
+                    );
+                    setFilteredBases(clientBases);
+                  }
+                }
+              }}
+            >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Agence" />
               </SelectTrigger>
               <SelectContent>
-                {bases.map((b) => (
+                <SelectItem value="all">Toutes les agences</SelectItem>
+                {filteredBases.map((b) => (
                   <SelectItem key={b.id} value={b.id}>
                     {b.location}
                   </SelectItem>
@@ -208,7 +250,7 @@ export default function MecanicienPage() {
             <Input
               placeholder="Rechercher plaque ou accord..."
               // value={search}
-              onChange={(e:any) => onSearchChange(e)}
+              onChange={(e: any) => onSearchChange(e)}
             />
             <Button size="icon" variant="outline">
               <Search size={18} />
@@ -224,7 +266,7 @@ export default function MecanicienPage() {
           >
             En cours
           </Button>
-          
+
           <Button
             onClick={() => setFilterStatus("ATTENTE_PIECES")}
             variant={filterStatus === "ATTENTE_PIECES" ? "default" : "outline"}
@@ -245,11 +287,12 @@ export default function MecanicienPage() {
           {loading && <p>Chargement...</p>}
           {!loading && filteredInterventions.length === 0 && (
             <div className="py-16 flex flex-col items-center justify-center text-center">
-                    
               {/* Icône */}
-              <div className="h-16 w-16 rounded-2xl bg-gradient-to-br 
-                              from-gray-100 to-gray-200 flex items-center justify-center shadow-sm">
-                <SearchX/>
+              <div
+                className="h-16 w-16 rounded-2xl bg-gradient-to-br 
+                              from-gray-100 to-gray-200 flex items-center justify-center shadow-sm"
+              >
+                <SearchX />
               </div>
 
               {/* Titre */}
@@ -305,36 +348,36 @@ export default function MecanicienPage() {
 
                   <Select
                     onValueChange={async (val) => {
-                        setInterventionId(inv.id);
-                        const result = await updateStatus(inv.id, val as any);
+                      setInterventionId(inv.id);
+                      const result = await updateStatus(inv.id, val as any);
 
-                        if (!result.success) {
-                            setInterventionId(null);
-                            return errorAlert("Erreur", result.message);
-                        }
-
+                      if (!result.success) {
                         setInterventionId(null);
-                        setInterventions((prev: any) =>
-                            prev.map((item: any) =>
-                            item.id === inv.id
-                                ? { ...item, status: result.data.status }
-                                : item,
-                            ),
-                        );
+                        return errorAlert("Erreur", result.message);
+                      }
 
-                        setInterventions((prev: any) =>
-                            prev.map((item: any) =>
-                            item.id === inv.id
-                                ? {
-                                    ...item,
-                                    status:
-                                    Object.keys(STATUS_UI_MAP).find(
-                                        (key) => STATUS_UI_MAP[key] === val,
-                                    ) || item.status,
-                                }
-                                : item,
-                            ),
-                        );
+                      setInterventionId(null);
+                      setInterventions((prev: any) =>
+                        prev.map((item: any) =>
+                          item.id === inv.id
+                            ? { ...item, status: result.data.status }
+                            : item,
+                        ),
+                      );
+
+                      setInterventions((prev: any) =>
+                        prev.map((item: any) =>
+                          item.id === inv.id
+                            ? {
+                                ...item,
+                                status:
+                                  Object.keys(STATUS_UI_MAP).find(
+                                    (key) => STATUS_UI_MAP[key] === val,
+                                  ) || item.status,
+                              }
+                            : item,
+                        ),
+                      );
                     }}
                     value={uiStatus}
                   >

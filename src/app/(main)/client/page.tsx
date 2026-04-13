@@ -85,7 +85,7 @@ export default function ClientPage() {
         };
       })
       .filter((v) => {
-        console.log("Voici le V en Questionnnnn !! : ", v);
+        // console.log("Voici le V en Questionnnnn !! : ", v);
         // filtre texte
         const plate = String(v.licensePlate ?? "").toLowerCase();
         const brand = String(v.brand?.name ?? "").toLowerCase();
@@ -142,14 +142,14 @@ export default function ClientPage() {
 
     if (vehicles.length > 0 && vehicles[0].interventions?.length > 0) {
       console.log("DEBUG - Intervention properties:", Object.keys(vehicles[0].interventions[0]));
-      console.log("DEBUG - First intervention status:", vehicles[0].interventions[0].status, "int_status:", vehicles[0].interventions[0].int_status);
+      console.log("DEBUG - First intervention status:", vehicles[0].interventions[0].status, "status:", vehicles[0].interventions[0].status);
     }
 
     const enCours = vehicles.filter(
       (v) =>
         Array.isArray(v.interventions) &&
         v.interventions.some(
-          (i: Intervention) => toUIStatus(i.int_status) === "EN_COURS",
+          (i: any) => toUIStatus(i.status) === "EN_COURS",
         ),
     ).length;
 
@@ -157,7 +157,7 @@ export default function ClientPage() {
       (v) =>
         Array.isArray(v.interventions) &&
         v.interventions.some(
-          (i: Intervention) => toUIStatus(i.int_status) === "CONFIRMEE",
+          (i: any) => toUIStatus(i.status) === "CONFIRMEE",
         ),
     ).length;
 
@@ -166,7 +166,7 @@ export default function ClientPage() {
         Array.isArray(v.interventions) &&
         v.interventions.length > 0 &&
         v.interventions.every(
-          (i: Intervention) => toUIStatus(i.int_status) === "TERMINEE",
+          (i: any) => toUIStatus(i.status) === "TERMINEE",
         ),
     ).length;
 
