@@ -85,7 +85,7 @@ export default function InterventionCard({
         <div className="min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
             <h3 className="text-lg font-bold text-gray-900 truncate">{v?.licensePlate || "—"}</h3>
-            {<p className="text-gray-500 text-sm truncate">{v?.brand} {v?.model}</p>}
+            {<p className="text-gray-500 text-sm truncate">{v?.brand?.name} {v?.model?.name}</p>}
             {v?.year != null && <p className="text-gray-400 text-sm">· {v.year}</p>}
           </div>
 
