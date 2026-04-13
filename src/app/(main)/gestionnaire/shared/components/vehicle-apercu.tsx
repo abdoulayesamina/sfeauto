@@ -119,6 +119,8 @@ export function VehiclePreview({
   };
 
   const handleEditIntervention = (intervention: any) => {
+    if(toUIStatus(intervention?.int_status) === "TERMINEE") return;
+
     setInterventionForEdit(intervention);
     setOpenEditModal(true);
   };
@@ -179,6 +181,7 @@ export function VehiclePreview({
           const meta = getStatusMeta(inv?.uiStatus) ?? DEFAULT_META;
           const hasDevis = Boolean(inv?.devis?.dev_id);
           const devisId = inv?.devis?.dev_id ?? null;
+          const isTerminee = inv?.uiStatus === "TERMINEE";
 
           return (
             <div key={inv.int_id} className="rounded-xl border bg-white p-5 shadow-sm hover:shadow-md transition">
@@ -217,11 +220,16 @@ export function VehiclePreview({
                     <Eye size={16} />
                     Voir tous les détails
                   </button>
-
-                  <Button variant="outline" className="flex items-center gap-2" onClick={() => handleEditIntervention(inv)}>
+                  
+                  {!isTerminee && (
+                     <Button variant="outline" className="flex items-center gap-2" onClick={() => handleEditIntervention(inv)}>
                     <Pencil size={16} />
                     Modifier
                   </Button>
+                  )
+
+                  }
+                 
 
                   {canCreateDevis(role) && (
                     <Button
