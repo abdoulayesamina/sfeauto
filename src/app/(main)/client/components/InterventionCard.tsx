@@ -54,6 +54,22 @@ function Badge({ label, variant }: { label: string; variant: "blue" | "orange" |
   return <span className={`px-3 py-1 rounded-full text-sm font-medium ${cls}`}>{label}</span>
 }
 
+const displayValue = (v: any) => {
+  if (v === null || v === undefined) return "—";
+  if (typeof v === "string" || typeof v === "number" || typeof v === "boolean")
+    return String(v);
+
+  if (typeof v === "object") {
+    if ("name" in v && v?.name) return String(v.name);
+    if ("label" in v && v?.label) return String(v.label);
+    if ("title" in v && v?.title) return String(v.title);
+    if ("location" in v && v?.location) return displayValue(v.location);
+    return "—";
+  }
+
+  return "—";
+};
+
 export default function InterventionCard({
   intervention,
   onViewInterventions,
@@ -65,7 +81,7 @@ export default function InterventionCard({
   const counts = computeCounts(intervention)
 
   const totalInterventions =
-  counts.CONFIRMEE + counts.EN_COURS + counts.ATTENTE_PIECES + counts.TERMINEE
+    counts.CONFIRMEE + counts.EN_COURS + counts.ATTENTE_PIECES + counts.TERMINEE
 
   return (
     <div
@@ -84,15 +100,15 @@ export default function InterventionCard({
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
-            <h3 className="text-lg font-bold text-gray-900 truncate">{v?.licensePlate || "—"}</h3>
-            {<p className="text-gray-500 text-sm truncate">{v?.brand?.name} {v?.model?.name}</p>}
-            {v?.year != null && <p className="text-gray-400 text-sm">· {v.year}</p>}
+            <h3 className="text-lg font-bold text-gray-900 truncate">{displayValue(v?.licensePlate)}</h3>
+            {<p className="text-gray-500 text-sm truncate">{displayValue(v?.brand)} {displayValue(v?.model)}</p>}
+            {v?.year != null && <p className="text-gray-400 text-sm">· {displayValue(v.year)}</p>}
           </div>
 
           <div className="mt-1 text-sm text-gray-500 flex flex-wrap gap-2">
-            <span>{v?.client?.name || "—"}</span>
+            <span>{displayValue(v?.client)}</span>
             <span>•</span>
-            <span>{v?.base?.location || "—"}</span>
+            <span>{displayValue(v?.base?.location)}</span>
             {v?.entryDate && (
               <>
                 <span>•</span>
