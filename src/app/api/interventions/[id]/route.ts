@@ -87,6 +87,7 @@ export async function PATCH(request: NextRequest, context: Ctx) {
       "accordNumber" in body ? normalizeNullableString(body.accordNumber) : undefined;
 
       const refuse = normalizedAccordNumber== "REFUSE";
+    console.log("Vérification numéro d'accord :", normalizedAccordNumber);
     if (normalizedAccordNumber && !refuse ) {
       const existing = await prisma.intervention_int.findFirst({
         where: {
@@ -258,7 +259,7 @@ export async function PATCH(request: NextRequest, context: Ctx) {
       updateData.int_status = nextStatus;
       updateData.int_statusUpdatedAt = new Date();
     }
-
+    console.log("Execution !!!");
     const updatedIntervention = await prisma.intervention_int.update({
       where: { int_id: id },
       data: updateData,
@@ -284,6 +285,7 @@ export async function PATCH(request: NextRequest, context: Ctx) {
       },
     });
 
+    console.log("Execution 22 !!!");
     if (changeHistoryEntries.length > 0) {
       await prisma.changehistory_chg.createMany({
         data: changeHistoryEntries,
