@@ -57,8 +57,13 @@ export function EditInterventionModal({ open, onClose, intervention, onUpdated, 
 
     // setWorkDescription(intervention.int_workDescription);
     setWorkDescription(intervention.int_workDescription ?? "");
-    setAccordNumber(intervention.int_accordNumber ?? "");
-    setDateOfConfirmation(toDateInputValue(intervention.int_dateOfConfirmation));
+  setAccordNumber(
+    intervention.int_accordNumber === "REFUSE"
+      ? "REFUSÉ"
+      : (intervention.int_accordNumber ?? "")
+  );
+  
+  setDateOfConfirmation(toDateInputValue(intervention.int_dateOfConfirmation));
 
     const didOrder = Boolean(intervention.int_didOrderParts);
     setPiecesCommande(didOrder ? "oui" : "non");
@@ -200,55 +205,60 @@ export function EditInterventionModal({ open, onClose, intervention, onUpdated, 
     e.target.value = "";
   };
 
-  async function handleSave(e?: React.FormEvent) {
+async function handleSave(e?: React.FormEvent) {
+  e?.preventDefault();
+  if (!intervention?.int_id) return;
 
-    
-    e?.preventDefault();
-    if (!intervention?.int_id) return;
-    
-    if(intervention.int_vehicle?.veh_kilometrage && kilometrage && intervention.int_vehicle.veh_kilometrage > parseInt(kilometrage)) {
-      toast.error("Le kilométrage de l'intervention ne peut pas être inférieur à celui du véhicule");
-      return;
-    }
-    const didOrderParts = piecesCommande === "oui";
-
-    const payload: InterventionPatchPayload = {
-      workDescription: workDescription.trim() || null,
-      accordNumber: accordNumber.trim() || null,
-      dateOfConfirmation: dateOfConfirmation
-        ? new Date(dateOfConfirmation).toISOString()
-        : null,
-      didOrderParts,
-      ordersDetails: didOrderParts ? (ordersDetails.trim() || null) : null,
-      comments: comments.trim() || null,
-      kilometrage: kilometrage.trim() || null,
-    };
-
-    const res = await patchIntervention(intervention.int_id, payload);
-
-    if (!res.ok) return;
-
-
-    if (images.length > 0) {
-      const formData = new FormData();
-
-      images.forEach((file) => {
-        formData.append("files", file);
-      });
-
-      await fetch(
-        `/api/interventions/${intervention.int_id}/photos`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-    }
-
-    onUpdated?.(res.data?.intervention ?? res.data);
-    reloadInterventionList?.();
-    onClose();
+  if (
+    intervention.int_vehicle?.veh_kilometrage &&
+    kilometrage &&
+    intervention.int_vehicle.veh_kilometrage > parseInt(kilometrage)
+  ) {
+    toast.error("Le kilométrage de l'intervention ne peut pas être inférieur à celui du véhicule");
+    return;
   }
+
+  const didOrderParts = piecesCommande === "oui";
+
+  const normalizedAccordNumber = accordNumber.trim()
+    ? accordNumber.trim().toUpperCase() === "REFUSÉ"
+      ? "REFUSE"
+      : accordNumber.trim()
+    : null;
+
+  const payload: InterventionPatchPayload = {
+    workDescription: workDescription.trim() || null,
+    accordNumber: normalizedAccordNumber,
+    dateOfConfirmation: dateOfConfirmation
+      ? new Date(dateOfConfirmation).toISOString()
+      : null,
+    didOrderParts,
+    ordersDetails: didOrderParts ? (ordersDetails.trim() || null) : null,
+    comments: comments.trim() || null,
+    kilometrage: kilometrage.trim() || null,
+  };
+
+  const res = await patchIntervention(intervention.int_id, payload);
+
+  if (!res.ok) return;
+
+  if (images.length > 0) {
+    const formData = new FormData();
+
+    images.forEach((file) => {
+      formData.append("files", file);
+    });
+
+    await fetch(`/api/interventions/${intervention.int_id}/photos`, {
+      method: "POST",
+      body: formData,
+    });
+  }
+
+  onUpdated?.(res.data?.intervention ?? res.data);
+  reloadInterventionList?.();
+  onClose();
+}
 
 
   return (
@@ -451,12 +461,21 @@ export function EditInterventionModal({ open, onClose, intervention, onUpdated, 
         <div className="border-t pt-6 space-y-6">
           <div className="space-y-2">
             <Label>Numéro d’accord</Label>
-            <Input
-              className="h-15"
-              value={accordNumber}
-              onChange={(e) => setAccordNumber(e.target.value)}
-              placeholder="ACC-2026-001"
-            />
+            <div className="flex items-center gap-2">
+                <Input
+                  className="h-15"
+                  value={accordNumber}
+                  onChange={(e) => setAccordNumber(e.target.value)}
+                  placeholder="ACC-2026-001"
+                />
+              <Button
+              type="button"
+              variant="destructive"
+              className="h-15 whitespace-nowrap"
+              onClick={()=>setAccordNumber("REFUSÉ")}>
+                REFUSÉ
+              </Button>
+            </div>
           </div>
 
           <div className="space-y-2">
