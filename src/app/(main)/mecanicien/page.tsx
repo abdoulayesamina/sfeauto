@@ -173,7 +173,6 @@ export default function MecanicienPage() {
   const [searchValue, setSearchValue] = useState("");
 
   const applyFilters = useCallback(() => {
-    debugger;
     let result = [...interventions];
 
     // Filtre par statut
@@ -202,12 +201,12 @@ export default function MecanicienPage() {
 
     // Filtre par Client
     if (clientId) {
-      result = result.filter((inv: any) => inv.clientId === clientId);
+      result = result.filter((inv: any) => inv.vehicle?.client?.id === clientId);
     }
 
     // Filtre par Agence (Base)
     if (baseId) {
-      result = result.filter((inv: any) => inv.baseId === baseId);
+      result = result.filter((inv: any) => inv.vehicle?.base?.id === baseId);
     }
 
     setFilteredInterventions(result);
@@ -299,7 +298,6 @@ export default function MecanicienPage() {
               placeholder="Rechercher plaque ou accord..."
               value={searchValue}
               onChange={(e) => {
-                debugger;
                 setSearchValue(e.target.value);
                 if (e.target.value === "") {
                   setFilterStatus("EN_COURS");
