@@ -86,7 +86,8 @@ export async function PATCH(request: NextRequest, context: Ctx) {
     const normalizedAccordNumber =
       "accordNumber" in body ? normalizeNullableString(body.accordNumber) : undefined;
 
-    if (normalizedAccordNumber) {
+      const refuse = normalizedAccordNumber== "REFUSE";
+    if (normalizedAccordNumber && !refuse ) {
       const existing = await prisma.intervention_int.findFirst({
         where: {
           int_accordNumber: normalizedAccordNumber,
@@ -185,7 +186,7 @@ export async function PATCH(request: NextRequest, context: Ctx) {
         : currentIntervention.int_didOrderParts;
 
     const wasUnapproved = !currentIntervention.int_interventionConfirmed;
-    const nowApproved = Boolean(finalAccordNumber && finalDateOfConfirmation);
+    const nowApproved = Boolean(finalAccordNumber && finalAccordNumber!=="REFUSE" && finalDateOfConfirmation);
 
     if (wasUnapproved && nowApproved) {
       changeHistoryEntries.push({
