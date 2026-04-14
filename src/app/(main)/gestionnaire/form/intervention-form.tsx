@@ -153,6 +153,9 @@ export function InterventionForm({
             type="number"
             name="kilometrage"
             value={mileage}
+            max={1000000}
+            min={0}
+            step={1}
             onChange={(e) => setMileage(e.target.value)}
             className="h-15"
           />

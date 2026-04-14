@@ -127,7 +127,7 @@ export default function IntervDetailGes({ selectedIntervention, onClose }: Props
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="rounded-xl border p-4 bg-zinc-50">
+        <div className={`rounded-xl border p-4 ${selectedIntervention?.accordNumber !== 'REFUSE' ? 'bg-zinc-50' : 'bg-red-100'}`}>
           <div className="mb-1 flex items-center gap-2">
             <div className="p-2 rounded-lg bg-orange-100 text-orange-700">
               <CheckCircle />

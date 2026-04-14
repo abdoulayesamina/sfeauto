@@ -282,6 +282,9 @@ export function EditInterventionModal({ open, onClose, intervention, onUpdated, 
               type="number"
               name="kilometrage"
               value={kilometrage}
+              max={1000000}
+              min={0}
+              step={1}
               onChange={(e) => setKilometrage(e.target.value)}
               className="h-15"
             />

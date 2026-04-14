@@ -123,6 +123,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if( Number(kilometrage) > 1000000 ) {
+      return NextResponse.json(
+        {
+          error: `Le kilométrage de l'intervention (${kilometrage}) dépasse la limite maximale de 1000000`,
+        },
+        { status: 400 }
+      );
+    }
+
     if (role === "AGENCE") {
       const userBaseId = session.user.baseId;
       if (!userBaseId) {

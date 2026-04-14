@@ -201,6 +201,12 @@ export function AddVehiculeForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (vehicule.veh_kilometrage && (Number(vehicule.veh_kilometrage) > 1000000)) {
+      return toast.error("Le kilométrage ne peut pas dépasser 1 000 000 km")
+    }
+
+
     if (!vehicule.veh_brandId) return alert("Veuillez sélectionner une marque")
     if (!vehicule.veh_modelId) return alert("Veuillez sélectionner un modèle")
     if (!vehicule.veh_clientId) return alert("Veuillez sélectionner un client")
@@ -472,6 +478,9 @@ export function AddVehiculeForm({
             type="number"
             placeholder="220"
             className="h-12"
+            max={1000000}
+            min={0}
+            step={1}
             value={vehicule.veh_kilometrage ?? ""}
             onChange={(e) =>
               setVehicule({

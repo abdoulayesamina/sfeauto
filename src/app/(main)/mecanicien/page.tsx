@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/src/shared/components/ui/button";
 import { Input } from "@/src/shared/components/ui/input";
 import {
@@ -102,7 +102,7 @@ const STATUS_TRANSLATIONS: Record<string, string> = {
 
 export default function MecanicienPage() {
   const [filterStatus, setFilterStatus] = useState<
-    "EN_COURS" | "TERMINEE" | "ATTENTE_PIECES"
+    "EN_COURS" | "TERMINEE" | "ATTENTE_PIECES" | "EN_ATTENTE-ACCORD" | ""
   >("EN_COURS");
   const [clientId, setClientId] = useState<string>();
   const [baseId, setBaseId] = useState<string>();
@@ -119,9 +119,9 @@ export default function MecanicienPage() {
 
   const { interventions, setInterventions, loading } = useInterventions(
     undefined,
-    clientId,
-    baseId,
-    search,
+    // clientId,
+    // baseId,
+    // search,
   );
 
   const {
@@ -150,25 +150,72 @@ export default function MecanicienPage() {
     setFilteredInterventions(filtered);
   }, [interventions, filterStatus]);
 
-  const onSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = String(e.target.value).toLowerCase().trim();
-    if (value === "") {
-      const filtered = interventions.filter(
-        (inv: any) => STATUS_UI_MAP[inv.status] === filterStatus,
-      );
-      setFilteredInterventions(filtered);
-      return;
+  // const onSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const value = String(e.target.value).toLowerCase().trim();
+  //   if (value === "") {
+  //     const filtered = interventions.filter(
+  //       (inv: any) => STATUS_UI_MAP[inv.status] === filterStatus,
+  //     );
+  //     setFilteredInterventions(filtered);
+  //     return;
+  //   }
+  //   const filtered = interventions.filter((inv: any) => {
+  //     const plate = String(inv.vehicle.licensePlate ?? "").toLowerCase();
+  //     const accord = String(inv.accordNumber ?? "").toLowerCase();
+  //     return plate.includes(value) || accord.includes(value);
+  //   });
+  //   const filteredAfterTrim = filtered.filter(
+  //     (inv: any) => STATUS_UI_MAP[inv.status] === filterStatus,
+  //   );
+  //   setFilteredInterventions(filteredAfterTrim);
+  // };
+
+  const [searchValue, setSearchValue] = useState("");
+
+  const applyFilters = useCallback(() => {
+    debugger;
+    let result = [...interventions];
+
+    // Filtre par statut
+    if (filterStatus) {
+      if (filterStatus === "EN_ATTENTE-ACCORD") {
+        result = result.filter(
+          (inv: any) => inv.accordNumber === null || inv.accordNumber === undefined || inv.accordNumber === "",
+        );
+      } else {
+        result = result.filter(
+          (inv: any) => STATUS_UI_MAP[inv.status] === filterStatus,
+        );
+      }
     }
-    const filtered = interventions.filter((inv: any) => {
-      const plate = String(inv.vehicle.licensePlate ?? "").toLowerCase();
-      const accord = String(inv.accordNumber ?? "").toLowerCase();
-      return plate.includes(value) || accord.includes(value);
-    });
-    const filteredAfterTrim = filtered.filter(
-      (inv: any) => STATUS_UI_MAP[inv.status] === filterStatus,
-    );
-    setFilteredInterventions(filteredAfterTrim);
-  };
+
+    // Filtre par recherche (plaque ou numéro d'accord)
+    if (searchValue) {
+      // ← tu dois stocker la valeur de l'input dans un state "searchValue"
+      const value = searchValue.toLowerCase().trim();
+      result = result.filter((inv: any) => {
+        const plate = String(inv.vehicle?.licensePlate ?? "").toLowerCase();
+        const accord = String(inv.accordNumber ?? "").toLowerCase();
+        return plate.includes(value) || accord.includes(value);
+      });
+    }
+
+    // Filtre par Client
+    if (clientId) {
+      result = result.filter((inv: any) => inv.clientId === clientId);
+    }
+
+    // Filtre par Agence (Base)
+    if (baseId) {
+      result = result.filter((inv: any) => inv.baseId === baseId);
+    }
+
+    setFilteredInterventions(result);
+  }, [interventions, filterStatus, searchValue, clientId, baseId]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [applyFilters]);
 
   return (
     <div className="bg-zinc-50 min-h-screen p-4 sm:p-8">
@@ -221,7 +268,7 @@ export default function MecanicienPage() {
                 } else {
                   setBaseId(value);
                   const selectedBase = bases.find((b) => b.id === value);
-                  
+
                   if (selectedBase && selectedBase.client.id !== clientId) {
                     setClientId(selectedBase.client.id);
                     const clientBases = bases.filter(
@@ -248,9 +295,20 @@ export default function MecanicienPage() {
 
           <div className="flex items-center gap-2">
             <Input
+              type="text"
               placeholder="Rechercher plaque ou accord..."
+              value={searchValue}
+              onChange={(e) => {
+                debugger;
+                setSearchValue(e.target.value);
+                if (e.target.value === "") {
+                  setFilterStatus("EN_COURS");
+                  return;
+                }else{
+                  setFilterStatus("");
+                }
+              }}
               // value={search}
-              onChange={(e: any) => onSearchChange(e)}
             />
             <Button size="icon" variant="outline">
               <Search size={18} />
@@ -260,6 +318,12 @@ export default function MecanicienPage() {
 
         {/* Statut filter */}
         <div className="flex gap-2 flex-wrap">
+          <Button
+            onClick={() => setFilterStatus("EN_ATTENTE-ACCORD")}
+            variant={filterStatus === "EN_ATTENTE-ACCORD" ? "default" : "outline"}
+          >
+            En attente d'accord
+          </Button>
           <Button
             onClick={() => setFilterStatus("EN_COURS")}
             variant={filterStatus === "EN_COURS" ? "default" : "outline"}
@@ -283,7 +347,7 @@ export default function MecanicienPage() {
         </div>
 
         {/* Liste */}
-        <div className="space-y-4">
+        <div className="space-y-4 max-h-[700px] overflow-y-auto">
           {loading && <p>Chargement...</p>}
           {!loading && filteredInterventions.length === 0 && (
             <div className="py-16 flex flex-col items-center justify-center text-center">
