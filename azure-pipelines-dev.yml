@@ -22,10 +22,10 @@ variables:
     value: "$(Build.ArtifactStagingDirectory)/app.zip"
 
 steps:
-  - task: NodeTool@0
+  - task: UseNode@1
     displayName: "Use Node.js $(nodeVersion)"
     inputs:
-      versionSpec: "$(nodeVersion)"
+      version: "$(nodeVersion)"
 
   - script: |
       node -v
@@ -33,34 +33,22 @@ steps:
     displayName: "Check Node and npm versions"
 
   - script: |
-      npm ci
-    displayName: "Install dependencies"
-
-  - script: |
-      npm run build
-    displayName: "Build application"
-    env:
-      DATABASE_URL: $(DATABASE_URL)
-      NEXTAUTH_SECRET: $(NEXTAUTH_SECRET)
-      NEXTAUTH_URL: $(NEXTAUTH_URL)
-      AZURE_STORAGE_CONNECTION_STRING: $(AZURE_STORAGE_CONNECTION_STRING)
-      AZURE_BLOB_CONTAINER: $(AZURE_BLOB_CONTAINER)
-      RAPIDAPI_KEY: $(RAPIDAPI_KEY)
-      RAPIDAPI_URL: $(RAPIDAPI_URL)
-      RAPIDAPI_HOST: $(RAPIDAPI_HOST)
-      NEXT_PUBLIC_API_URL: $(NEXT_PUBLIC_API_URL)
+      rm -rf node_modules
+      rm -f $(packagePath)
+    displayName: "Clean workspace"
 
   - task: ArchiveFiles@2
-    displayName: "Archive application files"
+    displayName: "Archive source files"
     inputs:
       rootFolderOrFile: "$(System.DefaultWorkingDirectory)"
       includeRootFolder: false
       archiveType: "zip"
       archiveFile: "$(packagePath)"
       replaceExistingArchive: true
+      verbose: true
 
   - task: AzureWebApp@1
-    displayName: "Deploy to Azure App Service DEV"
+    displayName: "Deploy source to Azure App Service DEV"
     inputs:
       azureSubscription: "$(azureServiceConnection)"
       appType: "webAppLinux"
