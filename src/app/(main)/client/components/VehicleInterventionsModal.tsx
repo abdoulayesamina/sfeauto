@@ -173,8 +173,8 @@ export default function VehicleInterventionsModal({
                 <div className="flex flex-col lg:flex-row lg:items-center gap-6">
                   <div className="flex-1">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4">
-                      <h3 className="font-semibold text-xl text-zinc-900">
-                        Intervention #{String(intervention.id).slice(-8)}
+                      <h3 className="font-semibold text-zinc-900">
+                        Intervention
                       </h3>
                       <InterventionStatusBadge status={intervention.status} />
                     </div>

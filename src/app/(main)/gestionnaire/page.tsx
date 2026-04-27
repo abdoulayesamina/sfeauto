@@ -1,85 +1,91 @@
-"use client"
+"use client";
 
-import { useEffect, useMemo, useState } from "react"
-import { Modal } from "@/src/shared/components/modal"
-import { Button } from "@/src/shared/components/ui/button"
-import { Vehicule } from "@/src/utils/types/vehicule"
-import { useManageApi } from "./shared/useManage.api"
-import { useClientApi } from "@/src/shared/hooks/useClient.api"
-import { useAgenceApi } from "@/src/shared/hooks/useAgence.api"
-import { AddVehiculeForm } from "./form/add-vehicule-form"
-import { VehicleSearchBar } from "./shared/components/vehicle-search-bar"
-import { VehicleListCard } from "./shared/components/vehicle-list-card"
-import { VehicleFilters } from "./shared/components/vehicle-filters"
-import { VehicleStats } from "./shared/components/vehicule-stats"
-import { VehicleNotFound } from "./vehicle-not-found"
-import { VehiclePreview } from "./shared/components/vehicle-apercu"
-import { errorAlert, successAlert } from "@/src/lib/alerts"
-import { useInterventionApi } from "./shared/useIntervention.api"
-import { InterventionForm } from "./form/intervention-form"
-import { toast } from "sonner"
-import { getBrandNameById, getModelNameById } from "../brands/shared/hooks/GetBrandOrModelName"
-import { formatLicensePlate } from "@/src/utils/formatters"
-import { searchSmart } from "@/src/utils/searchSmart"
+import { useEffect, useMemo, useState } from "react";
+import { Modal } from "@/src/shared/components/modal";
+import { Button } from "@/src/shared/components/ui/button";
+import { Vehicule } from "@/src/utils/types/vehicule";
+import { useManageApi } from "./shared/useManage.api";
+import { useClientApi } from "@/src/shared/hooks/useClient.api";
+import { useAgenceApi } from "@/src/shared/hooks/useAgence.api";
+import { AddVehiculeForm } from "./form/add-vehicule-form";
+import { VehicleSearchBar } from "./shared/components/vehicle-search-bar";
+import { VehicleListCard } from "./shared/components/vehicle-list-card";
+import { VehicleFilters } from "./shared/components/vehicle-filters";
+import { VehicleStats } from "./shared/components/vehicule-stats";
+import { VehicleNotFound } from "./vehicle-not-found";
+import { VehiclePreview } from "./shared/components/vehicle-apercu";
+import { errorAlert, successAlert } from "@/src/lib/alerts";
+import { useInterventionApi } from "./shared/useIntervention.api";
+import { InterventionForm } from "./form/intervention-form";
+import { toast } from "sonner";
+import {
+  getBrandNameById,
+  getModelNameById,
+} from "../brands/shared/hooks/GetBrandOrModelName";
+import { formatLicensePlate } from "@/src/utils/formatters";
+import { searchSmart } from "@/src/utils/searchSmart";
+import { VehiclePagination } from "./shared/components/pagination";
 
 export default function GestionnairePage() {
-  const { getVehicles, searchVehicles, createVehicle } = useManageApi()
-  const { getClients } = useClientApi()
-  const { getAgences } = useAgenceApi()
-  const { createIntervention } = useInterventionApi()
+  const { getVehicles, searchVehicles, createVehicle } = useManageApi();
+  const { getClients } = useClientApi();
+  const { getAgences } = useAgenceApi();
+  const { createIntervention } = useInterventionApi();
 
-  const [vehicles, setVehicles] = useState<Vehicule[]>([])
-  const [clients, setClients] = useState<any[]>([])
-  const [agences, setAgences] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const [vehicles, setVehicles] = useState<Vehicule[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
+  const [agences, setAgences] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const [vehiculeNotFound, setVehiculeNotFound] = useState(false)
-  const [openCreateVehiculeModal, setOpenCreateVehiculeModal] = useState(false)
-  const [apercuVehiculeOpen, setApercuVehiculeOpen] = useState(false)
-  const [selectedVehicle, setSelectedVehicle] = useState<any | null>(null)
+  const [vehiculeNotFound, setVehiculeNotFound] = useState(false);
+  const [openCreateVehiculeModal, setOpenCreateVehiculeModal] = useState(false);
+  const [apercuVehiculeOpen, setApercuVehiculeOpen] = useState(false);
+  const [selectedVehicle, setSelectedVehicle] = useState<any | null>(null);
 
-  const [filterByAllVehicule, setFilterByAllVehicule] = useState(true)
-  const [search, setSearch] = useState("")
-  const [preFillLicensePlate, setPreFillLicensePlate] = useState("")
-  const [clientId, setClientId] = useState<string>()
-  const [agenceId, setAgenceId] = useState<string>()
-  const [statut, setStatut] = useState<string>()
+  const [filterByAllVehicule, setFilterByAllVehicule] = useState(true);
+  const [search, setSearch] = useState("");
+  const [preFillLicensePlate, setPreFillLicensePlate] = useState("");
+  const [clientId, setClientId] = useState<string>();
+  const [agenceId, setAgenceId] = useState<string>();
+  const [statut, setStatut] = useState<string>();
 
-  const [interventionModalOpen, setInterventionModalOpen] = useState(false)
+  const [interventionModalOpen, setInterventionModalOpen] = useState(false);
+
+  const ITEMS_PER_PAGE = 20;
+  const [currentPage, setCurrentPage] = useState(1);
 
   const normalizeVehicles = (v: any): Vehicule[] => {
-    if (Array.isArray(v)) return v
-    if (Array.isArray(v?.vehicles)) return v.vehicles
-    return []
-  }
+    if (Array.isArray(v)) return v;
+    if (Array.isArray(v?.vehicles)) return v.vehicles;
+    return [];
+  };
 
   const normalizeArray = <T,>(x: any): T[] => {
-    return Array.isArray(x) ? x : []
-  }
+    return Array.isArray(x) ? x : [];
+  };
 
   useEffect(() => {
-    loadAll()
-
-  }, [])
+    loadAll();
+  }, []);
 
   const loadAll = async () => {
     try {
-      setLoading(true)
+      setLoading(true);
       const [v, c, a] = await Promise.all([
         getVehicles({ includeInterventions: true }),
         getClients(),
         getAgences(),
-      ])
+      ]);
 
-      setVehicles(normalizeVehicles(v))
-      setClients(normalizeArray(c))
-      setAgences(normalizeArray(a))
+      setVehicles(normalizeVehicles(v));
+      setClients(normalizeArray(c));
+      setAgences(normalizeArray(a));
     } catch (e: any) {
-      toast.error("Erreur", e.message)
+      toast.error("Erreur", e.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // Recherche
   // const handleSearch = async () => {
@@ -104,87 +110,104 @@ export default function GestionnairePage() {
 
   const handleSearch = async () => {
     if (!search.trim()) {
-      toast.info("Vous devez entrer une plaque d'immatriculation pour lancer la recherche.")
-      await loadAll()
-      setVehiculeNotFound(false)
-      return
+      toast.info(
+        "Vous devez entrer une plaque d'immatriculation pour lancer la recherche.",
+      );
+      await loadAll();
+      setVehiculeNotFound(false);
+      return;
     }
 
     try {
-      const { normalized } = searchSmart(search)
-      const data = await searchVehicles(normalized)
-      const vv = normalizeVehicles(data)
+      const { normalized } = searchSmart(search);
+      const data = await searchVehicles(normalized);
+      const vv = normalizeVehicles(data);
 
-      setVehicles(vv)
-      setVehiculeNotFound(vv.length === 0)
+      setVehicles(vv);
+      setVehiculeNotFound(vv.length === 0);
 
-      if (vv.length === 0) setPreFillLicensePlate(search)
-
+      if (vv.length === 0) setPreFillLicensePlate(search);
     } catch (e: any) {
-      toast.error("Recherche", e.message)
+      toast.error("Recherche", e.message);
     }
-
-  }
+  };
 
   const handleCreateVehicle = async (data: Partial<Vehicule>) => {
     try {
-      setLoading(true)
-      await createVehicle(data)
-      toast.success("Véhicule créé")
-      setLoading(false)
-      setOpenCreateVehiculeModal(false)
-      setVehiculeNotFound(false)
-      await loadAll()
+      setLoading(true);
+      await createVehicle(data);
+      toast.success("Véhicule créé");
+      setLoading(false);
+      setOpenCreateVehiculeModal(false);
+      setVehiculeNotFound(false);
+      await loadAll();
     } catch (e: any) {
-      toast.error("Erreur: " + e.message)
+      toast.error("Erreur: " + e.message);
 
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  const [filteredVehicles, setFilteredVehicles] = useState<Vehicule[]>([])
+  const [filteredVehicles, setFilteredVehicles] = useState<Vehicule[]>([]);
 
   useEffect(() => {
-    const list = Array.isArray(vehicles) ? vehicles : []
+    const list = Array.isArray(vehicles) ? vehicles : [];
 
     const filtered = list.filter((v) => {
-      if (clientId && v.veh_client?.cli_id !== clientId) return false
-      if (agenceId && v.veh_base?.bas_id !== agenceId) return false
+      if (clientId && v.veh_client?.cli_id !== clientId) return false;
+      if (agenceId && v.veh_base?.bas_id !== agenceId) return false;
 
       if (statut && statut !== "all") {
         if (statut === "SANS_INTERVENTION") {
-          if (v.interventions && v.interventions.length > 0) return false
+          if (v.interventions && v.interventions.length > 0) return false;
         } else {
-          const lastIntervention = v.interventions?.[v.interventions.length - 1]
-          if (!lastIntervention) return false
-          if (lastIntervention.int_status !== statut) return false
+          const lastIntervention =
+            v.interventions?.[v.interventions.length - 1];
+          if (!lastIntervention) return false;
+          if (lastIntervention.int_status !== statut) return false;
         }
       }
 
-      return true
-    })
-    setFilteredVehicles(filtered)
-  }, [vehicles, clientId, agenceId, statut])
+      return true;
+    });
+    setFilteredVehicles(filtered);
+  }, [vehicles, clientId, agenceId, statut]);
+
+  const paginatedVehicles = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return filteredVehicles.slice(startIndex, endIndex);
+  }, [filteredVehicles, currentPage, ITEMS_PER_PAGE]);
+
+  const totalPages = useMemo(() => {
+    return Math.ceil(filteredVehicles.length / ITEMS_PER_PAGE);
+  }, [filteredVehicles.length, ITEMS_PER_PAGE]);
 
   useEffect(() => {
-    if (!selectedVehicle) return
+    setCurrentPage(1); // On revient à la première page dès qu'on change de filtre/recherche
+  }, [filteredVehicles]);
 
-    const updatedVehicle = vehicles.find(v => v.veh_id === selectedVehicle.veh_id)
+  useEffect(() => {
+    if (!selectedVehicle) return;
+
+    const updatedVehicle = vehicles.find(
+      (v) => v.veh_id === selectedVehicle.veh_id,
+    );
     if (updatedVehicle) {
-      setSelectedVehicle(updatedVehicle)
+      setSelectedVehicle(updatedVehicle);
     }
-  }, [vehicles])
+  }, [vehicles]);
 
   const filteredAgences = useMemo(() => {
-    const list = Array.isArray(agences) ? agences : []
-    if (clientId) return list.filter((a) => a.bas_clientId === clientId)
-    return list
-  }, [agences, clientId])
+    const list = Array.isArray(agences) ? agences : [];
+    if (clientId) return list.filter((a) => a.bas_clientId === clientId);
+    return list;
+  }, [agences, clientId]);
 
   const handleSubmitIntervention = async (data: any) => {
-    setLoading(true)
+    setLoading(true);
     try {
-      console.log("Creating intervention with data:", data)
+      console.log("Creating intervention with data:", data);
       await createIntervention({
         veh_vehicleId: selectedVehicle?.veh_id ?? "",
         veh_accordNumber: data.numeroAccord,
@@ -195,25 +218,25 @@ export default function GestionnairePage() {
         veh_comments: data.commentaires || null,
         veh_images: data.images || [],
         veh_kilometrage: data.kilometrage || "",
-      })
+      });
 
-      await loadAll()
+      await loadAll();
       // if(selectedVehicle) {
       //   const updatedVehicle = vehicles.find(v => v.id === selectedVehicle.id)
       //   setSelectedVehicle(updatedVehicle ?? null)
       // }
-      setLoading(false)
-      setInterventionModalOpen(false)
-      toast.success("Intervention créée")
+      setLoading(false);
+      setInterventionModalOpen(false);
+      toast.success("Intervention créée");
     } catch (e: any) {
-      toast.error("Intervention : "+ e.message)
-      setLoading(false)
+      toast.error("Intervention : " + e.message);
+      setLoading(false);
     }
-  }
+  };
 
   const handleNewInterventionFromVehiculePreview = () => {
-    setInterventionModalOpen(true)
-  }
+    setInterventionModalOpen(true);
+  };
 
   // const session = getSession();
   return (
@@ -222,7 +245,11 @@ export default function GestionnairePage() {
         <h1 className="font-bold text-2xl">Page Gestionnaire</h1>
 
         {/* Barre de recherche */}
-        <VehicleSearchBar value={search} onChange={setSearch} onSearch={handleSearch} />
+        <VehicleSearchBar
+          value={search}
+          onChange={setSearch}
+          onSearch={handleSearch}
+        />
 
         {!vehiculeNotFound ? (
           <>
@@ -251,11 +278,11 @@ export default function GestionnairePage() {
               statut={statut}
               onChange={(filters) => {
                 if ("clientId" in filters) {
-                  setClientId(filters.clientId)
-                  setAgenceId(undefined)
+                  setClientId(filters.clientId);
+                  setAgenceId(undefined);
                 }
-                if ("agenceId" in filters) setAgenceId(filters.agenceId)
-                if ("statut" in filters) setStatut(filters.statut)
+                if ("agenceId" in filters) setAgenceId(filters.agenceId);
+                if ("statut" in filters) setStatut(filters.statut);
               }}
             />
 
@@ -267,18 +294,30 @@ export default function GestionnairePage() {
               // }
               enCours={
                 filteredVehicles.filter((v) => {
-                  const intervention = v.interventions || []
-                  return intervention.length > 0 && intervention.some(i => i.int_status !== "FIXING_FINISHED")
+                  const intervention = v.interventions || [];
+                  return (
+                    intervention.length > 0 &&
+                    intervention.some((i) => i.int_status !== "FIXING_FINISHED")
+                  );
                 }).length
               }
               // termine={filteredVehicles.filter((v) => v.interventions?.some((i) => i.status === "FIXING_FINISHED")).length}
               termine={
                 filteredVehicles.filter((v) => {
-                  const interventions = v.interventions || []
-                  return interventions.length > 0 && interventions.every(i => i.int_status === "FIXING_FINISHED")
+                  const interventions = v.interventions || [];
+                  return (
+                    interventions.length > 0 &&
+                    interventions.every(
+                      (i) => i.int_status === "FIXING_FINISHED",
+                    )
+                  );
                 }).length
               }
-              sansIntervention={filteredVehicles.filter((v) => !v.interventions || v.interventions.length === 0).length}
+              sansIntervention={
+                filteredVehicles.filter(
+                  (v) => !v.interventions || v.interventions.length === 0,
+                ).length
+              }
               // Somme de tout les Intervention de tous les véhicules dont le base.location est "Paris Test Agency"
               // test={filteredVehicles.filter((v) => v.base?.location === "Paris Test Agency").reduce((sum, v) => {
               //   const interventions = Array.isArray(v.interventions) ? v.interventions : []
@@ -289,22 +328,27 @@ export default function GestionnairePage() {
             {/* LISTE VEHICULES */}
             <VehicleListCard
               filterByAllVehicule={filterByAllVehicule}
-              vehicles={filteredVehicles}
+              vehicles={paginatedVehicles}
               clients={clients}
               agences={filteredAgences}
               onSelect={(v) => {
-                console.log("Selected vehicle:", v)
-                setSelectedVehicle(v)
-                setApercuVehiculeOpen(true)
+                console.log("Selected vehicle:", v);
+                setSelectedVehicle(v);
+                setApercuVehiculeOpen(true);
               }}
               reloadVehicles={loadAll}
+            />
+            <VehiclePagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
             />
           </>
         ) : (
           <VehicleNotFound
             onBack={() => {
-              setVehiculeNotFound(false)
-              loadAll()
+              setVehiculeNotFound(false);
+              loadAll();
             }}
             onCreate={() => setOpenCreateVehiculeModal(true)}
           />
@@ -327,11 +371,17 @@ export default function GestionnairePage() {
       </Modal>
 
       {/* MODAL APERCU VEHICULE */}
-      <Modal open={apercuVehiculeOpen} onClose={() => setApercuVehiculeOpen(false)} modalTitle="Aperçu véhicule">
+      <Modal
+        open={apercuVehiculeOpen}
+        onClose={() => setApercuVehiculeOpen(false)}
+        modalTitle="Aperçu véhicule"
+      >
         {selectedVehicle && (
           <VehiclePreview
             // licensePlate={selectedVehicle.licensePlate}
-            licensePlate={formatLicensePlate(selectedVehicle.veh_licensePlate || "")}
+            licensePlate={formatLicensePlate(
+              selectedVehicle.veh_licensePlate || "",
+            )}
             brand={selectedVehicle.veh_brand?.bra_name ?? ""}
             model={selectedVehicle.veh_model?.mod_name ?? ""}
             year={selectedVehicle.veh_year ?? 0}
@@ -366,5 +416,5 @@ export default function GestionnairePage() {
         />
       </Modal>
     </div>
-  )
+  );
 }
