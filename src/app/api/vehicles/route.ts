@@ -272,7 +272,7 @@ export async function GET(request: NextRequest) {
       orderBy: {
         veh_createdAt: "desc",
       },
-      take: search ? 10 : 100,
+      // take: search ? 20 : 100,
     });
 
     return NextResponse.json({ vehicles });
