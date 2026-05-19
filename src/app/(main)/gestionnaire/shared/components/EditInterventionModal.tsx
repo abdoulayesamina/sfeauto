@@ -13,6 +13,8 @@ import { Modal } from "@/src/shared/components/modal";
 import { InterventionPatchPayload, useInterventionApi } from "../hooks/useInterventionApi.api";
 import { useInterventionPhotos } from "../hooks/useInterventionPhotos.api";
 import { toast } from "sonner";
+import { useSession } from "next-auth/react";
+import { confirmAlert } from "@/src/lib/alerts";
 
 
 type PiecesCommande = "oui" | "non";
@@ -33,7 +35,12 @@ function toDateInputValue(d?: string | Date | null) {
 }
 
 export function EditInterventionModal({ open, onClose, intervention, onUpdated, reloadInterventionList }: Props) {
+  const { data: session } = useSession();
+  const role = session?.user?.role ?? null;
+  const hasDeletePermission = role === "ADMIN" || role === "MANAGER";
+
   const { patchIntervention, loading } = useInterventionApi();
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const { photos, loading: photosLoading, error: photosError, refetch } =
     useInterventionPhotos(intervention?.int_id);
@@ -204,6 +211,39 @@ export function EditInterventionModal({ open, onClose, intervention, onUpdated, 
 
     e.target.value = "";
   };
+
+  async function handleDelete() {
+    if (!intervention?.int_id) return;
+
+    const confirm = await confirmAlert(
+      "Supprimer l'intervention",
+      "Êtes-vous sûr de vouloir supprimer cette intervention ? Le devis associé (s'il existe) sera également supprimé."
+    );
+
+    if (!confirm) return;
+
+    setDeleteLoading(true);
+    try {
+      const res = await fetch(`/api/interventions/${intervention.int_id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        toast.error(errData.error || "Une erreur est survenue lors de la suppression.");
+        return;
+      }
+
+      toast.success("Intervention supprimée avec succès.");
+      reloadInterventionList?.();
+      onClose();
+    } catch (err) {
+      console.error("Error deleting intervention:", err);
+      toast.error("Erreur réseau lors de la suppression.");
+    } finally {
+      setDeleteLoading(false);
+    }
+  }
 
 async function handleSave(e?: React.FormEvent) {
   e?.preventDefault();
@@ -490,13 +530,25 @@ async function handleSave(e?: React.FormEvent) {
         </div>
 
         {photosError && <p className="text-sm text-red-600">{photosError}</p>}
-        <div className="grid grid-cols-2 gap-2">
-          <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
-            Annuler
-          </Button>
-          <Button type="submit" disabled={!canSave || loading}>
-            {loading ? "Enregistrement..." : "Enregistrer"}
-          </Button>
+        <div className="flex justify-between items-center gap-2">
+          {hasDeletePermission && (
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={deleteLoading || loading}
+              onClick={handleDelete}
+            >
+              {deleteLoading ? "Suppression..." : "Supprimer l'intervention"}
+            </Button>
+          )}
+          <div className="flex gap-2 ml-auto">
+            <Button type="button" variant="outline" onClick={onClose} disabled={loading || deleteLoading}>
+              Annuler
+            </Button>
+            <Button type="submit" disabled={!canSave || loading || deleteLoading}>
+              {loading ? "Enregistrement..." : "Enregistrer"}
+            </Button>
+          </div>
         </div>
       </form>
     </Modal>

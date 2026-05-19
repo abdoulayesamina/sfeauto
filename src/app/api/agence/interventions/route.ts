@@ -64,6 +64,10 @@ export async function GET(request: NextRequest) {
 
     const andFilters: any[] = [];
 
+    andFilters.push({
+      int_supprimee: false,
+    });
+
     if (baseFilter) {
       andFilters.push({
         int_vehicle: {

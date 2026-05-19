@@ -174,6 +174,9 @@ export async function GET(request: NextRequest) {
         },
 
         interventions: {
+          where: {
+            int_supprimee: false,
+          },
           select: {
             int_id: true,
             int_accordNumber: true,

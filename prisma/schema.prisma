@@ -212,6 +212,7 @@ model intervention_int {
   int_ordersDetails         String?
   int_kilometrage           String?
   int_comments              String?             @db.Text
+  int_supprimee             Boolean             @default(false)
   int_createdAt             DateTime            @default(now())
   int_updatedAt             DateTime            @updatedAt
 
@@ -230,6 +231,7 @@ model intervention_int {
   @@index([int_handledById])
   @@index([int_interventionConfirmed])
   @@index([int_status])
+  @@index([int_supprimee])
 }
 
 model interventionphoto_itp {

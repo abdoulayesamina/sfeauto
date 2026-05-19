@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
 
     const interventions = await prisma.intervention_int.findMany({
       where: {
+        int_supprimee: false,
         int_vehicle: {
           is: {
             veh_clientId: session.user.clientId,

@@ -21,7 +21,9 @@ export async function GET(request: NextRequest) {
     const baseId = searchParams.get("baseId")?.trim();
     const uiStatus = searchParams.get("status")?.trim();
 
-    const whereClause: any = {};
+    const whereClause: any = {
+      int_supprimee: false,
+    };
 
     if (uiStatus && uiStatus !== "ALL") {
       if (uiStatus === "EN_COURS") {
