@@ -246,7 +246,7 @@ export function AddVehiculeForm({
           <Button
             type="button"
             onClick={handleLookup}
-            disabled={lookupLoading}
+            disabled={lookupLoading || mode === "edit"}
           >
             {lookupLoading ? <Spinner className="h-4 w-4" /> : "Rechercher"}
           </Button>
@@ -259,6 +259,7 @@ export function AddVehiculeForm({
           <Label htmlFor="marque">Marque <span className="text-red-500">*</span></Label>
           <BrandSelect
             value={vehicule.veh_brandId ?? null}
+            disabled={mode === "edit"}
             onChange={(brandId) =>
               setVehicule({
                 ...vehicule,
@@ -274,6 +275,7 @@ export function AddVehiculeForm({
             key={vehicule.veh_brandId}
             brandId={vehicule.veh_brandId ?? null}
             value={vehicule.veh_modelId ?? null}
+            disabled={mode === "edit"}
             onChange={(modelId) =>
               setVehicule({
                 ...vehicule,
@@ -293,6 +295,7 @@ export function AddVehiculeForm({
             type="number"
             placeholder="2023"
             className="h-12"
+            disabled={mode === "edit"}
             value={vehicule.veh_year ?? ""}
             onChange={(e) =>
               setVehicule({
@@ -308,6 +311,7 @@ export function AddVehiculeForm({
             id="couleur"
             placeholder="Gris"
             className="h-12"
+            disabled={mode === "edit"}
             value={vehicule.veh_color || ""}
             onChange={(e) => setVehicule({ ...vehicule, veh_color: e.target.value })}
           />
@@ -322,6 +326,7 @@ export function AddVehiculeForm({
             id="firstRegistrationDate"
             type="date"
             className="h-12"
+            disabled={mode === "edit"}
             value={fromISOToDateInput(vehicule.veh_firstRegistrationDate)}
             onChange={(e) =>
               setVehicule({
@@ -338,6 +343,7 @@ export function AddVehiculeForm({
             id="registrationCardDate"
             type="date"
             className="h-12"
+            disabled={mode === "edit"}
             value={fromISOToDateInput(vehicule.veh_registrationCardDate)}
             onChange={(e) =>
               setVehicule({
@@ -355,6 +361,7 @@ export function AddVehiculeForm({
           <Label>Énergie</Label>
           <Select
             value={(vehicule.veh_energy as string) || ""}
+            disabled={mode === "edit"}
             onValueChange={(energy) => setVehicule({ ...vehicule, veh_energy: energy as any })}
           >
             <SelectTrigger className="h-12">
@@ -374,6 +381,7 @@ export function AddVehiculeForm({
           <Label>Carrosserie</Label>
           <Select
             value={(vehicule.veh_bodyType as string) || ""}
+            disabled={mode === "edit"}
             onValueChange={(bodyType) =>
               setVehicule({ ...vehicule, veh_bodyType: bodyType as any })
             }
@@ -401,6 +409,7 @@ export function AddVehiculeForm({
             type="number"
             placeholder="5"
             className="h-12"
+            disabled={mode === "edit"}
             value={vehicule.veh_doorsCount ?? ""}
             onChange={(e) =>
               setVehicule({
@@ -415,6 +424,7 @@ export function AddVehiculeForm({
           <Label>Type de boîte</Label>
           <Select
             value={(vehicule.veh_gearboxType as string) || ""}
+            disabled={mode === "edit"}
             onValueChange={(gearboxType) =>
               setVehicule({ ...vehicule, veh_gearboxType: gearboxType as any })
             }
@@ -442,6 +452,7 @@ export function AddVehiculeForm({
             type="number"
             placeholder="128"
             className="h-12"
+            disabled={mode === "edit"}
             value={vehicule.veh_realPowerHp ?? ""}
             onChange={(e) =>
               setVehicule({
@@ -459,6 +470,7 @@ export function AddVehiculeForm({
             type="number"
             placeholder="7"
             className="h-12"
+            disabled={mode === "edit"}
             value={vehicule.veh_fiscalPowerCv ?? ""}
             onChange={(e) =>
               setVehicule({
@@ -481,6 +493,7 @@ export function AddVehiculeForm({
             max={1000000}
             min={0}
             step={1}
+            disabled={mode === "edit"}
             value={vehicule.veh_kilometrage ?? ""}
             onChange={(e) =>
               setVehicule({
@@ -495,13 +508,14 @@ export function AddVehiculeForm({
       {/* Version */}
       <div className="flex flex-col gap-2">
         <Label htmlFor="version">Version</Label>
-        <Input
-          id="version"
-          placeholder="1.6 CRDI"
-          className="h-12"
-          value={vehicule.veh_version || ""}
-          onChange={(e) => setVehicule({ ...vehicule, veh_version: e.target.value })}
-        />
+          <Input
+            id="version"
+            placeholder="1.6 CRDI"
+            className="h-12"
+            disabled={mode === "edit"}
+            value={vehicule.veh_version || ""}
+            onChange={(e) => setVehicule({ ...vehicule, veh_version: e.target.value })}
+          />
       </div>
 
       {/* Client */}

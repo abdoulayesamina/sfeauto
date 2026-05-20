@@ -126,10 +126,11 @@ model client_cli {
   cli_numClient             String?
   cli_tvaIntraCommunautaire String?
 
-  bases    base_bas[]
-  vehicles vehicle_veh[]
-  users    user_usr[]
-  devis    te_devis_dev[]
+  bases         base_bas[]
+  vehicles      vehicle_veh[]
+  users         user_usr[]
+  devis         te_devis_dev[]
+  interventions intervention_int[] @relation("InterventionClient")
 
   @@index([cli_name])
 }
@@ -141,9 +142,10 @@ model base_bas {
   bas_updatedAt DateTime @updatedAt
   bas_clientId  String
 
-  bas_client client_cli    @relation(fields: [bas_clientId], references: [cli_id], onDelete: Cascade)
-  vehicles   vehicle_veh[]
-  users      user_usr[]
+  bas_client    client_cli         @relation(fields: [bas_clientId], references: [cli_id], onDelete: Cascade)
+  vehicles      vehicle_veh[]
+  users         user_usr[]
+  interventions intervention_int[] @relation("InterventionBase")
 
   @@index([bas_clientId])
   @@index([bas_location])
@@ -218,9 +220,13 @@ model intervention_int {
 
   int_vehicleId   String
   int_handledById String?
+  int_clientId    String?
+  int_baseId      String?
 
   int_vehicle   vehicle_veh         @relation("VehicleInterventions", fields: [int_vehicleId], references: [veh_id], onDelete: Cascade)
   int_handledBy user_usr?           @relation("InterventionHandler", fields: [int_handledById], references: [usr_id])
+  int_client    client_cli?         @relation("InterventionClient", fields: [int_clientId], references: [cli_id], onDelete: SetNull)
+  int_base      base_bas?           @relation("InterventionBase", fields: [int_baseId], references: [bas_id], onDelete: SetNull)
   photos        interventionphoto_itp[]
   history       statushistory_sth[]
   changes       changehistory_chg[]
@@ -232,6 +238,8 @@ model intervention_int {
   @@index([int_interventionConfirmed])
   @@index([int_status])
   @@index([int_supprimee])
+  @@index([int_clientId])
+  @@index([int_baseId])
 }
 
 model interventionphoto_itp {

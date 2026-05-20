@@ -179,6 +179,20 @@ export async function GET(request: NextRequest) {
           },
           select: {
             int_id: true,
+            int_clientId: true,
+            int_baseId: true,
+            int_client: {
+              select: {
+                cli_id: true,
+                cli_name: true,
+              },
+            },
+            int_base: {
+              select: {
+                bas_id: true,
+                bas_location: true,
+              },
+            },
             int_accordNumber: true,
             int_dateOfConfirmation: true,
             int_interventionConfirmed: true,

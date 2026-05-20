@@ -16,9 +16,11 @@ type Brand = { id: string; name: string }
 export function BrandSelect({
   value,
   onChange,
+  disabled,
 }: {
   value: string | null
   onChange: (id: string) => void
+  disabled?: boolean
 }) {
   const [brands, setBrands] = useState<Brand[]>([])
   const [creating, setCreating] = useState(false)
@@ -48,6 +50,7 @@ export function BrandSelect({
     <div className="flex flex-col gap-3">
       <Select
         value={value ?? ""}
+        disabled={disabled}
         onValueChange={(v) => {
           if (v === "__create__") {
             setCreating(true)
