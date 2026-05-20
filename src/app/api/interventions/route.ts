@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
 
     const vehicle = await prisma.vehicle_veh.findUnique({
       where: { veh_id: vehicleId },
-      select: { veh_id: true, veh_baseId: true, veh_kilometrage: true },
+      select: { veh_id: true, veh_baseId: true, veh_clientId: true, veh_kilometrage: true },
     });
 
     if (!vehicle) {
@@ -191,6 +191,8 @@ export async function POST(request: NextRequest) {
         const intervention = await tx.intervention_int.create({
           data: {
             int_vehicleId: vehicleId,
+            int_clientId: vehicle.veh_clientId,
+            int_baseId: vehicle.veh_baseId,
             int_accordNumber: accordNumber,
             int_dateOfConfirmation: confirmationDate,
             int_interventionConfirmed: true,

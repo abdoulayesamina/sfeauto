@@ -154,6 +154,20 @@ export async function GET(request: NextRequest) {
         where,
         select: {
           int_id: true,
+          int_clientId: true,
+          int_baseId: true,
+          int_client: {
+            select: {
+              cli_id: true,
+              cli_name: true,
+            },
+          },
+          int_base: {
+            select: {
+              bas_id: true,
+              bas_location: true,
+            },
+          },
           int_interventionConfirmed: true,
           int_status: true,
           int_accordNumber: true,
@@ -255,13 +269,13 @@ export async function GET(request: NextRequest) {
         year: item.int_vehicle.veh_year,
         color: item.int_vehicle.veh_color,
         client: {
-          id: item.int_vehicle.veh_client.cli_id,
-          name: item.int_vehicle.veh_client.cli_name,
+          id: item.int_clientId ?? item.int_vehicle.veh_client.cli_id,
+          name: item.int_client?.cli_name ?? item.int_vehicle.veh_client.cli_name,
         },
         base: {
-          id: item.int_vehicle.veh_base.bas_id,
-          location: item.int_vehicle.veh_base.bas_location,
-          clientId: item.int_vehicle.veh_base.bas_clientId,
+          id: item.int_baseId ?? item.int_vehicle.veh_base.bas_id,
+          location: item.int_base?.bas_location ?? item.int_vehicle.veh_base.bas_location,
+          clientId: item.int_clientId ?? item.int_vehicle.veh_base.bas_clientId,
         },
       },
 

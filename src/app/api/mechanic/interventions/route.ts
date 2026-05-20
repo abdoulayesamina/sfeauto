@@ -68,6 +68,12 @@ export async function GET(request: NextRequest) {
     const interventions = await prisma.intervention_int.findMany({
       where: whereClause,
       include: {
+        int_client: {
+          select: { cli_id: true, cli_name: true },
+        },
+        int_base: {
+          select: { bas_id: true, bas_location: true },
+        },
         int_vehicle: {
           include: {
             veh_client: {
@@ -124,12 +130,12 @@ export async function GET(request: NextRequest) {
         year: intervention.int_vehicle.veh_year,
         color: intervention.int_vehicle.veh_color,
         client: {
-          id: intervention.int_vehicle.veh_client.cli_id,
-          name: intervention.int_vehicle.veh_client.cli_name,
+          id: intervention.int_clientId ?? intervention.int_vehicle.veh_client.cli_id,
+          name: intervention.int_client?.cli_name ?? intervention.int_vehicle.veh_client.cli_name,
         },
         base: {
-          id: intervention.int_vehicle.veh_base.bas_id,
-          location: intervention.int_vehicle.veh_base.bas_location,
+          id: intervention.int_baseId ?? intervention.int_vehicle.veh_base.bas_id,
+          location: intervention.int_base?.bas_location ?? intervention.int_vehicle.veh_base.bas_location,
         },
       },
       handledBy: intervention.int_handledBy
