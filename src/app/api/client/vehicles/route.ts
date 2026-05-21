@@ -3,7 +3,9 @@ import { auth } from "@/auth";
 import { prisma } from "@/src/lib/prisma";
 import { logError } from "@/src/lib/logger";
 
-// GET /api/client/vehicles - Get all vehicles for the logged-in client's company
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const db = prisma as any;
+
 export async function GET() {
   try {
     const session = await auth();
@@ -25,81 +27,71 @@ export async function GET() {
       );
     }
 
-    const vehicles = await prisma.vehicle_veh.findMany({
-      where: {
-        veh_clientId: clientId,
-      },
-      include: {
-        veh_client: {
-          select: {
-            cli_id: true,
-            cli_name: true,
-          },
-        },
-        veh_base: {
-          select: {
-            bas_id: true,
-            bas_location: true,
-            bas_clientId: true,
-          },
-        },
-        veh_brand: {
-          select: {
-            bra_id: true,
-            bra_name: true,
-          },
-        },
-        veh_model: {
-          select: {
-            mod_id: true,
-            mod_name: true,
-          },
-        },
-        interventions: {
-          select: {
-            int_id: true,
-            int_status: true,
-            int_interventionConfirmed: true,
-            int_workDescription: true,
-            int_accordNumber: true,
-            int_dateOfConfirmation: true,
-            int_createdAt: true,
-            int_updatedAt: true,
-          },
-          orderBy: {
-            int_createdAt: "desc",
-          },
-        },
-      },
-      orderBy: {
-        veh_createdAt: "desc",
-      },
-    });
-
-    const stats = {
-      total: vehicles.length,
-      inProgress: 0,
-      completed: 0,
-      noIntervention: 0,
+    const vehicleInclude = {
+      veh_client: { select: { cli_id: true, cli_name: true } },
+      veh_base: { select: { bas_id: true, bas_location: true, bas_clientId: true } },
+      veh_brand: { select: { bra_id: true, bra_name: true } },
+      veh_model: { select: { mod_id: true, mod_name: true } },
     };
 
-    vehicles.forEach((vehicle) => {
-      if (vehicle.interventions.length === 0) {
-        stats.noIntervention++;
-      } else {
-        const hasInProgress = vehicle.interventions.some(
-          (i) => i.int_status !== "FIXING_FINISHED"
-        );
+    const interventionSelect = {
+      int_id: true,
+      int_status: true,
+      int_interventionConfirmed: true,
+      int_workDescription: true,
+      int_accordNumber: true,
+      int_dateOfConfirmation: true,
+      int_createdAt: true,
+      int_updatedAt: true,
+    };
 
-        if (hasInProgress) {
-          stats.inProgress++;
-        } else {
-          stats.completed++;
-        }
-      }
+    // 1. Véhicules actuellement liés à ce client
+    const currentVehicles: any[] = await db.vehicle_veh.findMany({
+      where: { veh_clientId: clientId },
+      include: {
+        ...vehicleInclude,
+        interventions: {
+          where: {
+            int_supprimee: false,
+            int_clientId: clientId,
+          },
+          select: interventionSelect,
+          orderBy: { int_createdAt: "desc" },
+        },
+      },
+      orderBy: { veh_createdAt: "desc" },
     });
 
-    const serializedVehicles = vehicles.map((v) => ({
+    // 2. Véhicules transférés vers un autre client mais ayant des interventions
+    //    créées quand ils appartenaient à ce client (int_clientId = clientId)
+    const historicalRows: { int_vehicleId: string }[] = await db.intervention_int.findMany({
+      where: {
+        int_supprimee: false,
+        int_clientId: clientId,
+        int_vehicle: { veh_clientId: { not: clientId } },
+      },
+      select: { int_vehicleId: true },
+      distinct: ["int_vehicleId"],
+    });
+
+    const transferredIds = historicalRows.map((r: any) => r.int_vehicleId);
+
+    const transferredVehicles: any[] = transferredIds.length > 0
+      ? await db.vehicle_veh.findMany({
+          where: { veh_id: { in: transferredIds } },
+          include: {
+            ...vehicleInclude,
+            // ne retourner que les interventions qui concernent ce client
+            interventions: {
+              where: { int_supprimee: false, int_clientId: clientId },
+              select: interventionSelect,
+              orderBy: { int_createdAt: "desc" },
+            },
+          },
+        })
+      : [];
+
+    const serializeVehicle = (v: any, isTransferred: boolean) => ({
       id: v.veh_id,
       licensePlate: v.veh_licensePlate,
       normalizedPlate: v.veh_normalizedPlate,
@@ -123,68 +115,45 @@ export async function GET() {
       handledById: v.veh_handledById,
       brandId: v.veh_brandId,
       modelId: v.veh_modelId,
-
-      client: {
-        id: v.veh_client.cli_id,
-        name: v.veh_client.cli_name,
-      },
-
-      base: {
-        id: v.veh_base.bas_id,
-        location: v.veh_base.bas_location,
-        clientId: v.veh_base.bas_clientId,
-      },
-
-      brand: v.veh_brand
-        ? {
-            id: v.veh_brand.bra_id,
-            name: v.veh_brand.bra_name,
-          }
-        : null,
-
-      model: v.veh_model
-        ? {
-            id: v.veh_model.mod_id,
-            name: v.veh_model.mod_name,
-          }
-        : null,
-
-      interventions: v.interventions.map((intervention) => ({
-        id: intervention.int_id,
-        status: intervention.int_status,
-        interventionConfirmed: intervention.int_interventionConfirmed,
-        workDescription: intervention.int_workDescription,
-        accordNumber: intervention.int_accordNumber,
-        dateOfConfirmation:
-          intervention.int_dateOfConfirmation?.toISOString() ?? null,
-        createdAt: intervention.int_createdAt.toISOString(),
-        updatedAt: intervention.int_updatedAt.toISOString(),
+      isTransferred,
+      client: { id: v.veh_client.cli_id, name: v.veh_client.cli_name },
+      base: { id: v.veh_base.bas_id, location: v.veh_base.bas_location, clientId: v.veh_base.bas_clientId },
+      brand: v.veh_brand ? { id: v.veh_brand.bra_id, name: v.veh_brand.bra_name } : null,
+      model: v.veh_model ? { id: v.veh_model.mod_id, name: v.veh_model.mod_name } : null,
+      interventions: (v.interventions ?? []).map((i: any) => ({
+        id: i.int_id,
+        status: i.int_status,
+        interventionConfirmed: i.int_interventionConfirmed,
+        workDescription: i.int_workDescription,
+        accordNumber: i.int_accordNumber,
+        dateOfConfirmation: i.int_dateOfConfirmation?.toISOString() ?? null,
+        createdAt: i.int_createdAt.toISOString(),
+        updatedAt: i.int_updatedAt.toISOString(),
       })),
-    }));
-
-    const bases = await prisma.base_bas.findMany({
-      where: {
-        bas_clientId: clientId,
-      },
-      select: {
-        bas_id: true,
-        bas_location: true,
-        bas_clientId: true,
-      },
-      orderBy: {
-        bas_location: "asc",
-      },
     });
 
-    const formattedBases = bases.map((base) => ({
-      id: base.bas_id,
-      location: base.bas_location,
-      clientId: base.bas_clientId,
-    }));
+    const serializedVehicles = [
+      ...currentVehicles.map((v: any) => serializeVehicle(v, false)),
+      ...transferredVehicles.map((v: any) => serializeVehicle(v, true)),
+    ];
+
+    // Stats basées uniquement sur les véhicules actuels
+    const stats = { total: currentVehicles.length, inProgress: 0, completed: 0, noIntervention: 0 };
+    currentVehicles.forEach((v: any) => {
+      if (!v.interventions?.length) stats.noIntervention++;
+      else if (v.interventions.some((i: any) => i.int_status !== "FIXING_FINISHED")) stats.inProgress++;
+      else stats.completed++;
+    });
+
+    const bases = await prisma.base_bas.findMany({
+      where: { bas_clientId: clientId },
+      select: { bas_id: true, bas_location: true, bas_clientId: true },
+      orderBy: { bas_location: "asc" },
+    });
 
     return NextResponse.json({
       vehicles: serializedVehicles,
-      bases: formattedBases,
+      bases: bases.map((b) => ({ id: b.bas_id, location: b.bas_location, clientId: b.bas_clientId })),
       stats,
     });
   } catch (error) {

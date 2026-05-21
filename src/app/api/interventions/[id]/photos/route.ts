@@ -21,6 +21,26 @@ async function getParamId(ctx: Ctx): Promise<string> {
   return p?.id;
 }
 
+async function getIntervention(interventionId: string) {
+  return (prisma as any).intervention_int.findUnique({
+    where: { int_id: interventionId },
+    select: {
+      int_id: true,
+      int_baseId: true,
+      int_vehicle: { select: { veh_baseId: true } },
+    },
+  }) as Promise<{ int_id: string; int_baseId: string | null; int_vehicle: { veh_baseId: string } } | null>;
+}
+
+function checkAgenceAccess(
+  intervention: { int_baseId: string | null; int_vehicle: { veh_baseId: string } },
+  userBaseId: string
+): boolean {
+  // Utiliser int_baseId (agence au moment de l'intervention) avec fallback sur veh_baseId actuel
+  const interventionBaseId = intervention.int_baseId ?? intervention.int_vehicle.veh_baseId;
+  return interventionBaseId === userBaseId;
+}
+
 export async function GET(_req: NextRequest, ctx: Ctx) {
   try {
     const session = await auth();
@@ -35,17 +55,7 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
       return NextResponse.json({ error: "interventionId invalide" }, { status: 400 });
     }
 
-    const intervention = await prisma.intervention_int.findUnique({
-      where: { int_id: interventionId },
-      select: {
-        int_id: true,
-        int_vehicle: {
-          select: {
-            veh_baseId: true,
-          },
-        },
-      },
-    });
+    const intervention = await getIntervention(interventionId);
 
     if (!intervention) {
       return NextResponse.json({ error: "Intervention introuvable" }, { status: 404 });
@@ -56,10 +66,9 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
       if (!userBaseId) {
         return NextResponse.json({ error: "Compte agence sans baseId" }, { status: 403 });
       }
-
-      if (intervention.int_vehicle.veh_baseId !== userBaseId) {
+      if (!checkAgenceAccess(intervention, userBaseId)) {
         return NextResponse.json(
-          { error: "Vous ne pouvez pas consulter les photos d’une autre agence" },
+          { error: "Vous ne pouvez pas consulter les photos d'une autre agence" },
           { status: 403 }
         );
       }
@@ -112,17 +121,7 @@ export async function POST(request: NextRequest, ctx: Ctx) {
       return NextResponse.json({ error: "interventionId invalide" }, { status: 400 });
     }
 
-    const intervention = await prisma.intervention_int.findUnique({
-      where: { int_id: interventionId },
-      select: {
-        int_id: true,
-        int_vehicle: {
-          select: {
-            veh_baseId: true,
-          },
-        },
-      },
-    });
+    const intervention = await getIntervention(interventionId);
 
     if (!intervention) {
       return NextResponse.json({ error: "Intervention introuvable" }, { status: 404 });
@@ -133,10 +132,9 @@ export async function POST(request: NextRequest, ctx: Ctx) {
       if (!userBaseId) {
         return NextResponse.json({ error: "Compte agence sans baseId" }, { status: 403 });
       }
-
-      if (intervention.int_vehicle.veh_baseId !== userBaseId) {
+      if (!checkAgenceAccess(intervention, userBaseId)) {
         return NextResponse.json(
-          { error: "Vous ne pouvez pas ajouter des photos à une intervention d’une autre agence" },
+          { error: "Vous ne pouvez pas ajouter des photos à une intervention d'une autre agence" },
           { status: 403 }
         );
       }
@@ -144,10 +142,7 @@ export async function POST(request: NextRequest, ctx: Ctx) {
 
     const contentType = request.headers.get("content-type") || "";
     if (!contentType.includes("multipart/form-data")) {
-      return NextResponse.json(
-        { error: "Utilisez multipart/form-data" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Utilisez multipart/form-data" }, { status: 400 });
     }
 
     const form = await request.formData();
@@ -172,10 +167,7 @@ export async function POST(request: NextRequest, ctx: Ctx) {
         }
 
         if (file.size > MAX_FILE_SIZE) {
-          return NextResponse.json(
-            { error: "Fichier trop lourd (8MB max)" },
-            { status: 400 }
-          );
+          return NextResponse.json({ error: "Fichier trop lourd (8MB max)" }, { status: 400 });
         }
 
         const ext = file.name.includes(".") ? file.name.split(".").pop() : "jpg";
@@ -185,9 +177,7 @@ export async function POST(request: NextRequest, ctx: Ctx) {
         const buffer = Buffer.from(await file.arrayBuffer());
 
         await blockBlob.uploadData(buffer, {
-          blobHTTPHeaders: {
-            blobContentType: file.type || "application/octet-stream",
-          },
+          blobHTTPHeaders: { blobContentType: file.type || "application/octet-stream" },
         });
 
         uploadedBlobNames.push(blobName);
@@ -226,14 +216,10 @@ export async function POST(request: NextRequest, ctx: Ctx) {
       } catch (cleanupErr: any) {
         logError("Cleanup Azure blobs failed", cleanupErr);
       }
-
       throw err;
     }
   } catch (error: any) {
     logError("Failed to upload photos (edit)", error);
-    return NextResponse.json(
-      { error: "Erreur upload photos" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur upload photos" }, { status: 500 });
   }
 }

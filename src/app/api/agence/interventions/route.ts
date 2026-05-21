@@ -70,11 +70,15 @@ export async function GET(request: NextRequest) {
 
     if (baseFilter) {
       andFilters.push({
-        int_vehicle: {
-          is: {
-            veh_baseId: baseFilter,
+        OR: [
+          // interventions créées quand le véhicule était dans cette agence (après migration)
+          { int_baseId: baseFilter },
+          // interventions sans int_baseId (avant migration) dont le véhicule est actuellement ici
+          {
+            int_baseId: null,
+            int_vehicle: { is: { veh_baseId: baseFilter } },
           },
-        },
+        ],
       });
     }
 
