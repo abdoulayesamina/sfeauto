@@ -272,6 +272,7 @@ export async function GET(request: NextRequest) {
         model: item.int_vehicle.veh_model?.mod_name ?? null,
         year: item.int_vehicle.veh_year,
         color: item.int_vehicle.veh_color,
+        currentBaseId: item.int_vehicle.veh_base.bas_id,
         client: {
           id: item.int_clientId ?? item.int_vehicle.veh_client.cli_id,
           name: item.int_client?.cli_name ?? item.int_vehicle.veh_client.cli_name,
