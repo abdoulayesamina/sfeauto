@@ -27,11 +27,13 @@ export function ModelSelect({
   value,
   modelName,
   onChange,
+  disabled,
 }: {
   brandId: string | null
   value: string | null
   modelName?: string | null
   onChange: (id: string) => void
+  disabled?: boolean
 }) {
   const [models, setModels] = useState<Model[]>([])
   const [creating, setCreating] = useState(false)
@@ -81,7 +83,7 @@ export function ModelSelect({
   return (
     <div className="flex flex-col gap-3">
       <Select
-        disabled={!brandId}
+        disabled={disabled || !brandId}
         value={value ?? ""}
         onValueChange={(v) => {
           if (v === "__create__") {

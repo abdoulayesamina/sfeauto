@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Building2 } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 import { Modal } from "@/src/shared/components/modal";
 import { Button } from "@/src/shared/components/ui/button";
@@ -34,6 +35,8 @@ type Counts = {
 export default function AgencePage() {
   const { listInterventions } = useAgenceClient();
   const { createIntervention, loading: creating } = useInterventionApi();
+  const { data: session } = useSession();
+  const userBaseId = session?.user?.baseId ?? null;
 
   const [interventions, setInterventions] = useState<any[]>([]);
   const [filterStatus, setFilterStatus] = useState<UIStatus>("ALL");
@@ -342,6 +345,7 @@ export default function AgencePage() {
                       handleViewDetails(representative, row.vehicle)
                     }
                     hideDetailsButton={true}
+                    userBaseId={userBaseId}
                   />
                 );
               })
@@ -352,7 +356,15 @@ export default function AgencePage() {
         ) : (
           <div className="space-y-4">
             <div className="flex justify-end">
-              <Button onClick={() => setOpenCreateIntervention(true)}>
+              <Button
+                onClick={() => setOpenCreateIntervention(true)}
+                disabled={!vehiculeSelect || vehiculeSelect.currentBaseId !== userBaseId}
+                title={
+                  vehiculeSelect?.currentBaseId !== userBaseId
+                    ? "Ce véhicule n'est plus rattaché à votre agence"
+                    : undefined
+                }
+              >
                 + Nouvelle intervention
               </Button>
             </div>

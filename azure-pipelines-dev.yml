@@ -1,0 +1,56 @@
+trigger:
+  branches:
+    include:
+      - develop
+
+pool:
+  vmImage: "ubuntu-latest"
+
+variables:
+  - group: sfeauto-dev
+
+  - name: nodeVersion
+    value: "20.x"
+
+  - name: azureServiceConnection
+    value: "sc-sfeauto-azure"
+
+  - name: webAppName
+    value: "app-sfeauto-api-dev"
+
+  - name: packagePath
+    value: "$(Build.ArtifactStagingDirectory)/app.zip"
+
+steps:
+  - task: UseNode@1
+    displayName: "Use Node.js $(nodeVersion)"
+    inputs:
+      version: "$(nodeVersion)"
+
+  - script: |
+      node -v
+      npm -v
+    displayName: "Check Node and npm versions"
+
+  - script: |
+      rm -rf node_modules
+      rm -f $(packagePath)
+    displayName: "Clean workspace"
+
+  - task: ArchiveFiles@2
+    displayName: "Archive source files"
+    inputs:
+      rootFolderOrFile: "$(System.DefaultWorkingDirectory)"
+      includeRootFolder: false
+      archiveType: "zip"
+      archiveFile: "$(packagePath)"
+      replaceExistingArchive: true
+      verbose: true
+
+  - task: AzureWebApp@1
+    displayName: "Deploy source to Azure App Service DEV"
+    inputs:
+      azureSubscription: "$(azureServiceConnection)"
+      appType: "webAppLinux"
+      appName: "$(webAppName)"
+      package: "$(packagePath)"

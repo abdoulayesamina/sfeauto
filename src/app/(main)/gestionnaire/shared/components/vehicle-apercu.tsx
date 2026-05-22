@@ -28,6 +28,7 @@ type VehiclePreviewProps = {
   termine?: number;
   onNewIntervention: () => void;
   reloadInterventionList: () => void;
+  onEditVehicle?: () => void;
 };
 
 const DEFAULT_META = {
@@ -48,6 +49,7 @@ export function VehiclePreview({
   interventions,
   onNewIntervention,
   reloadInterventionList,
+  onEditVehicle,
 }: VehiclePreviewProps) {
 
 
@@ -137,7 +139,19 @@ export function VehiclePreview({
 
   return (
     <div className="rounded-xl border bg-gradient-to-r from-zinc-50 to-white p-5 shadow-sm flex flex-col gap-4">
-      <div className="rounded-xl bg-gradient-to-r from-black to-gray-900 p-6 text-white shadow-lg">
+      <div className="rounded-xl bg-gradient-to-r from-black to-gray-900 p-6 text-white shadow-lg relative">
+        {onEditVehicle && ["MANAGER", "ADMIN"].includes(role || "") && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="absolute top-4 right-4 text-white border border-white/20 hover:bg-white/10 hover:text-white"
+            onClick={onEditVehicle}
+          >
+            <Pencil size={14} className="mr-1" />
+            Modifier
+          </Button>
+        )}
         <h1 className="text-2xl font-bold mb-4">{licensePlate}</h1>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
           <div>
@@ -183,6 +197,13 @@ export function VehiclePreview({
           const devisId = inv?.devis?.dev_id ?? null;
           const isTerminee = inv?.uiStatus === "TERMINEE";
 
+          // Client/agence historiques avec fallback sur le véhicule courant
+          const historicalClient = inv?.int_client?.cli_name ?? client;
+          const historicalAgence = inv?.int_base?.bas_location ?? agence;
+          const isHistorical =
+            (inv?.int_client?.cli_name && inv.int_client.cli_name !== client) ||
+            (inv?.int_base?.bas_location && inv.int_base.bas_location !== agence);
+
           return (
             <div key={inv.int_id} className="rounded-xl border bg-white p-5 shadow-sm hover:shadow-md transition">
               <div className="flex flex-col-reverse lg:flex-row justify-between items-start gap-4">
@@ -194,6 +215,20 @@ export function VehiclePreview({
                     </span>
                     <span>
                       Confirmé le : {inv?.int_dateOfConfirmation ? new Date(inv.int_dateOfConfirmation).toLocaleDateString() : "—"}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-3 mt-2 text-xs text-zinc-400">
+                    <span>
+                      <strong>Client :</strong> {historicalClient}
+                      {isHistorical && inv?.int_client?.cli_name && inv.int_client.cli_name !== client && (
+                        <span className="ml-1 text-amber-500">(historique)</span>
+                      )}
+                    </span>
+                    <span>
+                      <strong>Agence :</strong> {historicalAgence}
+                      {isHistorical && inv?.int_base?.bas_location && inv.int_base.bas_location !== agence && (
+                        <span className="ml-1 text-amber-500">(historique)</span>
+                      )}
                     </span>
                   </div>
                 </div>

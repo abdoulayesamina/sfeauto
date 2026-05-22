@@ -39,6 +39,8 @@ export default function GestionnairePage() {
 
   const [vehiculeNotFound, setVehiculeNotFound] = useState(false);
   const [openCreateVehiculeModal, setOpenCreateVehiculeModal] = useState(false);
+  const [openEditVehiculeModal, setOpenEditVehiculeModal] = useState(false);
+  const [vehicleToEdit, setVehicleToEdit] = useState<any | null>(null);
   const [apercuVehiculeOpen, setApercuVehiculeOpen] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<any | null>(null);
 
@@ -144,6 +146,41 @@ export default function GestionnairePage() {
     } catch (e: any) {
       toast.error("Erreur: " + e.message);
 
+      setLoading(false);
+    }
+  };
+
+  const handleEditVehicleClick = () => {
+    setVehicleToEdit(selectedVehicle);
+    setOpenEditVehiculeModal(true);
+  };
+
+  const handleUpdateVehicle = async (veh: Vehicule) => {
+    try {
+      setLoading(true);
+      const res = await fetch(`/api/vehicles/${veh.veh_id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          veh_clientId: veh.veh_clientId,
+          veh_baseId: veh.veh_baseId,
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Échec de la modification du véhicule");
+      }
+
+      toast.success("Véhicule modifié avec succès");
+      setOpenEditVehiculeModal(false);
+      setApercuVehiculeOpen(false);
+      await loadAll();
+    } catch (e: any) {
+      toast.error(e.message || "Erreur de modification");
+    } finally {
       setLoading(false);
     }
   };
@@ -394,6 +431,7 @@ export default function GestionnairePage() {
             termine={0}
             onNewIntervention={handleNewInterventionFromVehiculePreview}
             reloadInterventionList={loadAll}
+            onEditVehicle={handleEditVehicleClick}
           />
         )}
       </Modal>
@@ -414,6 +452,23 @@ export default function GestionnairePage() {
           onClose={() => setInterventionModalOpen(false)}
           loading={loading}
         />
+      </Modal>
+
+      {/* MODAL EDITION VEHICULE */}
+      <Modal
+        open={openEditVehiculeModal}
+        onClose={() => setOpenEditVehiculeModal(false)}
+        modalTitle="Modifier le véhicule"
+      >
+        {vehicleToEdit && (
+          <AddVehiculeForm
+            mode="edit"
+            data={vehicleToEdit}
+            onSubmit={handleUpdateVehicle}
+            onClose={() => setOpenEditVehiculeModal(false)}
+            loading={loading}
+          />
+        )}
       </Modal>
     </div>
   );

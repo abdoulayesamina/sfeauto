@@ -28,9 +28,22 @@ export async function GET(request: NextRequest) {
 
     const interventions = await prisma.intervention_int.findMany({
       where: {
+        int_supprimee: false,
+        OR: [
+          {
+            int_clientId: session.user.clientId,
+          },
+          {
+            int_clientId: null,
+            int_vehicle: {
+              is: {
+                veh_clientId: session.user.clientId,
+              },
+            },
+          },
+        ],
         int_vehicle: {
           is: {
-            veh_clientId: session.user.clientId,
             veh_licensePlate: {
               contains: search,
             },
@@ -38,6 +51,17 @@ export async function GET(request: NextRequest) {
         },
       },
       include: {
+        int_client: {
+          select: {
+            cli_name: true,
+          },
+        },
+        int_base: {
+          select: {
+            bas_id: true,
+            bas_location: true,
+          },
+        },
         int_vehicle: {
           include: {
             veh_client: {
@@ -99,11 +123,11 @@ export async function GET(request: NextRequest) {
         year: intervention.int_vehicle.veh_year,
         color: intervention.int_vehicle.veh_color,
         client: {
-          name: intervention.int_vehicle.veh_client.cli_name,
+          name: intervention.int_client?.cli_name ?? intervention.int_vehicle.veh_client.cli_name,
         },
         base: {
-          id: intervention.int_vehicle.veh_base.bas_id,
-          location: intervention.int_vehicle.veh_base.bas_location,
+          id: intervention.int_baseId ?? intervention.int_vehicle.veh_base.bas_id,
+          location: intervention.int_base?.bas_location ?? intervention.int_vehicle.veh_base.bas_location,
         },
       },
       handledBy: intervention.int_handledBy

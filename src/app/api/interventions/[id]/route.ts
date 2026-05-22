@@ -326,3 +326,56 @@ export async function PATCH(request: NextRequest, context: Ctx) {
     );
   }
 }
+
+export async function DELETE(request: NextRequest, context: Ctx) {
+  try {
+    const session = await auth();
+
+    if (!session?.user || !["MANAGER", "ADMIN"].includes(session.user.role)) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    }
+
+    const id = await getParamId(context);
+
+    if (!id || typeof id !== "string") {
+      return NextResponse.json({ error: "ID d'intervention invalide" }, { status: 400 });
+    }
+
+    const intervention = await prisma.intervention_int.findUnique({
+      where: { int_id: id },
+      include: { devis: true },
+    });
+
+    if (!intervention) {
+      return NextResponse.json({ error: "Intervention non trouvée" }, { status: 404 });
+    }
+
+    if (intervention.int_supprimee) {
+      return NextResponse.json({ error: "Intervention déjà supprimée" }, { status: 400 });
+    }
+
+    await prisma.$transaction(async (tx) => {
+      // 1. Soft-delete l'intervention
+      await tx.intervention_int.update({
+        where: { int_id: id },
+        data: { int_supprimee: true },
+      });
+
+      // 2. Soft-delete le devis associé si présent
+      if (intervention.devis) {
+        await tx.te_devis_dev.update({
+          where: { dev_id: intervention.devis.dev_id },
+          data: { dev_supprimee: true },
+        });
+      }
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    logError("Failed to delete intervention", error);
+    return NextResponse.json(
+      { error: "Échec de la suppression de l'intervention" },
+      { status: 500 }
+    );
+  }
+}

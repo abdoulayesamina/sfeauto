@@ -13,6 +13,7 @@ type Props = {
   onViewDetails: () => void
   hideVehicleActions?: boolean
   hideDetailsButton?: boolean
+  userBaseId?: string | null
 }
 
 function computeCounts(intervention: any) {
@@ -76,9 +77,13 @@ export default function InterventionCard({
   onViewDetails,
   hideVehicleActions,
   hideDetailsButton,
+  userBaseId,
 }: Props) {
   const v = intervention?.vehicle ?? {}
   const counts = computeCounts(intervention)
+
+  // Véhicule transféré : côté client via isTransferred, côté agence via currentBaseId vs userBaseId
+  const isTransferred = v?.isTransferred || (userBaseId != null && v?.currentBaseId != null && v.currentBaseId !== userBaseId)
 
   const totalInterventions =
     counts.CONFIRMEE + counts.EN_COURS + counts.ATTENTE_PIECES + counts.TERMINEE
@@ -103,6 +108,11 @@ export default function InterventionCard({
             <h3 className="text-lg font-bold text-gray-900 truncate">{displayValue(v?.licensePlate)}</h3>
             {<p className="text-gray-500 text-sm truncate">{displayValue(v?.brand)} {displayValue(v?.model)}</p>}
             {v?.year != null && <p className="text-gray-400 text-sm">· {displayValue(v.year)}</p>}
+            {isTransferred && (
+              <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-100 text-zinc-500 border border-zinc-200">
+                Véhicule transféré
+              </span>
+            )}
           </div>
 
           <div className="mt-1 text-sm text-gray-500 flex flex-wrap gap-2">
