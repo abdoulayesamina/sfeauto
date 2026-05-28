@@ -106,7 +106,7 @@ export default function MecanicienPage() {
   >("EN_COURS");
   const [clientId, setClientId] = useState<string>();
   const [baseId, setBaseId] = useState<string>();
-  const [search, setSearch] = useState("");
+  const [searchValue, setSearchValue] = useState("");
   const [interventionId, setInterventionId] = useState<number | null>(0);
 
   const { clients } = useClients();
@@ -118,10 +118,10 @@ export default function MecanicienPage() {
   }, [bases]);
 
   const { interventions, setInterventions, loading } = useInterventions(
-    undefined,
-    // clientId,
-    // baseId,
-    // search,
+    filterStatus,
+    clientId,
+    baseId,
+    searchValue,
   );
 
   const {
@@ -138,17 +138,6 @@ export default function MecanicienPage() {
   const [selectedIntervention, setSelectedIntervention] = useState<any>(null);
   const [filteredInterventions, setFilteredInterventions] = useState<any[]>([]);
 
-  useEffect(() => {
-    console.log("Intervention : ", interventions);
-    if (interventions.error) {
-      toast.error("Erreur : " + interventions.error);
-      return;
-    }
-    const filtered = interventions.filter(
-      (inv: any) => STATUS_UI_MAP[inv.status] === filterStatus,
-    );
-    setFilteredInterventions(filtered);
-  }, [interventions, filterStatus]);
 
   // const onSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   //   const value = String(e.target.value).toLowerCase().trim();
@@ -170,47 +159,26 @@ export default function MecanicienPage() {
   //   setFilteredInterventions(filteredAfterTrim);
   // };
 
-  const [searchValue, setSearchValue] = useState("");
 
   const applyFilters = useCallback(() => {
+    if (!Array.isArray(interventions)) {
+      setFilteredInterventions([]);
+      return;
+    }
+
     let result = [...interventions];
 
-    // Filtre par statut
-    if (filterStatus) {
-      if (filterStatus === "EN_ATTENTE-ACCORD") {
-        result = result.filter(
-          (inv: any) => inv.accordNumber === null || inv.accordNumber === undefined || inv.accordNumber === "",
-        );
-      } else {
-        result = result.filter(
-          (inv: any) => STATUS_UI_MAP[inv.status] === filterStatus,
-        );
-      }
-    }
-
-    // Filtre par recherche (plaque ou numéro d'accord)
-    if (searchValue) {
-      // ← tu dois stocker la valeur de l'input dans un state "searchValue"
-      const value = searchValue.toLowerCase().trim();
-      result = result.filter((inv: any) => {
-        const plate = String(inv.vehicle?.licensePlate ?? "").toLowerCase();
-        const accord = String(inv.accordNumber ?? "").toLowerCase();
-        return plate.includes(value) || accord.includes(value);
-      });
-    }
-
-    // Filtre par Client
-    if (clientId) {
-      result = result.filter((inv: any) => inv.vehicle?.client?.id === clientId);
-    }
-
-    // Filtre par Agence (Base)
-    if (baseId) {
-      result = result.filter((inv: any) => inv.vehicle?.base?.id === baseId);
+    // Note: Status, search, client, and base are now filtered server-side.
+    // We only need to handle special client-side cases here if any.
+    // For "EN_ATTENTE-ACCORD", it's currently a client-side filter.
+    if (filterStatus === "EN_ATTENTE-ACCORD") {
+      result = result.filter(
+        (inv: any) => !inv.accordNumber
+      );
     }
 
     setFilteredInterventions(result);
-  }, [interventions, filterStatus, searchValue, clientId, baseId]);
+  }, [interventions, filterStatus]);
 
   useEffect(() => {
     applyFilters();
@@ -251,7 +219,7 @@ export default function MecanicienPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tous les clients</SelectItem>{" "}
-                {clients.map((c) => (
+                {Array.isArray(clients) && clients.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
                     {c.name}
                   </SelectItem>
@@ -302,11 +270,11 @@ export default function MecanicienPage() {
                 if (e.target.value === "") {
                   setFilterStatus("EN_COURS");
                   return;
-                }else{
+                } else {
                   setFilterStatus("");
                 }
               }}
-              // value={search}
+            // value={search}
             />
             <Button size="icon" variant="outline">
               <Search size={18} />
@@ -431,12 +399,12 @@ export default function MecanicienPage() {
                         prev.map((item: any) =>
                           item.id === inv.id
                             ? {
-                                ...item,
-                                status:
-                                  Object.keys(STATUS_UI_MAP).find(
-                                    (key) => STATUS_UI_MAP[key] === val,
-                                  ) || item.status,
-                              }
+                              ...item,
+                              status:
+                                Object.keys(STATUS_UI_MAP).find(
+                                  (key) => STATUS_UI_MAP[key] === val,
+                                ) || item.status,
+                            }
                             : item,
                         ),
                       );
