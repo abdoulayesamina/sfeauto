@@ -19,8 +19,18 @@ export function useInterventions(
 
     fetch(`/api/mechanic/interventions?${params.toString()}`)
       .then(res => res.json())
-      .then(data => setInterventions(data))
-      .catch(console.error)
+      .then(data => {
+        if (Array.isArray(data)) {
+          setInterventions(data)
+        } else {
+          console.error("Format d'interventions invalide:", data)
+          setInterventions([])
+        }
+      })
+      .catch(err => {
+        console.error("Erreur fetching interventions:", err)
+        setInterventions([])
+      })
       .finally(() => setLoading(false))
   }, [statusFilter, clientId, baseId, search])
 

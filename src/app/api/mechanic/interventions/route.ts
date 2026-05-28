@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/src/lib/prisma";
 import { logError } from "@/src/lib/logger";
+import { normalizePlate } from "@/src/utils/searchSmart";
 
 export async function GET(request: NextRequest) {
   try {
@@ -20,6 +21,8 @@ export async function GET(request: NextRequest) {
     const clientId = searchParams.get("clientId")?.trim();
     const baseId = searchParams.get("baseId")?.trim();
     const uiStatus = searchParams.get("status")?.trim();
+
+    console.log(`[API Interventions] GET started. search=${search}, clientId=${clientId}, baseId=${baseId}, status=${uiStatus}`);
 
     const whereClause: any = {
       int_supprimee: false,
@@ -47,6 +50,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
+      const normalized = normalizePlate(search);
       whereClause.OR = [
         {
           int_accordNumber: {
@@ -56,14 +60,26 @@ export async function GET(request: NextRequest) {
         {
           int_vehicle: {
             is: {
-              veh_licensePlate: {
-                contains: search,
-              },
+              OR: [
+                {
+                  veh_licensePlate: {
+                    contains: search,
+                  },
+                },
+                {
+                  veh_normalizedPlate: {
+                    contains: normalized || search,
+                  },
+                },
+              ],
             },
           },
         },
       ];
     }
+
+    console.log("[API Interventions] Executing Prisma query with whereClause:", JSON.stringify(whereClause, null, 2));
+    const startTime = Date.now();
 
     const interventions = await prisma.intervention_int.findMany({
       where: whereClause,
@@ -108,6 +124,8 @@ export async function GET(request: NextRequest) {
       take: 100,
     });
 
+    console.log(`[API Interventions] Prisma query finished in ${Date.now() - startTime}ms. Found ${interventions.length} results.`);
+
     const serialized = interventions.map((intervention) => ({
       id: intervention.int_id,
       accordNumber: intervention.int_accordNumber,
@@ -123,26 +141,26 @@ export async function GET(request: NextRequest) {
       createdAt: intervention.int_createdAt.toISOString(),
       updatedAt: intervention.int_updatedAt.toISOString(),
       vehicle: {
-        id: intervention.int_vehicle.veh_id,
-        licensePlate: intervention.int_vehicle.veh_licensePlate,
-        brand: intervention.int_vehicle.veh_brand?.bra_name ?? null,
-        model: intervention.int_vehicle.veh_model?.mod_name ?? null,
-        year: intervention.int_vehicle.veh_year,
-        color: intervention.int_vehicle.veh_color,
+        id: intervention.int_vehicle?.veh_id ?? "unknown",
+        licensePlate: intervention.int_vehicle?.veh_licensePlate ?? "Inconnue",
+        brand: intervention.int_vehicle?.veh_brand?.bra_name ?? null,
+        model: intervention.int_vehicle?.veh_model?.mod_name ?? null,
+        year: intervention.int_vehicle?.veh_year,
+        color: intervention.int_vehicle?.veh_color,
         client: {
-          id: intervention.int_clientId ?? intervention.int_vehicle.veh_client.cli_id,
-          name: intervention.int_client?.cli_name ?? intervention.int_vehicle.veh_client.cli_name,
+          id: intervention.int_clientId ?? intervention.int_vehicle?.veh_client?.cli_id ?? "unknown",
+          name: intervention.int_client?.cli_name ?? intervention.int_vehicle?.veh_client?.cli_name ?? "Client inconnu",
         },
         base: {
-          id: intervention.int_baseId ?? intervention.int_vehicle.veh_base.bas_id,
-          location: intervention.int_base?.bas_location ?? intervention.int_vehicle.veh_base.bas_location,
+          id: intervention.int_baseId ?? intervention.int_vehicle?.veh_base?.bas_id ?? "unknown",
+          location: intervention.int_base?.bas_location ?? intervention.int_vehicle?.veh_base?.bas_location ?? "Lieu inconnu",
         },
       },
       handledBy: intervention.int_handledBy
         ? {
-            name: intervention.int_handledBy.usr_name,
-            email: intervention.int_handledBy.usr_email,
-          }
+          name: intervention.int_handledBy.usr_name,
+          email: intervention.int_handledBy.usr_email,
+        }
         : null,
       statusHistory: intervention.history.map((h) => ({
         id: h.sth_id,
