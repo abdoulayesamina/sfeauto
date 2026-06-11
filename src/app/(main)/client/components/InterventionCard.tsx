@@ -5,7 +5,7 @@ import { toUIStatus } from "@/src/utils/constants/intervention-status"
 import { useEffect, useState } from "react"
 import { getBrandNameById, getModelNameById } from "../../brands/shared/hooks/GetBrandOrModelName"
 
-type UIStatus = "CONFIRMEE" | "EN_COURS" | "ATTENTE_PIECES" | "TERMINEE"
+type UIStatus = "EN_COURS" | "ATTENTE_PIECES" | "TERMINEE"
 
 type Props = {
   intervention: any
@@ -19,7 +19,6 @@ type Props = {
 function computeCounts(intervention: any) {
   if (intervention?.counts) {
     return {
-      CONFIRMEE: Number(intervention.counts.CONFIRMEE ?? 0),
       EN_COURS: Number(intervention.counts.EN_COURS ?? 0),
       ATTENTE_PIECES: Number(intervention.counts.ATTENTE_PIECES ?? 0),
       TERMINEE: Number(intervention.counts.TERMINEE ?? 0),
@@ -28,20 +27,18 @@ function computeCounts(intervention: any) {
 
   const interventions = Array.isArray(intervention?.vehicle?.interventions) ? intervention.vehicle.interventions : []
 
-  let confirmee = 0,
-    enCours = 0,
+  let enCours = 0,
     attentePieces = 0,
     terminee = 0
 
   for (const inv of interventions) {
     const ui = toUIStatus(inv.status)
-    if (ui === "CONFIRMEE") confirmee++
-    else if (ui === "EN_COURS") enCours++
+    if (ui === "EN_COURS") enCours++
     else if (ui === "ATTENTE_PIECES") attentePieces++
     else if (ui === "TERMINEE") terminee++
   }
 
-  return { CONFIRMEE: confirmee, EN_COURS: enCours, ATTENTE_PIECES: attentePieces, TERMINEE: terminee }
+  return { EN_COURS: enCours, ATTENTE_PIECES: attentePieces, TERMINEE: terminee }
 }
 
 function Badge({ label, variant }: { label: string; variant: "blue" | "orange" | "green" }) {
@@ -86,7 +83,7 @@ export default function InterventionCard({
   const isTransferred = v?.isTransferred || (userBaseId != null && v?.currentBaseId != null && v.currentBaseId !== userBaseId)
 
   const totalInterventions =
-    counts.CONFIRMEE + counts.EN_COURS + counts.ATTENTE_PIECES + counts.TERMINEE
+    counts.EN_COURS + counts.ATTENTE_PIECES + counts.TERMINEE
 
   return (
     <div
@@ -128,9 +125,6 @@ export default function InterventionCard({
           </div>
 
           <div className="mt-3 flex items-center gap-2 flex-wrap">
-            {counts.CONFIRMEE > 0 && (
-              <Badge variant="blue" label={`${counts.CONFIRMEE} Confirmée`} />
-            )}
             {counts.EN_COURS > 0 && (
               <Badge variant="blue" label={`${counts.EN_COURS} En cours`} />
             )}

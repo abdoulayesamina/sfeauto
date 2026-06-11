@@ -16,7 +16,6 @@ import { toUIStatus } from "@/src/utils/constants/intervention-status";
 
 type UIStatus =
   | "ALL"
-  | "CONFIRMEE"
   | "EN_COURS"
   | "TERMINEE"
   | "ATTENTE_PIECES";
@@ -102,13 +101,6 @@ export default function ClientPage() {
 
         let statusMatch = true;
 
-        if (filterStatus === "CONFIRMEE") {
-          statusMatch =
-            v.interventions.length > 0 &&
-            v.interventions.some(
-              (i: any) => toUIStatus(i.status) === "CONFIRMEE",
-            );
-        }
         if (filterStatus === "EN_COURS") {
           statusMatch =
             v.interventions.length > 0 &&
@@ -153,13 +145,6 @@ export default function ClientPage() {
         ),
     ).length;
 
-    const confirmee = vehicles.filter(
-      (v) =>
-        Array.isArray(v.interventions) &&
-        v.interventions.some(
-          (i: any) => toUIStatus(i.status) === "CONFIRMEE",
-        ),
-    ).length;
 
     const termine = vehicles.filter(
       (v) =>
@@ -174,7 +159,7 @@ export default function ClientPage() {
       (v) => !Array.isArray(v.interventions) || v.interventions.length === 0,
     ).length;
 
-    return { total, enCours, confirmee, termine, sansIntervention };
+    return { total, enCours, termine, sansIntervention };
   }, [vehicles]);
 
   if (isLoading) {

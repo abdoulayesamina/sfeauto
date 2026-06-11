@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     if (uiStatus && uiStatus !== "ALL") {
       if (uiStatus === "EN_COURS") {
         whereClause.int_status = {
-          in: ["CONFIRMED_IN_PLANNING", "FIXING_STARTED"],
+          in: ["FIXING_STARTED"],
         };
       } else if (uiStatus === "TERMINEE") {
         whereClause.int_status = "FIXING_FINISHED";

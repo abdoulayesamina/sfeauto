@@ -7,7 +7,6 @@ import { Wrench, Car, Clock } from "lucide-react"
  * Types UI clairs et distincts
  */
 export type UIStatus =
-  | "CONFIRMEE"
   | "EN_COURS"
   | "ATTENTE_PIECES"
   | "TERMINEE"
@@ -16,7 +15,6 @@ export type UIStatus =
  * Mapping BACKEND → UI
  */
 export const STATUS_UI_MAP: Record<WorkStatus, UIStatus> = {
-  CONFIRMED_IN_PLANNING: "CONFIRMEE",
   FIXING_STARTED: "EN_COURS",
   WAITING_FOR_PARTS: "ATTENTE_PIECES",
   FIXING_FINISHED: "TERMINEE",
@@ -26,7 +24,6 @@ export const STATUS_UI_MAP: Record<WorkStatus, UIStatus> = {
  * Mapping UI → BACKEND
  */
 export const UI_TO_WORKSTATUS: Record<UIStatus, WorkStatus> = {
-  CONFIRMEE: "CONFIRMED_IN_PLANNING",
   EN_COURS: "FIXING_STARTED",
   ATTENTE_PIECES: "WAITING_FOR_PARTS",
   TERMINEE: "FIXING_FINISHED",
@@ -36,8 +33,8 @@ export const UI_TO_WORKSTATUS: Record<UIStatus, WorkStatus> = {
  * Convertit backend → UI
  */
 export const toUIStatus = (backendStatus?: string): UIStatus => {
-  if (!backendStatus) return "CONFIRMEE"
-  return STATUS_UI_MAP[backendStatus as WorkStatus] ?? "CONFIRMEE"
+  if (!backendStatus) return "EN_COURS"
+  return STATUS_UI_MAP[backendStatus as WorkStatus] ?? "EN_COURS"
 }
 
 /**
@@ -57,12 +54,12 @@ export const filterByUIStatus = (
  */
 export const getStatusMeta = (status: UIStatus) => {
   const map = {
-    CONFIRMEE: {
-      label: "Confirmée",
-      color: "text-gray-700",
-      bg: "bg-gray-100",
-      icon: Clock,
-    },
+    // CONFIRMEE: {
+    //   label: "Confirmée",
+    //   color: "text-gray-700",
+    //   bg: "bg-gray-100",
+    //   icon: Clock,
+    // },
     EN_COURS: {
       label: "En cours",
       color: "text-blue-700",
@@ -90,7 +87,7 @@ export const getStatusMeta = (status: UIStatus) => {
  * Labels pour historique backend
  */
 export const HISTORY_LABELS: Record<string, string> = {
-  CONFIRMED_IN_PLANNING: "Confirmée et planifiée",
+  // CONFIRMED_IN_PLANNING: "Confirmée et planifiée",
   FIXING_STARTED: "Travail commencé",
   WAITING_FOR_PARTS: "En attente de pièces",
   FIXING_FINISHED: "Travail terminé",

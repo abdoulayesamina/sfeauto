@@ -207,7 +207,7 @@ export async function PATCH(request: NextRequest, context: Ctx) {
       currentIntervention.int_status === "FIXING_FINISHED";
 
     if (!isAlreadyInProgressOrDone && nowApproved) {
-      nextStatus = finalDidOrderParts ? "WAITING_FOR_PARTS" : "CONFIRMED_IN_PLANNING";
+      nextStatus = finalDidOrderParts ? "WAITING_FOR_PARTS" : "FIXING_STARTED";
     }
 
     const statusChanged = nextStatus !== currentIntervention.int_status;

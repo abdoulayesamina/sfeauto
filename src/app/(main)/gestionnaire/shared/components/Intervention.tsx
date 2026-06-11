@@ -12,7 +12,6 @@ import { errorAlert } from "@/src/lib/alerts"
 import { useInterventionPhotos } from "../hooks/useInterventionPhotos.api"
 
 type UIStatus =
-  | "CONFIRMEE"
   | "EN_COURS"
   | "ATTENTE_PIECES"
   | "TERMINEE"
@@ -172,6 +171,14 @@ export default function IntervDetailGes({ selectedIntervention, onClose }: Props
         </p>
         <p className="text-gray-600 text-sm">
           {selectedIntervention?.int_workDescription || "Aucune description fournie"}
+        </p>
+      </div>
+
+      {/* Commentaires */}
+      <div className="rounded-xl border-[4px] border-red-300 p-4 bg-zinc-50">
+        <p className="font-semibold mb-2">Commentaires</p>
+        <p className="text-gray-600 text-sm">
+            {selectedIntervention?.int_comments || "Aucun commentaire fourni"}
         </p>
       </div>
 

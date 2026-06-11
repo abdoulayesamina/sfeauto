@@ -11,7 +11,6 @@ function parseIntSafe(v: string | null): number | null {
 }
 
 const ALLOWED_STATUSES = [
-  "CONFIRMED_IN_PLANNING",
   "WAITING_FOR_PARTS",
   "FIXING_STARTED",
   "FIXING_FINISHED",

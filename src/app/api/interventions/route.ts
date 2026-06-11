@@ -199,7 +199,7 @@ export async function POST(request: NextRequest) {
             int_kilometrage: kilometrage,
             int_status: didOrderParts
               ? "WAITING_FOR_PARTS"
-              : "CONFIRMED_IN_PLANNING",
+              : "FIXING_STARTED",
             int_statusUpdatedAt: new Date(),
             int_workDescription: workDescription,
             int_didOrderParts: didOrderParts,
@@ -458,7 +458,7 @@ export async function POST(request: NextRequest) {
 //     const interventionConfirmed = true;
 //     const status = didOrderParts
 //       ? "WAITING_FOR_PARTS"
-//       : "CONFIRMED_IN_PLANNING";
+//       : "FIXING_STARTED";
 
 //     const container = getContainerClient();
 //     await container.createIfNotExists();
@@ -540,7 +540,7 @@ export async function POST(request: NextRequest) {
 //           await tx.statushistory_sth.create({
 //             data: {
 //               sth_interventionId: intervention.int_id,
-//               sth_previousStatus: "CONFIRMED_IN_PLANNING",
+//               sth_previousStatus: "FIXING_STARTED",
 //               sth_newStatus: "WAITING_FOR_PARTS",
 //               sth_changedById: session.user.id,
 //             },

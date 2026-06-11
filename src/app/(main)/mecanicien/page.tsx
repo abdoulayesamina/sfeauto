@@ -41,7 +41,6 @@ export const statusStyles: Record<string, string> = {
 };
 
 const STATUS_UI_MAP: Record<string, string> = {
-  CONFIRMED_IN_PLANNING: "EN_COURS",
   EN_REPARATION: "EN_COURS",
   FIXING_STARTED: "EN_COURS",
   WAITING_FOR_PARTS: "ATTENTE_PIECES",
@@ -93,7 +92,6 @@ export const translateStatus = (status?: string): string => {
 };
 
 const STATUS_TRANSLATIONS: Record<string, string> = {
-  CONFIRMED_IN_PLANNING: "Confirmée et planifiée",
   FIXING_STARTED: "Réparation en cours",
   WAITING_FOR_PARTS: "En attente de pièces",
   FIXING_DONE: "Réparation terminée",

@@ -7,7 +7,7 @@ import { toUIStatus, getStatusMeta, HISTORY_LABELS } from "@/src/utils/constants
 import { errorAlert } from "@/src/lib/alerts"
 import { useInterventionPhotos } from "../../../gestionnaire/shared/hooks/useInterventionPhotos.api"
 
-type UIStatus = "CONFIRMEE" | "EN_COURS" | "ATTENTE_PIECES" | "TERMINEE"
+type UIStatus = "EN_COURS" | "ATTENTE_PIECES" | "TERMINEE"
 
 type Props = {
   selectedIntervention: any
@@ -144,6 +144,13 @@ export default function InterventionDetail({
         <p className="font-semibold mb-2">Description du travail</p>
         <p className="text-gray-600 text-sm">
           {selectedIntervention?.workDescription || "Aucune description fournie"}
+        </p>
+      </div>
+
+      <div className="rounded-xl border-[4px] border-red-300 p-4 bg-zinc-50">
+        <p className="font-semibold mb-2">Commentaires</p>
+        <p className="text-gray-600 text-sm">
+          {selectedIntervention?.comments || "Aucun commentaire fourni"}
         </p>
       </div>
 

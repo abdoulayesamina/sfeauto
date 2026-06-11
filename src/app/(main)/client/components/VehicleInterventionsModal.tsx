@@ -15,7 +15,6 @@ interface VehicleInterventionsModalProps {
   interventions: any[];
   filterStatus:
     | "ALL"
-    | "CONFIRMEE"
     | "EN_COURS"
     | "TERMINEE"
     | "ATTENTE_PIECES";
@@ -50,8 +49,6 @@ export default function VehicleInterventionsModal({
 
   const stats = {
     total: interventions.length,
-    confirmee: interventions.filter((i) => toUIStatus(i.status) === "CONFIRMEE")
-      .length,
     enCours: interventions.filter((i) => toUIStatus(i.status) === "EN_COURS")
       .length,
     attentePieces: interventions.filter(
@@ -139,11 +136,6 @@ export default function VehicleInterventionsModal({
               Total : {stats.total}
             </Badge>
 
-            {stats.confirmee > 0 && (
-              <Badge className="px-5 py-2 text-sm bg-sky-100 text-sky-700 border-sky-200">
-                Confirmées : {stats.confirmee}
-              </Badge>
-            )}
             {stats.enCours > 0 && (
               <Badge className="px-5 py-2 text-sm bg-blue-100 text-blue-700 border-blue-200">
                 En cours : {stats.enCours}
@@ -218,6 +210,17 @@ export default function VehicleInterventionsModal({
                         </p>
                         <p className="text-zinc-700 leading-relaxed line-clamp-3 text-[15px]">
                           {displayValue(intervention.workDescription)}
+                        </p>
+                      </div>
+                    )}
+                   
+                    {intervention.comments && (
+                      <div className="mt-6">
+                        <p className="font-bold text-sm mb-2 underline">
+                          Commentaires
+                        </p>
+                        <p className="text-zinc-700 leading-relaxed line-clamp-3 text-[13px]">
+                          {displayValue(intervention.comments)}
                         </p>
                       </div>
                     )}

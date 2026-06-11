@@ -99,7 +99,6 @@ export function SectionCards({ user }: { user?: any }) {
 
     const enCours = interventions.filter(
       (i) =>
-        i.int_status === "CONFIRMED_IN_PLANNING" ||
         i.int_status === "FIXING_STARTED",
     );
 
@@ -216,6 +215,8 @@ export function SectionCards({ user }: { user?: any }) {
     setOpenDetailModal(true);
   }
 
+  const [open, setOpen] = useState(false);
+
   // useEffect(() => {
   //   if(!agenceId || !vehicles) {
   //     setInterventionsParAgence(0);
@@ -240,6 +241,8 @@ export function SectionCards({ user }: { user?: any }) {
       <div className="flex px-6 pt-6 gap-2 flex-wrap">
         <div className="w-full max-w-xl">
           <Select
+            open={open}
+            onOpenChange={setOpen}
             value={clientId}
             onValueChange={(Id) => {
               clientIdChanged(Id);
@@ -252,6 +255,19 @@ export function SectionCards({ user }: { user?: any }) {
               {loading && <Spinner className="size-4" />}
             </SelectTrigger>
             <SelectContent className="z-[2000]">
+              {clientId ? (
+                <button
+                  className="bg-gray-50 cursor-pointer p-1 rounded text-sm hover:bg-gray-100 w-full"
+                  onClick={() => {
+                    displayGlobalStatistiques();
+                    setOpen(false);
+                  }}
+                >
+                  Afficher les statistiques globales
+                </button>
+              ) : (
+                ""
+              )}
               {clients.map((c) => (
                 <SelectItem key={c.cli_id} value={c.cli_id}>
                   {c.cli_name}
@@ -288,7 +304,7 @@ export function SectionCards({ user }: { user?: any }) {
           </p> */}
         </div>
       </div>
-      <div className="px-8 py-1 min-h-[38px]">
+      {/* <div className="px-8 py-1 min-h-[38px]">
         {clientId ? (
           <button
             className="bg-gray-50 cursor-pointer p-1 rounded text-sm hover:bg-gray-100 "
@@ -299,7 +315,7 @@ export function SectionCards({ user }: { user?: any }) {
         ) : (
           ""
         )}
-      </div>
+      </div> */}
       {
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 px-6">
           {[
@@ -469,7 +485,6 @@ export function SectionCards({ user }: { user?: any }) {
                   const status =
                     STATUS_UI_MAP[
                       inv.int_status as
-                        | "CONFIRMED_IN_PLANNING"
                         | "WAITING_FOR_PARTS"
                         | "FIXING_STARTED"
                         | "FIXING_FINISHED"

@@ -81,7 +81,6 @@ export function VehicleFilters({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Tous</SelectItem>
-          <SelectItem value="CONFIRMED_IN_PLANNING">Confirmé</SelectItem>
           <SelectItem value="WAITING_FOR_PARTS">Attente pièces</SelectItem>
           <SelectItem value="FIXING_STARTED">En réparation</SelectItem>
           <SelectItem value="FIXING_FINISHED">Terminé</SelectItem>

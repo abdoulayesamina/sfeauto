@@ -28,25 +28,17 @@ function isValidStatusTransition(
   newStatus: intervention_status
 ): boolean {
   const transitions: Record<intervention_status, intervention_status[]> = {
-    CONFIRMED_IN_PLANNING: [
-      intervention_status.WAITING_FOR_PARTS,
-      intervention_status.FIXING_STARTED,
-      intervention_status.FIXING_FINISHED,
-    ],
     WAITING_FOR_PARTS: [
-      intervention_status.CONFIRMED_IN_PLANNING,
       intervention_status.FIXING_STARTED,
       intervention_status.FIXING_FINISHED,
     ],
     FIXING_STARTED: [
-      intervention_status.CONFIRMED_IN_PLANNING,
       intervention_status.WAITING_FOR_PARTS,
       intervention_status.FIXING_FINISHED,
     ],
     FIXING_FINISHED: [
       intervention_status.FIXING_STARTED,
       intervention_status.WAITING_FOR_PARTS,
-      intervention_status.CONFIRMED_IN_PLANNING,
     ],
   };
 

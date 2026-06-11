@@ -12,7 +12,6 @@ type Props = {
 }
 
 const STATUS_UI_MAP: Record<string, { label: string; color: string; bg: string; icon: any }> = {
-  CONFIRMED_IN_PLANNING: { label: "EN COURS", color: "text-blue-600", bg: "bg-blue-100", icon: Car },
   FIXING_STARTED: { label: "EN COURS", color: "text-blue-600", bg: "bg-blue-100", icon: Car },
   WAITING_FOR_PARTS: { label: "ATTENTE PIECES", color: "text-orange-600", bg: "bg-orange-100", icon: Wrench },
   FIXING_FINISHED: { label: "TERMINEE", color: "text-emerald-600", bg: "bg-emerald-100", icon: Car },
@@ -178,6 +177,14 @@ export default function InterventionDetailClient({ selectedIntervention, onClose
         <p className="font-semibold mb-2">Description du travail</p>
         <p className="text-gray-600 text-sm">
           {displayValue(selectedIntervention.workDescription) || "Aucune description fournie"}
+        </p>
+      </div>
+      
+      {/* Commentaires */}
+      <div className="rounded-xl border-[4px] border-red-300 p-4 bg-zinc-50">
+        <p className="font-semibold mb-2">Commentaires</p>
+        <p className="text-gray-600 text-sm">
+          {displayValue(selectedIntervention.comments) || "Aucun commentaire fourni"}
         </p>
       </div>
 

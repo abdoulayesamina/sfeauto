@@ -207,7 +207,7 @@ model intervention_int {
   int_accordNumber          String?             
   int_dateOfConfirmation    DateTime?
   int_interventionConfirmed Boolean             @default(false)
-  int_status                intervention_status @default(CONFIRMED_IN_PLANNING)
+  int_status                intervention_status @default(FIXING_STARTED)
   int_statusUpdatedAt       DateTime            @default(now())
   int_workDescription       String?
   int_didOrderParts         Boolean             @default(false)
@@ -368,7 +368,7 @@ enum user_role {
 }
 
 enum intervention_status {
-  CONFIRMED_IN_PLANNING
+  // CONFIRMED_IN_PLANNING
   WAITING_FOR_PARTS
   FIXING_STARTED
   FIXING_FINISHED
@@ -400,21 +400,21 @@ enum vehicle_gearboxType {
 }
 
 enum statushistory_previousStatus {
-  CONFIRMED_IN_PLANNING
+  // CONFIRMED_IN_PLANNING
   WAITING_FOR_PARTS
   FIXING_STARTED
   FIXING_FINISHED
 }
 
 enum statushistory_newStatus {
-  CONFIRMED_IN_PLANNING
+  // CONFIRMED_IN_PLANNING
   WAITING_FOR_PARTS
   FIXING_STARTED
   FIXING_FINISHED
 }
 
 enum WorkStatus {
-  CONFIRMED_IN_PLANNING
+  // CONFIRMED_IN_PLANNING
   WAITING_FOR_PARTS
   FIXING_STARTED
   FIXING_FINISHED

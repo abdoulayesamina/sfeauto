@@ -3,7 +3,6 @@
 import { API_BASE_URL } from "@/src/shared/config/api"
 
 type WorkStatus =
-  | "CONFIRMED_IN_PLANNING"
   | "WAITING_FOR_PARTS"
   | "FIXING_STARTED"
   | "FIXING_FINISHED"

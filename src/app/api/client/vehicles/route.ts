@@ -43,6 +43,7 @@ export async function GET() {
       int_dateOfConfirmation: true,
       int_createdAt: true,
       int_updatedAt: true,
+      int_comments:true,
     };
 
     // 1. Véhicules actuellement liés à ce client
@@ -125,6 +126,7 @@ export async function GET() {
         status: i.int_status,
         interventionConfirmed: i.int_interventionConfirmed,
         workDescription: i.int_workDescription,
+        comments: i.int_comments,
         accordNumber: i.int_accordNumber,
         dateOfConfirmation: i.int_dateOfConfirmation?.toISOString() ?? null,
         createdAt: i.int_createdAt.toISOString(),

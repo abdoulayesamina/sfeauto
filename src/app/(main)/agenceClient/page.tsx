@@ -20,13 +20,11 @@ import InterventionDetailClient from "../client/components/detailsInterv";
 
 type UIStatus =
   | "ALL"
-  | "CONFIRMEE"
   | "EN_COURS"
   | "TERMINEE"
   | "ATTENTE_PIECES";
 
 type Counts = {
-  CONFIRMEE: number;
   EN_COURS: number;
   ATTENTE_PIECES: number;
   TERMINEE: number;
@@ -106,7 +104,7 @@ export default function AgencePage() {
         map.set(v.id, {
           vehicle: v,
           interventions: [],
-          counts: { CONFIRMEE: 0, EN_COURS: 0, ATTENTE_PIECES: 0, TERMINEE: 0 },
+          counts: { EN_COURS: 0, ATTENTE_PIECES: 0, TERMINEE: 0 },
           lastIntervention: null,
         });
       }
@@ -123,7 +121,6 @@ export default function AgencePage() {
       }
 
       const ui = toUIStatus(inv.status);
-      if (ui === "CONFIRMEE") row.counts.CONFIRMEE += 1;
       if (ui === "EN_COURS") row.counts.EN_COURS += 1;
       if (ui === "ATTENTE_PIECES") row.counts.ATTENTE_PIECES += 1;
       if (ui === "TERMINEE") row.counts.TERMINEE += 1;
@@ -143,7 +140,6 @@ export default function AgencePage() {
 
       const statusMatch =
         filterStatus === "ALL" ||
-        (filterStatus === "CONFIRMEE" && row.counts.CONFIRMEE > 0) ||
         (filterStatus === "EN_COURS" && row.counts.EN_COURS > 0) ||
         (filterStatus === "ATTENTE_PIECES" && row.counts.ATTENTE_PIECES > 0) ||
         (filterStatus === "TERMINEE" && row.counts.TERMINEE > 0);
@@ -161,9 +157,6 @@ export default function AgencePage() {
 
   const stats = useMemo(() => {
     const total = interventions.length;
-    const confirmee = interventions.filter(
-      (i) => toUIStatus(i.status) === "CONFIRMEE",
-    ).length;
     const enCours = interventions.filter(
       (i) => toUIStatus(i.status) === "EN_COURS",
     ).length;
@@ -173,7 +166,7 @@ export default function AgencePage() {
     const attentePieces = interventions.filter(
       (i) => toUIStatus(i.status) === "ATTENTE_PIECES",
     ).length;
-    return { total, confirmee, enCours, termine, attentePieces };
+    return { total, enCours, termine, attentePieces };
   }, [interventions]);
 
   const handleViewInterventions = (vehicleRow: any) => {
@@ -303,10 +296,6 @@ export default function AgencePage() {
           <div className="rounded-xl bg-white border p-4">
             <div className="text-sm text-gray-500">Total</div>
             <div className="text-2xl font-bold">{stats.total}</div>
-          </div>
-          <div className="rounded-xl bg-white border p-4">
-            <div className="text-sm text-gray-500">Confirmées</div>
-            <div className="text-2xl font-bold">{stats.confirmee}</div>
           </div>
           <div className="rounded-xl bg-white border p-4">
             <div className="text-sm text-gray-500">En cours</div>

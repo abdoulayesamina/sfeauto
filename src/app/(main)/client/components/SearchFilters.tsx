@@ -13,8 +13,8 @@ import { cn } from "@/src/lib/utils"
 interface SearchFiltersProps {
   searchQuery: string
   onSearchChange: (value: string) => void
-  filterStatus: "ALL" | "CONFIRMEE" | "EN_COURS" | "TERMINEE" | "ATTENTE_PIECES"
-  onFilterChange: (value: "ALL" | "CONFIRMEE" | "EN_COURS" | "TERMINEE" | "ATTENTE_PIECES") => void
+  filterStatus: "ALL" | "EN_COURS" | "TERMINEE" | "ATTENTE_PIECES"
+  onFilterChange: (value: "ALL" | "EN_COURS" | "TERMINEE" | "ATTENTE_PIECES") => void
 }
 
 export default function SearchFilters({
@@ -60,16 +60,6 @@ export default function SearchFilters({
             Toutes
           </Button>
           <Button
-            onClick={() => onFilterChange("CONFIRMEE")}
-            variant={filterStatus === "CONFIRMEE" ? "default" : "outline"}
-            className={cn(
-              "rounded-lg transition-all",
-              filterStatus === "CONFIRMEE" && "shadow-md"
-            )}
-          >
-            Confirmées
-          </Button>
-          <Button
             onClick={() => onFilterChange("EN_COURS")}
             variant={filterStatus === "EN_COURS" ? "default" : "outline"}
             className={cn(
@@ -111,7 +101,6 @@ export default function SearchFilters({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="ALL">Tous les statuts</SelectItem>
-            <SelectItem value="CONFIRMEE">Confirmées</SelectItem>
             <SelectItem value="EN_COURS">En cours</SelectItem>
             <SelectItem value="ATTENTE_PIECES">Attente pièces</SelectItem>
             <SelectItem value="TERMINEE">Terminées</SelectItem>

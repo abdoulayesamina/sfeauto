@@ -5,7 +5,7 @@ export const InterventionSchema = z.object({
   int_accordNumber: z.string(),
   int_dateOfConfirmation: z.string().datetime().optional(),
   int_interventionConfirmed: z.boolean(),
-  int_status: z.enum(['CONFIRMED_IN_PLANNING', 'WAITING_FOR_PARTS', 'FIXING_STARTED', 'FIXING_FINISHED']),
+  int_status: z.enum(['WAITING_FOR_PARTS', 'FIXING_STARTED', 'FIXING_FINISHED']),
   int_statusUpdatedAt: z.string().datetime().optional(),
   int_workDescription: z.string(),
   int_didOrderParts: z.boolean(),
