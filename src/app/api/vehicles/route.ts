@@ -98,7 +98,8 @@ export async function GET(request: NextRequest) {
         });
       }
     }
-
+    
+    console.log("Debug !!!");
     const vehicles = await prisma.vehicle_veh.findMany({
       where: {
         ...(session.user.role === "AGENCE"
@@ -291,6 +292,8 @@ export async function GET(request: NextRequest) {
       },
       // take: search ? 20 : 100,
     });
+
+
 
     return NextResponse.json({ vehicles });
   } catch (error) {

@@ -198,10 +198,16 @@ export default function GestionnairePage() {
         if (statut === "SANS_INTERVENTION") {
           if (v.interventions && v.interventions.length > 0) return false;
         } else {
-          const lastIntervention =
-            v.interventions?.[v.interventions.length - 1];
-          if (!lastIntervention) return false;
-          if (lastIntervention.int_status !== statut) return false;
+          // const lastIntervention =
+          // v.interventions?.[v.interventions.length - 1];
+
+          // if (!lastIntervention) return false;
+          // if (lastIntervention.int_status !== statut) return false;
+          const hasStatus = v.interventions?.some(
+            (intervention) => intervention.int_status === statut
+          );
+          
+          if (!hasStatus) return false;
         }
       }
 
