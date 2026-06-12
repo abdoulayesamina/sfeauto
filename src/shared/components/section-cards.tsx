@@ -37,6 +37,7 @@ import {
 } from "@/src/utils/constants/intervention-status";
 import { Modal } from "./modal";
 import IntervDetailGes from "@/src/app/(main)/gestionnaire/shared/components/Intervention";
+import { Intervention } from "@/src/utils/types/intervention";
 
 export function SectionCards({ user }: { user?: any }) {
   //recup la liste des agences
@@ -86,6 +87,8 @@ export function SectionCards({ user }: { user?: any }) {
   const [displayedInterventions, setDisplayedInterventions] = useState<any[]>(
     [],
   );
+
+  const [ globalInterventions, setGlobalInterventions] = useState<any[]>([]);
 
   // const [interventionsParAgence, setInterventionsParAgence] = useState(0);
   // const [interventionsParAgence, setInterventionsParAgence] = useState<{[key: string]: number}>({});
@@ -148,6 +151,12 @@ export function SectionCards({ user }: { user?: any }) {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const interventions = vehicles?.vehicles.flatMap((v: any) => v.interventions) ?? [];
+    setGlobalInterventions(interventions);
+    console.log("Toutes les interventions globales : ", interventions);
+  },[vehicles]);
 
   useEffect(() => {
     loadAllData();
@@ -269,8 +278,13 @@ export function SectionCards({ user }: { user?: any }) {
                 ""
               )}
               {clients.map((c) => (
-                <SelectItem key={c.cli_id} value={c.cli_id}>
+                <SelectItem key={c.cli_id} value={c.cli_id} className="">
                   {c.cli_name}
+                  {globalInterventions.some((i) => i.int_clientId === c.cli_id) && (
+                    <span className="ml-2 text-xs text-muted-foreground">
+                      ({globalInterventions.filter((i) => i.int_clientId === c.cli_id).length})
+                    </span>
+                  )}
                 </SelectItem>
               ))}
             </SelectContent>
