@@ -280,11 +280,11 @@ export function SectionCards({ user }: { user?: any }) {
               {clients.map((c) => (
                 <SelectItem key={c.cli_id} value={c.cli_id} className="">
                   {c.cli_name}
-                  {globalInterventions.some((i) => i.int_clientId === c.cli_id) && (
+                  {/* {globalInterventions.some((i) => i.int_clientId === c.cli_id) && (
                     <span className="ml-2 text-xs text-muted-foreground">
                       ({globalInterventions.filter((i) => i.int_clientId === c.cli_id).length})
                     </span>
-                  )}
+                  )} */}
                 </SelectItem>
               ))}
             </SelectContent>

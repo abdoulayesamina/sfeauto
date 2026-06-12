@@ -15,6 +15,7 @@ import { useInterventionPhotos } from "../hooks/useInterventionPhotos.api";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 import { confirmAlert } from "@/src/lib/alerts";
+import { formatDateToISO } from "@/src/utils/formatters";
 
 
 type PiecesCommande = "oui" | "non";
@@ -524,7 +525,12 @@ async function handleSave(e?: React.FormEvent) {
               type="date"
               className="h-15"
               value={dateOfConfirmation}
-              onChange={(e) => setDateOfConfirmation(e.target.value)}
+              // onChange={(e) => setDateOfConfirmation(e.target.value)}
+              onChange={(e) =>{
+                setDateOfConfirmation(formatDateToISO(e.target.value))
+                  console.log("Date de confirmation:", formatDateToISO(e.target.value))
+                }
+              }
             />
           </div>
         </div>

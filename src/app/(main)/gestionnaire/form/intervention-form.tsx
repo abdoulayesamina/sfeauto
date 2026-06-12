@@ -9,6 +9,7 @@ import {
   RadioGroupItem,
 } from "@/src/shared/components/ui/radio-group";
 import { Textarea } from "@/src/shared/components/ui/textarea";
+import { formatDateToISO } from "@/src/utils/formatters";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -285,8 +286,10 @@ export function InterventionForm({
           <Input
             type="date"
             value={dateConfirmation}
-            onChange={(e) =>
-              setDateConfirmation(e.target.value)
+            onChange={(e) =>{
+              setDateConfirmation(formatDateToISO(e.target.value))
+              console.log("Date de confirmation:", formatDateToISO(e.target.value))
+            }
             }
             className="h-15"
           />
