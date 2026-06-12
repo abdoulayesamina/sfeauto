@@ -99,7 +99,6 @@ export async function GET(request: NextRequest) {
       }
     }
     
-    console.log("Debug !!!");
     const vehicles = await prisma.vehicle_veh.findMany({
       where: {
         ...(session.user.role === "AGENCE"

@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     const baseId = searchParams.get("baseId")?.trim();
     const uiStatus = searchParams.get("status")?.trim();
 
-    console.log(`[API Interventions] GET started. search=${search}, clientId=${clientId}, baseId=${baseId}, status=${uiStatus}`);
+    // console.log(`[API Interventions] GET started. search=${search}, clientId=${clientId}, baseId=${baseId}, status=${uiStatus}`);
 
     const whereClause: any = {
       int_supprimee: false,
@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    console.log("[API Interventions] Executing Prisma query with whereClause:", JSON.stringify(whereClause, null, 2));
+    console.log("Saaluuut");
     const startTime = Date.now();
 
     const interventions = await prisma.intervention_int.findMany({

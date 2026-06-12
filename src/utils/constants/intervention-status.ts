@@ -87,11 +87,11 @@ export const getStatusMeta = (status: UIStatus) => {
  * Labels pour historique backend
  */
 export const HISTORY_LABELS: Record<string, string> = {
-  // CONFIRMED_IN_PLANNING: "Confirmée et planifiée",
   FIXING_STARTED: "Travail commencé",
   WAITING_FOR_PARTS: "En attente de pièces",
   FIXING_FINISHED: "Travail terminé",
 }
+// CONFIRMED_IN_PLANNING: "Confirmée et planifiée",
 
 
 
