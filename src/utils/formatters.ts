@@ -42,7 +42,7 @@ export function formatLicensePlate(plate?: string): string {
 }
 
 
-export const formatDateToISO = (date: string | Date) => {
+export function formatDateToISO(date: string | Date) {
   const d = new Date(date);
 
   const year = d.getFullYear();
