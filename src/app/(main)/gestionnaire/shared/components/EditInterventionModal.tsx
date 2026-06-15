@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 import { confirmAlert } from "@/src/lib/alerts";
 import { formatDateToISO } from "@/src/utils/formatters";
+import { compressImage } from "@/src/utils/image-compression";
 
 
 type PiecesCommande = "oui" | "non";
@@ -65,13 +66,13 @@ export function EditInterventionModal({ open, onClose, intervention, onUpdated, 
 
     // setWorkDescription(intervention.int_workDescription);
     setWorkDescription(intervention.int_workDescription ?? "");
-  setAccordNumber(
-    intervention.int_accordNumber === "REFUSE"
-      ? "REFUSÉ"
-      : (intervention.int_accordNumber ?? "")
-  );
-  
-  setDateOfConfirmation(toDateInputValue(intervention.int_dateOfConfirmation));
+    setAccordNumber(
+      intervention.int_accordNumber === "REFUSE"
+        ? "REFUSÉ"
+        : (intervention.int_accordNumber ?? "")
+    );
+
+    setDateOfConfirmation(toDateInputValue(intervention.int_dateOfConfirmation));
 
     const didOrder = Boolean(intervention.int_didOrderParts);
     setPiecesCommande(didOrder ? "oui" : "non");
@@ -160,30 +161,21 @@ export function EditInterventionModal({ open, onClose, intervention, onUpdated, 
   //   e.target.value = "";
   // };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
 
     const files = Array.from(e.target.files);
 
     const allowedTypes = ["image/png", "image/jpeg"];
-    const maxSize = 5 * 1024 * 1024; // 5MB
-
     const validFiles: File[] = [];
 
     let hasTypeError = false;
-    let hasSizeError = false;
 
     for (const file of files) {
       if (!file.type || !allowedTypes.includes(file.type)) {
         hasTypeError = true;
         continue;
       }
-
-      if (file.size > maxSize) {
-        hasSizeError = true;
-        continue;
-      }
-
       validFiles.push(file);
     }
 
@@ -193,24 +185,26 @@ export function EditInterventionModal({ open, onClose, intervention, onUpdated, 
       });
     }
 
-    if (hasSizeError) {
-      toast.error("Fichiers trop volumineux", {
-        description: "La taille maximale est de 5MB",
-      });
-    }
-
     if (validFiles.length === 0) {
       e.target.value = "";
       return;
     }
 
+    try {
+      const compressedFiles = await Promise.all(
+        validFiles.map((file) => compressImage(file))
+      );
 
-    setImages((prev) => [...prev, ...validFiles]);
+      setImages((prev) => [...prev, ...compressedFiles]);
 
-    const previews = validFiles.map((file) => URL.createObjectURL(file));
-    setImagesBlob((prev) => [...prev, ...previews]);
-
-    e.target.value = "";
+      const previews = compressedFiles.map((file) => URL.createObjectURL(file));
+      setImagesBlob((prev) => [...prev, ...previews]);
+    } catch (error) {
+      console.error("Erreur lors de la compression:", error);
+      toast.error("Une erreur est survenue lors du traitement des images");
+    } finally {
+      e.target.value = "";
+    }
   };
 
   async function handleDelete() {
@@ -246,60 +240,60 @@ export function EditInterventionModal({ open, onClose, intervention, onUpdated, 
     }
   }
 
-async function handleSave(e?: React.FormEvent) {
-  e?.preventDefault();
-  if (!intervention?.int_id) return;
+  async function handleSave(e?: React.FormEvent) {
+    e?.preventDefault();
+    if (!intervention?.int_id) return;
 
-  if (
-    intervention.int_vehicle?.veh_kilometrage &&
-    kilometrage &&
-    intervention.int_vehicle.veh_kilometrage > parseInt(kilometrage)
-  ) {
-    toast.error("Le kilométrage de l'intervention ne peut pas être inférieur à celui du véhicule");
-    return;
+    if (
+      intervention.int_vehicle?.veh_kilometrage &&
+      kilometrage &&
+      intervention.int_vehicle.veh_kilometrage > parseInt(kilometrage)
+    ) {
+      toast.error("Le kilométrage de l'intervention ne peut pas être inférieur à celui du véhicule");
+      return;
+    }
+
+    const didOrderParts = piecesCommande === "oui";
+
+    const normalizedAccordNumber = accordNumber.trim()
+      ? accordNumber.trim().toUpperCase() === "REFUSÉ"
+        ? "REFUSE"
+        : accordNumber.trim()
+      : null;
+
+    const payload: InterventionPatchPayload = {
+      workDescription: workDescription.trim() || null,
+      accordNumber: normalizedAccordNumber,
+      dateOfConfirmation: dateOfConfirmation
+        ? new Date(dateOfConfirmation).toISOString()
+        : null,
+      didOrderParts,
+      ordersDetails: didOrderParts ? (ordersDetails.trim() || null) : null,
+      comments: comments.trim() || null,
+      kilometrage: kilometrage.trim() || null,
+    };
+
+    const res = await patchIntervention(intervention.int_id, payload);
+
+    if (!res.ok) return;
+
+    if (images.length > 0) {
+      const formData = new FormData();
+
+      images.forEach((file) => {
+        formData.append("files", file);
+      });
+
+      await fetch(`/api/interventions/${intervention.int_id}/photos`, {
+        method: "POST",
+        body: formData,
+      });
+    }
+
+    onUpdated?.(res.data?.intervention ?? res.data);
+    reloadInterventionList?.();
+    onClose();
   }
-
-  const didOrderParts = piecesCommande === "oui";
-
-  const normalizedAccordNumber = accordNumber.trim()
-    ? accordNumber.trim().toUpperCase() === "REFUSÉ"
-      ? "REFUSE"
-      : accordNumber.trim()
-    : null;
-
-  const payload: InterventionPatchPayload = {
-    workDescription: workDescription.trim() || null,
-    accordNumber: normalizedAccordNumber,
-    dateOfConfirmation: dateOfConfirmation
-      ? new Date(dateOfConfirmation).toISOString()
-      : null,
-    didOrderParts,
-    ordersDetails: didOrderParts ? (ordersDetails.trim() || null) : null,
-    comments: comments.trim() || null,
-    kilometrage: kilometrage.trim() || null,
-  };
-
-  const res = await patchIntervention(intervention.int_id, payload);
-
-  if (!res.ok) return;
-
-  if (images.length > 0) {
-    const formData = new FormData();
-
-    images.forEach((file) => {
-      formData.append("files", file);
-    });
-
-    await fetch(`/api/interventions/${intervention.int_id}/photos`, {
-      method: "POST",
-      body: formData,
-    });
-  }
-
-  onUpdated?.(res.data?.intervention ?? res.data);
-  reloadInterventionList?.();
-  onClose();
-}
 
 
   return (
@@ -408,7 +402,7 @@ async function handleSave(e?: React.FormEvent) {
           </Button>
 
           <p className="text-gray-500 text-xs">
-            Formats acceptés : PNG, JPEG • Max 5MB
+            Formats acceptés : PNG, JPEG
           </p>
 
           {images.length > 0 && (
@@ -503,17 +497,17 @@ async function handleSave(e?: React.FormEvent) {
           <div className="space-y-2">
             <Label>Numéro d’accord</Label>
             <div className="flex items-center gap-2">
-                <Input
-                  className="h-15"
-                  value={accordNumber}
-                  onChange={(e) => setAccordNumber(e.target.value)}
-                  placeholder="ACC-2026-001"
-                />
+              <Input
+                className="h-15"
+                value={accordNumber}
+                onChange={(e) => setAccordNumber(e.target.value)}
+                placeholder="ACC-2026-001"
+              />
               <Button
-              type="button"
-              variant="destructive"
-              className="h-15 whitespace-nowrap"
-              onClick={()=>setAccordNumber("REFUSÉ")}>
+                type="button"
+                variant="destructive"
+                className="h-15 whitespace-nowrap"
+                onClick={() => setAccordNumber("REFUSÉ")}>
                 REFUSÉ
               </Button>
             </div>
@@ -526,10 +520,10 @@ async function handleSave(e?: React.FormEvent) {
               className="h-15"
               value={dateOfConfirmation}
               // onChange={(e) => setDateOfConfirmation(e.target.value)}
-              onChange={(e) =>{
+              onChange={(e) => {
                 setDateOfConfirmation(formatDateToISO(e.target.value))
-                  console.log("Date de confirmation:", formatDateToISO(e.target.value))
-                }
+                console.log("Date de confirmation:", formatDateToISO(e.target.value))
+              }
               }
             />
           </div>

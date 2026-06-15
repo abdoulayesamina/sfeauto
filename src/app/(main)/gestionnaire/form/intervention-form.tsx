@@ -13,6 +13,7 @@ import { formatDateToISO } from "@/src/utils/formatters";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { compressImage } from "@/src/utils/image-compression";
 
 type PiecesCommande = "oui" | "non";
 
@@ -63,29 +64,20 @@ export function InterventionForm({
     }
   }, [numeroAccord]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
 
     const allowedTypes = ["image/png", "image/jpeg"];
-    const maxSize = 5 * 1024 * 1024;
-
+    // On ne bloque plus par la taille ici, on compresse
     const validFiles: File[] = [];
-
     let hasTypeError = false;
-    let hasSizeError = false;
 
     for (const file of files) {
       if (!allowedTypes.includes(file.type)) {
         hasTypeError = true;
         continue;
       }
-
-      if (file.size > maxSize) {
-        hasSizeError = true;
-        continue;
-      }
-
       validFiles.push(file);
     }
 
@@ -93,18 +85,26 @@ export function InterventionForm({
       toast.error("Format non supporté (PNG / JPEG uniquement)");
     }
 
-    if (hasSizeError) {
-      toast.error("Certains fichiers dépassent 5MB");
+    if (!validFiles.length) {
+      e.target.value = "";
+      return;
     }
 
-    if (!validFiles.length) return;
+    try {
+      const compressedFiles = await Promise.all(
+        validFiles.map((file) => compressImage(file))
+      );
 
-    const previews = validFiles.map((file) =>
-      URL.createObjectURL(file)
-    );
+      const previews = compressedFiles.map((file) => URL.createObjectURL(file));
 
-    setImages((prev) => [...prev, ...validFiles]);
-    setImagesBlob((prev) => [...prev, ...previews]);
+      setImages((prev) => [...prev, ...compressedFiles]);
+      setImagesBlob((prev) => [...prev, ...previews]);
+    } catch (error) {
+      console.error("Erreur lors de la compression:", error);
+      toast.error("Une erreur est survenue lors du traitement des images");
+    } finally {
+      e.target.value = "";
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -173,7 +173,7 @@ export function InterventionForm({
         >
           {imagesBlob.length > 0
             ? `${images.length} fichier(s) sélectionné(s)`
-            : "Sélectionner des images PNG/JPEG (max 5MB)"}
+            : "Sélectionner des images PNG/JPEG"}
         </span>
 
         <Input
@@ -286,7 +286,7 @@ export function InterventionForm({
           <Input
             type="date"
             value={dateConfirmation}
-            onChange={(e) =>{
+            onChange={(e) => {
               setDateConfirmation(formatDateToISO(e.target.value))
               console.log("Date de confirmation:", formatDateToISO(e.target.value))
             }
