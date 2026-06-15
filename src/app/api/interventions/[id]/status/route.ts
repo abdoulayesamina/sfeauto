@@ -3,8 +3,8 @@ import { auth } from "@/auth";
 import { prisma } from "@/src/lib/prisma";
 import {
   intervention_status,
-  statushistory_newStatus,
-  statushistory_previousStatus,
+  statushistory_sth_sth_newStatus,
+  statushistory_sth_sth_previousStatus,
 } from "@/generated/prisma";
 import { logError } from "@/src/lib/logger";
 
@@ -46,12 +46,12 @@ function isValidStatusTransition(
   return transitions[currentStatus]?.includes(newStatus) ?? false;
 }
 
-function toHistoryPreviousStatus(value: intervention_status): statushistory_previousStatus {
-  return value as unknown as statushistory_previousStatus;
+function toHistoryPreviousStatus(value: intervention_status): statushistory_sth_sth_previousStatus {
+  return value as unknown as statushistory_sth_sth_previousStatus;
 }
 
-function toHistoryNewStatus(value: intervention_status): statushistory_newStatus {
-  return value as unknown as statushistory_newStatus;
+function toHistoryNewStatus(value: intervention_status): statushistory_sth_sth_newStatus {
+  return value as unknown as statushistory_sth_sth_newStatus;
 }
 
 export async function PATCH(request: NextRequest, context: Ctx) {

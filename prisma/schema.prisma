@@ -362,3 +362,8 @@ enum statushistory_sth_sth_newStatus {
   FIXING_STARTED
   FIXING_FINISHED
 }
+enum WorkStatus {
+  WAITING_FOR_PARTS
+  FIXING_STARTED
+  FIXING_FINISHED
+}
