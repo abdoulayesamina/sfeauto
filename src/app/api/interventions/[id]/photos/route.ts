@@ -7,7 +7,7 @@ import { logError } from "@/src/lib/logger";
 
 export const runtime = "nodejs";
 
-const MAX_FILE_SIZE = 8 * 1024 * 1024;
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB security limit
 const ALLOWED_PREFIX = "image/";
 
 type Ctx = { params: Promise<{ id: string }> | { id: string } };

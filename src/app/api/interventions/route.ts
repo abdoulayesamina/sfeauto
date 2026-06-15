@@ -7,7 +7,7 @@ import { getContainerClient, getSasUrlForBlob } from "@/src/lib/azureBlob";
 
 export const runtime = "nodejs";
 
-const MAX_FILE_SIZE = 8 * 1024 * 1024;
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB security limit
 const ALLOWED_PREFIX = "image/";
 
 function asString(v: FormDataEntryValue | null): string | null {
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if( Number(kilometrage) > 1000000 ) {
+    if (Number(kilometrage) > 1000000) {
       return NextResponse.json(
         {
           error: `Le kilométrage de l'intervention (${kilometrage}) dépasse la limite maximale de 1000000`,
@@ -278,7 +278,7 @@ export async function POST(request: NextRequest) {
 
 // export const runtime = "nodejs";
 
-// const MAX_FILE_SIZE = 8 * 1024 * 1024;
+// const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB security limit
 // const ALLOWED_PREFIX = "image/";
 
 // function asString(v: FormDataEntryValue | null): string | null {
