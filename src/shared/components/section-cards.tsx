@@ -16,7 +16,7 @@ import {
 } from "@/src/shared/components/ui/card";
 import { useManageApi } from "@/src/app/(main)/gestionnaire/shared/useManage.api";
 import { useAgenceApi } from "@/src/app/(main)/agence/shared/useAgence.api";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Agence } from "@/src/utils/types/agence";
 import { Vehicule } from "@/src/utils/types/vehicule";
 import { Label } from "./ui/label";
@@ -40,14 +40,6 @@ import IntervDetailGes from "@/src/app/(main)/gestionnaire/shared/components/Int
 import { Intervention } from "@/src/utils/types/intervention";
 
 export function SectionCards({ user }: { user?: any }) {
-  //recup la liste des agences
-  //rzcuperer les liste des interventions
-  //  afficher :
-  // - le nombre total d'interventions
-  // - le nombre d'interventions en cours
-  // - le nombre d'interventions terminées
-  // - le nombre d'interventions par agence
-
   const { getVehicles } = useManageApi();
   const { getAgences } = useAgenceApi();
   const { getClients } = useClientApi();
@@ -84,9 +76,8 @@ export function SectionCards({ user }: { user?: any }) {
   const [selectedStat, setSelectedStat] = useState<
     "total" | "encours" | "terminees" | "attente" | null
   >(null);
-  const [displayedInterventions, setDisplayedInterventions] = useState<any[]>(
-    [],
-  );
+  const [displayedInterventions, setDisplayedInterventions] = useState<any[]>([]);
+  const [search, setSearch] = useState("");
 
   const [ globalInterventions, setGlobalInterventions] = useState<any[]>([]);
 
@@ -226,6 +217,21 @@ export function SectionCards({ user }: { user?: any }) {
 
   const [open, setOpen] = useState(false);
 
+  const filteredInterventions = useMemo(() => {
+    const value = search.toLowerCase().trim();
+
+    return displayedInterventions.filter((inv) => {
+      const plate = inv.int_vehicle?.veh_licensePlate?.toLowerCase() ?? "";
+      const brand = inv.int_vehicle?.veh_brand?.bra_name?.toLowerCase() ?? "";
+      const model = inv.int_vehicle?.veh_model?.mod_name?.toLowerCase() ?? "";
+
+      return (
+        plate.includes(value) ||
+        brand.includes(value) ||
+        model.includes(value)
+      );
+    });
+  }, [displayedInterventions, search]);
   // useEffect(() => {
   //   if(!agenceId || !vehicles) {
   //     setInterventionsParAgence(0);
@@ -464,17 +470,29 @@ export function SectionCards({ user }: { user?: any }) {
           <div className="rounded-3xl bg-white shadow-xl border border-gray-200/70 overflow-hidden">
             {/* Header */}
             <div className="px-6 py-4 border-b bg-gradient-to-r from-gray-50 to-white">
-              <h2 className="text-lg font-semibold text-gray-900">
-                {selectedStat === "encours" && "Interventions en cours"}
-                {selectedStat === "terminees" && "Interventions terminées"}
-                {selectedStat === "attente" && "En attente de pièces"}
-                {selectedStat === "total" && "Toutes les interventions"}
-              </h2>
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    {selectedStat === "encours" && "Interventions en cours"}
+                    {selectedStat === "terminees" && "Interventions terminées"}
+                    {selectedStat === "attente" && "En attente de pièces"}
+                    {selectedStat === "total" && "Toutes les interventions"}
+                  </h2>
+
+                  <input
+                    type="text"
+                    placeholder="Rechercher par plaque, marque ou modèle..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="w-80 rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+
+              </div>
             </div>
 
             {/* Liste */}
             <div className="divide-y min-h-[420px] max-h-[420px] overflow-auto">
-              {displayedInterventions.length === 0 ? (
+              {filteredInterventions.length === 0 ? (
                 <div className="py-16 flex flex-col items-center justify-center text-center">
                   {/* Icône */}
                   <div
@@ -491,11 +509,19 @@ export function SectionCards({ user }: { user?: any }) {
 
                   {/* Description */}
                   <p className="mt-1 text-sm text-gray-500 max-w-sm">
-                    Il n’y a actuellement aucune intervention pour ce status.
+                    {
+                        filteredInterventions.length === 0 && (
+                            search ? (
+                                <span>Aucune intervention ne correspond à votre recherche.</span>
+                            ) : (
+                                <span>Aucune intervention disponible pour ce statut.</span>
+                            )
+                        )
+                    }
                   </p>
                 </div>
               ) : (
-                displayedInterventions.map((inv) => {
+                filteredInterventions.map((inv) => {
                   const status =
                     STATUS_UI_MAP[
                       inv.int_status as
