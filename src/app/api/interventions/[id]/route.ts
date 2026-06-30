@@ -97,6 +97,18 @@ export async function PATCH(request: NextRequest, context: Ctx) {
         select: {
           int_id: true,
           int_createdAt: true,
+          int_status: true,
+          int_workDescription: true,
+          int_vehicle: {
+            select: {
+              veh_licensePlate: true,
+              veh_year: true,
+              veh_brand: { select: { bra_name: true } },
+              veh_model: { select: { mod_name: true } },
+              veh_client: { select: { cli_name: true } },
+              veh_base: { select: { bas_location: true } },
+            },
+          },
         },
       });
 
@@ -107,8 +119,19 @@ export async function PATCH(request: NextRequest, context: Ctx) {
             code: "ACCORD_NUMBER_ALREADY_EXISTS",
             details: {
               accordNumber: normalizedAccordNumber,
+              conflictType: "intervention",
               interventionId: existing.int_id,
               createdAt: existing.int_createdAt,
+              status: existing.int_status,
+              workDescription: existing.int_workDescription,
+              vehicle: {
+                licensePlate: existing.int_vehicle?.veh_licensePlate ?? null,
+                brand: existing.int_vehicle?.veh_brand?.bra_name ?? null,
+                model: existing.int_vehicle?.veh_model?.mod_name ?? null,
+                year: existing.int_vehicle?.veh_year ?? null,
+                client: existing.int_vehicle?.veh_client?.cli_name ?? null,
+                base: existing.int_vehicle?.veh_base?.bas_location ?? null,
+              },
             },
           },
           { status: 409 }

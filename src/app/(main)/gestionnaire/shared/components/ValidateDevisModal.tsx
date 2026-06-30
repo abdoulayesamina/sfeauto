@@ -7,6 +7,7 @@ import { Input } from "@/src/shared/components/ui/input";
 import { Label } from "@/src/shared/components/ui/label";
 import { Spinner } from "@/src/shared/components/spinner";
 import { successAlert, errorAlert } from "@/src/lib/alerts";
+import { formatAccordConflictHtml } from "@/src/utils/accordConflict";
 import { useDevisApi } from "../../../devis/shared/hooks/useDevisApi.api";
 
 type Props = {
@@ -29,7 +30,17 @@ export function ValidateDevisModal({ open, onClose, devis, onValidated }: Props)
     const res = await validateDevis(devis.dev_id, accordNumber.trim());
 
     if (!res.ok) {
-      errorAlert("Erreur", res.error || "Impossible de valider le devis");
+      const data = res.data as any;
+
+      if (data?.code === "ACCORD_NUMBER_ALREADY_EXISTS" && data?.details) {
+        errorAlert(
+          res.error || "Numéro d’accord déjà utilisé",
+          undefined,
+          formatAccordConflictHtml(data.details)
+        );
+      } else {
+        errorAlert("Erreur", res.error || "Impossible de valider le devis");
+      }
       return;
     }
 

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { errorAlert, successAlert } from "@/src/lib/alerts";
+import { formatAccordConflictHtml } from "@/src/utils/accordConflict";
 
 export type InterventionPatchPayload = Partial<{
   accordNumber: string | null;
@@ -31,7 +32,13 @@ export function useInterventionApi() {
 
       if (!res.ok) {
         const msg = data?.error ?? "Erreur lors de la mise à jour";
-        errorAlert("Erreur modification intervention", msg);
+
+        if (data?.code === "ACCORD_NUMBER_ALREADY_EXISTS" && data?.details) {
+          errorAlert(msg, undefined, formatAccordConflictHtml(data.details));
+        } else {
+          errorAlert("Erreur modification intervention", msg);
+        }
+
         throw new Error(msg);
       }
 

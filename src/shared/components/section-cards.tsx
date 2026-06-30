@@ -647,9 +647,13 @@ export function SectionCards({ user }: { user?: any }) {
                         </span>
 
                         <div className="text-xs text-gray-400">
-                          {new Date(inv.int_updatedAt).toLocaleDateString(
-                            "fr-FR",
-                          )}
+                          {new Date(inv.int_updatedAt).toLocaleString("fr-FR", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
                         </div>
                         <button
                           className="flex items-center gap-1 text-blue-600 text-[12px] font-medium hover:underline"
