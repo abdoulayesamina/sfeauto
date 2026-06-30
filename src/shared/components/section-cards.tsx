@@ -224,48 +224,49 @@ export function SectionCards({ user }: { user?: any }) {
   // }, [vehicles, agenceId]);
 
 
-  const filteredInterventions = useMemo(() => {
+  // Prédicat de recherche commun (texte + date), réutilisé pour la liste et les stats
+  const matchesSearch = (inv: any) => {
     const value = search.toLowerCase().trim();
 
-    return displayedInterventions.filter((inv) => {
-      const plate = inv.int_vehicle?.veh_licensePlate?.toLowerCase() ?? "";
-      const brand = inv.int_vehicle?.veh_brand?.bra_name?.toLowerCase() ?? "";
-      const model = inv.int_vehicle?.veh_model?.mod_name?.toLowerCase() ?? "";
+    const plate = inv.int_vehicle?.veh_licensePlate?.toLowerCase() ?? "";
+    const brand = inv.int_vehicle?.veh_brand?.bra_name?.toLowerCase() ?? "";
+    const model = inv.int_vehicle?.veh_model?.mod_name?.toLowerCase() ?? "";
 
-      const matchText =
-        plate.includes(value) ||
-        brand.includes(value) ||
-        model.includes(value);
+    const matchText =
+      plate.includes(value) ||
+      brand.includes(value) ||
+      model.includes(value);
 
-      const interventionDate = new Date(inv.int_updatedAt)
-        .toISOString()
-        .split("T")[0];
+    const interventionDate = new Date(inv.int_updatedAt)
+      .toISOString()
+      .split("T")[0];
 
-      const matchDate =
-        !searchDate || interventionDate === searchDate;
+    const matchDate = !searchDate || interventionDate === searchDate;
 
-      return matchText && matchDate;
-    });
-  }, [displayedInterventions, search, searchDate]);
+    return matchText && matchDate;
+  };
 
+  // Liste affichée : périmètre du statut sélectionné (card cliquée), filtré par la recherche
+  const filteredInterventions = useMemo(
+    () => displayedInterventions.filter(matchesSearch),
+    [displayedInterventions, search, searchDate],
+  );
 
+  // Stats des cards : TOUJOURS calculées sur l'ensemble du périmètre (totalInterventions),
+  // filtré par la recherche, indépendamment de la card sélectionnée.
   const filteredStats = useMemo(() => {
+    const base = totalInterventions.filter(matchesSearch);
+
     return {
-      total: filteredInterventions.length,
+      total: base.length,
 
-      enCours: filteredInterventions.filter(
-        (i) => i.int_status === "FIXING_STARTED"
-      ).length,
+      enCours: base.filter((i) => i.int_status === "FIXING_STARTED").length,
 
-      terminees: filteredInterventions.filter(
-        (i) => i.int_status === "FIXING_FINISHED"
-      ).length,
+      terminees: base.filter((i) => i.int_status === "FIXING_FINISHED").length,
 
-      attente: filteredInterventions.filter(
-        (i) => i.int_status === "WAITING_FOR_PARTS"
-      ).length,
+      attente: base.filter((i) => i.int_status === "WAITING_FOR_PARTS").length,
     };
-  }, [filteredInterventions]);
+  }, [totalInterventions, search, searchDate]);
 
   const isFilterMode = search.trim() !== "" || searchDate !== "";
 
