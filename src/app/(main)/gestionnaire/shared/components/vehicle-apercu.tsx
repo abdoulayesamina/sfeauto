@@ -2,12 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
-import { Eye, PlusCircle, FileText, Pencil, CircleSlash2 } from "lucide-react";
+import { Eye, PlusCircle, FileText, Pencil, CircleSlash2, CarFront } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/src/shared/components/ui/button";
 import { Modal } from "@/src/shared/components/modal";
 import { toUIStatus, getStatusMeta } from "@/src/utils/constants/intervention-status";
 import { canCreateDevis } from "@/src/utils/permissions";
+import { useManageApi } from "../useManage.api";
 
 import IntervDetailGes from "./Intervention";
 import { CreateDevisModal } from "./CreateDevisModal";
@@ -23,6 +25,7 @@ type VehiclePreviewProps = {
   agence: string;
   entreeDate: string;
   color: string;
+  vehicleId: string;
   isAbsent?: boolean;
   interventions: any[];
   enReparation?: number;
@@ -47,7 +50,8 @@ export function VehiclePreview({
   agence,
   entreeDate,
   color,
-  isAbsent = false,
+  vehicleId,
+  isAbsent: isAbsentProp = false,
   interventions,
   onNewIntervention,
   reloadInterventionList,
@@ -58,6 +62,35 @@ export function VehiclePreview({
 
   const { data: session } = useSession();
   const role = session?.user?.role ?? null;
+
+  const { setVehicleAbsence } = useManageApi();
+  const canToggleAbsence = ["MANAGER", "MECHANIC", "ADMIN"].includes(role ?? "");
+
+  const [isAbsent, setIsAbsent] = useState<boolean>(isAbsentProp);
+  const [absentLoading, setAbsentLoading] = useState(false);
+
+  useEffect(() => {
+    setIsAbsent(isAbsentProp);
+  }, [isAbsentProp]);
+
+  const handleToggleAbsence = async () => {
+    if (!vehicleId || absentLoading) return;
+
+    const next = !isAbsent;
+    setAbsentLoading(true);
+    setIsAbsent(next); // optimistic
+
+    try {
+      await setVehicleAbsence(vehicleId, next);
+      toast.success(next ? "Véhicule marqué absent" : "Véhicule marqué présent");
+      reloadInterventionList?.();
+    } catch (err: any) {
+      setIsAbsent(!next); // rollback
+      toast.error(err?.message || "Échec de la mise à jour de l'absence");
+    } finally {
+      setAbsentLoading(false);
+    }
+  };
 
   const [filteredStatus, setFilteredStatus] = useState<"EN_COURS" | "TERMINEE">("EN_COURS");
   const [openDetailModal, setOpenDetailModal] = useState(false);
@@ -145,18 +178,47 @@ export function VehiclePreview({
   return (
     <div className="rounded-xl border bg-gradient-to-r from-zinc-50 to-white p-5 shadow-sm flex flex-col gap-4">
       <div className="rounded-xl bg-gradient-to-r from-black to-gray-900 p-6 text-white shadow-lg relative">
-        {onEditVehicle && ["MANAGER", "ADMIN"].includes(role || "") && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="absolute top-4 right-4 text-white border border-white/20 hover:bg-white/10 hover:text-white"
-            onClick={onEditVehicle}
-          >
-            <Pencil size={14} className="mr-1" />
-            Modifier
-          </Button>
-        )}
+        <div className="absolute top-4 right-4 flex items-center gap-2">
+          {canToggleAbsence && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={absentLoading}
+              title={
+                isAbsent
+                  ? "Véhicule absent — cliquer pour marquer présent"
+                  : "Marquer le véhicule comme absent"
+              }
+              className={`border hover:text-white ${
+                isAbsent
+                  ? "border-red-300/40 bg-red-500/20 text-red-100 hover:bg-red-500/30"
+                  : "border-white/20 text-white hover:bg-white/10"
+              }`}
+              onClick={handleToggleAbsence}
+            >
+              {isAbsent ? (
+                <CarFront size={14} className="mr-1" />
+              ) : (
+                <CircleSlash2 size={14} className="mr-1" />
+              )}
+              {isAbsent ? "Marquer présent" : "Marquer absent"}
+            </Button>
+          )}
+
+          {onEditVehicle && ["MANAGER", "ADMIN"].includes(role || "") && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="text-white border border-white/20 hover:bg-white/10 hover:text-white"
+              onClick={onEditVehicle}
+            >
+              <Pencil size={14} className="mr-1" />
+              Modifier
+            </Button>
+          )}
+        </div>
         <h1 className="text-2xl font-bold mb-4">{licensePlate}</h1>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
           <div>

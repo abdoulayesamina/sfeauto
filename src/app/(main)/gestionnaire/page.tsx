@@ -432,6 +432,7 @@ export default function GestionnairePage() {
             agence={selectedVehicle.veh_base?.bas_location ?? ""}
             entreeDate={selectedVehicle.veh_entryDate ?? ""}
             color={selectedVehicle.veh_color ?? ""}
+            vehicleId={selectedVehicle.veh_id ?? ""}
             isAbsent={Boolean(selectedVehicle.veh_absent)}
             interventions={selectedVehicle.interventions ?? []}
             enReparation={1}

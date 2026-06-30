@@ -42,9 +42,25 @@ export function useManageApi() {
     return res.json()
   }
 
+  const setVehicleAbsence = async (vehicleId: string, absent: boolean) => {
+    const res = await fetch(`${API_URL}/${vehicleId}/absence`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ absent }),
+    })
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.error || "Erreur mise à jour absence véhicule")
+    }
+
+    return res.json()
+  }
+
   return {
     getVehicles,
     searchVehicles,
     createVehicle,
+    setVehicleAbsence,
   }
 }

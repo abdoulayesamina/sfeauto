@@ -1,8 +1,7 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
-import { DiamondPlus, CarFront, CircleSlash2 } from "lucide-react"
-import { useSession } from "next-auth/react"
+import { useMemo, useState } from "react"
+import { DiamondPlus, CircleSlash2 } from "lucide-react"
 
 import { Vehicule } from "@/src/utils/types/vehicule"
 import { Client } from "@/src/utils/types/client"
@@ -63,16 +62,7 @@ export function VehicleItem({
   const [interventionModalOpen, setInterventionModalOpen] = useState(false)
   const { createIntervention, loading: submitting } = useInterventionApi()
 
-  const { data: session } = useSession()
-  const role = session?.user?.role ?? null
-  const canToggleAbsence = ["MANAGER", "MECHANIC", "ADMIN"].includes(role ?? "")
-
-  const [isAbsent, setIsAbsent] = useState<boolean>(Boolean(vehicle?.veh_absent))
-  const [absentLoading, setAbsentLoading] = useState(false)
-
-  useEffect(() => {
-    setIsAbsent(Boolean(vehicle?.veh_absent))
-  }, [vehicle?.veh_absent])
+  const isAbsent = Boolean(vehicle?.veh_absent)
 
   // State local pour les interventions (refresh instantané)
   // const [localInterventions, setLocalInterventions] = useState<any[]>(
@@ -132,40 +122,6 @@ export function VehicleItem({
     
   }
 
-  const handleToggleAbsent = async (e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (!vehicle.veh_id || absentLoading) return
-
-    const next = !isAbsent
-    setAbsentLoading(true)
-    // Optimistic update
-    setIsAbsent(next)
-
-    try {
-      const res = await fetch(`/api/vehicles/${vehicle.veh_id}/absence`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ absent: next }),
-      })
-
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}))
-        setIsAbsent(!next) // rollback
-        toast.error(errData.error || "Échec de la mise à jour de l'absence")
-        return
-      }
-
-      toast.success(next ? "Véhicule marqué absent" : "Véhicule marqué présent")
-      reloadVehicles?.()
-    } catch (err) {
-      setIsAbsent(!next) // rollback
-      console.error("Error toggling absence:", err)
-      toast.error("Erreur réseau lors de la mise à jour de l'absence")
-    } finally {
-      setAbsentLoading(false)
-    }
-  }
-
   /* ----------------------------- BADGES GROUPES ----------------------------- */
   // const groupedBadges = useMemo(() => {
   //   if (!localInterventions || localInterventions.length === 0) return []
@@ -200,31 +156,14 @@ export function VehicleItem({
               {vehicle.veh_brand?.bra_name} {vehicle.veh_model?.mod_name} · {vehicle.veh_year}
             </span>
 
-            {canToggleAbsence && (
-              <button
-                type="button"
-                onClick={handleToggleAbsent}
-                disabled={absentLoading}
-                title={
-                  isAbsent
-                    ? "Véhicule absent — cliquer pour marquer présent"
-                    : "Véhicule présent — cliquer pour marquer absent"
-                }
-                aria-pressed={isAbsent}
-                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition
-                  ${absentLoading ? "opacity-60 cursor-wait" : "cursor-pointer"}
-                  ${isAbsent
-                    ? "border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
-                    : "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                  }`}
+            {isAbsent && (
+              <span
+                title="Véhicule absent"
+                className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700"
               >
-                {isAbsent ? (
-                  <CircleSlash2 className="h-3.5 w-3.5" />
-                ) : (
-                  <CarFront className="h-3.5 w-3.5" />
-                )}
-                {isAbsent ? "Absent" : "Présent"}
-              </button>
+                <CircleSlash2 className="h-3.5 w-3.5" />
+                Absent
+              </span>
             )}
           </div>
 

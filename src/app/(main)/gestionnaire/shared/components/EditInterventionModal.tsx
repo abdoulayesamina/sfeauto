@@ -41,7 +41,7 @@ export function EditInterventionModal({ open, onClose, intervention, onUpdated, 
   const role = session?.user?.role ?? null;
   const hasDeletePermission = role === "ADMIN" || role === "MANAGER";
 
-  const { patchIntervention, loading } = useInterventionApi();
+  const { patchIntervention, cancelIntervention, loading } = useInterventionApi();
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
 
@@ -255,22 +255,16 @@ export function EditInterventionModal({ open, onClose, intervention, onUpdated, 
 
     setCancelLoading(true);
     try {
-      const res = await fetch(`/api/interventions/${intervention.int_id}/cancel`, {
-        method: "POST",
-      });
+      const res = await cancelIntervention(intervention.int_id);
 
       if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        toast.error(errData.error || "Une erreur est survenue lors de l'annulation.");
+        toast.error(res.error || "Une erreur est survenue lors de l'annulation.");
         return;
       }
 
       toast.success("Intervention annulée.");
       reloadInterventionList?.();
       onClose();
-    } catch (err) {
-      console.error("Error cancelling intervention:", err);
-      toast.error("Erreur réseau lors de l'annulation.");
     } finally {
       setCancelLoading(false);
     }
