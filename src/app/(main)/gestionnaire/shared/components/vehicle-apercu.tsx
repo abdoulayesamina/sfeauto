@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { Eye, PlusCircle, FileText, Pencil, CircleSlash2, CarFront } from "lucide-react";
 import { toast } from "sonner";
@@ -27,6 +27,7 @@ type VehiclePreviewProps = {
   color: string;
   vehicleId: string;
   isAbsent?: boolean;
+  highlightAccord?: string;
   interventions: any[];
   enReparation?: number;
   termine?: number;
@@ -52,6 +53,7 @@ export function VehiclePreview({
   color,
   vehicleId,
   isAbsent: isAbsentProp = false,
+  highlightAccord = "",
   interventions,
   onNewIntervention,
   reloadInterventionList,
@@ -175,6 +177,39 @@ export function VehiclePreview({
     [mappedInterventions]
   );
 
+  // Surlignage de l'intervention recherchée par numéro d'accord
+  const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [highlightId, setHighlightId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const accord = (highlightAccord ?? "").trim().toLowerCase();
+    if (!accord) {
+      setHighlightId(null);
+      return;
+    }
+
+    const match = mappedInterventions.find((i) =>
+      (i.int_accordNumber ?? "").toLowerCase().includes(accord)
+    );
+
+    if (!match) {
+      setHighlightId(null);
+      return;
+    }
+
+    // Bascule sur le bon onglet pour que l'intervention soit visible
+    setFilteredStatus(match.uiStatus === "TERMINEE" ? "TERMINEE" : "EN_COURS");
+    setHighlightId(match.int_id);
+  }, [highlightAccord, mappedInterventions]);
+
+  useEffect(() => {
+    if (!highlightId) return;
+    const el = itemRefs.current[highlightId];
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [highlightId, filteredInterventions]);
+
   return (
     <div className="rounded-xl border bg-gradient-to-r from-zinc-50 to-white p-5 shadow-sm flex flex-col gap-4">
       <div className="rounded-xl bg-gradient-to-r from-black to-gray-900 p-6 text-white shadow-lg relative">
@@ -279,8 +314,20 @@ export function VehiclePreview({
             (inv?.int_client?.cli_name && inv.int_client.cli_name !== client) ||
             (inv?.int_base?.bas_location && inv.int_base.bas_location !== agence);
 
+          const isHighlighted = highlightId === inv.int_id;
+
           return (
-            <div key={inv.int_id} className="rounded-xl border bg-white p-5 shadow-sm hover:shadow-md transition">
+            <div
+              key={inv.int_id}
+              ref={(el) => {
+                itemRefs.current[inv.int_id] = el;
+              }}
+              className={`rounded-xl border bg-white p-5 shadow-sm hover:shadow-md transition ${
+                isHighlighted
+                  ? "ring-2 ring-amber-400 border-amber-300 bg-amber-50"
+                  : ""
+              }`}
+            >
               <div className="flex flex-col-reverse lg:flex-row justify-between items-start gap-4">
                 <div>
                   <p className="font-semibold text-zinc-800">{inv?.int_workDescription ?? "—"}</p>

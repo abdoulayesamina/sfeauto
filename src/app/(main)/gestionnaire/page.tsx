@@ -46,6 +46,7 @@ export default function GestionnairePage() {
 
   const [filterByAllVehicule, setFilterByAllVehicule] = useState(true);
   const [search, setSearch] = useState("");
+  const [accordSearch, setAccordSearch] = useState("");
   const [preFillLicensePlate, setPreFillLicensePlate] = useState("");
   const [clientId, setClientId] = useState<string>();
   const [agenceId, setAgenceId] = useState<string>();
@@ -190,6 +191,20 @@ export default function GestionnairePage() {
   useEffect(() => {
     const list = Array.isArray(vehicles) ? vehicles : [];
 
+    // Recherche par numéro d'accord : mode exclusif.
+    // Si l'utilisateur cherche un accord, on ignore tous les autres filtres
+    // et on ne garde que les véhicules ayant une intervention avec cet accord.
+    const accord = accordSearch.trim().toLowerCase();
+    if (accord) {
+      const byAccord = list.filter((v) =>
+        v.interventions?.some((i) =>
+          (i.int_accordNumber ?? "").toLowerCase().includes(accord)
+        )
+      );
+      setFilteredVehicles(byAccord);
+      return;
+    }
+
     const filtered = list.filter((v) => {
       if (clientId && v.veh_client?.cli_id !== clientId) return false;
       if (agenceId && v.veh_base?.bas_id !== agenceId) return false;
@@ -206,7 +221,7 @@ export default function GestionnairePage() {
           const hasStatus = v.interventions?.some(
             (intervention) => intervention.int_status === statut
           );
-          
+
           if (!hasStatus) return false;
         }
       }
@@ -214,7 +229,7 @@ export default function GestionnairePage() {
       return true;
     });
     setFilteredVehicles(filtered);
-  }, [vehicles, clientId, agenceId, statut]);
+  }, [vehicles, clientId, agenceId, statut, accordSearch]);
 
   const paginatedVehicles = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -374,6 +389,8 @@ export default function GestionnairePage() {
               vehicles={paginatedVehicles}
               clients={clients}
               agences={filteredAgences}
+              accordSearch={accordSearch}
+              onAccordSearchChange={setAccordSearch}
               onSelect={(v) => {
                 console.log("Selected vehicle:", v);
                 setSelectedVehicle(v);
@@ -434,6 +451,7 @@ export default function GestionnairePage() {
             color={selectedVehicle.veh_color ?? ""}
             vehicleId={selectedVehicle.veh_id ?? ""}
             isAbsent={Boolean(selectedVehicle.veh_absent)}
+            highlightAccord={accordSearch}
             interventions={selectedVehicle.interventions ?? []}
             enReparation={1}
             termine={0}
