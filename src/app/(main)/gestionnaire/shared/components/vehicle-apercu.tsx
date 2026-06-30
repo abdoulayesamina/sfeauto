@@ -122,6 +122,7 @@ export function VehiclePreview({
 
   const handleEditIntervention = (intervention: any) => {
     if(toUIStatus(intervention?.int_status) === "TERMINEE") return;
+    if(intervention?.int_annulee) return;
 
     setInterventionForEdit(intervention);
     setOpenEditModal(true);
@@ -196,6 +197,7 @@ export function VehiclePreview({
           const hasDevis = Boolean(inv?.devis?.dev_id);
           const devisId = inv?.devis?.dev_id ?? null;
           const isTerminee = inv?.uiStatus === "TERMINEE";
+          const isAnnulee = Boolean(inv?.int_annulee);
 
           // Client/agence historiques avec fallback sur le véhicule courant
           const historicalClient = inv?.int_client?.cli_name ?? client;
@@ -240,9 +242,15 @@ export function VehiclePreview({
                     </span>
                   )}
 
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${meta.bg} ${meta.color}`}>
-                    {meta.label}
-                  </span>
+                  {isAnnulee ? (
+                    <span className="px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-700">
+                      Annulée
+                    </span>
+                  ) : (
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${meta.bg} ${meta.color}`}>
+                      {meta.label}
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -256,7 +264,7 @@ export function VehiclePreview({
                     Voir tous les détails
                   </button>
                   
-                  {!isTerminee && (
+                  {!isTerminee && !isAnnulee && (
                      <Button variant="outline" className="flex items-center gap-2" onClick={() => handleEditIntervention(inv)}>
                     <Pencil size={16} />
                     Modifier
@@ -264,9 +272,9 @@ export function VehiclePreview({
                   )
 
                   }
-                 
 
-                  {canCreateDevis(role) && (
+
+                  {canCreateDevis(role) && !isAnnulee && (
                     <Button
                       variant="outline"
                       className="flex items-center gap-2"

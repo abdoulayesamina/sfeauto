@@ -90,6 +90,13 @@ export async function POST(req: Request) {
       );
     }
 
+    if (intervention.int_annulee) {
+      return NextResponse.json(
+        { error: "Intervention annulée : impossible de créer un devis" },
+        { status: 409 }
+      );
+    }
+
     const vehicle = intervention.int_vehicle;
     const client = intervention.int_vehicle?.veh_client;
 

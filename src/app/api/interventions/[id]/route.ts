@@ -61,6 +61,13 @@ export async function PATCH(request: NextRequest, context: Ctx) {
       return NextResponse.json({ error: "Intervention non trouvée" }, { status: 404 });
     }
 
+    if (currentIntervention.int_annulee) {
+      return NextResponse.json(
+        { error: "Intervention annulée : aucune modification possible" },
+        { status: 409 }
+      );
+    }
+
     let parsedDateFromBody: Date | null | undefined = undefined;
 
     if ("dateOfConfirmation" in body) {

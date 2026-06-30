@@ -43,6 +43,9 @@ export function EditInterventionModal({ open, onClose, intervention, onUpdated, 
 
   const { patchIntervention, loading } = useInterventionApi();
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
+
+  const isAnnulee = Boolean(intervention?.int_annulee);
 
   const { photos, loading: photosLoading, error: photosError, refetch } =
     useInterventionPhotos(intervention?.int_id);
@@ -237,6 +240,39 @@ export function EditInterventionModal({ open, onClose, intervention, onUpdated, 
       toast.error("Erreur réseau lors de la suppression.");
     } finally {
       setDeleteLoading(false);
+    }
+  }
+
+  async function handleCancelIntervention() {
+    if (!intervention?.int_id) return;
+
+    const confirm = await confirmAlert(
+      "Annuler l'intervention",
+      "Êtes-vous sûr de vouloir annuler cette intervention ? Une fois annulée, aucune action ne sera plus possible dessus."
+    );
+
+    if (!confirm) return;
+
+    setCancelLoading(true);
+    try {
+      const res = await fetch(`/api/interventions/${intervention.int_id}/cancel`, {
+        method: "POST",
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        toast.error(errData.error || "Une erreur est survenue lors de l'annulation.");
+        return;
+      }
+
+      toast.success("Intervention annulée.");
+      reloadInterventionList?.();
+      onClose();
+    } catch (err) {
+      console.error("Error cancelling intervention:", err);
+      toast.error("Erreur réseau lors de l'annulation.");
+    } finally {
+      setCancelLoading(false);
     }
   }
 
@@ -531,21 +567,34 @@ export function EditInterventionModal({ open, onClose, intervention, onUpdated, 
 
         {photosError && <p className="text-sm text-red-600">{photosError}</p>}
         <div className="flex justify-between items-center gap-2">
-          {hasDeletePermission && (
-            <Button
-              type="button"
-              variant="destructive"
-              disabled={deleteLoading || loading}
-              onClick={handleDelete}
-            >
-              {deleteLoading ? "Suppression..." : "Supprimer l'intervention"}
-            </Button>
-          )}
+          <div className="flex gap-2">
+            {hasDeletePermission && (
+              <Button
+                type="button"
+                variant="destructive"
+                disabled={deleteLoading || loading || cancelLoading}
+                onClick={handleDelete}
+              >
+                {deleteLoading ? "Suppression..." : "Supprimer l'intervention"}
+              </Button>
+            )}
+            {!isAnnulee && (
+              <Button
+                type="button"
+                variant="outline"
+                className="border-orange-300 text-orange-700 hover:bg-orange-50"
+                disabled={cancelLoading || loading || deleteLoading}
+                onClick={handleCancelIntervention}
+              >
+                {cancelLoading ? "Annulation..." : "Annuler l'intervention"}
+              </Button>
+            )}
+          </div>
           <div className="flex gap-2 ml-auto">
-            <Button type="button" variant="outline" onClick={onClose} disabled={loading || deleteLoading}>
-              Annuler
+            <Button type="button" variant="outline" onClick={onClose} disabled={loading || deleteLoading || cancelLoading}>
+              Fermer
             </Button>
-            <Button type="submit" disabled={!canSave || loading || deleteLoading}>
+            <Button type="submit" disabled={!canSave || loading || deleteLoading || cancelLoading || isAnnulee}>
               {loading ? "Enregistrement..." : "Enregistrer"}
             </Button>
           </div>

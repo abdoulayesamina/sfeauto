@@ -205,6 +205,8 @@ export async function GET(request: NextRequest) {
             int_comments: true,
             int_createdAt: true,
             int_updatedAt: true,
+            int_annulee: true,
+            int_dateAnnulation: true,
 
             int_handledBy: {
               select: {

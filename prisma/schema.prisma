@@ -193,6 +193,8 @@ model intervention_int {
   int_handledById           String?
   int_kilometrage           String?
   int_supprimee             Boolean                 @default(false)
+  int_annulee               Boolean                 @default(false)
+  int_dateAnnulation        DateTime?
   int_baseId                String?
   int_clientId              String?
   changes                   changehistory_chg[]
@@ -210,6 +212,7 @@ model intervention_int {
   @@index([int_interventionConfirmed])
   @@index([int_status])
   @@index([int_supprimee])
+  @@index([int_annulee])
   @@index([int_clientId])
   @@index([int_baseId])
 }

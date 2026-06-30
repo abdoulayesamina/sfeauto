@@ -67,6 +67,10 @@ export async function GET(request: NextRequest) {
       int_supprimee: false,
     });
 
+    andFilters.push({
+      int_annulee: false,
+    });
+
     if (baseFilter) {
       andFilters.push({
         OR: [
