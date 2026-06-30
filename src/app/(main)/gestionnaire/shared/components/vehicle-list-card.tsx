@@ -28,7 +28,11 @@ export function VehicleListCard({
 }: VehicleListCardProps) {
   return (
     <div className="mt-6 border p-3 rounded">
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b p-2 bg-gray-700 backdrop-blur-xl text-white rounded">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b p-2 bg-gray-700 backdrop-blur-xl text-white rounded">
+
+        <div className="flex items-center gap-2 font-bold">
+          <h1>Liste des véhicules</h1>
+        </div>
         <div className="relative w-full sm:max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-300" />
           <input
@@ -48,10 +52,6 @@ export function VehicleListCard({
               <X className="h-4 w-4" />
             </button>
           )}
-        </div>
-
-        <div className="flex items-center gap-2 font-bold">
-          <h1>Liste des véhicules</h1>
         </div>
       </div>
 

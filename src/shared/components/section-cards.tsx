@@ -116,6 +116,8 @@ export function SectionCards({ user }: { user?: any }) {
     const interventions =
       vehicles?.vehicles.flatMap((v: any) => v.interventions) ?? [];
     updateInterventionsStats(interventions);
+    setSearch("");
+    setSearchDate("");                  
   };
 
   const loadAllData = async () => {
@@ -541,13 +543,22 @@ export function SectionCards({ user }: { user?: any }) {
                     <Button
                       variant="outline"
                       onClick={() => {
-                          setSearch("");
-                          setSearchDate("");
+                        setSearch("");
+                        setSearchDate("");
                       }}
+                      title={
+                        isFilterMode
+                          ? "Cliquez ici pour supprimer tous les filtres (recherche et/ou date)."
+                          : "Aucun filtre actif."
+                      }
+                      className={`transition-all duration-800 ${
+                        isFilterMode
+                          ? "border-black text-black animate-pulse hover:bg-black hover:text-white"
+                          : ""
+                      }`}
                     >
                       Réinitialiser
                     </Button>
-
                   </div>
 
               </div>
