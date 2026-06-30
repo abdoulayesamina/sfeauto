@@ -56,51 +56,48 @@ export function SectionCards({ user }: { user?: any }) {
   const [clientId, setClientId] = useState<string>("");
 
   const [nombreTotalInterventions, setNombreTotalInterventions] = useState(0);
-  const [nombreInterventionsEnCours, setNombreInterventionsEnCours] =
-    useState(0);
-  const [nombreInterventionsTerminees, setNombreInterventionsTerminees] =
-    useState(0);
-  const [
-    nombreInterventionsEnAttenteDePiece,
-    setNombreInterventionsEnAttenteDePiece,
-  ] = useState(0);
+  const [nombreInterventionsEnCours, setNombreInterventionsEnCours] = useState(0);
+  const [nombreInterventionsTerminees, setNombreInterventionsTerminees] = useState(0);
+  const [nombreInterventionsEnAttenteDePiece,setNombreInterventionsEnAttenteDePiece,] = useState(0);
 
   const [totalInterventions, setTotalInterventions] = useState<any[]>([]);
   const [interventionsEnCours, setInterventionsEnCours] = useState<any[]>([]);
-  const [interventionsTerminees, setInterventionsTerminees] = useState<any[]>(
-    [],
-  );
-  const [interventionsEnAttenteDePiece, setInterventionsEnAttenteDePiece] =
-    useState<any[]>([]);
+  const [interventionsTerminees, setInterventionsTerminees] = useState<any[]>([]);
+  const [interventionsEnAttenteDePiece, setInterventionsEnAttenteDePiece] = useState<any[]>([]);
 
-  const [selectedStat, setSelectedStat] = useState<
-    "total" | "encours" | "terminees" | "attente" | null
-  >(null);
   const [displayedInterventions, setDisplayedInterventions] = useState<any[]>([]);
   const [search, setSearch] = useState("");
+  const [searchDate, setSearchDate] = useState("");
+  
+  const [selectedStat, setSelectedStat] = useState<"total" | "encours" | "terminees" | "attente" | null>(null);
 
   const [ globalInterventions, setGlobalInterventions] = useState<any[]>([]);
 
-  // const [interventionsParAgence, setInterventionsParAgence] = useState(0);
-  // const [interventionsParAgence, setInterventionsParAgence] = useState<{[key: string]: number}>({});
 
   const updateInterventionsStats = (interventions: any[] = []) => {
-    setNombreTotalInterventions(interventions.length);
-    setTotalInterventions(interventions);
+
+    const sortedInterventions = [...interventions].sort(
+      (a, b) =>
+        new Date(b.int_updatedAt).getTime() -
+        new Date(a.int_updatedAt).getTime()
+    );
+
+    setNombreTotalInterventions(sortedInterventions.length);
+    setTotalInterventions(sortedInterventions);
 
     setSelectedStat("total");
-    setDisplayedInterventions(interventions);
+    setDisplayedInterventions(sortedInterventions);
 
-    const enCours = interventions.filter(
+    const enCours = sortedInterventions.filter(
       (i) =>
         i.int_status === "FIXING_STARTED",
     );
 
-    const terminees = interventions.filter(
+    const terminees = sortedInterventions.filter(
       (i) => i.int_status === "FIXING_FINISHED",
     );
 
-    const attenteDePiece = interventions.filter(
+    const attenteDePiece = sortedInterventions.filter(
       (i) => i.int_status === "WAITING_FOR_PARTS",
     );
 
@@ -217,6 +214,16 @@ export function SectionCards({ user }: { user?: any }) {
 
   const [open, setOpen] = useState(false);
 
+  // const baseInterventions = useMemo(() => {
+  //   if (agenceId) {
+  //     return vehicles?.vehicles
+  //       .filter((v: any) => v.veh_base.bas_id === agenceId)
+  //       .flatMap((v: any) => v.interventions) ?? [];
+  //   }
+  //   return vehicles?.vehicles.flatMap((v: any) => v.interventions) ?? [];
+  // }, [vehicles, agenceId]);
+
+
   const filteredInterventions = useMemo(() => {
     const value = search.toLowerCase().trim();
 
@@ -225,13 +232,44 @@ export function SectionCards({ user }: { user?: any }) {
       const brand = inv.int_vehicle?.veh_brand?.bra_name?.toLowerCase() ?? "";
       const model = inv.int_vehicle?.veh_model?.mod_name?.toLowerCase() ?? "";
 
-      return (
+      const matchText =
         plate.includes(value) ||
         brand.includes(value) ||
-        model.includes(value)
-      );
+        model.includes(value);
+
+      const interventionDate = new Date(inv.int_updatedAt)
+        .toISOString()
+        .split("T")[0];
+
+      const matchDate =
+        !searchDate || interventionDate === searchDate;
+
+      return matchText && matchDate;
     });
-  }, [displayedInterventions, search]);
+  }, [displayedInterventions, search, searchDate]);
+
+
+  const filteredStats = useMemo(() => {
+    return {
+      total: filteredInterventions.length,
+
+      enCours: filteredInterventions.filter(
+        (i) => i.int_status === "FIXING_STARTED"
+      ).length,
+
+      terminees: filteredInterventions.filter(
+        (i) => i.int_status === "FIXING_FINISHED"
+      ).length,
+
+      attente: filteredInterventions.filter(
+        (i) => i.int_status === "WAITING_FOR_PARTS"
+      ).length,
+    };
+  }, [filteredInterventions]);
+
+  const isFilterMode = search.trim() !== "" || searchDate !== "";
+
+
   // useEffect(() => {
   //   if(!agenceId || !vehicles) {
   //     setInterventionsParAgence(0);
@@ -345,7 +383,7 @@ export function SectionCards({ user }: { user?: any }) {
               value: loading ? (
                 <Spinner className="size-4 text-white" />
               ) : (
-                nombreTotalInterventions
+                isFilterMode ? filteredStats.total : nombreTotalInterventions
               ),
               subtitle: "Interventions",
               icon: ClipboardList,
@@ -361,7 +399,8 @@ export function SectionCards({ user }: { user?: any }) {
               value: loading ? (
                 <Spinner className="size-4 text-white" />
               ) : (
-                nombreInterventionsEnCours
+                // nombreInterventionsEnCours
+                isFilterMode ? filteredStats.enCours : nombreInterventionsEnCours
               ),
               subtitle: "Actives",
               icon: Clock3,
@@ -377,7 +416,8 @@ export function SectionCards({ user }: { user?: any }) {
               value: loading ? (
                 <Spinner className="size-4 text-white" />
               ) : (
-                nombreInterventionsTerminees
+                // nombreInterventionsTerminees
+                isFilterMode ? filteredStats.terminees : nombreInterventionsTerminees
               ),
               subtitle: "Clôturées",
               icon: CheckCircle2,
@@ -393,7 +433,8 @@ export function SectionCards({ user }: { user?: any }) {
               value: AgenceIntloading ? (
                 <Spinner className="size-4 text-white" />
               ) : (
-                nombreInterventionsEnAttenteDePiece
+                // nombreInterventionsEnAttenteDePiece
+                isFilterMode ? filteredStats.attente : nombreInterventionsEnAttenteDePiece
               ),
               subtitle: "Attente de pièce",
               icon: CheckCircle2,
@@ -479,13 +520,34 @@ export function SectionCards({ user }: { user?: any }) {
                     {selectedStat === "total" && "Toutes les interventions"}
                   </h2>
 
-                  <input
-                    type="text"
-                    placeholder="Rechercher par plaque, marque ou modèle..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="w-80 rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  <div className="flex items-center gap-3 flex-wrap">
+
+                    <input
+                      type="text"
+                      placeholder="Plaque, marque ou modèle..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className="w-72 rounded-lg border px-3 py-2"
+                    />
+
+                    <input
+                      type="date"
+                      value={searchDate}
+                      onChange={(e) => setSearchDate(e.target.value)}
+                      className="rounded-lg border px-3 py-2"
+                    />
+
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                          setSearch("");
+                          setSearchDate("");
+                      }}
+                    >
+                      Réinitialiser
+                    </Button>
+
+                  </div>
 
               </div>
             </div>
