@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
-import { Eye, PlusCircle, FileText, Pencil } from "lucide-react";
+import { Eye, PlusCircle, FileText, Pencil, CircleSlash2 } from "lucide-react";
 
 import { Button } from "@/src/shared/components/ui/button";
 import { Modal } from "@/src/shared/components/modal";
@@ -23,6 +23,7 @@ type VehiclePreviewProps = {
   agence: string;
   entreeDate: string;
   color: string;
+  isAbsent?: boolean;
   interventions: any[];
   enReparation?: number;
   termine?: number;
@@ -46,6 +47,7 @@ export function VehiclePreview({
   agence,
   entreeDate,
   color,
+  isAbsent = false,
   interventions,
   onNewIntervention,
   reloadInterventionList,
@@ -116,6 +118,7 @@ export function VehiclePreview({
   };
 
   const handleCreateDevis = (intervention: any) => {
+    if (isAbsent) return;
     setInterventionForDevis(intervention);
     setOpenDevisModal(true);
   };
@@ -123,6 +126,7 @@ export function VehiclePreview({
   const handleEditIntervention = (intervention: any) => {
     if(toUIStatus(intervention?.int_status) === "TERMINEE") return;
     if(intervention?.int_annulee) return;
+    if(isAbsent) return;
 
     setInterventionForEdit(intervention);
     setOpenEditModal(true);
@@ -181,6 +185,13 @@ export function VehiclePreview({
           </div>
         </div>
       </div>
+
+      {isAbsent && (
+        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+          <CircleSlash2 size={18} />
+          Véhicule absent : aucune action n’est possible sur ses interventions.
+        </div>
+      )}
 
       <div className="flex gap-3 mt-6">
         <Button variant={filteredStatus === "EN_COURS" ? "default" : "outline"} onClick={() => setFilteredStatus("EN_COURS")}>
@@ -264,7 +275,7 @@ export function VehiclePreview({
                     Voir tous les détails
                   </button>
                   
-                  {!isTerminee && !isAnnulee && (
+                  {!isTerminee && !isAnnulee && !isAbsent && (
                      <Button variant="outline" className="flex items-center gap-2" onClick={() => handleEditIntervention(inv)}>
                     <Pencil size={16} />
                     Modifier
@@ -274,7 +285,7 @@ export function VehiclePreview({
                   }
 
 
-                  {canCreateDevis(role) && !isAnnulee && (
+                  {canCreateDevis(role) && !isAnnulee && !isAbsent && (
                     <Button
                       variant="outline"
                       className="flex items-center gap-2"
@@ -308,7 +319,15 @@ export function VehiclePreview({
       </div>
 
       <div className="flex justify-center pt-2">
-        <Button className="flex items-center gap-2 w-full h-[50px]" onClick={onNewIntervention}>
+        <Button
+          className="flex items-center gap-2 w-full h-[50px]"
+          disabled={isAbsent}
+          title={isAbsent ? "Véhicule absent : aucune intervention possible" : undefined}
+          onClick={() => {
+            if (isAbsent) return;
+            onNewIntervention();
+          }}
+        >
           <PlusCircle size={18} />
           Nouvelle intervention
         </Button>

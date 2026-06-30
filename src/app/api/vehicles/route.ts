@@ -125,6 +125,8 @@ export async function GET(request: NextRequest) {
         veh_version: true,
         veh_registrationCardDate: true,
         veh_kilometrage: true,
+        veh_absent: true,
+        veh_dateAbsence: true,
 
         veh_entryDate: true,
         veh_exitDate: true,

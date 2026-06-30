@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { DiamondPlus } from "lucide-react"
+import { DiamondPlus, CarFront, CircleSlash2 } from "lucide-react"
+import { useSession } from "next-auth/react"
 
 import { Vehicule } from "@/src/utils/types/vehicule"
 import { Client } from "@/src/utils/types/client"
@@ -62,6 +63,17 @@ export function VehicleItem({
   const [interventionModalOpen, setInterventionModalOpen] = useState(false)
   const { createIntervention, loading: submitting } = useInterventionApi()
 
+  const { data: session } = useSession()
+  const role = session?.user?.role ?? null
+  const canToggleAbsence = ["MANAGER", "MECHANIC", "ADMIN"].includes(role ?? "")
+
+  const [isAbsent, setIsAbsent] = useState<boolean>(Boolean(vehicle?.veh_absent))
+  const [absentLoading, setAbsentLoading] = useState(false)
+
+  useEffect(() => {
+    setIsAbsent(Boolean(vehicle?.veh_absent))
+  }, [vehicle?.veh_absent])
+
   // State local pour les interventions (refresh instantané)
   // const [localInterventions, setLocalInterventions] = useState<any[]>(
   //   vehicle?.interventions ?? []
@@ -120,6 +132,40 @@ export function VehicleItem({
     
   }
 
+  const handleToggleAbsent = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!vehicle.veh_id || absentLoading) return
+
+    const next = !isAbsent
+    setAbsentLoading(true)
+    // Optimistic update
+    setIsAbsent(next)
+
+    try {
+      const res = await fetch(`/api/vehicles/${vehicle.veh_id}/absence`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ absent: next }),
+      })
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        setIsAbsent(!next) // rollback
+        toast.error(errData.error || "Échec de la mise à jour de l'absence")
+        return
+      }
+
+      toast.success(next ? "Véhicule marqué absent" : "Véhicule marqué présent")
+      reloadVehicles?.()
+    } catch (err) {
+      setIsAbsent(!next) // rollback
+      console.error("Error toggling absence:", err)
+      toast.error("Erreur réseau lors de la mise à jour de l'absence")
+    } finally {
+      setAbsentLoading(false)
+    }
+  }
+
   /* ----------------------------- BADGES GROUPES ----------------------------- */
   // const groupedBadges = useMemo(() => {
   //   if (!localInterventions || localInterventions.length === 0) return []
@@ -153,6 +199,33 @@ export function VehicleItem({
             <span className="text-gray-500">
               {vehicle.veh_brand?.bra_name} {vehicle.veh_model?.mod_name} · {vehicle.veh_year}
             </span>
+
+            {canToggleAbsence && (
+              <button
+                type="button"
+                onClick={handleToggleAbsent}
+                disabled={absentLoading}
+                title={
+                  isAbsent
+                    ? "Véhicule absent — cliquer pour marquer présent"
+                    : "Véhicule présent — cliquer pour marquer absent"
+                }
+                aria-pressed={isAbsent}
+                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition
+                  ${absentLoading ? "opacity-60 cursor-wait" : "cursor-pointer"}
+                  ${isAbsent
+                    ? "border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
+                    : "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                  }`}
+              >
+                {isAbsent ? (
+                  <CircleSlash2 className="h-3.5 w-3.5" />
+                ) : (
+                  <CarFront className="h-3.5 w-3.5" />
+                )}
+                {isAbsent ? "Absent" : "Présent"}
+              </button>
+            )}
           </div>
 
           <div className="mt-2 flex flex-wrap gap-3 text-sm text-gray-600">
@@ -198,8 +271,11 @@ export function VehicleItem({
 
           <Button
             className="px-4 py-2 rounded-lg shadow-sm hover:shadow transition ml-2"
+            disabled={isAbsent}
+            title={isAbsent ? "Véhicule absent : aucune intervention possible" : undefined}
             onClick={(e) => {
               e.stopPropagation()
+              if (isAbsent) return
               setInterventionModalOpen(true)
             }}
           >

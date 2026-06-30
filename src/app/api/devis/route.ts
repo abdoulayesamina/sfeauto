@@ -97,6 +97,13 @@ export async function POST(req: Request) {
       );
     }
 
+    if (intervention.int_vehicle?.veh_absent) {
+      return NextResponse.json(
+        { error: "Véhicule absent : impossible de créer un devis" },
+        { status: 409 }
+      );
+    }
+
     const vehicle = intervention.int_vehicle;
     const client = intervention.int_vehicle?.veh_client;
 

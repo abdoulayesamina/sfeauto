@@ -71,6 +71,10 @@ export async function GET(request: NextRequest) {
       int_annulee: false,
     });
 
+    andFilters.push({
+      int_vehicle: { veh_absent: false },
+    });
+
     if (baseFilter) {
       andFilters.push({
         OR: [

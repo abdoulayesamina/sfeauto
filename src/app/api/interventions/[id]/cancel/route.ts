@@ -42,6 +42,7 @@ export async function POST(request: NextRequest, context: Ctx) {
         int_id: true,
         int_supprimee: true,
         int_annulee: true,
+        int_vehicle: { select: { veh_absent: true } },
       },
     });
 
@@ -63,6 +64,13 @@ export async function POST(request: NextRequest, context: Ctx) {
       return NextResponse.json(
         { error: "Intervention déjà annulée" },
         { status: 400 },
+      );
+    }
+
+    if (intervention.int_vehicle?.veh_absent) {
+      return NextResponse.json(
+        { error: "Véhicule absent : aucune action possible sur cette intervention" },
+        { status: 409 },
       );
     }
 

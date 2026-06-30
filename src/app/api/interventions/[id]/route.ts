@@ -48,6 +48,9 @@ export async function PATCH(request: NextRequest, context: Ctx) {
     const currentIntervention = await prisma.intervention_int.findUnique({
       where: { int_id: id },
       include: {
+        int_vehicle: {
+          select: { veh_absent: true },
+        },
         photos: {
           select: {
             itp_id: true,
@@ -64,6 +67,13 @@ export async function PATCH(request: NextRequest, context: Ctx) {
     if (currentIntervention.int_annulee) {
       return NextResponse.json(
         { error: "Intervention annulée : aucune modification possible" },
+        { status: 409 }
+      );
+    }
+
+    if (currentIntervention.int_vehicle?.veh_absent) {
+      return NextResponse.json(
+        { error: "Véhicule absent : aucune action possible sur cette intervention" },
         { status: 409 }
       );
     }
