@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "dev": "node server.ts",
+    "dev": "node server.js",
     "build": "prisma generate && next build",
     "start": "NODE_ENV=production node server.ts",
     "seed": "tsx prisma/seed.ts"

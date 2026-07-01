@@ -25,6 +25,7 @@ import {
 import { formatLicensePlate } from "@/src/utils/formatters";
 import { searchSmart } from "@/src/utils/searchSmart";
 import { VehiclePagination } from "./shared/components/pagination";
+import { socket } from "@/src/server/socket";
 
 export default function GestionnairePage() {
   const { getVehicles, searchVehicles, createVehicle } = useManageApi();
@@ -295,6 +296,17 @@ export default function GestionnairePage() {
   const handleNewInterventionFromVehiculePreview = () => {
     setInterventionModalOpen(true);
   };
+
+  // useEffect(() => {
+  //   socket.on("connect", () => {
+  //     console.log("Socket is connected frontend");
+  //     console.log(socket.id);
+  //   });
+
+  //   return () => {
+  //     socket.off("connect");
+  //   };
+  // }, [socket.active]);
 
   // const session = getSession();
   return (

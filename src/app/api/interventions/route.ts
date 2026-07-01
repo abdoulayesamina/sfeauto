@@ -239,6 +239,8 @@ export async function POST(request: NextRequest) {
         return { intervention, photos: createdPhotos };
       });
 
+      
+
       return NextResponse.json(
         {
           message: "Intervention créée",
