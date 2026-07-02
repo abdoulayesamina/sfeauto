@@ -27,7 +27,7 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
-, "server.js"  ],
+, "server.js", "src/socket.js"  ],
   "exclude": ["node_modules",
     "prisma/seed.ts"
 ]

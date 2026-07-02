@@ -25,7 +25,6 @@ import {
 import { formatLicensePlate } from "@/src/utils/formatters";
 import { searchSmart } from "@/src/utils/searchSmart";
 import { VehiclePagination } from "./shared/components/pagination";
-import { socket } from "@/src/server/socket";
 
 export default function GestionnairePage() {
   const { getVehicles, searchVehicles, createVehicle } = useManageApi();

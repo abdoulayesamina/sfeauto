@@ -2,6 +2,7 @@ import React from "react";
 import "@/src/app/globals.css";
 import { Poppins } from "next/font/google";
 import Providers from "../providers";
+import { Toaster } from "sonner";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -17,6 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Providers>
           {children}
         </Providers>
+        <Toaster position="top-right" richColors />
       </body>
     </html>
   );
