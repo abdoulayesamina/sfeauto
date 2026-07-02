@@ -8,6 +8,7 @@ import {
 } from "@/generated/prisma";
 import { logError } from "@/src/lib/logger";
 import { notifyAdmins } from "@/src/lib/notifications";
+import { getStatusLabel } from "@/src/utils/constants/status-labels";
 
 type Ctx = { params: Promise<{ id: string }> | { id: string } };
 
@@ -309,7 +310,7 @@ export async function PATCH(request: NextRequest, context: Ctx) {
       await notifyAdmins({
         type: "INTERVENTION_UPDATED",
         title: "Statut d'intervention mis à jour",
-        message: `Le statut de l'intervention du véhicule ${updated.int_vehicle?.veh_licensePlate ?? ""} est passé à « ${newStatus} ».`,
+        message: `Le statut de l'intervention du véhicule ${updated.int_vehicle?.veh_licensePlate ?? ""} est passé à « ${getStatusLabel(newStatus)} ».`,
         interventionId: id,
         excludeUserId: session.user.id ?? null,
       });

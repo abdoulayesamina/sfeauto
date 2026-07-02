@@ -8,6 +8,7 @@ import { socket, registerSocket } from "@/src/socket.js";
 import { useNotificationsApi } from "@/src/shared/hooks/useNotifications.api";
 import { AppNotification } from "@/src/utils/types/notification";
 import { Modal } from "@/src/shared/components/modal";
+import { getStatusLabel } from "@/src/utils/constants/status-labels";
 
 const TYPE_LABELS: Record<AppNotification["not_type"], string> = {
   INTERVENTION_CREATED: "Intervention créée",
@@ -235,7 +236,7 @@ export function NotificationBell({ userId, role }: Props) {
                 </p>
                 <p className="text-sm text-gray-800">
                   <span className="text-gray-500">Statut :</span>{" "}
-                  {selected.intervention.int_status ?? "—"}
+                  {getStatusLabel(selected.intervention.int_status)}
                 </p>
                 <p className="text-sm text-gray-800">
                   <span className="text-gray-500">Travaux :</span>{" "}
