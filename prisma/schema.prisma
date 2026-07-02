@@ -290,6 +290,7 @@ model user_usr {
   usr_client                 client_cli?             @relation(fields: [usr_clientId], references: [cli_id])
   vehiclesHandled            vehicle_veh[]           @relation("VehicleHandler")
   notification               notification_not[]
+
   @@index([usr_email])
   @@index([usr_role])
   @@index([usr_baseId], map: "user_usr_usr_baseId_fkey")
@@ -319,17 +320,17 @@ model model_mod {
 }
 
 model notification_not {
-  not_id          String   @id @default(cuid())
-  not_title       String
-  not_message     String   @db.Text
-  not_url         String?
-  not_type        NotificationType
-  not_isRead      Boolean  @default(false)
-  not_userId      String
+  not_id             String            @id @default(cuid())
+  not_title          String
+  not_message        String            @db.Text
+  not_url            String?
+  not_type           NotificationType
+  not_isRead         Boolean           @default(false)
+  not_userId         String
   not_interventionId String?
-  not_createdAt   DateTime @default(now())
-  user            user_usr @relation(fields:[not_userId],references:[usr_id])
-  intervention    intervention_int? @relation(fields:[not_interventionId],references:[int_id],onDelete:SetNull)
+  not_createdAt      DateTime          @default(now())
+  user               user_usr          @relation(fields: [not_userId], references: [usr_id])
+  intervention       intervention_int? @relation(fields: [not_interventionId], references: [int_id], onDelete: SetNull)
 
   @@index([not_userId])
   @@index([not_isRead])
@@ -393,6 +394,7 @@ enum statushistory_sth_sth_newStatus {
   FIXING_STARTED
   FIXING_FINISHED
 }
+
 enum WorkStatus {
   WAITING_FOR_PARTS
   FIXING_STARTED
