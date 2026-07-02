@@ -7,6 +7,7 @@ import {
   statushistory_sth_sth_previousStatus,
 } from "@/generated/prisma";
 import { logError } from "@/src/lib/logger";
+import { notifyAdmins } from "@/src/lib/notifications";
 
 type Ctx = { params: Promise<{ id: string }> | { id: string } };
 
@@ -303,6 +304,16 @@ export async function PATCH(request: NextRequest, context: Ctx) {
           : null,
       })),
     };
+
+    if (statusChanged) {
+      await notifyAdmins({
+        type: "INTERVENTION_UPDATED",
+        title: "Statut d'intervention mis à jour",
+        message: `Le statut de l'intervention du véhicule ${updated.int_vehicle?.veh_licensePlate ?? ""} est passé à « ${newStatus} ».`,
+        interventionId: id,
+        excludeUserId: session.user.id ?? null,
+      });
+    }
 
     return NextResponse.json(serialized);
   } catch (error: any) {

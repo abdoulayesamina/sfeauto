@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 import { logError } from "@/src/lib/logger";
 import { randomUUID } from "crypto";
 import { getContainerClient, getSasUrlForBlob } from "@/src/lib/azureBlob";
-import { io } from "@/server";
+import { notifyAdmins } from "@/src/lib/notifications";
 
 export const runtime = "nodejs";
 
@@ -240,22 +240,12 @@ export async function POST(request: NextRequest) {
         return { intervention, photos: createdPhotos };
       });
 
-      const notification = await prisma.notification_not.create({
-        data:{
-          not_title: "Nouvelle intervention",
-          not_message: `Nouvelle intervention pour le véhicule ${vehicle.veh_licensePlate}.`,
-          not_type: "INTERVENTION_CREATED",
-          not_userId: session.user.id ?? null,
-          not_interventionId: result.intervention.int_id,
-        },
-        include: {
-          user: true,
-          intervention: true,
-        }
-      });
-
-      io.emit("new_intervention", {
-        notification,
+      await notifyAdmins({
+        type: "INTERVENTION_CREATED",
+        title: "Nouvelle intervention",
+        message: `Nouvelle intervention pour le véhicule ${vehicle.veh_licensePlate}.`,
+        interventionId: result.intervention.int_id,
+        excludeUserId: session.user.id ?? null,
       });
 
       return NextResponse.json(

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { auth } from "@/auth";
 import { logError } from "@/src/lib/logger";
+import { notifyAdmins } from "@/src/lib/notifications";
 
 type Ctx = { params: Promise<{ id: string }> | { id: string } };
 
@@ -342,6 +343,14 @@ export async function PATCH(request: NextRequest, context: Ctx) {
         },
       });
     }
+
+    await notifyAdmins({
+      type: "INTERVENTION_UPDATED",
+      title: "Intervention modifiée",
+      message: `L'intervention du véhicule ${updatedIntervention.int_vehicle?.veh_licensePlate ?? ""} a été modifiée.`,
+      interventionId: id,
+      excludeUserId: session.user.id ?? null,
+    });
 
     return NextResponse.json({
       intervention: updatedIntervention,

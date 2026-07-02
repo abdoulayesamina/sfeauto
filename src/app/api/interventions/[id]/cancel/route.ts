@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { auth } from "@/auth";
 import { logError } from "@/src/lib/logger";
+import { notifyAdmins } from "@/src/lib/notifications";
 
 type Ctx = { params: Promise<{ id: string }> | { id: string } };
 
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest, context: Ctx) {
         int_id: true,
         int_supprimee: true,
         int_annulee: true,
-        int_vehicle: { select: { veh_absent: true } },
+        int_vehicle: { select: { veh_absent: true, veh_licensePlate: true } },
       },
     });
 
@@ -95,6 +96,14 @@ export async function POST(request: NextRequest, context: Ctx) {
       });
 
       return result;
+    });
+
+    await notifyAdmins({
+      type: "INTERVENTION_CANCELLED",
+      title: "Intervention annulée",
+      message: `L'intervention du véhicule ${intervention.int_vehicle?.veh_licensePlate ?? ""} a été annulée.`,
+      interventionId: id,
+      excludeUserId: session.user.id ?? null,
     });
 
     return NextResponse.json({ success: true, intervention: updated });
