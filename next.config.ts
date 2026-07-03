@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "stsfeautoshared01.blob.core.windows.net",
+        hostname: "stlateldev2.blob.core.windows.net",
       },
     ],
   },
