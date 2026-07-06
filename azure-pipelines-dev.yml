@@ -78,6 +78,14 @@ steps:
         cp -R node_modules/.prisma "$(packageDir)/node_modules/.prisma"
       fi
 
+      # server.js custom (Socket.io) : le build standalone genere son propre
+      # server.js minimal sans Socket.io, on le remplace par le notre.
+      cp server.js "$(packageDir)/server.js"
+
+      # socket.io n'est jamais trace par le bundler standalone (import type
+      # uniquement dans le code applicatif), on l'installe donc a part.
+      (cd "$(packageDir)" && npm install socket.io@^4.8.3 --no-save --omit=dev)
+
       echo "=== package content ==="
       find "$(packageDir)" -maxdepth 3 | sort
     displayName: "Prepare standalone package"
