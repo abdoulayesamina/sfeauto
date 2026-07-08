@@ -30,7 +30,7 @@ export function getInterventionAgeMeta(
       level: "danger",
       days,
       className: "border-l-4 border-l-red-500",
-      title: `Intervention non terminée depuis ${days} jours — nécessite une attention urgente`,
+      title: `Intervention non terminée depuis ${days} jours`,
     };
   }
 
