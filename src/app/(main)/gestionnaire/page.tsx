@@ -11,7 +11,7 @@ import { AddVehiculeForm } from "./form/add-vehicule-form";
 import { VehicleSearchBar } from "./shared/components/vehicle-search-bar";
 import { VehicleListCard } from "./shared/components/vehicle-list-card";
 import { VehicleFilters } from "./shared/components/vehicle-filters";
-import { VehicleStats } from "./shared/components/vehicule-stats";
+import { InterventionStats } from "./shared/components/intervention-stats";
 import { VehicleNotFound } from "./vehicle-not-found";
 import { VehiclePreview } from "./shared/components/vehicle-apercu";
 import { errorAlert, successAlert } from "@/src/lib/alerts";
@@ -256,6 +256,24 @@ export default function GestionnairePage() {
     }
   }, [vehicles]);
 
+  const interventionStats = useMemo(() => {
+    const interventions = filteredVehicles.flatMap(
+      (v) => v.interventions ?? [],
+    );
+
+    return {
+      total: interventions.length,
+      enCours: interventions.filter((i) => i.int_status === "FIXING_STARTED")
+        .length,
+      terminees: interventions.filter(
+        (i) => i.int_status === "FIXING_FINISHED",
+      ).length,
+      attente: interventions.filter(
+        (i) => i.int_status === "WAITING_FOR_PARTS",
+      ).length,
+    };
+  }, [filteredVehicles]);
+
   const filteredAgences = useMemo(() => {
     const list = Array.isArray(agences) ? agences : [];
     if (clientId) return list.filter((a) => a.bas_clientId === clientId);
@@ -356,42 +374,12 @@ export default function GestionnairePage() {
             />
 
             {/* STATS */}
-            <VehicleStats
-              total={filteredVehicles.length}
-              // enCours={
-              //   filteredVehicles.filter((v) => v.intervention?.some((i) => i.status !== "FIXING_FINISHED")).length
-              // }
-              enCours={
-                filteredVehicles.filter((v) => {
-                  const intervention = v.interventions || [];
-                  return (
-                    intervention.length > 0 &&
-                    intervention.some((i) => i.int_status !== "FIXING_FINISHED")
-                  );
-                }).length
-              }
-              // termine={filteredVehicles.filter((v) => v.interventions?.some((i) => i.status === "FIXING_FINISHED")).length}
-              termine={
-                filteredVehicles.filter((v) => {
-                  const interventions = v.interventions || [];
-                  return (
-                    interventions.length > 0 &&
-                    interventions.every(
-                      (i) => i.int_status === "FIXING_FINISHED",
-                    )
-                  );
-                }).length
-              }
-              sansIntervention={
-                filteredVehicles.filter(
-                  (v) => !v.interventions || v.interventions.length === 0,
-                ).length
-              }
-              // Somme de tout les Intervention de tous les véhicules dont le base.location est "Paris Test Agency"
-              // test={filteredVehicles.filter((v) => v.base?.location === "Paris Test Agency").reduce((sum, v) => {
-              //   const interventions = Array.isArray(v.interventions) ? v.interventions : []
-              //   return sum + interventions.reduce((invSum, i) => invSum , 0)
-              // }, 0) }
+            <InterventionStats
+              total={interventionStats.total}
+              enCours={interventionStats.enCours}
+              terminees={interventionStats.terminees}
+              attente={interventionStats.attente}
+              loading={loading}
             />
 
             {/* LISTE VEHICULES */}
