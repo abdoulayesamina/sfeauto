@@ -51,12 +51,14 @@ function fromISOToDateInput(iso?: string) {
 export function AddVehiculeForm({
   onClose,
   onSubmit,
+  onSubmitAndCreateIntervention,
   mode,
   data,
   loading,
 }: {
   onClose: () => void
   onSubmit: (vehicule: Vehicule) => void
+  onSubmitAndCreateIntervention?: (vehicule: Vehicule) => void
   mode: "create" | "edit"
   data?: Vehicule
   loading?: boolean
@@ -91,6 +93,8 @@ export function AddVehiculeForm({
   const [loadingClients, setLoadingClients] = useState(true)
   const [loadingAgences, setLoadingAgences] = useState(false)
   const [lookupLoading, setLookupLoading] = useState(false)
+  const [brandName, setBrandName] = useState("")
+  const [modelName, setModelName] = useState("")
 
   useEffect(() => {
     if (mode === "create" && data?.veh_licensePlate) {
@@ -178,6 +182,9 @@ export function AddVehiculeForm({
         veh_version: v.version ?? prev.veh_version,
       }))
 
+      if (v.brandName) setBrandName(v.brandName)
+      if (v.modelName) setModelName(v.modelName)
+
       await new Promise((r) => setTimeout(r, 0))
 
       setVehicule((prev) => ({
@@ -199,21 +206,54 @@ export function AddVehiculeForm({
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-
+  const isVehiculeValid = () => {
     if (vehicule.veh_kilometrage && (Number(vehicule.veh_kilometrage) > 1000000)) {
-      return toast.error("Le kilométrage ne peut pas dépasser 1 000 000 km")
+      toast.error("Le kilométrage ne peut pas dépasser 1 000 000 km")
+      return false
     }
 
+    if (!vehicule.veh_brandId) { alert("Veuillez sélectionner une marque"); return false }
+    if (!vehicule.veh_modelId) { alert("Veuillez sélectionner un modèle"); return false }
+    if (!vehicule.veh_clientId) { alert("Veuillez sélectionner un client"); return false }
+    if (!vehicule.veh_baseId) { alert("Veuillez sélectionner une agence"); return false }
+    if (!vehicule.veh_licensePlate) { alert("Veuillez saisir l'immatriculation"); return false }
+    if (!vehicule.veh_kilometrage) { alert("Veuillez saisir le kilométrage"); return false }
+    return true
+  }
 
-    if (!vehicule.veh_brandId) return alert("Veuillez sélectionner une marque")
-    if (!vehicule.veh_modelId) return alert("Veuillez sélectionner un modèle")
-    if (!vehicule.veh_clientId) return alert("Veuillez sélectionner un client")
-    if (!vehicule.veh_baseId) return alert("Veuillez sélectionner une agence")
-    if (!vehicule.veh_licensePlate) return alert("Veuillez saisir l'immatriculation")
-    if(!vehicule.veh_kilometrage) return alert("Veuillez saisir le kilométrage")
-    onSubmit(vehicule)
+  // Enrichit le véhicule avec les libellés déjà connus du formulaire (marque,
+  // modèle, client, agence) afin de pouvoir l'ajouter à la liste côté page
+  // sans devoir refaire un fetch complet après la création.
+  const buildEnrichedVehicule = (): Vehicule => {
+    const client = clients.find((c) => c.cli_id === vehicule.veh_clientId)
+    const agence = agences.find((a) => a.bas_id === vehicule.veh_baseId)
+
+    return {
+      ...vehicule,
+      veh_brand: vehicule.veh_brandId
+        ? { bra_id: vehicule.veh_brandId, bra_name: brandName }
+        : undefined,
+      veh_model: vehicule.veh_modelId
+        ? { mod_id: vehicule.veh_modelId, mod_name: modelName }
+        : undefined,
+      veh_client: client
+        ? { cli_id: client.cli_id, cli_name: client.cli_name }
+        : undefined,
+      veh_base: agence
+        ? { bas_id: agence.bas_id, bas_location: agence.bas_location }
+        : undefined,
+    }
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!isVehiculeValid()) return
+    onSubmit(buildEnrichedVehicule())
+  }
+
+  const handleSubmitAndCreateIntervention = () => {
+    if (!isVehiculeValid()) return
+    onSubmitAndCreateIntervention?.(buildEnrichedVehicule())
   }
   return (
     <form className="space-y-6" onSubmit={handleSubmit}>
@@ -260,13 +300,15 @@ export function AddVehiculeForm({
           <BrandSelect
             value={vehicule.veh_brandId ?? null}
             disabled={mode === "edit"}
-            onChange={(brandId) =>
+            onChange={(brandId, name) => {
               setVehicule({
                 ...vehicule,
                 veh_brandId : brandId,
                 veh_modelId: null, // reset modèle
               })
-            }
+              setBrandName(name ?? "")
+              setModelName("")
+            }}
           />
         </div>
         <div className="flex flex-col gap-2">
@@ -276,12 +318,13 @@ export function AddVehiculeForm({
             brandId={vehicule.veh_brandId ?? null}
             value={vehicule.veh_modelId ?? null}
             disabled={mode === "edit"}
-            onChange={(modelId) =>
+            onChange={(modelId, name) => {
               setVehicule({
                 ...vehicule,
                 veh_modelId : modelId,
               })
-            }
+              setModelName(name ?? "")
+            }}
           />
         </div>
       </div>
@@ -587,6 +630,18 @@ export function AddVehiculeForm({
           {loading ? <Spinner className="h-4 w-4" /> : ""}
           {mode === "edit" ? "Mettre à jour" : "Créer le véhicule"}
         </Button>
+        {mode === "create" && onSubmitAndCreateIntervention && (
+          <Button
+            type="button"
+            variant="secondary"
+            className="w-full sm:w-auto"
+            onClick={handleSubmitAndCreateIntervention}
+            disabled={loading}
+          >
+            {loading ? <Spinner className="h-4 w-4" /> : ""}
+            Créer et ajouter une intervention
+          </Button>
+        )}
       </div>
     </form>
   )

@@ -135,18 +135,57 @@ export default function GestionnairePage() {
     }
   };
 
+  // Fusionne la réponse de l'API (champs persistés) avec les infos d'affichage
+  // (marque, modèle, client, agence) déjà connues du formulaire, pour insérer
+  // le véhicule dans la liste sans devoir tout recharger depuis le serveur.
+  const buildLocalVehicle = (
+    data: Partial<Vehicule>,
+    created: Partial<Vehicule>,
+  ): Vehicule => ({
+    ...data,
+    ...created,
+    veh_brand: data.veh_brand,
+    veh_model: data.veh_model,
+    veh_client: data.veh_client,
+    veh_base: data.veh_base,
+    interventions: [],
+  } as Vehicule);
+
   const handleCreateVehicle = async (data: Partial<Vehicule>) => {
     try {
       setLoading(true);
-      await createVehicle(data);
+      const created = await createVehicle(data);
+      const newVehicle = buildLocalVehicle(data, created);
+
+      setVehicles((prev) => [newVehicle, ...prev]);
       toast.success("Véhicule créé");
-      setLoading(false);
       setOpenCreateVehiculeModal(false);
       setVehiculeNotFound(false);
-      await loadAll();
     } catch (e: any) {
       toast.error("Erreur: " + e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  const handleCreateVehicleAndAddIntervention = async (
+    data: Partial<Vehicule>,
+  ) => {
+    try {
+      setLoading(true);
+      const created = await createVehicle(data);
+      const newVehicle = buildLocalVehicle(data, created);
+
+      setVehicles((prev) => [newVehicle, ...prev]);
+      toast.success("Véhicule créé");
+      setOpenCreateVehiculeModal(false);
+      setVehiculeNotFound(false);
+
+      setSelectedVehicle(newVehicle);
+      setInterventionModalOpen(true);
+    } catch (e: any) {
+      toast.error("Erreur: " + e.message);
+    } finally {
       setLoading(false);
     }
   };
@@ -424,6 +463,7 @@ export default function GestionnairePage() {
           mode="create"
           data={{ veh_licensePlate: preFillLicensePlate } as Vehicule}
           onSubmit={handleCreateVehicle}
+          onSubmitAndCreateIntervention={handleCreateVehicleAndAddIntervention}
           onClose={() => setOpenCreateVehiculeModal(false)}
           loading={loading}
         />

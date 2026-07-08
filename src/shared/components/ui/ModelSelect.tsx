@@ -32,7 +32,7 @@ export function ModelSelect({
   brandId: string | null
   value: string | null
   modelName?: string | null
-  onChange: (id: string) => void
+  onChange: (id: string, name?: string) => void
   disabled?: boolean
 }) {
   const [models, setModels] = useState<Model[]>([])
@@ -75,7 +75,7 @@ export function ModelSelect({
 
     const model = await res.json()
     setModels(prev => [...prev, model])
-    onChange(model.id)
+    onChange(model.id, model.name)
     setNewName("")
     setCreating(false)
   }
@@ -89,7 +89,7 @@ export function ModelSelect({
           if (v === "__create__") {
             setCreating(true)
           } else {
-            onChange(v)
+            onChange(v, models.find((m) => m.id === v)?.name)
           }
         }}
       >
