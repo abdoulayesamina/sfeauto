@@ -9,6 +9,7 @@ import {
   toUIStatus,
 } from "@/src/utils/constants/intervention-status";
 import InterventionStatusBadge from "./InterventionStatusBadge";
+import { getInterventionAgeMeta } from "@/src/utils/constants/intervention-age";
 
 interface VehicleInterventionsModalProps {
   vehicle: any;
@@ -157,10 +158,17 @@ export default function VehicleInterventionsModal({
         {/* Liste des interventions */}
         <div className="space-y-3 p-3 max-h-[500px] overflow-y-auto">
           {filteredInterventions.length > 0 ? (
-            filteredInterventions.map((intervention) => (
+            filteredInterventions.map((intervention) => {
+              const ageMeta = getInterventionAgeMeta(
+                intervention.status,
+                intervention.createdAt,
+              );
+
+              return (
               <div
                 key={intervention.id}
-                className="bg-white rounded-3xl shadow-sm border border-zinc-100 p-7 hover:shadow-md transition-shadow duration-200 group"
+                title={ageMeta?.title}
+                className={`bg-white rounded-3xl shadow-sm border border-zinc-100 p-7 hover:shadow-md transition-shadow duration-200 group ${ageMeta?.className ?? ""}`}
               >
                 <div className="flex flex-col lg:flex-row lg:items-center gap-6">
                   <div className="flex-1">
@@ -237,7 +245,8 @@ export default function VehicleInterventionsModal({
                   </Button>
                 </div>
               </div>
-            ))
+              );
+            })
           ) : (
             <div className="bg-white rounded-3xl p-16 text-center border border-zinc-100">
               <div className="mx-auto w-16 h-16 bg-zinc-100 rounded-2xl flex items-center justify-center mb-5">

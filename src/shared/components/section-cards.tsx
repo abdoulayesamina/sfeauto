@@ -35,6 +35,7 @@ import {
   getStatusMeta,
   STATUS_UI_MAP,
 } from "@/src/utils/constants/intervention-status";
+import { getInterventionAgeMeta } from "@/src/utils/constants/intervention-age";
 import { Modal } from "./modal";
 import IntervDetailGes from "@/src/app/(main)/gestionnaire/shared/components/Intervention";
 import { Intervention } from "@/src/utils/types/intervention";
@@ -604,11 +605,16 @@ export function SectionCards({ user }: { user?: any }) {
                         | "FIXING_FINISHED"
                     ];
                   const statusMeta = getStatusMeta(status);
+                  const ageMeta = getInterventionAgeMeta(
+                    inv.int_status,
+                    inv.int_createdAt,
+                  );
 
                   return (
                     <div
                       key={inv.int_id}
-                      className="group p-5 flex flex-col-reverse lg:flex-row lg:items-center gap-5 hover:bg-gray-50 transition rounded-2xl"
+                      title={ageMeta?.title}
+                      className={`group p-5 flex flex-col-reverse lg:flex-row lg:items-center gap-5 hover:bg-gray-50 transition rounded-2xl ${ageMeta?.className ?? ""}`}
                     >
                       <div className="flex items-center gap-5 flex-1">
                         <div

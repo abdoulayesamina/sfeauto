@@ -33,6 +33,7 @@ import { Modal } from "@/src/shared/components/modal";
 import { Spinner } from "@/src/shared/components/spinner";
 import { errorAlert } from "@/src/lib/alerts";
 import { toast } from "sonner";
+import { getInterventionAgeMeta } from "@/src/utils/constants/intervention-age";
 
 export const statusStyles: Record<string, string> = {
   EN_COURS: "bg-blue-100 text-blue-700",
@@ -332,11 +333,13 @@ export default function MecanicienPage() {
           {!loading &&
             filteredInterventions.map((inv) => {
               const uiStatus = STATUS_UI_MAP[inv.status];
+              const ageMeta = getInterventionAgeMeta(inv.status, inv.createdAt);
 
               return (
                 <div
                   key={inv.id}
-                  className="border rounded-xl p-5 flex flex-col gap-4 lg:flex-row lg:items-center hover:shadow-md transition"
+                  title={ageMeta?.title}
+                  className={`border rounded-xl p-5 flex flex-col gap-4 lg:flex-row lg:items-center hover:shadow-md transition ${ageMeta?.className ?? ""}`}
                 >
                   <div className="flex items-start gap-3 flex-1">
                     {/* <Car className="text-gray-400 mt-1" /> */}
