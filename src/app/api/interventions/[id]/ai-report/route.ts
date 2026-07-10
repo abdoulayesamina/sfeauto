@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/src/lib/prisma";
 import { logError } from "@/src/lib/logger";
-import { azureOpenAI, AZURE_OPENAI_MODEL } from "@/src/lib/azureOpenAI";
+import { getAzureOpenAI, AZURE_OPENAI_MODEL } from "@/src/lib/azureOpenAI";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -73,7 +73,7 @@ ${contextLines}
 Réponds uniquement avec un JSON strict de la forme :
 {"technique": "...", "client": "...", "assurance": "..."}`;
 
-    const completion = await azureOpenAI.chat.completions.create({
+    const completion = await getAzureOpenAI().chat.completions.create({
       model: AZURE_OPENAI_MODEL,
       messages: [{ role: "user", content: prompt }],
       response_format: { type: "json_object" },
