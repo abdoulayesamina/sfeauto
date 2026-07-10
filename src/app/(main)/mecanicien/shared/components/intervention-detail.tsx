@@ -1,11 +1,19 @@
 "use client"
 
 import React, { useEffect, useState } from "react"
-import { Car, User, MapPin, Wrench, Images, X, CheckCircle } from "lucide-react"
+import { Car, User, MapPin, Wrench, Images, X, CheckCircle, Sparkles, RefreshCw, Loader2 } from "lucide-react"
 import { Button } from "@/src/shared/components/ui/button"
 import { toUIStatus, getStatusMeta, HISTORY_LABELS } from "@/src/utils/constants/intervention-status"
-import { errorAlert } from "@/src/lib/alerts"
+import { errorAlert, successAlert } from "@/src/lib/alerts"
 import { useInterventionPhotos } from "../../../gestionnaire/shared/hooks/useInterventionPhotos.api"
+import { useAiReport, AiReportStyle } from "../../../gestionnaire/shared/hooks/useAiReport.api"
+import { useInterventionApi } from "../../../gestionnaire/shared/hooks/useInterventionApi.api"
+
+const REPORT_STYLE_LABELS: Record<AiReportStyle, string> = {
+  technique: "Technique",
+  client: "Client",
+  assurance: "Assurance",
+}
 
 type UIStatus = "EN_COURS" | "ATTENTE_PIECES" | "TERMINEE"
 
@@ -43,6 +51,41 @@ export default function InterventionDetail({
   useEffect(() => {
     if (photosError) errorAlert("Photos", photosError)
   }, [photosError])
+
+  const { generateReport, loading: generating, error: generateError } = useAiReport()
+  const { patchIntervention, loading: saving } = useInterventionApi()
+
+  const [aiReport, setAiReport] = useState<Record<AiReportStyle, string> | null>(null)
+  const [reportStyle, setReportStyle] = useState<AiReportStyle>("technique")
+  const [draftText, setDraftText] = useState("")
+  const [savedDescription, setSavedDescription] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (generateError) errorAlert("Compte-rendu IA", generateError)
+  }, [generateError])
+
+  const handleGenerate = async () => {
+    const report = await generateReport(selectedIntervention?.id)
+    if (!report) return
+
+    setAiReport(report)
+    setReportStyle("technique")
+    setDraftText(report.technique)
+  }
+
+  const handleStyleChange = (style: AiReportStyle) => {
+    setReportStyle(style)
+    if (aiReport) setDraftText(aiReport[style])
+  }
+
+  const handleSaveReport = async () => {
+    try {
+      await patchIntervention(selectedIntervention?.id, { workDescription: draftText })
+      setSavedDescription(draftText)
+    } catch {
+      // erreur déjà notifiée par patchIntervention
+    }
+  }
 
   const openViewer = (idx: number) => {
     setActiveIndex(idx)
@@ -143,8 +186,81 @@ export default function InterventionDetail({
       <div className="rounded-xl border p-4 bg-zinc-50">
         <p className="font-semibold mb-2">Description du travail</p>
         <p className="text-gray-600 text-sm">
-          {selectedIntervention?.workDescription || "Aucune description fournie"}
+          {savedDescription ?? selectedIntervention?.workDescription ?? "Aucune description fournie"}
         </p>
+      </div>
+
+      <div className="rounded-xl border border-blue-200 p-4 bg-blue-50">
+        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-blue-700" />
+            <p className="font-semibold">Compte-rendu d'intervention</p>
+          </div>
+          {aiReport && (
+            <span className="text-xs font-medium text-blue-700 bg-blue-100 border border-blue-200 px-2 py-1 rounded-full">
+              Généré par IA
+            </span>
+          )}
+        </div>
+
+        {!aiReport ? (
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <p className="text-sm text-gray-600">
+              Générer automatiquement un compte-rendu à partir des notes, pièces et photos de cette intervention.
+            </p>
+            <Button type="button" onClick={handleGenerate} disabled={generating} className="shrink-0">
+              {generating ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Sparkles className="w-4 h-4 mr-2" />
+              )}
+              Générer
+            </Button>
+          </div>
+        ) : (
+          <>
+            <div className="inline-flex bg-white border rounded-lg p-1 mb-3 gap-1">
+              {(Object.keys(REPORT_STYLE_LABELS) as AiReportStyle[]).map((style) => (
+                <button
+                  key={style}
+                  type="button"
+                  onClick={() => handleStyleChange(style)}
+                  className={`text-xs font-medium px-3 py-1.5 rounded-md transition ${
+                    reportStyle === style
+                      ? "bg-zinc-900 text-white"
+                      : "text-gray-600 hover:bg-zinc-100"
+                  }`}
+                >
+                  {REPORT_STYLE_LABELS[style]}
+                </button>
+              ))}
+            </div>
+
+            <textarea
+              value={draftText}
+              onChange={(e) => setDraftText(e.target.value)}
+              rows={4}
+              className="w-full text-sm text-gray-700 bg-white border rounded-lg p-3 resize-none focus:outline-none focus:ring-2 focus:ring-blue-300"
+            />
+
+            <div className="flex items-center gap-2 mt-3 flex-wrap">
+              <Button type="button" variant="outline" size="sm" onClick={handleGenerate} disabled={generating}>
+                <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${generating ? "animate-spin" : ""}`} />
+                Régénérer
+              </Button>
+              <div className="flex-1" />
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleSaveReport}
+                disabled={saving || draftText === (savedDescription ?? "")}
+              >
+                {saving && <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />}
+                Enregistrer comme description
+              </Button>
+            </div>
+          </>
+        )}
       </div>
 
       <div className="rounded-xl border-[4px] border-red-300 p-4 bg-zinc-50">
