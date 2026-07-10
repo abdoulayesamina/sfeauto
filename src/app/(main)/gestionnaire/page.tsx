@@ -210,6 +210,13 @@ export default function GestionnairePage() {
       setVehiculeNotFound(false);
 
       setSelectedVehicle(newVehicle);
+
+      if (pendingPhotoIntervention) {
+        setInterventionInitialPhotos(pendingPhotoIntervention.photos);
+        setInterventionInitialDescription(pendingPhotoIntervention.description);
+        setPendingPhotoIntervention(null);
+      }
+
       setInterventionModalOpen(true);
     } catch (e: any) {
       toast.error("Erreur: " + e.message);
