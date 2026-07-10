@@ -186,7 +186,7 @@ model intervention_int {
   int_interventionConfirmed Boolean                 @default(false)
   int_status                intervention_status     @default(FIXING_STARTED)
   int_statusUpdatedAt       DateTime                @default(now())
-  int_workDescription       String?
+  int_workDescription       String?                 @db.Text
   int_didOrderParts         Boolean                 @default(false)
   int_ordersDetails         String?
   int_comments              String?                 @db.Text

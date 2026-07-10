@@ -14,6 +14,7 @@ import { VehicleFilters } from "./shared/components/vehicle-filters";
 import { InterventionStats } from "./shared/components/intervention-stats";
 import { VehicleNotFound } from "./vehicle-not-found";
 import { VehiclePreview } from "./shared/components/vehicle-apercu";
+import { PhotoInterventionWizard } from "./shared/components/photo-intervention-wizard";
 import { errorAlert, successAlert } from "@/src/lib/alerts";
 import { useInterventionApi } from "./shared/useIntervention.api";
 import { InterventionForm } from "./form/intervention-form";
@@ -53,9 +54,24 @@ export default function GestionnairePage() {
   const [statut, setStatut] = useState<string>();
 
   const [interventionModalOpen, setInterventionModalOpen] = useState(false);
+  const [interventionInitialPhotos, setInterventionInitialPhotos] = useState<File[]>([]);
+  const [interventionInitialDescription, setInterventionInitialDescription] = useState("");
+
+  const [pendingPhotoIntervention, setPendingPhotoIntervention] = useState<{
+    photos: File[];
+    description: string;
+  } | null>(null);
+
+  const [postCreateDialogOpen, setPostCreateDialogOpen] = useState(false);
+  const [lastCreatedVehicle, setLastCreatedVehicle] = useState<any | null>(null);
 
   const ITEMS_PER_PAGE = 20;
   const [currentPage, setCurrentPage] = useState(1);
+
+  const createVehicleData = useMemo(
+    () => ({ veh_licensePlate: preFillLicensePlate } as Vehicule),
+    [preFillLicensePlate]
+  );
 
   const normalizeVehicles = (v: any): Vehicule[] => {
     if (Array.isArray(v)) return v;
@@ -161,6 +177,18 @@ export default function GestionnairePage() {
       toast.success("Véhicule créé");
       setOpenCreateVehiculeModal(false);
       setVehiculeNotFound(false);
+      await loadAll();
+
+      if (pendingPhotoIntervention) {
+        setSelectedVehicle(created);
+        setInterventionInitialPhotos(pendingPhotoIntervention.photos);
+        setInterventionInitialDescription(pendingPhotoIntervention.description);
+        setPendingPhotoIntervention(null);
+        setInterventionModalOpen(true);
+      } else {
+        setLastCreatedVehicle(created);
+        setPostCreateDialogOpen(true);
+      }
     } catch (e: any) {
       toast.error("Erreur: " + e.message);
     } finally {
@@ -188,6 +216,12 @@ export default function GestionnairePage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePostCreateNewIntervention = () => {
+    setSelectedVehicle(lastCreatedVehicle);
+    setPostCreateDialogOpen(false);
+    setInterventionModalOpen(true);
   };
 
   const handleEditVehicleClick = () => {
@@ -342,6 +376,8 @@ export default function GestionnairePage() {
       // }
       setLoading(false);
       setInterventionModalOpen(false);
+      setInterventionInitialPhotos([]);
+      setInterventionInitialDescription("");
       toast.success("Intervention créée");
     } catch (e: any) {
       toast.error("Intervention : " + e.message);
@@ -371,11 +407,28 @@ export default function GestionnairePage() {
         <h1 className="font-bold text-2xl">Page Gestionnaire</h1>
 
         {/* Barre de recherche */}
-        <VehicleSearchBar
-          value={search}
-          onChange={setSearch}
-          onSearch={handleSearch}
-        />
+        <div className="flex gap-2 items-center">
+          <PhotoInterventionWizard
+            onVehicleMatched={(vehicle, photos, description) => {
+              setSelectedVehicle(vehicle);
+              setInterventionInitialPhotos(photos);
+              setInterventionInitialDescription(description);
+              setInterventionModalOpen(true);
+            }}
+            onVehicleNeedsCreation={(plate, photos, description) => {
+              setPreFillLicensePlate(plate ?? "");
+              setPendingPhotoIntervention({ photos, description });
+              setOpenCreateVehiculeModal(true);
+            }}
+          />
+          <div className="flex-1">
+            <VehicleSearchBar
+              value={search}
+              onChange={setSearch}
+              onSearch={handleSearch}
+            />
+          </div>
+        </div>
 
         {!vehiculeNotFound ? (
           <>
@@ -456,15 +509,22 @@ export default function GestionnairePage() {
       {/* MODAL CREATION VEHICULE */}
       <Modal
         open={openCreateVehiculeModal}
-        onClose={() => setOpenCreateVehiculeModal(false)}
+        onClose={() => {
+          setOpenCreateVehiculeModal(false);
+          setPendingPhotoIntervention(null);
+        }}
         modalTitle="Créer un nouveau véhicule"
       >
         <AddVehiculeForm
           mode="create"
-          data={{ veh_licensePlate: preFillLicensePlate } as Vehicule}
+          data={createVehicleData}
+          autoLookup={pendingPhotoIntervention !== null}
           onSubmit={handleCreateVehicle}
           onSubmitAndCreateIntervention={handleCreateVehicleAndAddIntervention}
-          onClose={() => setOpenCreateVehiculeModal(false)}
+          onClose={() => {
+            setOpenCreateVehiculeModal(false);
+            setPendingPhotoIntervention(null);
+          }}
           loading={loading}
         />
       </Modal>
@@ -504,7 +564,11 @@ export default function GestionnairePage() {
       {/* MODAL CREATION INTERVENTION */}
       <Modal
         open={interventionModalOpen}
-        onClose={() => setInterventionModalOpen(false)}
+        onClose={() => {
+          setInterventionModalOpen(false);
+          setInterventionInitialPhotos([]);
+          setInterventionInitialDescription("");
+        }}
         modalTitle="Créer une intervention"
       >
         <InterventionForm
@@ -513,10 +577,33 @@ export default function GestionnairePage() {
           // vehicleDisplayText={`${selectedVehicle?.licensePlate} - ${selectedVehicle?.brand?.name ?? ""} ${selectedVehicle?.model?.name ?? ""}`}
           vehicleDisplayText={`${formatLicensePlate(selectedVehicle?.veh_licensePlate || "")} - ${selectedVehicle?.veh_brand?.bra_name ?? ""} ${selectedVehicle?.veh_model?.mod_name ?? ""}`}
           defaultAccordNumber="ACC-2026-001"
+          initialPhotos={interventionInitialPhotos}
+          initialDescription={interventionInitialDescription}
           onSubmit={handleSubmitIntervention}
-          onClose={() => setInterventionModalOpen(false)}
+          onClose={() => {
+            setInterventionModalOpen(false);
+            setInterventionInitialPhotos([]);
+            setInterventionInitialDescription("");
+          }}
           loading={loading}
         />
+      </Modal>
+
+      {/* MODAL VEHICULE CREE : SUITE LOGIQUE */}
+      <Modal
+        open={postCreateDialogOpen}
+        onClose={() => setPostCreateDialogOpen(false)}
+        modalTitle="Véhicule créé avec succès"
+        modalDescription="Que souhaitez-vous faire ?"
+      >
+        <div className="grid grid-cols-2 gap-2 p-2">
+          <Button variant="outline" onClick={() => setPostCreateDialogOpen(false)}>
+            Retour à la liste
+          </Button>
+          <Button onClick={handlePostCreateNewIntervention}>
+            Créer une intervention
+          </Button>
+        </div>
       </Modal>
 
       {/* MODAL EDITION VEHICULE */}

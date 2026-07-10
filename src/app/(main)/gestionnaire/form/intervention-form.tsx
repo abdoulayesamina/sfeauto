@@ -22,6 +22,8 @@ interface InterventionFormProps {
   vehicleDisplayText: string
   kilometrage: string
   defaultAccordNumber?: string
+  initialPhotos?: File[]
+  initialDescription?: string
   onSubmit?: (data: any) => void
   onClose?: () => void
   loading?: boolean
@@ -32,6 +34,8 @@ export function InterventionForm({
   vehicleId,
   vehicleDisplayText,
   defaultAccordNumber = "ACC-2026-001",
+  initialPhotos,
+  initialDescription,
   onSubmit,
   onClose,
   loading = false,
@@ -39,11 +43,13 @@ export function InterventionForm({
   const [piecesCommande, setPiecesCommande] =
     useState<PiecesCommande>("non");
 
-  const [imagesBlob, setImagesBlob] = useState<string[]>([]);
-  const [images, setImages] = useState<File[]>([]);
+  const [imagesBlob, setImagesBlob] = useState<string[]>(
+    () => (initialPhotos ?? []).map((f) => URL.createObjectURL(f))
+  );
+  const [images, setImages] = useState<File[]>(initialPhotos ?? []);
 
   // ✅ champs contrôlés
-  const [description, setDescription] = useState("");
+  const [description, setDescription] = useState(initialDescription ?? "");
   const [numeroAccord, setNumeroAccord] = useState("");
   const [dateConfirmation, setDateConfirmation] = useState("");
   const [detailsCommande, setDetailsCommande] = useState("");
