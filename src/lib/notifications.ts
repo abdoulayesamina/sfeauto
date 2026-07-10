@@ -1,6 +1,7 @@
 import { prisma } from "@/src/lib/prisma";
 import { getIO } from "@/src/lib/socketServer";
 import { logError } from "@/src/lib/logger";
+import { sendMail } from "@/src/lib/mail";
 import type { NotificationType } from "@/generated/prisma";
 
 type NotifyAdminsInput = {
@@ -61,4 +62,37 @@ export async function notifyAdmins(input: NotifyAdminsInput): Promise<void> {
   } catch (error) {
     logError("Failed to notify admins", error);
   }
+
+  await notifyByEmail({ title, message, interventionId });
+}
+
+/**
+ * Envoie un email pour toute action sur une intervention (création, statut,
+ * modification, annulation). Adresse de destination configurable via
+ * EMAIL_NOTIFY_TO (en dev : l'email personnel du développeur). Ne fait jamais
+ * échouer l'action appelante : sendMail avale déjà ses propres erreurs.
+ */
+async function notifyByEmail(input: {
+  title: string;
+  message: string;
+  interventionId?: string | null;
+}): Promise<void> {
+  const to = process.env.EMAIL_NOTIFY_TO;
+  if (!to) return;
+
+  await sendMail({
+    to,
+    subject: `[SFE Auto] ${input.title}`,
+    html: `
+      <div style="font-family: sans-serif; font-size: 14px; color: #111;">
+        <h2 style="margin: 0 0 8px;">${input.title}</h2>
+        <p style="margin: 0 0 8px;">${input.message}</p>
+        ${
+          input.interventionId
+            ? `<p style="margin: 0; color: #666; font-size: 12px;">Intervention : ${input.interventionId}</p>`
+            : ""
+        }
+      </div>
+    `,
+  });
 }
