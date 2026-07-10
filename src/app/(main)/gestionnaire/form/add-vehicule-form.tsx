@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Vehicule } from "@/src/utils/types/vehicule"
 import { Input } from "@/src/shared/components/ui/input"
 import { Label } from "@/src/shared/components/ui/label"
@@ -54,12 +54,14 @@ export function AddVehiculeForm({
   mode,
   data,
   loading,
+  autoLookup = false,
 }: {
   onClose: () => void
   onSubmit: (vehicule: Vehicule) => void
   mode: "create" | "edit"
   data?: Vehicule
   loading?: boolean
+  autoLookup?: boolean
 }) {
   const { getClients } = useClientApi()
   const { getAgences } = useAgenceApi()
@@ -91,10 +93,16 @@ export function AddVehiculeForm({
   const [loadingClients, setLoadingClients] = useState(true)
   const [loadingAgences, setLoadingAgences] = useState(false)
   const [lookupLoading, setLookupLoading] = useState(false)
+  const autoLookupDone = useRef(false)
 
   useEffect(() => {
     if (mode === "create" && data?.veh_licensePlate) {
       setVehicule((prev) => ({ ...prev, veh_licensePlate: data.veh_licensePlate }))
+
+      if (autoLookup && !autoLookupDone.current) {
+        autoLookupDone.current = true
+        handleLookup(data.veh_licensePlate)
+      }
     }
     if (mode === "edit" && data) {
       setVehicule({
@@ -102,6 +110,7 @@ export function AddVehiculeForm({
         veh_version: data.veh_version ?? "",
       })
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, mode])
 
   useEffect(() => {
@@ -127,8 +136,10 @@ export function AddVehiculeForm({
       .finally(() => setLoadingAgences(false))
   }, [vehicule.veh_clientId])
 
-  const handleLookup = async () => {
-    if (!vehicule.veh_licensePlate) {
+  const handleLookup = async (plateOverride?: string) => {
+    const plate = plateOverride ?? vehicule.veh_licensePlate
+
+    if (!plate) {
       toast.error("Veuillez saisir une immatriculation")
       return
     }
@@ -136,7 +147,7 @@ export function AddVehiculeForm({
     try {
       setLookupLoading(true)
 
-      const res = await fetch(`/api/vehicles/lookup/${vehicule.veh_licensePlate}`)
+      const res = await fetch(`/api/vehicles/lookup/${plate}`)
       const result = await res.json()
 
       if (!res.ok) {
@@ -245,7 +256,7 @@ export function AddVehiculeForm({
 
           <Button
             type="button"
-            onClick={handleLookup}
+            onClick={() => handleLookup()}
             disabled={lookupLoading || mode === "edit"}
           >
             {lookupLoading ? <Spinner className="h-4 w-4" /> : "Rechercher"}
