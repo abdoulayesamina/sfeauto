@@ -26,6 +26,8 @@ export async function GET(request: NextRequest) {
 
     const whereClause: any = {
       int_supprimee: false,
+      int_annulee: false,
+      int_vehicle: { veh_absent: false },
     };
 
     if (uiStatus && uiStatus !== "ALL") {

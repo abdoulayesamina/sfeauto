@@ -16,7 +16,7 @@ import {
 } from "@/src/shared/components/ui/card";
 import { useManageApi } from "@/src/app/(main)/gestionnaire/shared/useManage.api";
 import { useAgenceApi } from "@/src/app/(main)/agence/shared/useAgence.api";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Agence } from "@/src/utils/types/agence";
 import { Vehicule } from "@/src/utils/types/vehicule";
 import { Label } from "./ui/label";
@@ -40,14 +40,6 @@ import IntervDetailGes from "@/src/app/(main)/gestionnaire/shared/components/Int
 import { Intervention } from "@/src/utils/types/intervention";
 
 export function SectionCards({ user }: { user?: any }) {
-  //recup la liste des agences
-  //rzcuperer les liste des interventions
-  //  afficher :
-  // - le nombre total d'interventions
-  // - le nombre d'interventions en cours
-  // - le nombre d'interventions terminées
-  // - le nombre d'interventions par agence
-
   const { getVehicles } = useManageApi();
   const { getAgences } = useAgenceApi();
   const { getClients } = useClientApi();
@@ -64,52 +56,48 @@ export function SectionCards({ user }: { user?: any }) {
   const [clientId, setClientId] = useState<string>("");
 
   const [nombreTotalInterventions, setNombreTotalInterventions] = useState(0);
-  const [nombreInterventionsEnCours, setNombreInterventionsEnCours] =
-    useState(0);
-  const [nombreInterventionsTerminees, setNombreInterventionsTerminees] =
-    useState(0);
-  const [
-    nombreInterventionsEnAttenteDePiece,
-    setNombreInterventionsEnAttenteDePiece,
-  ] = useState(0);
+  const [nombreInterventionsEnCours, setNombreInterventionsEnCours] = useState(0);
+  const [nombreInterventionsTerminees, setNombreInterventionsTerminees] = useState(0);
+  const [nombreInterventionsEnAttenteDePiece,setNombreInterventionsEnAttenteDePiece,] = useState(0);
 
   const [totalInterventions, setTotalInterventions] = useState<any[]>([]);
   const [interventionsEnCours, setInterventionsEnCours] = useState<any[]>([]);
-  const [interventionsTerminees, setInterventionsTerminees] = useState<any[]>(
-    [],
-  );
-  const [interventionsEnAttenteDePiece, setInterventionsEnAttenteDePiece] =
-    useState<any[]>([]);
+  const [interventionsTerminees, setInterventionsTerminees] = useState<any[]>([]);
+  const [interventionsEnAttenteDePiece, setInterventionsEnAttenteDePiece] = useState<any[]>([]);
 
-  const [selectedStat, setSelectedStat] = useState<
-    "total" | "encours" | "terminees" | "attente" | null
-  >(null);
-  const [displayedInterventions, setDisplayedInterventions] = useState<any[]>(
-    [],
-  );
+  const [displayedInterventions, setDisplayedInterventions] = useState<any[]>([]);
+  const [search, setSearch] = useState("");
+  const [searchDate, setSearchDate] = useState("");
+  
+  const [selectedStat, setSelectedStat] = useState<"total" | "encours" | "terminees" | "attente" | null>(null);
 
   const [ globalInterventions, setGlobalInterventions] = useState<any[]>([]);
 
-  // const [interventionsParAgence, setInterventionsParAgence] = useState(0);
-  // const [interventionsParAgence, setInterventionsParAgence] = useState<{[key: string]: number}>({});
 
   const updateInterventionsStats = (interventions: any[] = []) => {
-    setNombreTotalInterventions(interventions.length);
-    setTotalInterventions(interventions);
+
+    const sortedInterventions = [...interventions].sort(
+      (a, b) =>
+        new Date(b.int_updatedAt).getTime() -
+        new Date(a.int_updatedAt).getTime()
+    );
+
+    setNombreTotalInterventions(sortedInterventions.length);
+    setTotalInterventions(sortedInterventions);
 
     setSelectedStat("total");
-    setDisplayedInterventions(interventions);
+    setDisplayedInterventions(sortedInterventions);
 
-    const enCours = interventions.filter(
+    const enCours = sortedInterventions.filter(
       (i) =>
         i.int_status === "FIXING_STARTED",
     );
 
-    const terminees = interventions.filter(
+    const terminees = sortedInterventions.filter(
       (i) => i.int_status === "FIXING_FINISHED",
     );
 
-    const attenteDePiece = interventions.filter(
+    const attenteDePiece = sortedInterventions.filter(
       (i) => i.int_status === "WAITING_FOR_PARTS",
     );
 
@@ -226,6 +214,63 @@ export function SectionCards({ user }: { user?: any }) {
 
   const [open, setOpen] = useState(false);
 
+  // const baseInterventions = useMemo(() => {
+  //   if (agenceId) {
+  //     return vehicles?.vehicles
+  //       .filter((v: any) => v.veh_base.bas_id === agenceId)
+  //       .flatMap((v: any) => v.interventions) ?? [];
+  //   }
+  //   return vehicles?.vehicles.flatMap((v: any) => v.interventions) ?? [];
+  // }, [vehicles, agenceId]);
+
+
+  // Prédicat de recherche commun (texte + date), réutilisé pour la liste et les stats
+  const matchesSearch = (inv: any) => {
+    const value = search.toLowerCase().trim();
+
+    const plate = inv.int_vehicle?.veh_licensePlate?.toLowerCase() ?? "";
+    const brand = inv.int_vehicle?.veh_brand?.bra_name?.toLowerCase() ?? "";
+    const model = inv.int_vehicle?.veh_model?.mod_name?.toLowerCase() ?? "";
+
+    const matchText =
+      plate.includes(value) ||
+      brand.includes(value) ||
+      model.includes(value);
+
+    const interventionDate = new Date(inv.int_updatedAt)
+      .toISOString()
+      .split("T")[0];
+
+    const matchDate = !searchDate || interventionDate === searchDate;
+
+    return matchText && matchDate;
+  };
+
+  // Liste affichée : périmètre du statut sélectionné (card cliquée), filtré par la recherche
+  const filteredInterventions = useMemo(
+    () => displayedInterventions.filter(matchesSearch),
+    [displayedInterventions, search, searchDate],
+  );
+
+  // Stats des cards : TOUJOURS calculées sur l'ensemble du périmètre (totalInterventions),
+  // filtré par la recherche, indépendamment de la card sélectionnée.
+  const filteredStats = useMemo(() => {
+    const base = totalInterventions.filter(matchesSearch);
+
+    return {
+      total: base.length,
+
+      enCours: base.filter((i) => i.int_status === "FIXING_STARTED").length,
+
+      terminees: base.filter((i) => i.int_status === "FIXING_FINISHED").length,
+
+      attente: base.filter((i) => i.int_status === "WAITING_FOR_PARTS").length,
+    };
+  }, [totalInterventions, search, searchDate]);
+
+  const isFilterMode = search.trim() !== "" || searchDate !== "";
+
+
   // useEffect(() => {
   //   if(!agenceId || !vehicles) {
   //     setInterventionsParAgence(0);
@@ -339,7 +384,7 @@ export function SectionCards({ user }: { user?: any }) {
               value: loading ? (
                 <Spinner className="size-4 text-white" />
               ) : (
-                nombreTotalInterventions
+                isFilterMode ? filteredStats.total : nombreTotalInterventions
               ),
               subtitle: "Interventions",
               icon: ClipboardList,
@@ -355,7 +400,8 @@ export function SectionCards({ user }: { user?: any }) {
               value: loading ? (
                 <Spinner className="size-4 text-white" />
               ) : (
-                nombreInterventionsEnCours
+                // nombreInterventionsEnCours
+                isFilterMode ? filteredStats.enCours : nombreInterventionsEnCours
               ),
               subtitle: "Actives",
               icon: Clock3,
@@ -371,7 +417,8 @@ export function SectionCards({ user }: { user?: any }) {
               value: loading ? (
                 <Spinner className="size-4 text-white" />
               ) : (
-                nombreInterventionsTerminees
+                // nombreInterventionsTerminees
+                isFilterMode ? filteredStats.terminees : nombreInterventionsTerminees
               ),
               subtitle: "Clôturées",
               icon: CheckCircle2,
@@ -387,7 +434,8 @@ export function SectionCards({ user }: { user?: any }) {
               value: AgenceIntloading ? (
                 <Spinner className="size-4 text-white" />
               ) : (
-                nombreInterventionsEnAttenteDePiece
+                // nombreInterventionsEnAttenteDePiece
+                isFilterMode ? filteredStats.attente : nombreInterventionsEnAttenteDePiece
               ),
               subtitle: "Attente de pièce",
               icon: CheckCircle2,
@@ -464,17 +512,50 @@ export function SectionCards({ user }: { user?: any }) {
           <div className="rounded-3xl bg-white shadow-xl border border-gray-200/70 overflow-hidden">
             {/* Header */}
             <div className="px-6 py-4 border-b bg-gradient-to-r from-gray-50 to-white">
-              <h2 className="text-lg font-semibold text-gray-900">
-                {selectedStat === "encours" && "Interventions en cours"}
-                {selectedStat === "terminees" && "Interventions terminées"}
-                {selectedStat === "attente" && "En attente de pièces"}
-                {selectedStat === "total" && "Toutes les interventions"}
-              </h2>
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    {selectedStat === "encours" && "Interventions en cours"}
+                    {selectedStat === "terminees" && "Interventions terminées"}
+                    {selectedStat === "attente" && "En attente de pièces"}
+                    {selectedStat === "total" && "Toutes les interventions"}
+                  </h2>
+
+                  <div className="flex items-center gap-3 flex-wrap">
+
+                    <input
+                      type="text"
+                      placeholder="Plaque, marque ou modèle..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className="w-72 rounded-lg border px-3 py-2"
+                    />
+
+                    <input
+                      type="date"
+                      value={searchDate}
+                      onChange={(e) => setSearchDate(e.target.value)}
+                      className="rounded-lg border px-3 py-2"
+                    />
+
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                          setSearch("");
+                          setSearchDate("");
+                      }}
+                    >
+                      Réinitialiser
+                    </Button>
+
+                  </div>
+
+              </div>
             </div>
 
             {/* Liste */}
             <div className="divide-y min-h-[420px] max-h-[420px] overflow-auto">
-              {displayedInterventions.length === 0 ? (
+              {filteredInterventions.length === 0 ? (
                 <div className="py-16 flex flex-col items-center justify-center text-center">
                   {/* Icône */}
                   <div
@@ -491,11 +572,19 @@ export function SectionCards({ user }: { user?: any }) {
 
                   {/* Description */}
                   <p className="mt-1 text-sm text-gray-500 max-w-sm">
-                    Il n’y a actuellement aucune intervention pour ce status.
+                    {
+                        filteredInterventions.length === 0 && (
+                            search ? (
+                                <span>Aucune intervention ne correspond à votre recherche.</span>
+                            ) : (
+                                <span>Aucune intervention disponible pour ce statut.</span>
+                            )
+                        )
+                    }
                   </p>
                 </div>
               ) : (
-                displayedInterventions.map((inv) => {
+                filteredInterventions.map((inv) => {
                   const status =
                     STATUS_UI_MAP[
                       inv.int_status as
@@ -558,9 +647,13 @@ export function SectionCards({ user }: { user?: any }) {
                         </span>
 
                         <div className="text-xs text-gray-400">
-                          {new Date(inv.int_updatedAt).toLocaleDateString(
-                            "fr-FR",
-                          )}
+                          {new Date(inv.int_updatedAt).toLocaleString("fr-FR", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
                         </div>
                         <button
                           className="flex items-center gap-1 text-blue-600 text-[12px] font-medium hover:underline"

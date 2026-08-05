@@ -135,6 +135,20 @@ export async function PATCH(request: NextRequest, context: Ctx) {
       );
     }
 
+    if (intervention.int_annulee) {
+      return NextResponse.json(
+        { error: "Intervention annulée : le statut ne peut plus être modifié" },
+        { status: 409 }
+      );
+    }
+
+    if (intervention.int_vehicle?.veh_absent) {
+      return NextResponse.json(
+        { error: "Véhicule absent : le statut ne peut plus être modifié" },
+        { status: 409 }
+      );
+    }
+
     if (!intervention.int_accordNumber) {
       return NextResponse.json(
         {

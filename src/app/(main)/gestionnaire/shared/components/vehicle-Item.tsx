@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
-import { DiamondPlus } from "lucide-react"
+import { useMemo, useState } from "react"
+import { DiamondPlus, CircleSlash2 } from "lucide-react"
 
 import { Vehicule } from "@/src/utils/types/vehicule"
 import { Client } from "@/src/utils/types/client"
@@ -61,6 +61,8 @@ export function VehicleItem({
 }: VehicleItemProps) {
   const [interventionModalOpen, setInterventionModalOpen] = useState(false)
   const { createIntervention, loading: submitting } = useInterventionApi()
+
+  const isAbsent = Boolean(vehicle?.veh_absent)
 
   // State local pour les interventions (refresh instantané)
   // const [localInterventions, setLocalInterventions] = useState<any[]>(
@@ -153,6 +155,16 @@ export function VehicleItem({
             <span className="text-gray-500">
               {vehicle.veh_brand?.bra_name} {vehicle.veh_model?.mod_name} · {vehicle.veh_year}
             </span>
+
+            {isAbsent && (
+              <span
+                title="Véhicule absent"
+                className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700"
+              >
+                <CircleSlash2 className="h-3.5 w-3.5" />
+                Absent
+              </span>
+            )}
           </div>
 
           <div className="mt-2 flex flex-wrap gap-3 text-sm text-gray-600">
@@ -198,8 +210,11 @@ export function VehicleItem({
 
           <Button
             className="px-4 py-2 rounded-lg shadow-sm hover:shadow transition ml-2"
+            disabled={isAbsent}
+            title={isAbsent ? "Véhicule absent : aucune intervention possible" : undefined}
             onClick={(e) => {
               e.stopPropagation()
+              if (isAbsent) return
               setInterventionModalOpen(true)
             }}
           >

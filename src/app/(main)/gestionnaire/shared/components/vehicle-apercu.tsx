@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
-import { Eye, PlusCircle, FileText, Pencil } from "lucide-react";
+import { Eye, PlusCircle, FileText, Pencil, CircleSlash2, CarFront } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/src/shared/components/ui/button";
 import { Modal } from "@/src/shared/components/modal";
 import { toUIStatus, getStatusMeta } from "@/src/utils/constants/intervention-status";
 import { canCreateDevis } from "@/src/utils/permissions";
+import { useManageApi } from "../useManage.api";
 
 import IntervDetailGes from "./Intervention";
 import { CreateDevisModal } from "./CreateDevisModal";
@@ -23,6 +25,9 @@ type VehiclePreviewProps = {
   agence: string;
   entreeDate: string;
   color: string;
+  vehicleId: string;
+  isAbsent?: boolean;
+  highlightAccord?: string;
   interventions: any[];
   enReparation?: number;
   termine?: number;
@@ -46,6 +51,9 @@ export function VehiclePreview({
   agence,
   entreeDate,
   color,
+  vehicleId,
+  isAbsent: isAbsentProp = false,
+  highlightAccord = "",
   interventions,
   onNewIntervention,
   reloadInterventionList,
@@ -56,6 +64,35 @@ export function VehiclePreview({
 
   const { data: session } = useSession();
   const role = session?.user?.role ?? null;
+
+  const { setVehicleAbsence } = useManageApi();
+  const canToggleAbsence = ["MANAGER", "MECHANIC", "ADMIN"].includes(role ?? "");
+
+  const [isAbsent, setIsAbsent] = useState<boolean>(isAbsentProp);
+  const [absentLoading, setAbsentLoading] = useState(false);
+
+  useEffect(() => {
+    setIsAbsent(isAbsentProp);
+  }, [isAbsentProp]);
+
+  const handleToggleAbsence = async () => {
+    if (!vehicleId || absentLoading) return;
+
+    const next = !isAbsent;
+    setAbsentLoading(true);
+    setIsAbsent(next); // optimistic
+
+    try {
+      await setVehicleAbsence(vehicleId, next);
+      toast.success(next ? "Véhicule marqué absent" : "Véhicule marqué présent");
+      reloadInterventionList?.();
+    } catch (err: any) {
+      setIsAbsent(!next); // rollback
+      toast.error(err?.message || "Échec de la mise à jour de l'absence");
+    } finally {
+      setAbsentLoading(false);
+    }
+  };
 
   const [filteredStatus, setFilteredStatus] = useState<"EN_COURS" | "TERMINEE">("EN_COURS");
   const [openDetailModal, setOpenDetailModal] = useState(false);
@@ -116,12 +153,15 @@ export function VehiclePreview({
   };
 
   const handleCreateDevis = (intervention: any) => {
+    if (isAbsent) return;
     setInterventionForDevis(intervention);
     setOpenDevisModal(true);
   };
 
   const handleEditIntervention = (intervention: any) => {
     if(toUIStatus(intervention?.int_status) === "TERMINEE") return;
+    if(intervention?.int_annulee) return;
+    if(isAbsent) return;
 
     setInterventionForEdit(intervention);
     setOpenEditModal(true);
@@ -137,21 +177,83 @@ export function VehiclePreview({
     [mappedInterventions]
   );
 
+  // Surlignage de l'intervention recherchée par numéro d'accord
+  const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [highlightId, setHighlightId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const accord = (highlightAccord ?? "").trim().toLowerCase();
+    if (!accord) {
+      setHighlightId(null);
+      return;
+    }
+
+    const match = mappedInterventions.find((i) =>
+      (i.int_accordNumber ?? "").toLowerCase().includes(accord)
+    );
+
+    if (!match) {
+      setHighlightId(null);
+      return;
+    }
+
+    // Bascule sur le bon onglet pour que l'intervention soit visible
+    setFilteredStatus(match.uiStatus === "TERMINEE" ? "TERMINEE" : "EN_COURS");
+    setHighlightId(match.int_id);
+  }, [highlightAccord, mappedInterventions]);
+
+  useEffect(() => {
+    if (!highlightId) return;
+    const el = itemRefs.current[highlightId];
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [highlightId, filteredInterventions]);
+
   return (
     <div className="rounded-xl border bg-gradient-to-r from-zinc-50 to-white p-5 shadow-sm flex flex-col gap-4">
       <div className="rounded-xl bg-gradient-to-r from-black to-gray-900 p-6 text-white shadow-lg relative">
-        {onEditVehicle && ["MANAGER", "ADMIN"].includes(role || "") && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="absolute top-4 right-4 text-white border border-white/20 hover:bg-white/10 hover:text-white"
-            onClick={onEditVehicle}
-          >
-            <Pencil size={14} className="mr-1" />
-            Modifier
-          </Button>
-        )}
+        <div className="absolute top-4 right-4 flex items-center gap-2">
+          {canToggleAbsence && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={absentLoading}
+              title={
+                isAbsent
+                  ? "Véhicule absent — cliquer pour marquer présent"
+                  : "Marquer le véhicule comme absent"
+              }
+              className={`border hover:text-white ${
+                isAbsent
+                  ? "border-red-300/40 bg-red-500/20 text-red-100 hover:bg-red-500/30"
+                  : "border-white/20 text-white hover:bg-white/10"
+              }`}
+              onClick={handleToggleAbsence}
+            >
+              {isAbsent ? (
+                <CarFront size={14} className="mr-1" />
+              ) : (
+                <CircleSlash2 size={14} className="mr-1" />
+              )}
+              {isAbsent ? "Marquer présent" : "Marquer absent"}
+            </Button>
+          )}
+
+          {onEditVehicle && ["MANAGER", "ADMIN"].includes(role || "") && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="text-white border border-white/20 hover:bg-white/10 hover:text-white"
+              onClick={onEditVehicle}
+            >
+              <Pencil size={14} className="mr-1" />
+              Modifier
+            </Button>
+          )}
+        </div>
         <h1 className="text-2xl font-bold mb-4">{licensePlate}</h1>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
           <div>
@@ -181,6 +283,13 @@ export function VehiclePreview({
         </div>
       </div>
 
+      {isAbsent && (
+        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+          <CircleSlash2 size={18} />
+          Véhicule absent : aucune action n’est possible sur ses interventions.
+        </div>
+      )}
+
       <div className="flex gap-3 mt-6">
         <Button variant={filteredStatus === "EN_COURS" ? "default" : "outline"} onClick={() => setFilteredStatus("EN_COURS")}>
           En cours ({countEnCours})
@@ -196,6 +305,7 @@ export function VehiclePreview({
           const hasDevis = Boolean(inv?.devis?.dev_id);
           const devisId = inv?.devis?.dev_id ?? null;
           const isTerminee = inv?.uiStatus === "TERMINEE";
+          const isAnnulee = Boolean(inv?.int_annulee);
 
           // Client/agence historiques avec fallback sur le véhicule courant
           const historicalClient = inv?.int_client?.cli_name ?? client;
@@ -204,8 +314,20 @@ export function VehiclePreview({
             (inv?.int_client?.cli_name && inv.int_client.cli_name !== client) ||
             (inv?.int_base?.bas_location && inv.int_base.bas_location !== agence);
 
+          const isHighlighted = highlightId === inv.int_id;
+
           return (
-            <div key={inv.int_id} className="rounded-xl border bg-white p-5 shadow-sm hover:shadow-md transition">
+            <div
+              key={inv.int_id}
+              ref={(el) => {
+                itemRefs.current[inv.int_id] = el;
+              }}
+              className={`rounded-xl border bg-white p-5 shadow-sm hover:shadow-md transition ${
+                isHighlighted
+                  ? "ring-2 ring-amber-400 border-amber-300 bg-amber-50"
+                  : ""
+              }`}
+            >
               <div className="flex flex-col-reverse lg:flex-row justify-between items-start gap-4">
                 <div>
                   <p className="font-semibold text-zinc-800">{inv?.int_workDescription ?? "—"}</p>
@@ -240,9 +362,15 @@ export function VehiclePreview({
                     </span>
                   )}
 
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${meta.bg} ${meta.color}`}>
-                    {meta.label}
-                  </span>
+                  {isAnnulee ? (
+                    <span className="px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-700">
+                      Annulée
+                    </span>
+                  ) : (
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${meta.bg} ${meta.color}`}>
+                      {meta.label}
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -256,7 +384,7 @@ export function VehiclePreview({
                     Voir tous les détails
                   </button>
                   
-                  {!isTerminee && (
+                  {!isTerminee && !isAnnulee && !isAbsent && (
                      <Button variant="outline" className="flex items-center gap-2" onClick={() => handleEditIntervention(inv)}>
                     <Pencil size={16} />
                     Modifier
@@ -264,9 +392,9 @@ export function VehiclePreview({
                   )
 
                   }
-                 
 
-                  {canCreateDevis(role) && (
+
+                  {canCreateDevis(role) && !isAnnulee && !isAbsent && (
                     <Button
                       variant="outline"
                       className="flex items-center gap-2"
@@ -300,7 +428,15 @@ export function VehiclePreview({
       </div>
 
       <div className="flex justify-center pt-2">
-        <Button className="flex items-center gap-2 w-full h-[50px]" onClick={onNewIntervention}>
+        <Button
+          className="flex items-center gap-2 w-full h-[50px]"
+          disabled={isAbsent}
+          title={isAbsent ? "Véhicule absent : aucune intervention possible" : undefined}
+          onClick={() => {
+            if (isAbsent) return;
+            onNewIntervention();
+          }}
+        >
           <PlusCircle size={18} />
           Nouvelle intervention
         </Button>

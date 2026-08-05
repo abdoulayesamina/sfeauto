@@ -32,10 +32,11 @@ export const successAlert = (title: string, text?: string) => {
   })
 }
 
-export const errorAlert = (title: string, text?: string) => {
+export const errorAlert = (title: string, text?: string, html?: string) => {
   MySwal.fire({
     title,
-    text,
+    // `html` prend le dessus sur `text` quand il est fourni (message enrichi)
+    ...(html ? { html } : { text }),
     icon: "error",
     confirmButtonText: "OK",
     customClass: {

@@ -159,6 +159,8 @@ model vehicle_veh {
   veh_brandId               String?
   veh_modelId               String?
   veh_kilometrage           String?
+  veh_absent                Boolean              @default(false)
+  veh_dateAbsence           DateTime?
   interventions             intervention_int[]   @relation("VehicleInterventions")
   devis                     te_devis_dev[]
   veh_base                  base_bas             @relation(fields: [veh_baseId], references: [bas_id], onDelete: Cascade)
@@ -172,6 +174,7 @@ model vehicle_veh {
   @@index([veh_clientId])
   @@index([veh_baseId])
   @@index([veh_handledById])
+  @@index([veh_absent])
   @@index([veh_brandId], map: "vehicle_veh_veh_brandId_fkey")
   @@index([veh_modelId], map: "vehicle_veh_veh_modelId_fkey")
 }
@@ -193,6 +196,8 @@ model intervention_int {
   int_handledById           String?
   int_kilometrage           String?
   int_supprimee             Boolean                 @default(false)
+  int_annulee               Boolean                 @default(false)
+  int_dateAnnulation        DateTime?
   int_baseId                String?
   int_clientId              String?
   changes                   changehistory_chg[]
@@ -210,6 +215,7 @@ model intervention_int {
   @@index([int_interventionConfirmed])
   @@index([int_status])
   @@index([int_supprimee])
+  @@index([int_annulee])
   @@index([int_clientId])
   @@index([int_baseId])
 }

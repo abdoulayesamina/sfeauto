@@ -81,11 +81,18 @@ export async function POST(request: NextRequest) {
 
     const vehicle = await prisma.vehicle_veh.findUnique({
       where: { veh_id: vehicleId },
-      select: { veh_id: true, veh_baseId: true, veh_clientId: true, veh_kilometrage: true },
+      select: { veh_id: true, veh_baseId: true, veh_clientId: true, veh_kilometrage: true, veh_absent: true },
     });
 
     if (!vehicle) {
       return NextResponse.json({ error: "Véhicule invalide" }, { status: 400 });
+    }
+
+    if (vehicle.veh_absent) {
+      return NextResponse.json(
+        { error: "Véhicule absent : aucune intervention possible" },
+        { status: 409 }
+      );
     }
 
     const currentKm = parseInt(vehicle.veh_kilometrage || "0", 10);

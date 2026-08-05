@@ -64,6 +64,9 @@ export const VehiculeSchema = z.object({
   veh_clientId: z.string().min(1, "Client obligatoire"),
   veh_baseId: z.string().min(1, "Agence obligatoire"),
 
+  veh_absent: z.boolean().optional(),
+  veh_dateAbsence: z.string().datetime().nullable().optional(),
+
   veh_entryDate: z.string().datetime().optional(),
   veh_exitDate: z.string().datetime().optional(),
 

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { errorAlert, successAlert } from "@/src/lib/alerts";
+import { formatAccordConflictHtml } from "@/src/utils/accordConflict";
 
 export type InterventionPatchPayload = Partial<{
   accordNumber: string | null;
@@ -31,7 +32,13 @@ export function useInterventionApi() {
 
       if (!res.ok) {
         const msg = data?.error ?? "Erreur lors de la mise à jour";
-        errorAlert("Erreur modification intervention", msg);
+
+        if (data?.code === "ACCORD_NUMBER_ALREADY_EXISTS" && data?.details) {
+          errorAlert(msg, undefined, formatAccordConflictHtml(data.details));
+        } else {
+          errorAlert("Erreur modification intervention", msg);
+        }
+
         throw new Error(msg);
       }
 
@@ -42,5 +49,29 @@ export function useInterventionApi() {
     }
   };
 
-  return { patchIntervention, loading };
+  const cancelIntervention = async (id: string) => {
+    setLoading(true);
+    try {
+      if (!id) throw new Error("ID intervention manquant");
+
+      const res = await fetch(`/api/interventions/${id}/cancel`, {
+        method: "POST",
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        const msg = data?.error ?? "Erreur lors de l'annulation";
+        return { ok: false as const, error: msg };
+      }
+
+      return { ok: true as const, data };
+    } catch (err: any) {
+      return { ok: false as const, error: err?.message ?? "Erreur réseau" };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { patchIntervention, cancelIntervention, loading };
 }

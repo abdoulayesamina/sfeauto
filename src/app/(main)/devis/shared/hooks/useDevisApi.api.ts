@@ -244,7 +244,8 @@ export function useDevisApi() {
     if (!res.ok) {
       const msg = data?.error ?? "Erreur validation devis";
       setError(msg);
-      return { ok: false as const, error: msg, data: null };
+      // On remonte `data` (code + details) pour permettre un message enrichi côté UI
+      return { ok: false as const, error: msg, data };
     }
 
     return { ok: true as const, error: null, data };

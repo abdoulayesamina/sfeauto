@@ -81,12 +81,52 @@ export async function POST(
         dev_accordNumber,
         dev_id: { not: dev_id },
       },
-      select: { dev_id: true },
+      select: {
+        dev_id: true,
+        dev_numdevis: true,
+        dev_datecreation: true,
+        dev_intervention: {
+          select: {
+            int_id: true,
+            int_status: true,
+            int_workDescription: true,
+          },
+        },
+        dev_vehicle: {
+          select: {
+            veh_licensePlate: true,
+            veh_year: true,
+            veh_brand: { select: { bra_name: true } },
+            veh_model: { select: { mod_name: true } },
+          },
+        },
+        dev_client: { select: { cli_name: true } },
+      },
     });
 
     if (exists) {
       return NextResponse.json(
-        { error: "Ce numéro d’accord est déjà utilisé" },
+        {
+          error: "Ce numéro d’accord est déjà utilisé",
+          code: "ACCORD_NUMBER_ALREADY_EXISTS",
+          details: {
+            accordNumber: dev_accordNumber,
+            conflictType: "devis",
+            devisNumber: exists.dev_numdevis,
+            interventionId: exists.dev_intervention?.int_id ?? null,
+            createdAt: exists.dev_datecreation,
+            status: exists.dev_intervention?.int_status ?? null,
+            workDescription: exists.dev_intervention?.int_workDescription ?? null,
+            vehicle: {
+              licensePlate: exists.dev_vehicle?.veh_licensePlate ?? null,
+              brand: exists.dev_vehicle?.veh_brand?.bra_name ?? null,
+              model: exists.dev_vehicle?.veh_model?.mod_name ?? null,
+              year: exists.dev_vehicle?.veh_year ?? null,
+              client: exists.dev_client?.cli_name ?? null,
+              base: null,
+            },
+          },
+        },
         { status: 409 }
       );
     }
