@@ -402,9 +402,9 @@ export default function GestionnairePage() {
 
   // const session = getSession();
   return (
-    <div className="h-full py-2 px-12 bg-zinc-50">
-      <div className="bg-white min-h-full rounded-lg py-1 px-4">
-        <h1 className="font-bold text-2xl">Page Gestionnaire</h1>
+    <div className="h-full py-1 px-3 sm:px-6 lg:px-12 bg-zinc-50">
+      <div className="bg-white min-h-full rounded-lg py-1 px-2 sm:px-4">
+        <h1 className="font-bold text-base sm:text-xl">Page Gestionnaire</h1>
 
         {/* Barre de recherche */}
         <div className="flex gap-2 items-center justify-center mt-1">
@@ -433,14 +433,16 @@ export default function GestionnairePage() {
         {!vehiculeNotFound ? (
           <>
             {/* Toggle tous / par agence */}
-            <div className="flex items-center gap-2 py-2">
+            <div className="flex items-center gap-2 py-1">
               <Button
+                size="sm"
                 variant={filterByAllVehicule ? "default" : "outline"}
                 onClick={() => setFilterByAllVehicule(true)}
               >
                 Tous les véhicules
               </Button>
               <Button
+                size="sm"
                 variant={!filterByAllVehicule ? "default" : "outline"}
                 onClick={() => setFilterByAllVehicule(false)}
               >

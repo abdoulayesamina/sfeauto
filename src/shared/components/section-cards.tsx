@@ -295,7 +295,7 @@ export function SectionCards({ user }: { user?: any }) {
 
   return (
     <div>
-      <div className="flex px-6 pt-6 gap-2 flex-wrap">
+      <div className="flex px-3 pt-3 sm:px-6 sm:pt-6 gap-2 flex-wrap">
         <div className="w-full max-w-xl">
           <Select
             open={open}
@@ -307,7 +307,7 @@ export function SectionCards({ user }: { user?: any }) {
               resetStats();
             }}
           >
-            <SelectTrigger className="h-12">
+            <SelectTrigger className="h-9 sm:h-12">
               <SelectValue placeholder={"Sélectionnez un client"} />
               {loading && <Spinner className="size-4" />}
             </SelectTrigger>
@@ -349,7 +349,7 @@ export function SectionCards({ user }: { user?: any }) {
             value={agenceId}
             onValueChange={(baseId) => setAgenceId(baseId)}
           >
-            <SelectTrigger className="h-12">
+            <SelectTrigger className="h-9 sm:h-12">
               <SelectValue placeholder={"Sélectionnez une agence"} />
               {loading && <Spinner className="size-4" />}
             </SelectTrigger>
@@ -379,7 +379,7 @@ export function SectionCards({ user }: { user?: any }) {
         )}
       </div> */}
       {
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 px-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4 px-3 sm:px-6">
           {[
             {
               key: "total",
@@ -464,33 +464,33 @@ export function SectionCards({ user }: { user?: any }) {
                   setDisplayedInterventions(interventionsEnAttenteDePiece);
               }}
               className={`cursor-pointer transform transition-all hover:-translate-y-1 hover:scale-[1.02]
-              @container/card group relative overflow-hidden rounded-3xl border border-gray-200/60
-              shadow-[0_12px_34px_rgba(0,0,0,0.08)]
-              hover:shadow-[0_18px_52px_rgba(0,0,0,0.10)] ${c.tone.bg}`}
+              @container/card group relative overflow-hidden rounded-xl sm:rounded-2xl border border-gray-200/60
+              shadow-[0_6px_18px_rgba(0,0,0,0.06)]
+              hover:shadow-[0_10px_28px_rgba(0,0,0,0.09)] ${c.tone.bg}`}
             >
               <div className="absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b from-black/0 via-black/0 to-black/0" />
               <div className="absolute inset-0 bg-gradient-to-t from-white/70 via-white/20 to-white/0" />
               <div className="absolute -right-12 -top-12 h-32 w-32 rounded-full bg-white/70 blur-2xl opacity-70 group-hover:opacity-90 transition-opacity" />
               <div className="absolute inset-0 ring-1 ring-inset ring-white/50" />
 
-              <CardHeader className="relative">
-                <div className="flex items-start justify-between gap-3">
+              <CardHeader className="relative p-2 sm:p-3">
+                <div className="flex items-center justify-between gap-2">
                   <div className="min-w-0">
-                    <div className="text-sm font-medium text-gray-900">
+                    <div className="text-[11px] sm:text-sm font-medium text-gray-900 truncate">
                       {c.title}
                     </div>
-                    <div className="text-xs text-gray-600 mt-0.5">
+                    <div className="hidden sm:block text-xs text-gray-600 mt-0.5 truncate">
                       {c.subtitle}
                     </div>
                   </div>
                   <div
-                    className={`grid place-items-center h-10 w-10 rounded-2xl ${c.tone.iconBg} ring-1`}
+                    className={`hidden sm:grid place-items-center h-7 w-7 lg:h-8 lg:w-8 rounded-lg lg:rounded-xl shrink-0 ${c.tone.iconBg} ring-1`}
                   >
-                    <c.icon className={`h-5 w-5 ${c.tone.accent}`} />
+                    <c.icon className={`h-3.5 w-3.5 lg:h-4 lg:w-4 ${c.tone.accent}`} />
                   </div>
                 </div>
 
-                <CardTitle className="mt-4 @[250px]/card:text-4xl text-3xl font-semibold tabular-nums tracking-tight text-gray-900">
+                <CardTitle className="mt-0.5 sm:mt-1 text-lg sm:text-xl lg:text-2xl font-semibold tabular-nums tracking-tight text-gray-900">
                   {loading || AgenceIntloading ? (
                     <span className="inline-flex items-center">
                       <Spinner className={`size-4 ${c.tone.accent}`} />
@@ -501,9 +501,9 @@ export function SectionCards({ user }: { user?: any }) {
                 </CardTitle>
               </CardHeader>
 
-              <CardFooter className="relative pt-0 py-4 ml-2">
-                <div className={`text-xs ${c.tone.accent}`}>
-                  {!clientId ? "Interventions globales du système" : ""}
+              <CardFooter className="relative pt-0 pb-2 sm:pb-3 px-2 sm:px-3">
+                <div className={`text-[9px] sm:text-[11px] leading-tight truncate w-full ${c.tone.accent}`}>
+                  {!clientId ? "Interventions globales" : ""}
                 </div>
               </CardFooter>
             </Card>

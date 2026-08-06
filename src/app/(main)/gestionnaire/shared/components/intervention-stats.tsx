@@ -4,7 +4,6 @@ import React from "react";
 import { ClipboardList, Clock3, CheckCircle2 } from "lucide-react";
 import {
   Card,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/src/shared/components/ui/card";
@@ -85,7 +84,7 @@ export function InterventionStats({
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mt-2">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mt-1 sm:mt-2">
       {cards.map((c) => {
         const isActive =
           c.statut === undefined
@@ -98,9 +97,9 @@ export function InterventionStats({
           onClick={() =>
             onStatutClick?.(isActive ? undefined : c.statut)
           }
-          className={`@container/card group relative overflow-hidden rounded-3xl border
-          shadow-[0_12px_34px_rgba(0,0,0,0.08)]
-          hover:shadow-[0_18px_52px_rgba(0,0,0,0.10)] transition-all cursor-pointer ${c.tone.bg} ${
+          className={`@container/card group relative overflow-hidden rounded-xl sm:rounded-2xl border
+          shadow-[0_6px_18px_rgba(0,0,0,0.06)]
+          hover:shadow-[0_10px_28px_rgba(0,0,0,0.09)] transition-all cursor-pointer ${c.tone.bg} ${
             isActive
               ? "border-gray-900/70 ring-2 ring-gray-900/20"
               : "border-gray-200/60"
@@ -111,24 +110,21 @@ export function InterventionStats({
           <div className="absolute -right-12 -top-12 h-32 w-32 rounded-full bg-white/70 blur-2xl opacity-70 group-hover:opacity-90 transition-opacity" />
           <div className="absolute inset-0 ring-1 ring-inset ring-white/50" />
 
-          <CardHeader className="relative">
-            <div className="flex items-start justify-between gap-3">
+          <CardHeader className="relative p-2 sm:p-3">
+            <div className="flex items-center justify-between gap-2">
               <div className="min-w-0">
-                <div className="text-sm font-medium text-gray-900">
+                <div className="text-[11px] sm:text-sm font-medium text-gray-900 truncate">
                   {c.title}
-                </div>
-                <div className="text-xs text-gray-600 mt-0.5">
-                  {c.subtitle}
                 </div>
               </div>
               <div
-                className={`grid place-items-center h-10 w-10 rounded-2xl ${c.tone.iconBg} ring-1`}
+                className={`hidden sm:grid place-items-center h-8 w-8 rounded-xl shrink-0 ${c.tone.iconBg} ring-1`}
               >
-                <c.icon className={`h-5 w-5 ${c.tone.accent}`} />
+                <c.icon className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${c.tone.accent}`} />
               </div>
             </div>
 
-            <CardTitle className="mt-4 @[250px]/card:text-4xl text-3xl font-semibold tabular-nums tracking-tight text-gray-900">
+            <CardTitle className="mt-0.5 sm:mt-1 text-lg sm:text-2xl font-semibold tabular-nums tracking-tight text-gray-900">
               {loading ? (
                 <span className="inline-flex items-center">
                   <Spinner className={`size-4 ${c.tone.accent}`} />
@@ -138,8 +134,6 @@ export function InterventionStats({
               )}
             </CardTitle>
           </CardHeader>
-
-          <CardFooter className="relative pt-0" />
         </Card>
         );
       })}
