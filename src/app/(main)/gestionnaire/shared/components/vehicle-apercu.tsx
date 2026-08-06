@@ -212,95 +212,109 @@ export function VehiclePreview({
   }, [highlightId, filteredInterventions]);
 
   return (
-    <div className="rounded-xl border bg-gradient-to-r from-zinc-50 to-white p-5 shadow-sm flex flex-col gap-4">
-      <div className="rounded-xl bg-gradient-to-r from-black to-gray-900 p-6 text-white shadow-lg relative">
-        <div className="absolute top-4 right-4 flex items-center gap-2">
-          {canToggleAbsence && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled={absentLoading}
-              title={
-                isAbsent
-                  ? "Véhicule absent — cliquer pour marquer présent"
-                  : "Marquer le véhicule comme absent"
-              }
-              className={`border hover:text-white ${
-                isAbsent
-                  ? "border-red-300/40 bg-red-500/20 text-red-100 hover:bg-red-500/30"
-                  : "border-white/20 text-white hover:bg-white/10"
-              }`}
-              onClick={handleToggleAbsence}
-            >
-              {isAbsent ? (
-                <CarFront size={14} className="mr-1" />
-              ) : (
-                <CircleSlash2 size={14} className="mr-1" />
-              )}
-              {isAbsent ? "Marquer présent" : "Marquer absent"}
-            </Button>
-          )}
+    <div className="rounded-lg sm:rounded-xl border bg-gradient-to-r from-zinc-50 to-white p-3 sm:p-4 lg:p-5 shadow-sm flex flex-col gap-3 sm:gap-4">
+      <div className="rounded-lg sm:rounded-xl bg-gradient-to-r from-black to-gray-900 p-3 sm:p-5 lg:p-6 text-white shadow-lg">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-3">
+          <h1 className="text-lg sm:text-xl lg:text-2xl font-bold order-2 sm:order-1">{licensePlate}</h1>
 
-          {onEditVehicle && ["MANAGER", "ADMIN"].includes(role || "") && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="text-white border border-white/20 hover:bg-white/10 hover:text-white"
-              onClick={onEditVehicle}
-            >
-              <Pencil size={14} className="mr-1" />
-              Modifier
-            </Button>
-          )}
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap order-1 sm:order-2">
+            {canToggleAbsence && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={absentLoading}
+                title={
+                  isAbsent
+                    ? "Véhicule absent — cliquer pour marquer présent"
+                    : "Marquer le véhicule comme absent"
+                }
+                className={`border hover:text-white text-xs sm:text-sm h-auto px-2 py-1 sm:px-3 sm:py-1.5 ${
+                  isAbsent
+                    ? "border-red-300/40 bg-red-500/20 text-red-100 hover:bg-red-500/30"
+                    : "border-white/20 text-white hover:bg-white/10"
+                }`}
+                onClick={handleToggleAbsence}
+              >
+                {isAbsent ? (
+                  <CarFront size={14} className="mr-1" />
+                ) : (
+                  <CircleSlash2 size={14} className="mr-1" />
+                )}
+                {isAbsent ? "Marquer présent" : "Marquer absent"}
+              </Button>
+            )}
+
+            {onEditVehicle && ["MANAGER", "ADMIN"].includes(role || "") && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="text-white border border-white/20 hover:bg-white/10 hover:text-white text-xs sm:text-sm h-auto px-2 py-1 sm:px-3 sm:py-1.5"
+                onClick={onEditVehicle}
+              >
+                <Pencil size={14} className="mr-1" />
+                Modifier
+              </Button>
+            )}
+          </div>
         </div>
-        <h1 className="text-2xl font-bold mb-4">{licensePlate}</h1>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-2.5 sm:gap-4 text-xs sm:text-sm mt-2.5 sm:mt-4">
           <div>
             <p className="text-white/70">Véhicule</p>
-            <p className="font-semibold">
+            <p className="font-semibold truncate">
               {brand} {model}
             </p>
           </div>
           <div>
             <p className="text-white/70">Année & Couleur</p>
-            <p className="font-semibold">
+            <p className="font-semibold truncate">
               {year} • {color}
             </p>
           </div>
           <div>
             <p className="text-white/70">Client</p>
-            <p className="font-semibold">{client}</p>
+            <p className="font-semibold truncate">{client}</p>
           </div>
           <div>
             <p className="text-white/70">Base</p>
-            <p className="font-semibold">{agence}</p>
+            <p className="font-semibold truncate">{agence}</p>
           </div>
           <div>
             <p className="text-white/70">Date d’entrée</p>
-            <p className="font-semibold">{entreeDate ? new Date(entreeDate).toLocaleDateString() : "—"}</p>
+            <p className="font-semibold truncate">{entreeDate ? new Date(entreeDate).toLocaleDateString() : "—"}</p>
           </div>
         </div>
       </div>
 
       {isAbsent && (
-        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-          <CircleSlash2 size={18} />
+        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 sm:px-4 sm:py-3 text-xs sm:text-sm font-medium text-red-700">
+          <CircleSlash2 size={18} className="shrink-0" />
           Véhicule absent : aucune action n’est possible sur ses interventions.
         </div>
       )}
 
-      <div className="flex gap-3 mt-6">
-        <Button variant={filteredStatus === "EN_COURS" ? "default" : "outline"} onClick={() => setFilteredStatus("EN_COURS")}>
+      <div className="flex gap-2 sm:gap-3 mt-2 sm:mt-6">
+        <Button
+          size="sm"
+          className="text-xs sm:text-sm h-auto px-2.5 py-1.5 sm:px-4 sm:py-2"
+          variant={filteredStatus === "EN_COURS" ? "default" : "outline"}
+          onClick={() => setFilteredStatus("EN_COURS")}
+        >
           En cours ({countEnCours})
         </Button>
-        <Button variant={filteredStatus === "TERMINEE" ? "default" : "outline"} onClick={() => setFilteredStatus("TERMINEE")}>
+        <Button
+          size="sm"
+          className="text-xs sm:text-sm h-auto px-2.5 py-1.5 sm:px-4 sm:py-2"
+          variant={filteredStatus === "TERMINEE" ? "default" : "outline"}
+          onClick={() => setFilteredStatus("TERMINEE")}
+        >
           Terminées ({countTerminee})
         </Button>
       </div>
 
-      <div className="mt-6 space-y-4 p-2 min-h-[350px] max-h-[350px] overflow-auto">
+      <div className="mt-2 sm:mt-6 space-y-2.5 sm:space-y-4 p-1 sm:p-2 min-h-[260px] max-h-[260px] sm:min-h-[350px] sm:max-h-[350px] overflow-auto">
         {filteredInterventions.map((inv) => {
           const meta = getStatusMeta(inv?.uiStatus) ?? DEFAULT_META;
           const hasDevis = Boolean(inv?.devis?.dev_id);
@@ -325,16 +339,16 @@ export function VehiclePreview({
                 itemRefs.current[inv.int_id] = el;
               }}
               title={ageMeta?.title}
-              className={`rounded-xl border bg-white p-5 shadow-sm hover:shadow-md transition ${
+              className={`rounded-lg sm:rounded-xl border bg-white p-3 sm:p-4 lg:p-5 shadow-sm hover:shadow-md transition ${
                 isHighlighted
                   ? "ring-2 ring-amber-400 border-amber-300 bg-amber-50"
                   : ""
               } ${ageMeta?.className ?? ""}`}
             >
-              <div className="flex flex-col-reverse lg:flex-row justify-between items-start gap-4">
+              <div className="flex flex-col-reverse lg:flex-row justify-between items-start gap-2 sm:gap-4">
                 <div>
-                  <p className="font-semibold text-zinc-800">{inv?.int_workDescription ?? "—"}</p>
-                  <div className="flex flex-wrap gap-4 mt-2 text-sm text-zinc-500">
+                  <p className="font-semibold text-sm sm:text-base text-zinc-800 max-w-2xl">{inv?.int_workDescription ?? "—"}</p>
+                  <div className="flex flex-wrap gap-2 sm:gap-4 mt-1.5 sm:mt-2 text-xs sm:text-sm text-zinc-500">
                     <span>
                       <strong>N° Accord :</strong> {inv?.int_accordNumber ?? "—"}
                     </span>
@@ -342,7 +356,7 @@ export function VehiclePreview({
                       Confirmé le : {inv?.int_dateOfConfirmation ? new Date(inv.int_dateOfConfirmation).toLocaleDateString() : "—"}
                     </span>
                   </div>
-                  <div className="flex flex-wrap gap-3 mt-2 text-xs text-zinc-400">
+                  <div className="flex flex-wrap gap-2 sm:gap-3 mt-1.5 sm:mt-2 text-[11px] sm:text-xs text-zinc-400">
                     <span>
                       <strong>Client :</strong> {historicalClient}
                       {isHistorical && inv?.int_client?.cli_name && inv.int_client.cli_name !== client && (
@@ -358,54 +372,57 @@ export function VehiclePreview({
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-2 w-full lg:w-auto flex-wrap">
+                <div className="flex items-center justify-end gap-1.5 sm:gap-2 w-full lg:w-auto flex-wrap">
                   {hasDevis && (
-                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
+                    <span className="px-2 py-0.5 sm:px-3 sm:py-1 rounded-full text-[10px] sm:text-xs font-semibold bg-emerald-100 text-emerald-700">
                       Devis créé
                     </span>
                   )}
 
                   {isAnnulee ? (
-                    <span className="px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-700">
+                    <span className="px-2 py-0.5 sm:px-3 sm:py-1 rounded-full text-[10px] sm:text-sm font-medium bg-red-100 text-red-700">
                       Annulée
                     </span>
                   ) : (
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${meta.bg} ${meta.color}`}>
+                    <span className={`px-2 py-0.5 sm:px-3 sm:py-1 rounded-full text-[10px] sm:text-sm font-medium ${meta.bg} ${meta.color}`}>
                       {meta.label}
                     </span>
                   )}
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center justify-between gap-3 mt-4">
-                <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 mt-2.5 sm:mt-4">
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-3">
                   <button
-                    className="flex items-center gap-2 text-blue-600 text-sm font-medium hover:underline"
+                    className="flex items-center gap-1.5 sm:gap-2 text-blue-600 text-xs sm:text-sm font-medium hover:underline"
                     onClick={() => handleViewDetail(inv)}
                   >
-                    <Eye size={16} />
+                    <Eye size={14} />
                     Voir tous les détails
                   </button>
-                  
+
                   {!isTerminee && !isAnnulee && !isAbsent && (
-                     <Button variant="outline" className="flex items-center gap-2" onClick={() => handleEditIntervention(inv)}>
-                    <Pencil size={16} />
-                    Modifier
-                  </Button>
-                  )
-
-                  }
-
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm h-auto px-2.5 py-1 sm:px-3 sm:py-1.5"
+                      onClick={() => handleEditIntervention(inv)}
+                    >
+                      <Pencil size={14} />
+                      Modifier
+                    </Button>
+                  )}
 
                   {canCreateDevis(role) && !isAnnulee && !isAbsent && (
                     <Button
+                      size="sm"
                       variant="outline"
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm h-auto px-2.5 py-1 sm:px-3 sm:py-1.5"
                       disabled={hasDevis}
                       title={hasDevis ? "Un devis existe déjà pour cette intervention" : "Créer un devis"}
                       onClick={() => handleCreateDevis(inv)}
                     >
-                      <FileText size={16} />
+                      <FileText size={14} />
                       {hasDevis ? "Devis existant" : "Créer devis"}
                     </Button>
                   )}
@@ -413,14 +430,15 @@ export function VehiclePreview({
 
                 {hasDevis && (
                   <Button
+                    size="sm"
                     variant="outline"
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm h-auto px-2.5 py-1 sm:px-3 sm:py-1.5"
                     onClick={() => {
                       setOpenApercu(true);
                       setTargetDevisIdForApercu(devisId);
                     }}
                   >
-                    <Eye size={16} />
+                    <Eye size={14} />
                     Aperçu du devis
                   </Button>
                 )}
@@ -430,9 +448,9 @@ export function VehiclePreview({
         })}
       </div>
 
-      <div className="flex justify-center pt-2">
+      <div className="flex justify-center pt-1 sm:pt-2">
         <Button
-          className="flex items-center gap-2 w-full h-[50px]"
+          className="flex items-center gap-2 w-full h-[42px] sm:h-[50px] text-sm sm:text-base"
           disabled={isAbsent}
           title={isAbsent ? "Véhicule absent : aucune intervention possible" : undefined}
           onClick={() => {

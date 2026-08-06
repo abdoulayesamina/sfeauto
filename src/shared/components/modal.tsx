@@ -39,9 +39,9 @@ export function Modal({ open, modalTitle, modalDescription, children, onClose }:
                 onClick={onClose}
             />
 
-            <div className="z-[1001] h-[100%] flex items-center justify-center w-full p-10">
+            <div className="z-[1001] h-[100%] flex items-center justify-center w-full p-2 sm:p-6 lg:p-10">
                 <div
-                    className="bg-white rounded-xl shadow-xl px-6 pb-6 max-h-[95%] overflow-auto md:min-w-[600px] min-w-full"
+                    className="bg-white rounded-xl shadow-xl px-3 pb-3 sm:px-6 sm:pb-6 max-h-[95%] overflow-auto md:min-w-[600px] w-full md:w-auto"
                     onClick={(e) => e.stopPropagation()}
                 >
                     <div className="flex justify-end pb-1">
@@ -53,9 +53,9 @@ export function Modal({ open, modalTitle, modalDescription, children, onClose }:
                             <X className="h-4 w-4" />
                         </Button>
                     </div>
-                    <div className="p-2">
-                        <h1 className="text-xl font-bold">{modalTitle}</h1>
-                        <span className="text-sm text-gray-500 "> {modalDescription}</span>
+                    <div className="p-1 sm:p-2">
+                        <h1 className="text-base sm:text-xl font-bold">{modalTitle}</h1>
+                        <span className="text-xs sm:text-sm text-gray-500 "> {modalDescription}</span>
                     </div>
                     <div >
                         {children}

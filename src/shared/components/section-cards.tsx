@@ -511,37 +511,38 @@ export function SectionCards({ user }: { user?: any }) {
         </div>
       }
       {selectedStat && (
-        <div className="mt-8 px-6">
-          <div className="rounded-3xl bg-white shadow-xl border border-gray-200/70 overflow-hidden">
+        <div className="mt-4 sm:mt-6 lg:mt-8 px-3 sm:px-6">
+          <div className="rounded-xl sm:rounded-2xl lg:rounded-3xl bg-white shadow-xl border border-gray-200/70 overflow-hidden">
             {/* Header */}
-            <div className="px-6 py-4 border-b bg-gradient-to-r from-gray-50 to-white">
-              <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="px-3 py-2.5 sm:px-6 sm:py-4 border-b bg-gradient-to-r from-gray-50 to-white">
+              <div className="flex items-center justify-between gap-2 sm:gap-4 flex-wrap">
 
-                  <h2 className="text-lg font-semibold text-gray-900">
+                  <h2 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900">
                     {selectedStat === "encours" && "Interventions en cours"}
                     {selectedStat === "terminees" && "Interventions terminées"}
                     {selectedStat === "attente" && "En attente de pièces"}
                     {selectedStat === "total" && "Toutes les interventions"}
                   </h2>
 
-                  <div className="flex items-center gap-3 flex-wrap">
+                  <div className="flex items-center gap-1.5 sm:gap-3 flex-wrap">
 
                     <input
                       type="text"
                       placeholder="Plaque, marque ou modèle..."
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
-                      className="w-72 rounded-lg border px-3 py-2"
+                      className="w-full sm:w-72 rounded-lg border px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm"
                     />
 
                     <input
                       type="date"
                       value={searchDate}
                       onChange={(e) => setSearchDate(e.target.value)}
-                      className="rounded-lg border px-3 py-2"
+                      className="rounded-lg border px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm"
                     />
 
                     <Button
+                      size="sm"
                       variant="outline"
                       onClick={() => {
                         setSearch("");
@@ -552,7 +553,7 @@ export function SectionCards({ user }: { user?: any }) {
                           ? "Cliquez ici pour supprimer tous les filtres (recherche et/ou date)."
                           : "Aucun filtre actif."
                       }
-                      className={`transition-all duration-800 ${
+                      className={`text-xs sm:text-sm transition-all duration-800 ${
                         isFilterMode
                           ? "border-black text-black animate-pulse hover:bg-black hover:text-white"
                           : ""
@@ -566,24 +567,24 @@ export function SectionCards({ user }: { user?: any }) {
             </div>
 
             {/* Liste */}
-            <div className="divide-y min-h-[420px] max-h-[420px] overflow-auto">
+            <div className="divide-y min-h-[300px] max-h-[300px] sm:min-h-[420px] sm:max-h-[420px] overflow-auto">
               {filteredInterventions.length === 0 ? (
-                <div className="py-16 flex flex-col items-center justify-center text-center">
+                <div className="py-8 sm:py-12 lg:py-16 flex flex-col items-center justify-center text-center">
                   {/* Icône */}
                   <div
-                    className="h-16 w-16 rounded-2xl bg-gradient-to-br 
+                    className="h-12 w-12 sm:h-16 sm:w-16 rounded-xl sm:rounded-2xl bg-gradient-to-br
                                     from-gray-100 to-gray-200 flex items-center justify-center shadow-sm"
                   >
                     <SearchX />
                   </div>
 
                   {/* Titre */}
-                  <h3 className="mt-4 text-lg font-semibold text-gray-900">
+                  <h3 className="mt-3 sm:mt-4 text-sm sm:text-lg font-semibold text-gray-900">
                     Aucune intervention
                   </h3>
 
                   {/* Description */}
-                  <p className="mt-1 text-sm text-gray-500 max-w-sm">
+                  <p className="mt-1 text-xs sm:text-sm text-gray-500 max-w-sm">
                     {
                         filteredInterventions.length === 0 && (
                             search ? (
@@ -614,56 +615,56 @@ export function SectionCards({ user }: { user?: any }) {
                     <div
                       key={inv.int_id}
                       title={ageMeta?.title}
-                      className={`group p-5 flex flex-col-reverse lg:flex-row lg:items-center gap-5 hover:bg-gray-50 transition rounded-2xl ${ageMeta?.className ?? ""}`}
+                      className={`group p-2.5 sm:p-3.5 lg:p-5 flex flex-col-reverse lg:flex-row lg:items-center gap-2.5 sm:gap-3.5 lg:gap-5 hover:bg-gray-50 transition rounded-lg sm:rounded-xl lg:rounded-2xl ${ageMeta?.className ?? ""}`}
                     >
-                      <div className="flex items-center gap-5 flex-1">
+                      <div className="flex items-center gap-2.5 sm:gap-3.5 lg:gap-5 flex-1">
                         <div
-                          className="h-14 w-14 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 
-                                          flex items-center justify-center text-sm font-semibold text-gray-700 shadow-sm"
+                          className="h-9 w-9 sm:h-11 sm:w-11 lg:h-14 lg:w-14 rounded-lg sm:rounded-xl lg:rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200
+                                          flex items-center justify-center text-xs sm:text-sm font-semibold text-gray-700 shadow-sm shrink-0"
                         >
                           {inv.int_vehicle?.veh_brand?.bra_name[0] ?? ""}
                           {inv.int_vehicle?.veh_model?.mod_name[0] ?? ""}
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between flex-wrap lg:justify-start gap-3">
-                            <div className="font-semibold text-gray-900 truncate">
+                          <div className="flex items-center justify-between flex-wrap lg:justify-start gap-1.5 sm:gap-3">
+                            <div className="text-xs sm:text-sm lg:text-base font-semibold text-gray-900 truncate">
                               {inv.int_vehicle?.veh_brand?.bra_name ?? ""}{" "}
                               {inv.int_vehicle?.veh_model?.mod_name ?? ""}
                             </div>
-                            <span className="flex items-center gap-3">
-                              <span className="text-xs bg-gray-100 px-2 py-0.5 rounded-md text-gray-600">
+                            <span className="flex items-center gap-1.5 sm:gap-3">
+                              <span className="text-[10px] sm:text-xs bg-gray-100 px-1.5 py-0.5 sm:px-2 rounded-md text-gray-600">
                                 {inv.int_vehicle?.veh_year ?? ""}
                               </span>
 
-                              <span className="text-xs bg-slate-100 px-2 py-0.5 rounded-md text-gray-600">
+                              <span className="text-[10px] sm:text-xs bg-slate-100 px-1.5 py-0.5 sm:px-2 rounded-md text-gray-600">
                                 {inv.int_vehicle?.veh_color ?? ""}
                               </span>
                             </span>
                           </div>
 
-                          <div className="text-sm text-gray-600 mt-1">
+                          <div className="text-[11px] sm:text-sm text-gray-600 mt-0.5 sm:mt-1">
                             Plaque :{" "}
                             <span className="font-medium text-gray-800">
                               {inv.int_vehicle?.veh_licensePlate ?? ""}
                             </span>
                           </div>
 
-                          <div className="text-sm mt-1 text-gray-500 truncate lg:max-w-[300px]">
+                          <div className="text-[11px] sm:text-sm mt-0.5 sm:mt-1 text-gray-500 truncate lg:max-w-[300px]">
                             {inv.int_workDescription ?? ""}
                           </div>
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-start flex-row lg:items-end gap-2">
+                      <div className="flex items-center justify-start flex-row lg:items-end gap-1.5 sm:gap-2">
                         <span
                           className={`${statusMeta.bg} ${statusMeta.color}
-                            text-xs font-medium px-3 py-1 rounded-full`}
+                            text-[10px] sm:text-xs font-medium px-2 py-0.5 sm:px-3 sm:py-1 rounded-full`}
                         >
                           {statusMeta.label}
                         </span>
 
-                        <div className="text-xs text-gray-400">
+                        <div className="text-[10px] sm:text-xs text-gray-400">
                           {new Date(inv.int_updatedAt).toLocaleString("fr-FR", {
                             day: "2-digit",
                             month: "2-digit",
@@ -673,7 +674,7 @@ export function SectionCards({ user }: { user?: any }) {
                           })}
                         </div>
                         <button
-                          className="flex items-center gap-1 text-blue-600 text-[12px] font-medium hover:underline"
+                          className="flex items-center gap-1 text-blue-600 text-[10px] sm:text-[12px] font-medium hover:underline"
                           onClick={() => handleViewDetail(inv)}
                         >
                           <Eye size={12} />
