@@ -33,9 +33,12 @@ import { Modal } from "@/src/shared/components/modal";
 import { Spinner } from "@/src/shared/components/spinner";
 import { errorAlert, confirmAlert } from "@/src/lib/alerts";
 import { toast } from "sonner";
+import { getInterventionAgeMeta } from "@/src/utils/constants/intervention-age";
+import { computeUIStatus } from "@/src/utils/constants/intervention-status";
 
 export const statusStyles: Record<string, string> = {
   EN_ATTENTE_ACCORD: "bg-purple-100 text-purple-700",
+  REFUSE: "bg-red-100 text-red-700",
   EN_COURS: "bg-blue-100 text-blue-700",
   ATTENTE_PIECES: "bg-orange-100 text-orange-700",
   TERMINEE: "bg-green-100 text-green-700",
@@ -320,14 +323,18 @@ export default function MecanicienPage() {
           )}
           {!loading &&
             filteredInterventions.map((inv) => {
-              const uiStatus = !inv.accordNumber
-                ? "EN_ATTENTE_ACCORD"
-                : STATUS_UI_MAP[inv.status] ?? "EN_COURS";
+              const uiStatus = computeUIStatus({
+                int_status: inv.status,
+                int_accordNumber: inv.accordNumber,
+                int_annulee: inv.annulee,
+              });
+              const ageMeta = getInterventionAgeMeta(inv.status, inv.createdAt);
 
               return (
                 <div
                   key={inv.id}
-                  className="border rounded-xl p-5 flex flex-col gap-4 lg:flex-row lg:items-center hover:shadow-md transition"
+                  title={ageMeta?.title}
+                  className={`border rounded-xl p-5 flex flex-col gap-4 lg:flex-row lg:items-center hover:shadow-md transition ${ageMeta?.className ?? ""}`}
                 >
                   <div className="flex items-start gap-3 flex-1">
                     {/* <Car className="text-gray-400 mt-1" /> */}
@@ -408,9 +415,7 @@ export default function MecanicienPage() {
                     <SelectContent>
                       <SelectItem value="EN_ATTENTE_ACCORD">En attente d'accord</SelectItem>
                       <SelectItem value="EN_COURS">En cours</SelectItem>
-                      <SelectItem value="ATTENTE_PIECES">
-                        Attente pièces
-                      </SelectItem>
+                      <SelectItem value="ATTENTE_PIECES">Attente pièces</SelectItem>
                       <SelectItem value="TERMINEE">Terminée</SelectItem>
                     </SelectContent>
                   </Select>

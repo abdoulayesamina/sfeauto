@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { logError } from "@/src/lib/logger";
 import { randomUUID } from "crypto";
 import { getContainerClient, getSasUrlForBlob } from "@/src/lib/azureBlob";
+import { notifyAdmins } from "@/src/lib/notifications";
 
 export const runtime = "nodejs";
 
@@ -81,7 +82,7 @@ export async function POST(request: NextRequest) {
 
     const vehicle = await prisma.vehicle_veh.findUnique({
       where: { veh_id: vehicleId },
-      select: { veh_id: true, veh_baseId: true, veh_clientId: true, veh_kilometrage: true, veh_absent: true },
+      select: { veh_id: true, veh_baseId: true, veh_clientId: true, veh_kilometrage: true, veh_absent: true, veh_licensePlate: true },
     });
 
     if (!vehicle) {
@@ -237,6 +238,14 @@ export async function POST(request: NextRequest) {
         }
 
         return { intervention, photos: createdPhotos };
+      });
+
+      await notifyAdmins({
+        type: "INTERVENTION_CREATED",
+        title: "Nouvelle intervention",
+        message: `Nouvelle intervention pour le véhicule ${vehicle.veh_licensePlate}.`,
+        interventionId: result.intervention.int_id,
+        excludeUserId: session.user.id ?? null,
       });
 
       return NextResponse.json(

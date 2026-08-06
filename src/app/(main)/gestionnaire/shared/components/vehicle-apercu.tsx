@@ -7,7 +7,8 @@ import { toast } from "sonner";
 
 import { Button } from "@/src/shared/components/ui/button";
 import { Modal } from "@/src/shared/components/modal";
-import { toUIStatus, getStatusMeta } from "@/src/utils/constants/intervention-status";
+import { toUIStatus, getStatusMeta, computeUIStatus } from "@/src/utils/constants/intervention-status";
+import { getInterventionAgeMeta } from "@/src/utils/constants/intervention-age";
 import { canCreateDevis } from "@/src/utils/permissions";
 import { useManageApi } from "../useManage.api";
 
@@ -115,7 +116,7 @@ export function VehiclePreview({
   const mappedInterventions = useMemo(() => {
     return (localInterventions ?? []).map((inv) => ({
       ...inv,
-      uiStatus: toUIStatus(inv?.int_status),
+      uiStatus: computeUIStatus(inv),
     }));
   }, [localInterventions]);
 
@@ -159,7 +160,7 @@ export function VehiclePreview({
   };
 
   const handleEditIntervention = (intervention: any) => {
-    if(toUIStatus(intervention?.int_status) === "TERMINEE") return;
+    if(toUIStatus(intervention?.int_status, intervention?.int_accordNumber) === "TERMINEE") return;
     if(intervention?.int_annulee) return;
     if(isAbsent) return;
 
@@ -168,7 +169,7 @@ export function VehiclePreview({
   };
 
   const countEnCours = useMemo(
-    () => (mappedInterventions ?? []).filter((i) => i.uiStatus !== "TERMINEE").length,
+    () => (mappedInterventions ?? []).filter((i) => !i.int_annulee && i.uiStatus !== "TERMINEE").length,
     [mappedInterventions]
   );
 
@@ -315,6 +316,7 @@ export function VehiclePreview({
             (inv?.int_base?.bas_location && inv.int_base.bas_location !== agence);
 
           const isHighlighted = highlightId === inv.int_id;
+          const ageMeta = getInterventionAgeMeta(inv?.int_status, inv?.int_createdAt);
 
           return (
             <div
@@ -322,11 +324,12 @@ export function VehiclePreview({
               ref={(el) => {
                 itemRefs.current[inv.int_id] = el;
               }}
+              title={ageMeta?.title}
               className={`rounded-xl border bg-white p-5 shadow-sm hover:shadow-md transition ${
                 isHighlighted
                   ? "ring-2 ring-amber-400 border-amber-300 bg-amber-50"
                   : ""
-              }`}
+              } ${ageMeta?.className ?? ""}`}
             >
               <div className="flex flex-col-reverse lg:flex-row justify-between items-start gap-4">
                 <div>
@@ -362,15 +365,9 @@ export function VehiclePreview({
                     </span>
                   )}
 
-                  {isAnnulee ? (
-                    <span className="px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-700">
-                      Annulée
-                    </span>
-                  ) : (
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${meta.bg} ${meta.color}`}>
-                      {meta.label}
-                    </span>
-                  )}
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${meta.bg} ${meta.color}`}>
+                    {meta.label}
+                  </span>
                 </div>
               </div>
 

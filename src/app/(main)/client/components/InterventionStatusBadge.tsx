@@ -3,16 +3,18 @@ import { cn } from "@/src/lib/utils"
 
 interface InterventionStatusBadgeProps {
   status: string
+  accordNumber?: string | null
   showIcon?: boolean
   className?: string
 }
 
 export default function InterventionStatusBadge({ 
-  status, 
+  status,
+  accordNumber,
   showIcon = true,
   className 
 }: InterventionStatusBadgeProps) {
-  const uiStatus = toUIStatus(status)
+  const uiStatus = toUIStatus(status, accordNumber)
   const statusMeta = getStatusMeta(uiStatus)
   const StatusIcon = statusMeta.icon
 

@@ -28,6 +28,13 @@ export function useStatusInt(): UseStatusIntReturn {
 
     try {
       const isWaitingForApproval = newStatus === "EN_ATTENTE_ACCORD"
+      const isRefuse = newStatus === "REFUSE"
+      const isAnnulee = newStatus === "ANNULEE"
+
+      if (isRefuse || isAnnulee) {
+        setError("Impossible de changer vers ce statut")
+        return { success: false, message: "Statut non modifiable" }
+      }
 
       const res = await fetch(`/api/interventions/${interventionId}/status`, {
         method: "PATCH",
@@ -35,7 +42,7 @@ export function useStatusInt(): UseStatusIntReturn {
         body: JSON.stringify(
           isWaitingForApproval
             ? { waitingForApproval: true }
-            : { status: UI_TO_WORKSTATUS[newStatus] }
+            : { status: UI_TO_WORKSTATUS[newStatus as keyof typeof UI_TO_WORKSTATUS] }
         ),
       })
 

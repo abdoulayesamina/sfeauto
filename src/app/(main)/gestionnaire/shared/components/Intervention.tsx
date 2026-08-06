@@ -7,14 +7,10 @@ import {
   toUIStatus,
   getStatusMeta,
   HISTORY_LABELS,
+  UIStatus,
 } from "@/src/utils/constants/intervention-status"
 import { errorAlert } from "@/src/lib/alerts"
 import { useInterventionPhotos } from "../hooks/useInterventionPhotos.api"
-
-type UIStatus =
-  | "EN_COURS"
-  | "ATTENTE_PIECES"
-  | "TERMINEE"
 
 type Props = {
   selectedIntervention: any
@@ -24,7 +20,7 @@ type Props = {
 export default function IntervDetailGes({ selectedIntervention, onClose }: Props) {
   if (!selectedIntervention) return null
 
-  const uiStatus: UIStatus = toUIStatus(selectedIntervention?.int_status)
+  const uiStatus: UIStatus = toUIStatus(selectedIntervention?.int_status, selectedIntervention?.int_accordNumber)
 
   const history = selectedIntervention?.int_statusHistory ?? []
 

@@ -8,7 +8,6 @@ import {
   SidebarInset,
   SidebarProvider,
 } from "@/src/shared/components/ui/sidebar"
-import { Toaster } from "sonner"
 
  const poppins = Poppins({
     subsets: ["latin"],
@@ -33,7 +32,7 @@ export default async function MainLayout({
     avatar: "/avatars/default.jpg", 
     role: session.user.role,
   }
-
+  
 
   return (
     <SidebarProvider>
@@ -42,7 +41,6 @@ export default async function MainLayout({
         <SiteHeader />
         {children}
       </SidebarInset>
-       <Toaster position="top-right" richColors />
     </SidebarProvider>
   )
 }

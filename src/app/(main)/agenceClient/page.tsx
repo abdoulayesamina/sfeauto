@@ -120,7 +120,7 @@ export default function AgencePage() {
         if (b > a) row.lastIntervention = inv;
       }
 
-      const ui = toUIStatus(inv.status);
+      const ui = toUIStatus(inv.status, inv.accordNumber);
       if (ui === "EN_COURS") row.counts.EN_COURS += 1;
       if (ui === "ATTENTE_PIECES") row.counts.ATTENTE_PIECES += 1;
       if (ui === "TERMINEE") row.counts.TERMINEE += 1;
@@ -158,13 +158,13 @@ export default function AgencePage() {
   const stats = useMemo(() => {
     const total = interventions.length;
     const enCours = interventions.filter(
-      (i) => toUIStatus(i.status) === "EN_COURS",
+      (i) => toUIStatus(i.status, i.accordNumber) === "EN_COURS",
     ).length;
     const termine = interventions.filter(
-      (i) => toUIStatus(i.status) === "TERMINEE",
+      (i) => toUIStatus(i.status, i.accordNumber) === "TERMINEE",
     ).length;
     const attentePieces = interventions.filter(
-      (i) => toUIStatus(i.status) === "ATTENTE_PIECES",
+      (i) => toUIStatus(i.status, i.accordNumber) === "ATTENTE_PIECES",
     ).length;
     return { total, enCours, termine, attentePieces };
   }, [interventions]);

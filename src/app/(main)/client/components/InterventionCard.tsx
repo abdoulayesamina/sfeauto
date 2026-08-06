@@ -32,7 +32,7 @@ function computeCounts(intervention: any) {
     terminee = 0
 
   for (const inv of interventions) {
-    const ui = toUIStatus(inv.status)
+    const ui = toUIStatus(inv.status, inv.accordNumber)
     if (ui === "EN_COURS") enCours++
     else if (ui === "ATTENTE_PIECES") attentePieces++
     else if (ui === "TERMINEE") terminee++

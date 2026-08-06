@@ -11,9 +11,10 @@ import { AddVehiculeForm } from "./form/add-vehicule-form";
 import { VehicleSearchBar } from "./shared/components/vehicle-search-bar";
 import { VehicleListCard } from "./shared/components/vehicle-list-card";
 import { VehicleFilters } from "./shared/components/vehicle-filters";
-import { VehicleStats } from "./shared/components/vehicule-stats";
+import { InterventionStats } from "./shared/components/intervention-stats";
 import { VehicleNotFound } from "./vehicle-not-found";
 import { VehiclePreview } from "./shared/components/vehicle-apercu";
+import { PhotoInterventionWizard } from "./shared/components/photo-intervention-wizard";
 import { errorAlert, successAlert } from "@/src/lib/alerts";
 import { useInterventionApi } from "./shared/useIntervention.api";
 import { InterventionForm } from "./form/intervention-form";
@@ -22,6 +23,7 @@ import {
   getBrandNameById,
   getModelNameById,
 } from "../brands/shared/hooks/GetBrandOrModelName";
+import { computeUIStatus } from "@/src/utils/constants/intervention-status";
 import { formatLicensePlate } from "@/src/utils/formatters";
 import { searchSmart } from "@/src/utils/searchSmart";
 import { VehiclePagination } from "./shared/components/pagination";
@@ -53,9 +55,24 @@ export default function GestionnairePage() {
   const [statut, setStatut] = useState<string>();
 
   const [interventionModalOpen, setInterventionModalOpen] = useState(false);
+  const [interventionInitialPhotos, setInterventionInitialPhotos] = useState<File[]>([]);
+  const [interventionInitialDescription, setInterventionInitialDescription] = useState("");
+
+  const [pendingPhotoIntervention, setPendingPhotoIntervention] = useState<{
+    photos: File[];
+    description: string;
+  } | null>(null);
+
+  const [postCreateDialogOpen, setPostCreateDialogOpen] = useState(false);
+  const [lastCreatedVehicle, setLastCreatedVehicle] = useState<any | null>(null);
 
   const ITEMS_PER_PAGE = 20;
   const [currentPage, setCurrentPage] = useState(1);
+
+  const createVehicleData = useMemo(
+    () => ({ veh_licensePlate: preFillLicensePlate } as Vehicule),
+    [preFillLicensePlate]
+  );
 
   const normalizeVehicles = (v: any): Vehicule[] => {
     if (Array.isArray(v)) return v;
@@ -135,20 +152,84 @@ export default function GestionnairePage() {
     }
   };
 
+  // Fusionne la réponse de l'API (champs persistés) avec les infos d'affichage
+  // (marque, modèle, client, agence) déjà connues du formulaire, pour insérer
+  // le véhicule dans la liste sans devoir tout recharger depuis le serveur.
+  const buildLocalVehicle = (
+    data: Partial<Vehicule>,
+    created: Partial<Vehicule>,
+  ): Vehicule => ({
+    ...data,
+    ...created,
+    veh_brand: data.veh_brand,
+    veh_model: data.veh_model,
+    veh_client: data.veh_client,
+    veh_base: data.veh_base,
+    interventions: [],
+  } as Vehicule);
+
   const handleCreateVehicle = async (data: Partial<Vehicule>) => {
     try {
       setLoading(true);
-      await createVehicle(data);
+      const created = await createVehicle(data);
+      const newVehicle = buildLocalVehicle(data, created);
+
+      setVehicles((prev) => [newVehicle, ...prev]);
       toast.success("Véhicule créé");
-      setLoading(false);
       setOpenCreateVehiculeModal(false);
       setVehiculeNotFound(false);
       await loadAll();
+
+      if (pendingPhotoIntervention) {
+        setSelectedVehicle(created);
+        setInterventionInitialPhotos(pendingPhotoIntervention.photos);
+        setInterventionInitialDescription(pendingPhotoIntervention.description);
+        setPendingPhotoIntervention(null);
+        setInterventionModalOpen(true);
+      } else {
+        setLastCreatedVehicle(created);
+        setPostCreateDialogOpen(true);
+      }
     } catch (e: any) {
       toast.error("Erreur: " + e.message);
-
+    } finally {
       setLoading(false);
     }
+  };
+
+  const handleCreateVehicleAndAddIntervention = async (
+    data: Partial<Vehicule>,
+  ) => {
+    try {
+      setLoading(true);
+      const created = await createVehicle(data);
+      const newVehicle = buildLocalVehicle(data, created);
+
+      setVehicles((prev) => [newVehicle, ...prev]);
+      toast.success("Véhicule créé");
+      setOpenCreateVehiculeModal(false);
+      setVehiculeNotFound(false);
+
+      setSelectedVehicle(newVehicle);
+
+      if (pendingPhotoIntervention) {
+        setInterventionInitialPhotos(pendingPhotoIntervention.photos);
+        setInterventionInitialDescription(pendingPhotoIntervention.description);
+        setPendingPhotoIntervention(null);
+      }
+
+      setInterventionModalOpen(true);
+    } catch (e: any) {
+      toast.error("Erreur: " + e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePostCreateNewIntervention = () => {
+    setSelectedVehicle(lastCreatedVehicle);
+    setPostCreateDialogOpen(false);
+    setInterventionModalOpen(true);
   };
 
   const handleEditVehicleClick = () => {
@@ -256,6 +337,26 @@ export default function GestionnairePage() {
     }
   }, [vehicles]);
 
+  const interventionStats = useMemo(() => {
+    const interventions = filteredVehicles.flatMap(
+      (v) => v.interventions ?? [],
+    );
+
+    return {
+      total: interventions.length,
+      enCours: interventions.filter((i) => i.int_status === "FIXING_STARTED")
+        .length,
+      terminees: interventions.filter(
+        (i) => i.int_status === "FIXING_FINISHED",
+      ).length,
+      attente: interventions.filter(
+        (i) => i.int_status === "WAITING_FOR_PARTS",
+      ).length,
+      annulees: interventions.filter((i) => computeUIStatus(i) === "ANNULEE").length,
+      refusees: interventions.filter((i) => computeUIStatus(i) === "REFUSE").length,
+    };
+  }, [filteredVehicles]);
+
   const filteredAgences = useMemo(() => {
     const list = Array.isArray(agences) ? agences : [];
     if (clientId) return list.filter((a) => a.bas_clientId === clientId);
@@ -285,6 +386,8 @@ export default function GestionnairePage() {
       // }
       setLoading(false);
       setInterventionModalOpen(false);
+      setInterventionInitialPhotos([]);
+      setInterventionInitialDescription("");
       toast.success("Intervention créée");
     } catch (e: any) {
       toast.error("Intervention : " + e.message);
@@ -296,6 +399,17 @@ export default function GestionnairePage() {
     setInterventionModalOpen(true);
   };
 
+  // useEffect(() => {
+  //   socket.on("connect", () => {
+  //     console.log("Socket is connected frontend");
+  //     console.log(socket.id);
+  //   });
+
+  //   return () => {
+  //     socket.off("connect");
+  //   };
+  // }, [socket.active]);
+
   // const session = getSession();
   return (
     <div className="h-full py-4 px-12 bg-zinc-50">
@@ -303,11 +417,28 @@ export default function GestionnairePage() {
         <h1 className="font-bold text-2xl">Page Gestionnaire</h1>
 
         {/* Barre de recherche */}
-        <VehicleSearchBar
-          value={search}
-          onChange={setSearch}
-          onSearch={handleSearch}
-        />
+        <div className="flex gap-2 items-center">
+          <PhotoInterventionWizard
+            onVehicleMatched={(vehicle, photos, description) => {
+              setSelectedVehicle(vehicle);
+              setInterventionInitialPhotos(photos);
+              setInterventionInitialDescription(description);
+              setInterventionModalOpen(true);
+            }}
+            onVehicleNeedsCreation={(plate, photos, description) => {
+              setPreFillLicensePlate(plate ?? "");
+              setPendingPhotoIntervention({ photos, description });
+              setOpenCreateVehiculeModal(true);
+            }}
+          />
+          <div className="flex-1">
+            <VehicleSearchBar
+              value={search}
+              onChange={setSearch}
+              onSearch={handleSearch}
+            />
+          </div>
+        </div>
 
         {!vehiculeNotFound ? (
           <>
@@ -345,42 +476,14 @@ export default function GestionnairePage() {
             />
 
             {/* STATS */}
-            <VehicleStats
-              total={filteredVehicles.length}
-              // enCours={
-              //   filteredVehicles.filter((v) => v.intervention?.some((i) => i.status !== "FIXING_FINISHED")).length
-              // }
-              enCours={
-                filteredVehicles.filter((v) => {
-                  const intervention = v.interventions || [];
-                  return (
-                    intervention.length > 0 &&
-                    intervention.some((i) => i.int_status !== "FIXING_FINISHED")
-                  );
-                }).length
-              }
-              // termine={filteredVehicles.filter((v) => v.interventions?.some((i) => i.status === "FIXING_FINISHED")).length}
-              termine={
-                filteredVehicles.filter((v) => {
-                  const interventions = v.interventions || [];
-                  return (
-                    interventions.length > 0 &&
-                    interventions.every(
-                      (i) => i.int_status === "FIXING_FINISHED",
-                    )
-                  );
-                }).length
-              }
-              sansIntervention={
-                filteredVehicles.filter(
-                  (v) => !v.interventions || v.interventions.length === 0,
-                ).length
-              }
-              // Somme de tout les Intervention de tous les véhicules dont le base.location est "Paris Test Agency"
-              // test={filteredVehicles.filter((v) => v.base?.location === "Paris Test Agency").reduce((sum, v) => {
-              //   const interventions = Array.isArray(v.interventions) ? v.interventions : []
-              //   return sum + interventions.reduce((invSum, i) => invSum , 0)
-              // }, 0) }
+            <InterventionStats
+              total={interventionStats.total}
+              enCours={interventionStats.enCours}
+              terminees={interventionStats.terminees}
+              attente={interventionStats.attente}
+              annulees={interventionStats.annulees}
+              refusees={interventionStats.refusees}
+              loading={loading}
             />
 
             {/* LISTE VEHICULES */}
@@ -418,14 +521,22 @@ export default function GestionnairePage() {
       {/* MODAL CREATION VEHICULE */}
       <Modal
         open={openCreateVehiculeModal}
-        onClose={() => setOpenCreateVehiculeModal(false)}
+        onClose={() => {
+          setOpenCreateVehiculeModal(false);
+          setPendingPhotoIntervention(null);
+        }}
         modalTitle="Créer un nouveau véhicule"
       >
         <AddVehiculeForm
           mode="create"
-          data={{ veh_licensePlate: preFillLicensePlate } as Vehicule}
+          data={createVehicleData}
+          autoLookup={pendingPhotoIntervention !== null}
           onSubmit={handleCreateVehicle}
-          onClose={() => setOpenCreateVehiculeModal(false)}
+          onSubmitAndCreateIntervention={handleCreateVehicleAndAddIntervention}
+          onClose={() => {
+            setOpenCreateVehiculeModal(false);
+            setPendingPhotoIntervention(null);
+          }}
           loading={loading}
         />
       </Modal>
@@ -465,7 +576,11 @@ export default function GestionnairePage() {
       {/* MODAL CREATION INTERVENTION */}
       <Modal
         open={interventionModalOpen}
-        onClose={() => setInterventionModalOpen(false)}
+        onClose={() => {
+          setInterventionModalOpen(false);
+          setInterventionInitialPhotos([]);
+          setInterventionInitialDescription("");
+        }}
         modalTitle="Créer une intervention"
       >
         <InterventionForm
@@ -474,10 +589,33 @@ export default function GestionnairePage() {
           // vehicleDisplayText={`${selectedVehicle?.licensePlate} - ${selectedVehicle?.brand?.name ?? ""} ${selectedVehicle?.model?.name ?? ""}`}
           vehicleDisplayText={`${formatLicensePlate(selectedVehicle?.veh_licensePlate || "")} - ${selectedVehicle?.veh_brand?.bra_name ?? ""} ${selectedVehicle?.veh_model?.mod_name ?? ""}`}
           defaultAccordNumber="ACC-2026-001"
+          initialPhotos={interventionInitialPhotos}
+          initialDescription={interventionInitialDescription}
           onSubmit={handleSubmitIntervention}
-          onClose={() => setInterventionModalOpen(false)}
+          onClose={() => {
+            setInterventionModalOpen(false);
+            setInterventionInitialPhotos([]);
+            setInterventionInitialDescription("");
+          }}
           loading={loading}
         />
+      </Modal>
+
+      {/* MODAL VEHICULE CREE : SUITE LOGIQUE */}
+      <Modal
+        open={postCreateDialogOpen}
+        onClose={() => setPostCreateDialogOpen(false)}
+        modalTitle="Véhicule créé avec succès"
+        modalDescription="Que souhaitez-vous faire ?"
+      >
+        <div className="grid grid-cols-2 gap-2 p-2">
+          <Button variant="outline" onClick={() => setPostCreateDialogOpen(false)}>
+            Retour à la liste
+          </Button>
+          <Button onClick={handlePostCreateNewIntervention}>
+            Créer une intervention
+          </Button>
+        </div>
       </Modal>
 
       {/* MODAL EDITION VEHICULE */}
