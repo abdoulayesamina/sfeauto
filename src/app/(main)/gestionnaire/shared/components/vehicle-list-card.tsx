@@ -27,7 +27,7 @@ export function VehicleListCard({
   reloadVehicles,
 }: VehicleListCardProps) {
   return (
-    <div className="mt-6 border p-3 rounded">
+    <div className="mt-2 border p-3 rounded">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b p-2 bg-gray-700 backdrop-blur-xl text-white rounded">
 
         <div className="flex items-center gap-2 font-bold">

@@ -15,7 +15,7 @@ export function VehicleSearchBar({
   placeholder = "Rechercher un véhicule",
 }: VehicleSearchBarProps) {
   return (
-    <div className="flex p-4 items-center justify-center mt-4 shadow rounded">
+    <div className="flex items-center justify-center p-1 shadow rounded">
       <div className="flex items-center justify-center gap-2 w-full md:w-[80%] flex-col md:flex-row mx-auto">
         <Input
           className="md:flex-1"

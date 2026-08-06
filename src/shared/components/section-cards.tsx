@@ -501,7 +501,7 @@ export function SectionCards({ user }: { user?: any }) {
                 </CardTitle>
               </CardHeader>
 
-              <CardFooter className="relative pt-0">
+              <CardFooter className="relative pt-0 py-4 ml-2">
                 <div className={`text-xs ${c.tone.accent}`}>
                   {!clientId ? "Interventions globales du système" : ""}
                 </div>

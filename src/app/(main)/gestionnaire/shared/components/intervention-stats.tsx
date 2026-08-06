@@ -77,7 +77,7 @@ export function InterventionStats({
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mt-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mt-2">
       {cards.map((c) => (
         <Card
           key={c.key}
