@@ -6,6 +6,8 @@ import {
   ClipboardList,
   SearchX,
   Eye,
+  XCircle,
+  Ban,
 } from "lucide-react";
 
 import {
@@ -34,6 +36,7 @@ import { Button } from "./ui/button";
 import {
   getStatusMeta,
   STATUS_UI_MAP,
+  computeUIStatus,
 } from "@/src/utils/constants/intervention-status";
 import { getInterventionAgeMeta } from "@/src/utils/constants/intervention-age";
 import { Modal } from "./modal";
@@ -60,17 +63,21 @@ export function SectionCards({ user }: { user?: any }) {
   const [nombreInterventionsEnCours, setNombreInterventionsEnCours] = useState(0);
   const [nombreInterventionsTerminees, setNombreInterventionsTerminees] = useState(0);
   const [nombreInterventionsEnAttenteDePiece,setNombreInterventionsEnAttenteDePiece,] = useState(0);
+  const [nombreInterventionsAnnulees, setNombreInterventionsAnnulees] = useState(0);
+  const [nombreInterventionsRefusees, setNombreInterventionsRefusees] = useState(0);
 
   const [totalInterventions, setTotalInterventions] = useState<any[]>([]);
   const [interventionsEnCours, setInterventionsEnCours] = useState<any[]>([]);
   const [interventionsTerminees, setInterventionsTerminees] = useState<any[]>([]);
   const [interventionsEnAttenteDePiece, setInterventionsEnAttenteDePiece] = useState<any[]>([]);
+  const [interventionsAnnulees, setInterventionsAnnulees] = useState<any[]>([]);
+  const [interventionsRefusees, setInterventionsRefusees] = useState<any[]>([]);
 
   const [displayedInterventions, setDisplayedInterventions] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [searchDate, setSearchDate] = useState("");
   
-  const [selectedStat, setSelectedStat] = useState<"total" | "encours" | "terminees" | "attente" | null>(null);
+  const [selectedStat, setSelectedStat] = useState<"total" | "encours" | "terminees" | "attente" | "annulees" | "refusees" | null>(null);
 
   const [ globalInterventions, setGlobalInterventions] = useState<any[]>([]);
 
@@ -102,13 +109,23 @@ export function SectionCards({ user }: { user?: any }) {
       (i) => i.int_status === "WAITING_FOR_PARTS",
     );
 
+    const annulees = sortedInterventions.filter((i) => i.int_annulee === true);
+
+    const refusees = sortedInterventions.filter(
+      (i) => !i.int_annulee && i.int_accordNumber === "REFUSE",
+    );
+
     setNombreInterventionsEnCours(enCours.length);
     setNombreInterventionsTerminees(terminees.length);
     setNombreInterventionsEnAttenteDePiece(attenteDePiece.length);
+    setNombreInterventionsAnnulees(annulees.length);
+    setNombreInterventionsRefusees(refusees.length);
 
     setInterventionsEnCours(enCours);
     setInterventionsTerminees(terminees);
     setInterventionsEnAttenteDePiece(attenteDePiece);
+    setInterventionsAnnulees(annulees);
+    setInterventionsRefusees(refusees);
   };
 
   const displayGlobalStatistiques = () => {
@@ -186,11 +203,15 @@ export function SectionCards({ user }: { user?: any }) {
     setNombreInterventionsEnCours(0);
     setNombreInterventionsTerminees(0);
     setNombreInterventionsEnAttenteDePiece(0);
+    setNombreInterventionsAnnulees(0);
+    setNombreInterventionsRefusees(0);
 
     setTotalInterventions([]);
     setInterventionsEnCours([]);
     setInterventionsTerminees([]);
     setInterventionsEnAttenteDePiece([]);
+    setInterventionsAnnulees([]);
+    setInterventionsRefusees([]);
   };
 
   const clientIdChanged = (id: string) => {
@@ -262,12 +283,11 @@ export function SectionCards({ user }: { user?: any }) {
 
     return {
       total: base.length,
-
       enCours: base.filter((i) => i.int_status === "FIXING_STARTED").length,
-
       terminees: base.filter((i) => i.int_status === "FIXING_FINISHED").length,
-
       attente: base.filter((i) => i.int_status === "WAITING_FOR_PARTS").length,
+      annulees: base.filter((i) => i.int_annulee === true).length,
+      refusees: base.filter((i) => !i.int_annulee && i.int_accordNumber === "REFUSE").length,
     };
   }, [totalInterventions, search, searchDate]);
 
@@ -403,7 +423,6 @@ export function SectionCards({ user }: { user?: any }) {
               value: loading ? (
                 <Spinner className="size-4 text-white" />
               ) : (
-                // nombreInterventionsEnCours
                 isFilterMode ? filteredStats.enCours : nombreInterventionsEnCours
               ),
               subtitle: "Actives",
@@ -420,7 +439,6 @@ export function SectionCards({ user }: { user?: any }) {
               value: loading ? (
                 <Spinner className="size-4 text-white" />
               ) : (
-                // nombreInterventionsTerminees
                 isFilterMode ? filteredStats.terminees : nombreInterventionsTerminees
               ),
               subtitle: "Clôturées",
@@ -437,7 +455,6 @@ export function SectionCards({ user }: { user?: any }) {
               value: AgenceIntloading ? (
                 <Spinner className="size-4 text-white" />
               ) : (
-                // nombreInterventionsEnAttenteDePiece
                 isFilterMode ? filteredStats.attente : nombreInterventionsEnAttenteDePiece
               ),
               subtitle: "Attente de pièce",
@@ -446,6 +463,38 @@ export function SectionCards({ user }: { user?: any }) {
                 bg: "bg-gradient-to-br from-amber-50 via-white to-orange-50",
                 accent: "text-orange-700",
                 iconBg: "bg-orange-600/10 ring-orange-600/20",
+              },
+            },
+            {
+              key: "annulees",
+              title: "Annulées",
+              value: loading ? (
+                <Spinner className="size-4 text-white" />
+              ) : (
+                isFilterMode ? filteredStats.annulees : nombreInterventionsAnnulees
+              ),
+              subtitle: "Interventions annulées",
+              icon: Ban,
+              tone: {
+                bg: "bg-gradient-to-br from-red-50 via-white to-rose-50",
+                accent: "text-red-700",
+                iconBg: "bg-red-600/10 ring-red-600/20",
+              },
+            },
+            {
+              key: "refusees",
+              title: "Refusées",
+              value: loading ? (
+                <Spinner className="size-4 text-white" />
+              ) : (
+                isFilterMode ? filteredStats.refusees : nombreInterventionsRefusees
+              ),
+              subtitle: "Accord refusé",
+              icon: XCircle,
+              tone: {
+                bg: "bg-gradient-to-br from-red-50 via-white to-pink-50",
+                accent: "text-rose-700",
+                iconBg: "bg-rose-600/10 ring-rose-600/20",
               },
             },
           ].map((c) => (
@@ -462,6 +511,10 @@ export function SectionCards({ user }: { user?: any }) {
                   setDisplayedInterventions(interventionsTerminees);
                 if (c.key === "attente")
                   setDisplayedInterventions(interventionsEnAttenteDePiece);
+                if (c.key === "annulees")
+                  setDisplayedInterventions(interventionsAnnulees);
+                if (c.key === "refusees")
+                  setDisplayedInterventions(interventionsRefusees);
               }}
               className={`cursor-pointer transform transition-all hover:-translate-y-1 hover:scale-[1.02]
               @container/card group relative overflow-hidden rounded-xl sm:rounded-2xl border border-gray-200/60
@@ -522,6 +575,8 @@ export function SectionCards({ user }: { user?: any }) {
                     {selectedStat === "terminees" && "Interventions terminées"}
                     {selectedStat === "attente" && "En attente de pièces"}
                     {selectedStat === "total" && "Toutes les interventions"}
+                    {selectedStat === "annulees" && "Interventions annulées"}
+                    {selectedStat === "refusees" && "Interventions refusées"}
                   </h2>
 
                   <div className="flex items-center gap-1.5 sm:gap-3 flex-wrap">
@@ -598,14 +653,8 @@ export function SectionCards({ user }: { user?: any }) {
                 </div>
               ) : (
                 filteredInterventions.map((inv) => {
-                  const status =
-                    STATUS_UI_MAP[
-                      inv.int_status as
-                        | "WAITING_FOR_PARTS"
-                        | "FIXING_STARTED"
-                        | "FIXING_FINISHED"
-                    ];
-                  const statusMeta = getStatusMeta(status);
+                  const uiStatus = computeUIStatus(inv);
+                  const statusMeta = getStatusMeta(uiStatus);
                   const ageMeta = getInterventionAgeMeta(
                     inv.int_status,
                     inv.int_createdAt,

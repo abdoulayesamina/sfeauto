@@ -2,21 +2,27 @@ trigger:
   branches:
     include:
       - standalone
+      - standalone_prod
 
 pool:
   vmImage: "ubuntu-latest"
 
 variables:
-  - group: sfeauto-dev
+  # standalone -> dev (groupe sfeauto-dev), standalone_prod -> prod (groupe sfeauto-prod)
+  - ${{ if eq(variables['Build.SourceBranchName'], 'standalone_prod') }}:
+    - group: sfeauto-prod
+    - name: webAppName
+      value: "app-sfeauto-api-prod"
+  - ${{ else }}:
+    - group: sfeauto-dev
+    - name: webAppName
+      value: "app-sfeauto-api-dev"
 
   - name: nodeVersion
     value: "20.x"
 
   - name: azureServiceConnection
     value: "sc-sfeauto-azure"
-
-  - name: webAppName
-    value: "app-sfeauto-api-dev"
 
   - name: packageDir
     value: "$(Build.ArtifactStagingDirectory)/package"
@@ -53,6 +59,12 @@ steps:
       AZURE_OPENAI_ENDPOINT: $(AZURE_OPENAI_ENDPOINT)
       AZURE_OPENAI_API_KEY: $(AZURE_OPENAI_API_KEY)
       AZURE_OPENAI_MODEL: $(AZURE_OPENAI_MODEL)
+      EMAIL_HOST: $(EMAIL_HOST)
+      EMAIL_PORT: $(EMAIL_PORT)
+      EMAIL_USER: $(EMAIL_USER)
+      EMAIL_PASS: $(EMAIL_PASS)
+      EMAIL_FROM: $(EMAIL_FROM)
+      EMAIL_NOTIFY_TO: $(EMAIL_NOTIFY_TO)
 
 
   - script: |

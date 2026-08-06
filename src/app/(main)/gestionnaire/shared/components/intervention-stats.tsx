@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { ClipboardList, Clock3, CheckCircle2 } from "lucide-react";
+import { ClipboardList, Clock3, CheckCircle2, Ban, XCircle } from "lucide-react";
 import {
   Card,
   CardHeader,
@@ -14,6 +14,8 @@ type InterventionStatsProps = {
   enCours: number;
   terminees: number;
   attente: number;
+  annulees: number;
+  refusees: number;
   loading?: boolean;
   activeStatut?: string;
   onStatutClick?: (statut: string | undefined) => void;
@@ -24,6 +26,8 @@ export function InterventionStats({
   enCours,
   terminees,
   attente,
+  annulees,
+  refusees,
   loading,
   activeStatut,
   onStatutClick,
@@ -35,12 +39,13 @@ export function InterventionStats({
       value: total,
       subtitle: "Interventions",
       icon: ClipboardList,
-      statut: undefined,
+      // statut: undefined,
       tone: {
         bg: "bg-gradient-to-br from-violet-50 via-white to-fuchsia-50",
         accent: "text-violet-700",
         iconBg: "bg-violet-600/10 ring-violet-600/20",
       },
+      statut: "all",
     },
     {
       key: "encours",
@@ -48,12 +53,13 @@ export function InterventionStats({
       value: enCours,
       subtitle: "Actives",
       icon: Clock3,
-      statut: "FIXING_STARTED",
+      // statut: "FIXING_STARTED",
       tone: {
         bg: "bg-gradient-to-br from-blue-50 via-white to-indigo-50",
         accent: "text-blue-700",
         iconBg: "bg-blue-600/10 ring-blue-600/20",
       },
+      statut: "FIXING_STARTED",
     },
     {
       key: "terminees",
@@ -61,12 +67,13 @@ export function InterventionStats({
       value: terminees,
       subtitle: "Clôturées",
       icon: CheckCircle2,
-      statut: "FIXING_FINISHED",
+      // statut: "FIXING_FINISHED",
       tone: {
         bg: "bg-gradient-to-br from-emerald-50 via-white to-teal-50",
         accent: "text-emerald-700",
         iconBg: "bg-emerald-600/10 ring-emerald-600/20",
       },
+      statut: "FIXING_FINISHED",
     },
     {
       key: "attente",
@@ -74,12 +81,39 @@ export function InterventionStats({
       value: attente,
       subtitle: "Attente de pièce",
       icon: CheckCircle2,
-      statut: "WAITING_FOR_PARTS",
+      // statut: "WAITING_FOR_PARTS",
       tone: {
         bg: "bg-gradient-to-br from-amber-50 via-white to-orange-50",
         accent: "text-orange-700",
         iconBg: "bg-orange-600/10 ring-orange-600/20",
       },
+      statut: "WAITING_FOR_PARTS",
+    },
+    {
+      key: "annulees",
+      title: "Annulées",
+      value: annulees,
+      subtitle: "Interventions annulées",
+      icon: Ban,
+      tone: {
+        bg: "bg-gradient-to-br from-red-50 via-white to-rose-50",
+        accent: "text-red-700",
+        iconBg: "bg-red-600/10 ring-red-600/20",
+      },
+      statut: "ANNULEE",
+    },
+    {
+      key: "refusees",
+      title: "Refusées",
+      value: refusees,
+      subtitle: "Accord refusé",
+      icon: XCircle,
+      tone: {
+        bg: "bg-gradient-to-br from-red-50 via-white to-pink-50",
+        accent: "text-rose-700",
+        iconBg: "bg-rose-600/10 ring-rose-600/20",
+      },
+      statut: "REFUSE",
     },
   ];
 

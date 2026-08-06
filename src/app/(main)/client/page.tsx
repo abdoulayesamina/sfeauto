@@ -105,7 +105,7 @@ export default function ClientPage() {
           statusMatch =
             v.interventions.length > 0 &&
             v.interventions.some(
-              (i: any) => toUIStatus(i.status) === "EN_COURS",
+              (i: any) => toUIStatus(i.status, i.accordNumber) === "EN_COURS",
             );
         }
 
@@ -113,7 +113,7 @@ export default function ClientPage() {
           statusMatch =
             v.interventions.length > 0 &&
             v.interventions.some(
-              (i: any) => toUIStatus(i.status) === "ATTENTE_PIECES",
+              (i: any) => toUIStatus(i.status, i.accordNumber) === "ATTENTE_PIECES",
             );
         }
 
@@ -121,7 +121,7 @@ export default function ClientPage() {
           statusMatch =
             v.interventions.length > 0 &&
             v.interventions.every(
-              (i: any) => toUIStatus(i.status) === "TERMINEE",
+              (i: any) => toUIStatus(i.status, i.accordNumber) === "TERMINEE",
             );
         }
 
@@ -141,7 +141,7 @@ export default function ClientPage() {
       (v) =>
         Array.isArray(v.interventions) &&
         v.interventions.some(
-          (i: any) => toUIStatus(i.status) === "EN_COURS",
+          (i: any) => toUIStatus(i.status, i.accordNumber) === "EN_COURS",
         ),
     ).length;
 
@@ -151,7 +151,7 @@ export default function ClientPage() {
         Array.isArray(v.interventions) &&
         v.interventions.length > 0 &&
         v.interventions.every(
-          (i: any) => toUIStatus(i.status) === "TERMINEE",
+          (i: any) => toUIStatus(i.status, i.accordNumber) === "TERMINEE",
         ),
     ).length;
 

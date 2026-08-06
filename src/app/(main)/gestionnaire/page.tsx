@@ -23,6 +23,7 @@ import {
   getBrandNameById,
   getModelNameById,
 } from "../brands/shared/hooks/GetBrandOrModelName";
+import { computeUIStatus } from "@/src/utils/constants/intervention-status";
 import { formatLicensePlate } from "@/src/utils/formatters";
 import { searchSmart } from "@/src/utils/searchSmart";
 import { VehiclePagination } from "./shared/components/pagination";
@@ -210,6 +211,13 @@ export default function GestionnairePage() {
       setVehiculeNotFound(false);
 
       setSelectedVehicle(newVehicle);
+
+      if (pendingPhotoIntervention) {
+        setInterventionInitialPhotos(pendingPhotoIntervention.photos);
+        setInterventionInitialDescription(pendingPhotoIntervention.description);
+        setPendingPhotoIntervention(null);
+      }
+
       setInterventionModalOpen(true);
     } catch (e: any) {
       toast.error("Erreur: " + e.message);
@@ -344,6 +352,8 @@ export default function GestionnairePage() {
       attente: interventions.filter(
         (i) => i.int_status === "WAITING_FOR_PARTS",
       ).length,
+      annulees: interventions.filter((i) => computeUIStatus(i) === "ANNULEE").length,
+      refusees: interventions.filter((i) => computeUIStatus(i) === "REFUSE").length,
     };
   }, [filteredVehicles]);
 
@@ -473,6 +483,8 @@ export default function GestionnairePage() {
               enCours={interventionStats.enCours}
               terminees={interventionStats.terminees}
               attente={interventionStats.attente}
+              annulees={interventionStats.annulees}
+              refusees={interventionStats.refusees}
               loading={loading}
               activeStatut={statut}
               onStatutClick={setStatut}

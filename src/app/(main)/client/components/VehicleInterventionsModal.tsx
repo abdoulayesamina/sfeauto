@@ -50,12 +50,12 @@ export default function VehicleInterventionsModal({
 
   const stats = {
     total: interventions.length,
-    enCours: interventions.filter((i) => toUIStatus(i.status) === "EN_COURS")
+    enCours: interventions.filter((i) => toUIStatus(i.status, i.accordNumber) === "EN_COURS")
       .length,
     attentePieces: interventions.filter(
-      (i) => toUIStatus(i.status) === "ATTENTE_PIECES",
+      (i) => toUIStatus(i.status, i.accordNumber) === "ATTENTE_PIECES",
     ).length,
-    terminee: interventions.filter((i) => toUIStatus(i.status) === "TERMINEE")
+    terminee: interventions.filter((i) => toUIStatus(i.status, i.accordNumber) === "TERMINEE")
       .length,
   };
 
@@ -176,7 +176,10 @@ export default function VehicleInterventionsModal({
                       <h3 className="font-semibold text-zinc-900">
                         Intervention
                       </h3>
-                      <InterventionStatusBadge status={intervention.status} />
+                      <InterventionStatusBadge 
+                        status={intervention.status} 
+                        accordNumber={intervention.accordNumber} 
+                      />
                     </div>
 
                     <div className="flex flex-wrap gap-x-7 gap-y-3 text-sm text-zinc-600">

@@ -29,16 +29,16 @@ export function getInterventionAgeMeta(
     return {
       level: "danger",
       days,
-      className: "border-l-4 border-l-red-500",
+      className: "bg-red-100 border-red-300",
       title: `Intervention non terminée depuis ${days} jours`,
     };
   }
 
-  if (days >= 3) {
+  if (days >= 2) {
     return {
       level: "warning",
       days,
-      className: "border-l-4 border-l-orange-400",
+      className: "bg-orange-100 border-orange-300",
       title: `Intervention non terminée depuis ${days} jours`,
     };
   }
