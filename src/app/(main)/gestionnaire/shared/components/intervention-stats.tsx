@@ -16,6 +16,8 @@ type InterventionStatsProps = {
   terminees: number;
   attente: number;
   loading?: boolean;
+  activeStatut?: string;
+  onStatutClick?: (statut: string | undefined) => void;
 };
 
 export function InterventionStats({
@@ -24,6 +26,8 @@ export function InterventionStats({
   terminees,
   attente,
   loading,
+  activeStatut,
+  onStatutClick,
 }: InterventionStatsProps) {
   const cards = [
     {
@@ -32,6 +36,7 @@ export function InterventionStats({
       value: total,
       subtitle: "Interventions",
       icon: ClipboardList,
+      statut: undefined,
       tone: {
         bg: "bg-gradient-to-br from-violet-50 via-white to-fuchsia-50",
         accent: "text-violet-700",
@@ -44,6 +49,7 @@ export function InterventionStats({
       value: enCours,
       subtitle: "Actives",
       icon: Clock3,
+      statut: "FIXING_STARTED",
       tone: {
         bg: "bg-gradient-to-br from-blue-50 via-white to-indigo-50",
         accent: "text-blue-700",
@@ -56,6 +62,7 @@ export function InterventionStats({
       value: terminees,
       subtitle: "Clôturées",
       icon: CheckCircle2,
+      statut: "FIXING_FINISHED",
       tone: {
         bg: "bg-gradient-to-br from-emerald-50 via-white to-teal-50",
         accent: "text-emerald-700",
@@ -68,6 +75,7 @@ export function InterventionStats({
       value: attente,
       subtitle: "Attente de pièce",
       icon: CheckCircle2,
+      statut: "WAITING_FOR_PARTS",
       tone: {
         bg: "bg-gradient-to-br from-amber-50 via-white to-orange-50",
         accent: "text-orange-700",
@@ -78,13 +86,27 @@ export function InterventionStats({
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mt-2">
-      {cards.map((c) => (
+      {cards.map((c) => {
+        const isActive =
+          c.statut === undefined
+            ? !activeStatut || activeStatut === "all"
+            : activeStatut === c.statut;
+
+        return (
         <Card
           key={c.key}
-          className={`@container/card group relative overflow-hidden rounded-3xl border border-gray-200/60
+          onClick={() =>
+            onStatutClick?.(isActive ? undefined : c.statut)
+          }
+          className={`@container/card group relative overflow-hidden rounded-3xl border
           shadow-[0_12px_34px_rgba(0,0,0,0.08)]
-          hover:shadow-[0_18px_52px_rgba(0,0,0,0.10)] transition-all ${c.tone.bg}`}
+          hover:shadow-[0_18px_52px_rgba(0,0,0,0.10)] transition-all cursor-pointer ${c.tone.bg} ${
+            isActive
+              ? "border-gray-900/70 ring-2 ring-gray-900/20"
+              : "border-gray-200/60"
+          }`}
         >
+
           <div className="absolute inset-0 bg-gradient-to-t from-white/70 via-white/20 to-white/0" />
           <div className="absolute -right-12 -top-12 h-32 w-32 rounded-full bg-white/70 blur-2xl opacity-70 group-hover:opacity-90 transition-opacity" />
           <div className="absolute inset-0 ring-1 ring-inset ring-white/50" />
@@ -119,7 +141,8 @@ export function InterventionStats({
 
           <CardFooter className="relative pt-0" />
         </Card>
-      ))}
+        );
+      })}
     </div>
   );
 }

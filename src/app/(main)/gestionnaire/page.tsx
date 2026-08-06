@@ -472,6 +472,8 @@ export default function GestionnairePage() {
               terminees={interventionStats.terminees}
               attente={interventionStats.attente}
               loading={loading}
+              activeStatut={statut}
+              onStatutClick={setStatut}
             />
 
             {/* LISTE VEHICULES */}

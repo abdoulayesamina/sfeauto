@@ -32,8 +32,8 @@ export default async function MainLayout({
     avatar: "/avatars/default.jpg", 
     role: session.user.role,
   }
-  
 
+  
   return (
     <SidebarProvider>
       <AppSidebar user={user} variant="inset"/>
