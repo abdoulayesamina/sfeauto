@@ -293,12 +293,13 @@ export default function GestionnairePage() {
       if (statut && statut !== "all") {
         if (statut === "SANS_INTERVENTION") {
           if (v.interventions && v.interventions.length > 0) return false;
-        } else {
-          // const lastIntervention =
-          // v.interventions?.[v.interventions.length - 1];
+        } else if (statut === "ANNULEE" || statut === "REFUSE") {
+          const hasStatus = v.interventions?.some(
+            (intervention) => computeUIStatus(intervention) === statut
+          );
 
-          // if (!lastIntervention) return false;
-          // if (lastIntervention.int_status !== statut) return false;
+          if (!hasStatus) return false;
+        } else {
           const hasStatus = v.interventions?.some(
             (intervention) => intervention.int_status === statut
           );
