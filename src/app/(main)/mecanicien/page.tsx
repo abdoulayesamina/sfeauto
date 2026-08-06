@@ -31,10 +31,11 @@ import { useClients } from "./shared/useClient.api";
 import InterventionDetail from "./shared/components/intervention-detail";
 import { Modal } from "@/src/shared/components/modal";
 import { Spinner } from "@/src/shared/components/spinner";
-import { errorAlert } from "@/src/lib/alerts";
+import { errorAlert, confirmAlert } from "@/src/lib/alerts";
 import { toast } from "sonner";
 
 export const statusStyles: Record<string, string> = {
+  EN_ATTENTE_ACCORD: "bg-purple-100 text-purple-700",
   EN_COURS: "bg-blue-100 text-blue-700",
   ATTENTE_PIECES: "bg-orange-100 text-orange-700",
   TERMINEE: "bg-green-100 text-green-700",
@@ -100,7 +101,7 @@ const STATUS_TRANSLATIONS: Record<string, string> = {
 
 export default function MecanicienPage() {
   const [filterStatus, setFilterStatus] = useState<
-    "EN_COURS" | "TERMINEE" | "ATTENTE_PIECES" | "EN_ATTENTE-ACCORD" | ""
+    "EN_ATTENTE_ACCORD" | "EN_COURS" | "TERMINEE" | "ATTENTE_PIECES" | ""
   >("EN_COURS");
   const [clientId, setClientId] = useState<string>();
   const [baseId, setBaseId] = useState<string>();
@@ -163,20 +164,8 @@ export default function MecanicienPage() {
       setFilteredInterventions([]);
       return;
     }
-
-    let result = [...interventions];
-
-    // Note: Status, search, client, and base are now filtered server-side.
-    // We only need to handle special client-side cases here if any.
-    // For "EN_ATTENTE-ACCORD", it's currently a client-side filter.
-    if (filterStatus === "EN_ATTENTE-ACCORD") {
-      result = result.filter(
-        (inv: any) => !inv.accordNumber
-      );
-    }
-
-    setFilteredInterventions(result);
-  }, [interventions, filterStatus]);
+    setFilteredInterventions([...interventions]);
+  }, [interventions]);
 
   useEffect(() => {
     applyFilters();
@@ -283,8 +272,8 @@ export default function MecanicienPage() {
         {/* Statut filter */}
         <div className="flex gap-2 flex-wrap">
           <Button
-            onClick={() => setFilterStatus("EN_ATTENTE-ACCORD")}
-            variant={filterStatus === "EN_ATTENTE-ACCORD" ? "default" : "outline"}
+            onClick={() => setFilterStatus("EN_ATTENTE_ACCORD")}
+            variant={filterStatus === "EN_ATTENTE_ACCORD" ? "default" : "outline"}
           >
             En attente d'accord
           </Button>
@@ -331,7 +320,9 @@ export default function MecanicienPage() {
           )}
           {!loading &&
             filteredInterventions.map((inv) => {
-              const uiStatus = STATUS_UI_MAP[inv.status];
+              const uiStatus = !inv.accordNumber
+                ? "EN_ATTENTE_ACCORD"
+                : STATUS_UI_MAP[inv.status] ?? "EN_COURS";
 
               return (
                 <div
@@ -376,6 +367,14 @@ export default function MecanicienPage() {
 
                   <Select
                     onValueChange={async (val) => {
+                      if (val === "EN_ATTENTE_ACCORD" && inv.accordNumber) {
+                        const confirmed = await confirmAlert(
+                          "Retour en attente d'accord",
+                          `Un numéro d'accord existe (${inv.accordNumber}). Il sera supprimé. Confirmer ?`
+                        );
+                        if (!confirmed) return;
+                      }
+
                       setInterventionId(inv.id);
                       const result = await updateStatus(inv.id, val as any);
 
@@ -388,21 +387,11 @@ export default function MecanicienPage() {
                       setInterventions((prev: any) =>
                         prev.map((item: any) =>
                           item.id === inv.id
-                            ? { ...item, status: result.data.status }
-                            : item,
-                        ),
-                      );
-
-                      setInterventions((prev: any) =>
-                        prev.map((item: any) =>
-                          item.id === inv.id
                             ? {
-                              ...item,
-                              status:
-                                Object.keys(STATUS_UI_MAP).find(
-                                  (key) => STATUS_UI_MAP[key] === val,
-                                ) || item.status,
-                            }
+                                ...item,
+                                status: result.data.status,
+                                accordNumber: result.data.accordNumber,
+                              }
                             : item,
                         ),
                       );
@@ -417,6 +406,7 @@ export default function MecanicienPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="EN_ATTENTE_ACCORD">En attente d'accord</SelectItem>
                       <SelectItem value="EN_COURS">En cours</SelectItem>
                       <SelectItem value="ATTENTE_PIECES">
                         Attente pièces

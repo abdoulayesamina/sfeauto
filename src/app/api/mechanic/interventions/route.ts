@@ -31,13 +31,16 @@ export async function GET(request: NextRequest) {
     };
 
     if (uiStatus && uiStatus !== "ALL") {
-      if (uiStatus === "EN_COURS") {
-        whereClause.int_status = {
-          in: ["FIXING_STARTED"],
-        };
+      if (uiStatus === "EN_ATTENTE_ACCORD") {
+        whereClause.int_accordNumber = null;
+      } else if (uiStatus === "EN_COURS") {
+        whereClause.int_accordNumber = { not: null };
+        whereClause.int_status = "FIXING_STARTED";
       } else if (uiStatus === "TERMINEE") {
+        whereClause.int_accordNumber = { not: null };
         whereClause.int_status = "FIXING_FINISHED";
       } else if (uiStatus === "ATTENTE_PIECES") {
+        whereClause.int_accordNumber = { not: null };
         whereClause.int_status = "WAITING_FOR_PARTS";
       }
     }
