@@ -118,7 +118,7 @@ export function InterventionStats({
   ];
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mt-1 sm:mt-2">
+    <div className="grid grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 mt-1 sm:mt-2">
       {cards.map((c) => {
         const isActive =
           c.statut === undefined

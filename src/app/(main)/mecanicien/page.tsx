@@ -34,7 +34,7 @@ import { Spinner } from "@/src/shared/components/spinner";
 import { errorAlert, confirmAlert } from "@/src/lib/alerts";
 import { toast } from "sonner";
 import { getInterventionAgeMeta } from "@/src/utils/constants/intervention-age";
-import { computeUIStatus } from "@/src/utils/constants/intervention-status";
+import { computeUIStatus, getStatusMeta as getUIStatusMeta } from "@/src/utils/constants/intervention-status";
 
 export const statusStyles: Record<string, string> = {
   EN_ATTENTE_ACCORD: "bg-purple-100 text-purple-700",
@@ -185,8 +185,8 @@ export default function MecanicienPage() {
         </div>
 
         {/* Filtres */}
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-row gap-2 sm:gap-3">
             <Select
               value={clientId || "all"}
               onValueChange={(value) => {
@@ -204,7 +204,7 @@ export default function MecanicienPage() {
                 }
               }}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="flex-1 min-w-0 sm:w-[180px]">
                 <SelectValue placeholder="Client" />
               </SelectTrigger>
               <SelectContent>
@@ -236,7 +236,7 @@ export default function MecanicienPage() {
                 }
               }}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="flex-1 min-w-0 sm:w-[180px]">
                 <SelectValue placeholder="Agence" />
               </SelectTrigger>
               <SelectContent>
@@ -334,44 +334,49 @@ export default function MecanicienPage() {
                 <div
                   key={inv.id}
                   title={ageMeta?.title}
-                  className={`border rounded-xl p-5 flex flex-col gap-4 lg:flex-row lg:items-center hover:shadow-md transition ${ageMeta?.className ?? ""}`}
+                  className={`border rounded-xl p-3 sm:p-5 flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-center hover:shadow-md transition ${ageMeta?.className ?? ""}`}
                 >
-                  <div className="flex items-start gap-3 flex-1">
-                    {/* <Car className="text-gray-400 mt-1" /> */}
-                    <Car size={18} className="text-gray-400 mt-1 shrink-0" />
-                    <div>
-                      <p className="font-bold">{inv.vehicle.licensePlate}</p>
-                      <p className="text-sm text-gray-500">
-                        {inv.vehicle.brand} {inv.vehicle.model}
+                  <div className="flex flex-col gap-1.5 flex-1">
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                      <Car size={18} className="text-gray-400 shrink-0" />
+                      <p className="truncate">
+                        <span className="font-bold">{inv.vehicle.licensePlate}</span>{" "}
+                        <span className="text-sm text-gray-500">
+                          {inv.vehicle.brand} {inv.vehicle.model}
+                        </span>
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                      <Calendar size={18} className="text-gray-400 shrink-0" />
+                      <p className="truncate">
+                        <span className="font-medium">{inv.accordNumber || "—"}</span>{" "}
+                        <span className="text-sm text-gray-500">
+                          {inv.createdAt.slice(0, 10)}
+                        </span>
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                      <User size={18} className="text-gray-400 shrink-0" />
+                      <p className="truncate">
+                        <span className="font-medium">{inv.vehicle.client.name}</span>{" "}
+                        <span className="text-sm text-gray-500 inline-flex items-center gap-1">
+                          <MapPin size={14} />
+                          {inv.vehicle.base.location}
+                        </span>
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3 flex-1">
-                    {/* <Calendar className="text-gray-400 mt-1" /> */}
-                    <Calendar
-                      size={18}
-                      className="text-gray-400 mt-1 shrink-0"
-                    />
-                    <div>
-                      <p className="font-medium">{inv.accordNumber || "—"}</p>
-                      <p className="text-sm text-gray-500">
-                        {inv.createdAt.slice(0, 10)}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3 flex-1">
-                    <User size={18} className="text-gray-400 mt-1 shrink-0" />
-                    <div>
-                      <p className="font-medium">{inv.vehicle.client.name}</p>
-                      <p className="text-sm text-gray-500 flex items-center gap-1">
-                        <MapPin size={14} />
-                        {inv.vehicle.base.location}
-                      </p>
-                    </div>
-                  </div>
-
+                  <div className="flex items-center gap-2">
+                  {uiStatus === "REFUSE" || uiStatus === "ANNULEE" ? (
+                    <span
+                      className={`inline-flex items-center gap-1.5 w-[140px] sm:w-[180px] justify-center rounded-md border px-3 py-2 text-sm font-medium ${getUIStatusMeta(uiStatus).bg} ${getUIStatusMeta(uiStatus).color}`}
+                    >
+                      {getUIStatusMeta(uiStatus).label}
+                    </span>
+                  ) : (
                   <Select
                     onValueChange={async (val) => {
                       if (val === "EN_ATTENTE_ACCORD" && inv.accordNumber) {
@@ -406,7 +411,7 @@ export default function MecanicienPage() {
                     value={uiStatus}
                   >
                     <SelectTrigger
-                      className={`w-[180px] ${statusStyles[uiStatus]}`}
+                      className={`w-[140px] sm:w-[180px] ${statusStyles[uiStatus]}`}
                       disabled={inv.id == interventionId}
                     >
                       {inv.id == interventionId ? <Spinner /> : ""}
@@ -419,15 +424,17 @@ export default function MecanicienPage() {
                       <SelectItem value="TERMINEE">Terminée</SelectItem>
                     </SelectContent>
                   </Select>
+                  )}
 
                   <Button
                     variant="outline"
-                    className="gap-2"
+                    className="gap-2 shrink-0"
                     onClick={() => openModal(inv)}
                   >
                     <Eye size={16} />
                     Détails
                   </Button>
+                  </div>
                 </div>
               );
             })}

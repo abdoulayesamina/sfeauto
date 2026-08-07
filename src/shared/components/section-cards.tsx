@@ -16,11 +16,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/src/shared/components/ui/card";
-import { useManageApi } from "@/src/app/(main)/gestionnaire/shared/useManage.api";
+import { useInterventionsStatsApi } from "@/src/shared/hooks/useInterventionsStats.api";
 import { useAgenceApi } from "@/src/app/(main)/agence/shared/useAgence.api";
 import { useEffect, useMemo, useState } from "react";
 import { Agence } from "@/src/utils/types/agence";
-import { Vehicule } from "@/src/utils/types/vehicule";
 import { Label } from "./ui/label";
 import {
   Select,
@@ -44,7 +43,7 @@ import IntervDetailGes from "@/src/app/(main)/gestionnaire/shared/components/Int
 import { Intervention } from "@/src/utils/types/intervention";
 
 export function SectionCards({ user }: { user?: any }) {
-  const { getVehicles } = useManageApi();
+  const { getInterventionsStats } = useInterventionsStatsApi();
   const { getAgences } = useAgenceApi();
   const { getClients } = useClientApi();
 
@@ -53,9 +52,6 @@ export function SectionCards({ user }: { user?: any }) {
   const [agences, setAgences] = useState<Agence[]>([]);
   const [agencesFiltered, setAgencesFiltered] = useState<Agence[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
-  const [vehicles, setVehicles] = useState<{ vehicles: Vehicule[] } | null>(
-    null,
-  );
   const [agenceId, setAgenceId] = useState<string>("");
   const [clientId, setClientId] = useState<string>("");
 
@@ -79,10 +75,20 @@ export function SectionCards({ user }: { user?: any }) {
   
   const [selectedStat, setSelectedStat] = useState<"total" | "encours" | "terminees" | "attente" | "annulees" | "refusees" | null>(null);
 
-  const [ globalInterventions, setGlobalInterventions] = useState<any[]>([]);
-
-
-  const updateInterventionsStats = (interventions: any[] = []) => {
+  // Compteurs des cards : viennent des stats calculées côté serveur (sur tout
+  // le périmètre client/agence, pas juste ce qui a été rapatrié) quand
+  // disponibles ; sinon on retombe sur un calcul local.
+  const updateInterventionsStats = (
+    interventions: any[] = [],
+    serverStats?: {
+      total: number;
+      enCours: number;
+      terminees: number;
+      attente: number;
+      annulees: number;
+      refusees: number;
+    },
+  ) => {
 
     const sortedInterventions = [...interventions].sort(
       (a, b) =>
@@ -90,7 +96,6 @@ export function SectionCards({ user }: { user?: any }) {
         new Date(a.int_updatedAt).getTime()
     );
 
-    setNombreTotalInterventions(sortedInterventions.length);
     setTotalInterventions(sortedInterventions);
 
     setSelectedStat("total");
@@ -115,11 +120,12 @@ export function SectionCards({ user }: { user?: any }) {
       (i) => !i.int_annulee && i.int_accordNumber === "REFUSE",
     );
 
-    setNombreInterventionsEnCours(enCours.length);
-    setNombreInterventionsTerminees(terminees.length);
-    setNombreInterventionsEnAttenteDePiece(attenteDePiece.length);
-    setNombreInterventionsAnnulees(annulees.length);
-    setNombreInterventionsRefusees(refusees.length);
+    setNombreTotalInterventions(serverStats?.total ?? sortedInterventions.length);
+    setNombreInterventionsEnCours(serverStats?.enCours ?? enCours.length);
+    setNombreInterventionsTerminees(serverStats?.terminees ?? terminees.length);
+    setNombreInterventionsEnAttenteDePiece(serverStats?.attente ?? attenteDePiece.length);
+    setNombreInterventionsAnnulees(serverStats?.annulees ?? annulees.length);
+    setNombreInterventionsRefusees(serverStats?.refusees ?? refusees.length);
 
     setInterventionsEnCours(enCours);
     setInterventionsTerminees(terminees);
@@ -128,31 +134,39 @@ export function SectionCards({ user }: { user?: any }) {
     setInterventionsRefusees(refusees);
   };
 
-  const displayGlobalStatistiques = () => {
+  const fetchStats = async (scope: { clientId?: string; agenceId?: string }) => {
+    const result = await getInterventionsStats(scope);
+    updateInterventionsStats(result.interventions, result.stats);
+  };
+
+  const displayGlobalStatistiques = async () => {
     clientIdChanged("");
     setAgenceId("");
-    const interventions =
-      vehicles?.vehicles.flatMap((v: any) => v.interventions) ?? [];
-    updateInterventionsStats(interventions);
     setSearch("");
-    setSearchDate("");                  
+    setSearchDate("");
+
+    setLoading(true);
+    try {
+      await fetchStats({});
+    } catch (error) {
+      console.error("Erreur lors du chargement des statistiques : ", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const loadAllData = async () => {
     try {
       setLoading(true);
-      const agences = await getAgences();
-      setAgences(agences);
+      const [agencesRes, clientsRes] = await Promise.all([
+        getAgences(),
+        getClients(),
+      ]);
 
-      const vehicles = await getVehicles();
-      setVehicles(vehicles);
+      setAgences(agencesRes);
+      setClients(clientsRes);
 
-      const clients = await getClients();
-      setClients(clients);
-
-      const interventions =
-        vehicles?.vehicles.flatMap((v: any) => v.interventions) ?? [];
-      updateInterventionsStats(interventions);
+      await fetchStats({});
     } catch (error) {
       console.error("Erreur lors du chargement des données : ", error);
     } finally {
@@ -161,13 +175,8 @@ export function SectionCards({ user }: { user?: any }) {
   };
 
   useEffect(() => {
-    const interventions = vehicles?.vehicles.flatMap((v: any) => v.interventions) ?? [];
-    setGlobalInterventions(interventions);
-    console.log("Toutes les interventions globales : ", interventions);
-  },[vehicles]);
-
-  useEffect(() => {
     loadAllData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -175,25 +184,20 @@ export function SectionCards({ user }: { user?: any }) {
   }, [agences]);
 
   useEffect(() => {
-    console.log("Liste des vehicules : ", vehicles?.vehicles);
-
     if (!clientId && agenceId) {
       const ag = agences.find((a) => a.bas_id === agenceId);
       clientIdChanged(ag?.bas_clientId ?? "");
     }
 
     if (agenceId) {
-      const interventions = vehicles?.vehicles
-        .filter((v: any) => v.veh_base.bas_id === agenceId)
-        .flatMap((v: any) => v.interventions);
-
-      updateInterventionsStats(interventions);
-
-      setLoading(true);
-      setTimeout(() => {
-        setLoading(false);
-      }, 600);
+      setAgenceIntloading(true);
+      fetchStats({ agenceId })
+        .catch((error) =>
+          console.error("Erreur lors du chargement des statistiques d'agence : ", error),
+        )
+        .finally(() => setAgenceIntloading(false));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [agenceId]);
 
   const resetStats = () => {
@@ -316,7 +320,7 @@ export function SectionCards({ user }: { user?: any }) {
   return (
     <div>
       <div className="flex px-3 pt-3 sm:px-6 sm:pt-6 gap-2 flex-wrap">
-        <div className="w-full max-w-xl">
+        <div className="flex-1 min-w-0 max-w-xl">
           <Select
             open={open}
             onOpenChange={setOpen}
@@ -364,7 +368,7 @@ export function SectionCards({ user }: { user?: any }) {
               : ""}
           </p>
         </div>
-        <div className="w-full max-w-xl">
+        <div className="flex-1 min-w-0 max-w-xl">
           <Select
             value={agenceId}
             onValueChange={(baseId) => setAgenceId(baseId)}
@@ -399,7 +403,7 @@ export function SectionCards({ user }: { user?: any }) {
         )}
       </div> */}
       {
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4 px-3 sm:px-6">
+        <div className="grid grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4 px-3 sm:px-6">
           {[
             {
               key: "total",

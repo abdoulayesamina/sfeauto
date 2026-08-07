@@ -147,7 +147,7 @@ export function VehicleItem({
       >
         {/* INFOS VEHICULE */}
         <div className="flex-1 px-3 py-2.5 sm:px-4 sm:py-3 lg:px-6 lg:py-5">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+          <div className="flex flex-row flex-wrap items-center gap-1 sm:gap-3">
             <span className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900">
               {/* {vehicle.licensePlate} */}
               {formatLicensePlate(vehicle.veh_licensePlate || "")}
@@ -177,12 +177,12 @@ export function VehicleItem({
         {/* STATUTS & ACTION */}
         <div
           className="
-          px-2 py-2 sm:py-3 lg:py-5 flex flex-wrap flex-col items-start lg:items-end
+          px-2 py-2 sm:py-3 lg:py-5 flex flex-row flex-wrap items-center justify-between lg:justify-end
           gap-1.5 sm:gap-2 border-t lg:border-t-0 lg:border-l border-gray-100
           2xl:max-w-[800px] xl:max-w-[500px] xl:min-w-[500px] lg:min-w-[230px]
         "
         >
-          <div className="flex lg:flex-col flex-wrap gap-1 xl:flex-row lg:justify-end bg-white">
+          <div className="flex flex-row flex-wrap gap-1 lg:justify-end bg-white">
             {groupedBadges.length > 0 ? (
               groupedBadges.map((g) => {
                 const statusMeta = getStatusMeta(g.uiStatus)

@@ -68,6 +68,28 @@ export default function GestionnairePage() {
 
   const ITEMS_PER_PAGE = 20;
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const DEFAULT_STATS = {
+    total: 0,
+    enCours: 0,
+    terminees: 0,
+    attente: 0,
+    annulees: 0,
+    refusees: 0,
+  };
+  const [stats, setStats] = useState(DEFAULT_STATS);
+
+  // Recherche plaque (barre du haut) : mode à part, résultats déjà réduits
+  // par le serveur, pas de pagination/filtre serveur appliqué par-dessus.
+  const [searchMode, setSearchMode] = useState(false);
+
+  // Évite un fetch réseau par frappe clavier sur la recherche par n° d'accord.
+  const [debouncedAccordSearch, setDebouncedAccordSearch] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedAccordSearch(accordSearch.trim()), 300);
+    return () => clearTimeout(t);
+  }, [accordSearch]);
 
   const createVehicleData = useMemo(
     () => ({ veh_licensePlate: preFillLicensePlate } as Vehicule),
@@ -84,20 +106,25 @@ export default function GestionnairePage() {
     return Array.isArray(x) ? x : [];
   };
 
-  useEffect(() => {
-    loadAll();
-  }, []);
-
   const loadAll = async () => {
     try {
       setLoading(true);
       const [v, c, a] = await Promise.all([
-        getVehicles({ includeInterventions: true }),
+        getVehicles({
+          page: currentPage,
+          pageSize: ITEMS_PER_PAGE,
+          clientId,
+          agenceId,
+          statut,
+          accordSearch: debouncedAccordSearch || undefined,
+        }),
         getClients(),
         getAgences(),
       ]);
 
       setVehicles(normalizeVehicles(v));
+      setTotalPages(v?.totalPages ?? 1);
+      setStats(v?.stats ?? DEFAULT_STATS);
       setClients(normalizeArray(c));
       setAgences(normalizeArray(a));
     } catch (e: any) {
@@ -106,6 +133,22 @@ export default function GestionnairePage() {
       setLoading(false);
     }
   };
+
+  // Recharge la page courante dès qu'un filtre, la pagination, ou le mode
+  // recherche change. En mode recherche plaque, c'est handleSearch qui gère
+  // `vehicles` directement — on n'écrase pas ses résultats ici.
+  useEffect(() => {
+    if (searchMode) return;
+    loadAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, clientId, agenceId, statut, debouncedAccordSearch, searchMode]);
+
+  // Retour à la page 1 dès qu'un filtre change (pas sur un simple changement
+  // de page), pour ne pas se retrouver sur une page qui n'existe plus.
+  useEffect(() => {
+    setCurrentPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clientId, agenceId, statut, debouncedAccordSearch]);
 
   // Recherche
   // const handleSearch = async () => {
@@ -133,7 +176,7 @@ export default function GestionnairePage() {
       toast.info(
         "Vous devez entrer une plaque d'immatriculation pour lancer la recherche.",
       );
-      await loadAll();
+      setSearchMode(false);
       setVehiculeNotFound(false);
       return;
     }
@@ -144,6 +187,7 @@ export default function GestionnairePage() {
       const vv = normalizeVehicles(data);
 
       setVehicles(vv);
+      setSearchMode(true);
       setVehiculeNotFound(vv.length === 0);
 
       if (vv.length === 0) setPreFillLicensePlate(search);
@@ -267,66 +311,6 @@ export default function GestionnairePage() {
     }
   };
 
-  const [filteredVehicles, setFilteredVehicles] = useState<Vehicule[]>([]);
-
-  useEffect(() => {
-    const list = Array.isArray(vehicles) ? vehicles : [];
-
-    // Recherche par numéro d'accord : mode exclusif.
-    // Si l'utilisateur cherche un accord, on ignore tous les autres filtres
-    // et on ne garde que les véhicules ayant une intervention avec cet accord.
-    const accord = accordSearch.trim().toLowerCase();
-    if (accord) {
-      const byAccord = list.filter((v) =>
-        v.interventions?.some((i) =>
-          (i.int_accordNumber ?? "").toLowerCase().includes(accord)
-        )
-      );
-      setFilteredVehicles(byAccord);
-      return;
-    }
-
-    const filtered = list.filter((v) => {
-      if (clientId && v.veh_client?.cli_id !== clientId) return false;
-      if (agenceId && v.veh_base?.bas_id !== agenceId) return false;
-
-      if (statut && statut !== "all") {
-        if (statut === "SANS_INTERVENTION") {
-          if (v.interventions && v.interventions.length > 0) return false;
-        } else if (statut === "ANNULEE" || statut === "REFUSE") {
-          const hasStatus = v.interventions?.some(
-            (intervention) => computeUIStatus(intervention) === statut
-          );
-
-          if (!hasStatus) return false;
-        } else {
-          const hasStatus = v.interventions?.some(
-            (intervention) => intervention.int_status === statut
-          );
-
-          if (!hasStatus) return false;
-        }
-      }
-
-      return true;
-    });
-    setFilteredVehicles(filtered);
-  }, [vehicles, clientId, agenceId, statut, accordSearch]);
-
-  const paginatedVehicles = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const endIndex = startIndex + ITEMS_PER_PAGE;
-    return filteredVehicles.slice(startIndex, endIndex);
-  }, [filteredVehicles, currentPage, ITEMS_PER_PAGE]);
-
-  const totalPages = useMemo(() => {
-    return Math.ceil(filteredVehicles.length / ITEMS_PER_PAGE);
-  }, [filteredVehicles.length, ITEMS_PER_PAGE]);
-
-  useEffect(() => {
-    setCurrentPage(1); // On revient à la première page dès qu'on change de filtre/recherche
-  }, [filteredVehicles]);
-
   useEffect(() => {
     if (!selectedVehicle) return;
 
@@ -338,11 +322,10 @@ export default function GestionnairePage() {
     }
   }, [vehicles]);
 
-  const interventionStats = useMemo(() => {
-    const interventions = filteredVehicles.flatMap(
-      (v) => v.interventions ?? [],
-    );
-
+  // En mode recherche plaque, le serveur ne renvoie pas de stats agrégées
+  // (petit résultat direct) : on les recalcule localement comme avant.
+  const searchModeStats = useMemo(() => {
+    const interventions = vehicles.flatMap((v) => v.interventions ?? []);
     return {
       total: interventions.length,
       enCours: interventions.filter((i) => i.int_status === "FIXING_STARTED")
@@ -356,7 +339,9 @@ export default function GestionnairePage() {
       annulees: interventions.filter((i) => computeUIStatus(i) === "ANNULEE").length,
       refusees: interventions.filter((i) => computeUIStatus(i) === "REFUSE").length,
     };
-  }, [filteredVehicles]);
+  }, [vehicles]);
+
+  const displayStats = searchMode ? searchModeStats : stats;
 
   const filteredAgences = useMemo(() => {
     const list = Array.isArray(agences) ? agences : [];
@@ -418,7 +403,7 @@ export default function GestionnairePage() {
         <h1 className="font-bold text-base sm:text-xl">Page Gestionnaire</h1>
 
         {/* Barre de recherche */}
-        <div className="flex gap-2 items-center justify-center mt-1">
+        <div className="flex items-center gap-2 p-2 mt-1 shadow rounded">
           <PhotoInterventionWizard
             onVehicleMatched={(vehicle, photos, description) => {
               setSelectedVehicle(vehicle);
@@ -432,13 +417,11 @@ export default function GestionnairePage() {
               setOpenCreateVehiculeModal(true);
             }}
           />
-          <div className="flex-1">
-            <VehicleSearchBar
-              value={search}
-              onChange={setSearch}
-              onSearch={handleSearch}
-            />
-          </div>
+          <VehicleSearchBar
+            value={search}
+            onChange={setSearch}
+            onSearch={handleSearch}
+          />
         </div>
 
         {!vehiculeNotFound ? (
@@ -480,12 +463,12 @@ export default function GestionnairePage() {
 
             {/* STATS */}
             <InterventionStats
-              total={interventionStats.total}
-              enCours={interventionStats.enCours}
-              terminees={interventionStats.terminees}
-              attente={interventionStats.attente}
-              annulees={interventionStats.annulees}
-              refusees={interventionStats.refusees}
+              total={displayStats.total}
+              enCours={displayStats.enCours}
+              terminees={displayStats.terminees}
+              attente={displayStats.attente}
+              annulees={displayStats.annulees}
+              refusees={displayStats.refusees}
               loading={loading}
               activeStatut={statut}
               onStatutClick={setStatut}
@@ -494,7 +477,7 @@ export default function GestionnairePage() {
             {/* LISTE VEHICULES */}
             <VehicleListCard
               filterByAllVehicule={filterByAllVehicule}
-              vehicles={paginatedVehicles}
+              vehicles={vehicles}
               clients={clients}
               agences={filteredAgences}
               accordSearch={accordSearch}
@@ -508,15 +491,15 @@ export default function GestionnairePage() {
             />
             <VehiclePagination
               currentPage={currentPage}
-              totalPages={totalPages}
+              totalPages={searchMode ? 1 : totalPages}
               onPageChange={setCurrentPage}
             />
           </>
         ) : (
           <VehicleNotFound
             onBack={() => {
+              setSearchMode(false);
               setVehiculeNotFound(false);
-              loadAll();
             }}
             onCreate={() => setOpenCreateVehiculeModal(true)}
           />

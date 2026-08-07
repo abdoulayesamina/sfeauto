@@ -30,7 +30,7 @@ export function VehicleFilters({
   onChange,
 }: VehicleFiltersProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3">
+    <div className="grid grid-cols-3 gap-2 sm:gap-3">
       <Select
         value={clientId || "all"}
         onValueChange={(value) =>

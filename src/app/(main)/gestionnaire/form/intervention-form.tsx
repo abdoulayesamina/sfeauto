@@ -63,6 +63,17 @@ export function InterventionForm({
     console.log("Images selected:", imagesBlob);
   }, [imagesBlob]);
 
+  // Garde toujours la dernière valeur pour le cleanup au démontage,
+  // sans re-déclencher l'effet à chaque changement de imagesBlob.
+  const imagesBlobRef = useRef<string[]>(imagesBlob);
+  imagesBlobRef.current = imagesBlob;
+
+  useEffect(() => {
+    return () => {
+      imagesBlobRef.current.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, []);
+
   // 🔥 focus automatique si champ rempli (ou après erreur)
   useEffect(() => {
     if (numeroAccord && accordRef.current) {
@@ -145,7 +156,6 @@ export function InterventionForm({
         <Textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Décrivez les travaux à effectuer..."
           className="min-h-[120px]"
         />
       </div>
@@ -268,7 +278,6 @@ export function InterventionForm({
           onChange={(e) =>
             setCommentaires(e.target.value)
           }
-          placeholder="Notes ou commentaires supplémentaires..."
           className="min-h-[100px]"
         />
       </div>
@@ -283,7 +292,6 @@ export function InterventionForm({
               setNumeroAccord(e.target.value)
             }
             className="h-15"
-            placeholder={defaultAccordNumber}
           />
         </div>
 

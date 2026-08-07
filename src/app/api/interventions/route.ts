@@ -31,6 +31,135 @@ function parseOptionalDate(value: string | null): Date | null {
   return d;
 }
 
+function normalizeOptionalString(value: string | null): string | null {
+  const s = value?.trim();
+  return s ? s : null;
+}
+
+// ============================
+// GET /api/interventions
+// Liste allégée + stats agrégées, pensée pour le tableau de bord (pas de
+// photos/devis embarqués — chaque écran de détail les refetch lui-même).
+// ============================
+export async function GET(request: NextRequest) {
+  try {
+    const session = await auth();
+    const role = session?.user?.role;
+
+    if (!session || !["ADMIN", "MECHANIC"].includes(role as string)) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const clientIdParam = normalizeOptionalString(searchParams.get("clientId"));
+    const agenceIdParam = normalizeOptionalString(searchParams.get("agenceId"));
+    const searchParam = normalizeOptionalString(searchParams.get("search"));
+    const dateParam = normalizeOptionalString(searchParams.get("date"));
+
+    let dateRange: { gte: Date; lt: Date } | null = null;
+    if (dateParam) {
+      const start = parseOptionalDate(dateParam);
+      if (start) {
+        const end = new Date(start);
+        end.setDate(end.getDate() + 1);
+        dateRange = { gte: start, lt: end };
+      }
+    }
+
+    const vehicleScope =
+      clientIdParam || agenceIdParam
+        ? {
+            ...(clientIdParam ? { veh_clientId: clientIdParam } : {}),
+            ...(agenceIdParam ? { veh_baseId: agenceIdParam } : {}),
+          }
+        : undefined;
+
+    const where = {
+      int_supprimee: false,
+      ...(vehicleScope ? { int_vehicle: vehicleScope } : {}),
+      ...(searchParam
+        ? {
+            OR: [
+              { int_vehicle: { veh_licensePlate: { contains: searchParam } } },
+              { int_vehicle: { veh_brand: { bra_name: { contains: searchParam } } } },
+              { int_vehicle: { veh_model: { mod_name: { contains: searchParam } } } },
+            ],
+          }
+        : {}),
+      ...(dateRange ? { int_updatedAt: dateRange } : {}),
+    };
+
+    const [interventions, statusGroups, annuleesCount, refuseesCount] = await Promise.all([
+      prisma.intervention_int.findMany({
+        where,
+        select: {
+          int_id: true,
+          int_accordNumber: true,
+          int_dateOfConfirmation: true,
+          int_status: true,
+          int_statusUpdatedAt: true,
+          int_workDescription: true,
+          int_comments: true,
+          int_didOrderParts: true,
+          int_ordersDetails: true,
+          int_annulee: true,
+          int_createdAt: true,
+          int_updatedAt: true,
+          int_handledBy: {
+            select: { usr_id: true, usr_name: true, usr_email: true },
+          },
+          int_vehicle: {
+            select: {
+              veh_id: true,
+              veh_licensePlate: true,
+              veh_year: true,
+              veh_color: true,
+              veh_entryDate: true,
+              veh_brand: { select: { bra_name: true } },
+              veh_model: { select: { mod_name: true } },
+              veh_client: { select: { cli_id: true, cli_name: true } },
+              veh_base: { select: { bas_id: true, bas_location: true } },
+            },
+          },
+        },
+        orderBy: { int_updatedAt: "desc" },
+        take: 5000,
+      }),
+      prisma.intervention_int.groupBy({
+        by: ["int_status"],
+        where,
+        _count: true,
+      }),
+      prisma.intervention_int.count({
+        where: { ...where, int_annulee: true },
+      }),
+      prisma.intervention_int.count({
+        where: { ...where, int_annulee: false, int_accordNumber: "REFUSE" },
+      }),
+    ]);
+
+    const stats = {
+      total: statusGroups.reduce((sum, g) => sum + g._count, 0),
+      enCours:
+        statusGroups.find((g) => g.int_status === "FIXING_STARTED")?._count ?? 0,
+      terminees:
+        statusGroups.find((g) => g.int_status === "FIXING_FINISHED")?._count ?? 0,
+      attente:
+        statusGroups.find((g) => g.int_status === "WAITING_FOR_PARTS")?._count ?? 0,
+      annulees: annuleesCount,
+      refusees: refuseesCount,
+    };
+
+    return NextResponse.json({ interventions, stats });
+  } catch (error) {
+    logError("Failed to fetch interventions", error);
+    return NextResponse.json(
+      { error: "Échec de la récupération des interventions" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();

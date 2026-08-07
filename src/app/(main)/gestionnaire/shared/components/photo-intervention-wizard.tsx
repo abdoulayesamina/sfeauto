@@ -148,6 +148,8 @@ export function PhotoInterventionWizard({
       <Button
         type="button"
         variant="outline"
+        size="icon"
+        className="shrink-0"
         onClick={handleOpenCapture}
         title="Créer une intervention à partir de photos"
       >

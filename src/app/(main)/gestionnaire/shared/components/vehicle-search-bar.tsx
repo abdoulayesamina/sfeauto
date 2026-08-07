@@ -15,18 +15,17 @@ export function VehicleSearchBar({
   placeholder = "Rechercher un véhicule",
 }: VehicleSearchBarProps) {
   return (
-    <div className="flex items-center justify-center p-1 shadow rounded">
-      <div className="flex items-center justify-center gap-2 w-full md:w-[80%] flex-col md:flex-row mx-auto">
-        <Input
-          className="md:flex-1"
-          value={value}
-          placeholder={placeholder}
-          onChange={(e) => onChange?.(e.target.value)}
-        />
-        <Button onClick={onSearch} className="w-full md:w-auto">
-          Créer une intervention
-        </Button>
-      </div>
+    <div className="flex flex-1 items-center gap-2">
+      <Input
+        className="flex-1 min-w-[100px] md:max-w-xs"
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => onChange?.(e.target.value)}
+      />
+      <Button onClick={onSearch} className="shrink-0 whitespace-nowrap px-3 sm:px-4">
+        <span className="sm:hidden">Créer</span>
+        <span className="hidden sm:inline">Créer une intervention</span>
+      </Button>
     </div>
   )
 }
