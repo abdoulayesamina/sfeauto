@@ -1,18 +1,22 @@
-import { getStatusMeta, toUIStatus } from "@/src/utils/constants/intervention-status"
+import { getStatusMeta, computeUIStatus, UI_TO_INTERVENTIONSTATUS } from "@/src/utils/constants/intervention-status"
 import { cn } from "@/src/lib/utils"
 
 interface InterventionStatusBadgeProps {
   status: string
+  accordNumber?: string | null
   showIcon?: boolean
   className?: string
 }
 
 export default function InterventionStatusBadge({ 
-  status, 
+  status,
+  accordNumber,
   showIcon = true,
   className 
 }: InterventionStatusBadgeProps) {
-  const uiStatus = toUIStatus(status)
+  // Convert UI status to DB status if needed
+  const dbStatus = UI_TO_INTERVENTIONSTATUS[status] || (status as any);
+  const uiStatus = computeUIStatus({ int_status: dbStatus })
   const statusMeta = getStatusMeta(uiStatus)
   const StatusIcon = statusMeta.icon
 

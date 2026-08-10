@@ -4,17 +4,13 @@ import React, { useEffect, useState } from "react"
 import { Car, User, MapPin, Wrench, FileText, Images, X, CheckCircle } from "lucide-react"
 import { Button } from "@/src/shared/components/ui/button"
 import {
-  toUIStatus,
   getStatusMeta,
   HISTORY_LABELS,
+  UIStatus,
+  computeUIStatus,
 } from "@/src/utils/constants/intervention-status"
 import { errorAlert } from "@/src/lib/alerts"
 import { useInterventionPhotos } from "../hooks/useInterventionPhotos.api"
-
-type UIStatus =
-  | "EN_COURS"
-  | "ATTENTE_PIECES"
-  | "TERMINEE"
 
 type Props = {
   selectedIntervention: any
@@ -24,7 +20,7 @@ type Props = {
 export default function IntervDetailGes({ selectedIntervention, onClose }: Props) {
   if (!selectedIntervention) return null
 
-  const uiStatus: UIStatus = toUIStatus(selectedIntervention?.int_status)
+  const uiStatus: UIStatus = computeUIStatus({ int_status: selectedIntervention?.int_status })
 
   const history = selectedIntervention?.int_statusHistory ?? []
 

@@ -13,7 +13,7 @@ import { Modal } from "@/src/shared/components/modal"
 
 import { InterventionForm } from "../../form/intervention-form"
 import { useInterventionApi } from "../useIntervention.api"
-import { toUIStatus, getStatusMeta } from "@/src/utils/constants/intervention-status"
+import { getStatusMeta } from "@/src/utils/constants/intervention-status"
 import { groupInterventionsByStatus } from "@/src/utils/constants/groupInterventionsByStatus"
 import { formatLicensePlate } from "@/src/utils/formatters"
 import { toast } from "sonner"
@@ -138,36 +138,36 @@ export function VehicleItem({
       <div
         onClick={onClick}
         className="
-  mt-4 rounded-xl border border-gray-200 bg-white
+  mt-2 sm:mt-3 lg:mt-4 rounded-lg sm:rounded-xl border border-gray-200 bg-white
   hover:border-[#F5963A]
   transition-all duration-200
-  flex flex-col lg:flex-row gap-4
+  flex flex-col lg:flex-row gap-1.5 sm:gap-3 lg:gap-4
   cursor-pointer
 "
       >
         {/* INFOS VEHICULE */}
-        <div className="flex-1 px-6 py-5">
-          <div className="flex flex-col md:flex-row md:items-center gap-3">
-            <span className="text-lg font-semibold text-gray-900">
+        <div className="flex-1 px-3 py-2.5 sm:px-4 sm:py-3 lg:px-6 lg:py-5">
+          <div className="flex flex-row flex-wrap items-center gap-1 sm:gap-3">
+            <span className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900">
               {/* {vehicle.licensePlate} */}
               {formatLicensePlate(vehicle.veh_licensePlate || "")}
             </span>
-            <span className="text-gray-500">
+            <span className="text-xs sm:text-sm lg:text-base text-gray-500">
               {vehicle.veh_brand?.bra_name} {vehicle.veh_model?.mod_name} · {vehicle.veh_year}
             </span>
 
             {isAbsent && (
               <span
                 title="Véhicule absent"
-                className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700"
+                className="inline-flex items-center gap-1 sm:gap-1.5 rounded-full border border-red-200 bg-red-50 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-medium text-red-700 w-fit"
               >
-                <CircleSlash2 className="h-3.5 w-3.5" />
+                <CircleSlash2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                 Absent
               </span>
             )}
           </div>
 
-          <div className="mt-2 flex flex-wrap gap-3 text-sm text-gray-600">
+          <div className="mt-1 sm:mt-2 flex flex-wrap gap-1.5 sm:gap-3 text-[11px] sm:text-sm text-gray-600">
             <span>{clientName}</span>
             {!compact && <span className="text-gray-400">• {agenceName}</span>}
             <span className="text-gray-400">• Entrée : {entryDateText}</span>
@@ -177,12 +177,12 @@ export function VehicleItem({
         {/* STATUTS & ACTION */}
         <div
           className="
-          px-2 py-5 flex flex-wrap flex-col items-start lg:items-end
-          gap-2 border-t lg:border-t-0 lg:border-l border-gray-100
+          px-2 py-2 sm:py-3 lg:py-5 flex flex-row flex-wrap items-center justify-between lg:justify-end
+          gap-1.5 sm:gap-2 border-t lg:border-t-0 lg:border-l border-gray-100
           2xl:max-w-[800px] xl:max-w-[500px] xl:min-w-[500px] lg:min-w-[230px]
         "
         >
-          <div className="flex lg:flex-col flex-wrap gap-1 xl:flex-row lg:justify-end bg-white">
+          <div className="flex flex-row flex-wrap gap-1 lg:justify-end bg-white">
             {groupedBadges.length > 0 ? (
               groupedBadges.map((g) => {
                 const statusMeta = getStatusMeta(g.uiStatus)
@@ -192,24 +192,25 @@ export function VehicleItem({
                   <span
                     key={String(g.uiStatus)}
                     className={`
-                    ${statusMeta.bg} ${statusMeta.color} text-xs font-medium
-                    px-3 py-1 rounded-full flex items-center gap-1
+                    ${statusMeta.bg} ${statusMeta.color} text-[10px] sm:text-xs font-medium
+                    px-2 py-0.5 sm:px-3 sm:py-1 rounded-full flex items-center gap-1
                   `}
                   >
-                    <statusMeta.icon className="w-3 h-3" />
+                    <statusMeta.icon className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                     {label}
                   </span>
                 )
               })
             ) : (
-              <span className="bg-gray-100 text-gray-700 text-xs font-medium px-3 py-1 rounded-full">
+              <span className="bg-gray-100 text-gray-700 text-[10px] sm:text-xs font-medium px-2 py-0.5 sm:px-3 sm:py-1 rounded-full">
                 Aucune intervention
               </span>
             )}
           </div>
 
           <Button
-            className="px-4 py-2 rounded-lg shadow-sm hover:shadow transition ml-2"
+            size="sm"
+            className="px-2.5 py-1 text-xs sm:px-4 sm:py-2 sm:text-sm rounded-lg shadow-sm hover:shadow transition sm:ml-2 h-auto"
             disabled={isAbsent}
             title={isAbsent ? "Véhicule absent : aucune intervention possible" : undefined}
             onClick={(e) => {
@@ -218,7 +219,7 @@ export function VehicleItem({
               setInterventionModalOpen(true)
             }}
           >
-            <DiamondPlus className="mr-2 h-4 w-4" />
+            <DiamondPlus className="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
             Intervention
           </Button>
         </div>

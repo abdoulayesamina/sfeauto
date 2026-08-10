@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { logError } from "@/src/lib/logger";
 import { prisma } from "@/src/lib/prisma";
 import { normalizePlate } from "@/src/lib/normalizePlate";
+import { adaptLegacyIntervention } from "@/src/utils/constants/intervention-status";
 
 const BODY_TYPES = [
   "BERLINE",
@@ -98,14 +99,61 @@ export async function GET(request: NextRequest) {
         });
       }
     }
-    
-    const vehicles = await prisma.vehicle_veh.findMany({
-      where: {
-        ...(session.user.role === "AGENCE"
-          ? { veh_baseId: session.user.baseId! }
-          : {}),
-        ...(orFilters.length > 0 ? { OR: orFilters } : {}),
-      },
+
+    // La pagination ne s'active que si l'appelant la demande explicitement
+    // (query param présent) — sans ça, on garde l'ancien comportement
+    // "tout renvoyer" pour ne pas casser silencieusement les appelants qui
+    // n'ont pas encore été migrés vers la pagination serveur.
+    const isPaginated = searchParams.has("page") || searchParams.has("pageSize");
+    const page = Math.max(1, parseOptionalInt(searchParams.get("page")) ?? 1);
+    const pageSize = Math.min(
+      100,
+      Math.max(1, parseOptionalInt(searchParams.get("pageSize")) ?? 20)
+    );
+    const clientIdParam = normalizeOptionalString(searchParams.get("clientId"));
+    const agenceIdParam = normalizeOptionalString(searchParams.get("agenceId"));
+    const statutParam = normalizeOptionalString(searchParams.get("statut"));
+    const accordSearchParam = normalizeOptionalString(searchParams.get("accordSearch"));
+
+    // Recherche par n° d'accord : mode exclusif, comme côté front — quand elle
+    // est active, on ignore volontairement client/agence/statut.
+    const interventionsFilter = accordSearchParam
+      ? {
+          some: {
+            int_supprimee: false,
+            int_accordNumber: { contains: accordSearchParam },
+          },
+        }
+      : statutParam && statutParam !== "all"
+        ? statutParam === "SANS_INTERVENTION"
+          ? { none: { int_supprimee: false } }
+          : statutParam === "ANNULEE"
+            ? { some: { int_supprimee: false, int_annulee: true } }
+            : statutParam === "REFUSE"
+              ? {
+                  some: {
+                    int_supprimee: false,
+                    int_annulee: false,
+                    int_accordNumber: "REFUSE",
+                  },
+                }
+              : { some: { int_supprimee: false, int_status: statutParam as any } }
+        : undefined;
+
+    const where = {
+      ...(session.user.role === "AGENCE"
+        ? { veh_baseId: session.user.baseId! }
+        : {}),
+      ...(orFilters.length > 0 ? { OR: orFilters } : {}),
+      ...(!accordSearchParam && clientIdParam ? { veh_clientId: clientIdParam } : {}),
+      ...(!accordSearchParam && agenceIdParam ? { veh_baseId: agenceIdParam } : {}),
+      ...(interventionsFilter ? { interventions: interventionsFilter } : {}),
+    };
+
+    const [vehicles, total, statusGroups, annuleesCount, refuseesCount] = await Promise.all([
+      prisma.vehicle_veh.findMany({
+      where,
+      ...(isPaginated ? { skip: (page - 1) * pageSize, take: pageSize } : {}),
       select: {
         veh_id: true,
         veh_licensePlate: true,
@@ -218,29 +266,13 @@ export async function GET(request: NextRequest) {
               },
             },
 
-            photos: {
-              select: {
-                itp_id: true,
-                itp_url: true,
-                itp_blobName: true,
-                itp_contentType: true,
-                itp_size: true,
-                itp_createdAt: true,
-              },
-            },
-
+            // Les photos et le détail complet du devis ne sont jamais lus
+            // depuis cette liste (chaque écran de détail les refetch lui-même
+            // via useInterventionPhotos / DevisApercu) — on ne garde que
+            // l'identifiant du devis pour savoir s'il en existe déjà un.
             devis: {
               select: {
                 dev_id: true,
-                dev_numdevis: true,
-                dev_datecreation: true,
-                dev_totalht: true,
-                dev_totaltva: true,
-                dev_totalttc: true,
-                dev_tva: true,
-                dev_supprimee: true,
-                dev_accordNumber: true,
-                dev_dateAccord: true,
               },
             },
 
@@ -293,12 +325,53 @@ export async function GET(request: NextRequest) {
       orderBy: {
         veh_createdAt: "desc",
       },
-      // take: search ? 20 : 100,
+      }),
+      prisma.vehicle_veh.count({ where }),
+      // Stats calculées sur TOUTES les interventions des véhicules qui
+      // correspondent aux filtres actuels (pas seulement la page affichée),
+      // pour reproduire le comportement du calcul précédent côté client.
+      prisma.intervention_int.groupBy({
+        by: ["int_status"],
+        where: { int_supprimee: false, int_vehicle: where },
+        _count: true,
+      }),
+      prisma.intervention_int.count({
+        where: { int_supprimee: false, OR: [{ int_status: "CANCELLED" }, { int_annulee: true }], int_vehicle: where },
+      }),
+      prisma.intervention_int.count({
+        where: {
+          int_supprimee: false,
+          OR: [{ int_status: "REFUSED" }, { int_accordNumber: "REFUSE" }],
+          int_vehicle: where,
+        },
+      }),
+    ]);
+
+    const stats = {
+      total: statusGroups.reduce((sum, g) => sum + g._count, 0) + annuleesCount + refuseesCount,
+      enCours:
+        statusGroups.find((g) => g.int_status === "FIXING_STARTED")?._count ?? 0,
+      terminees:
+        statusGroups.find((g) => g.int_status === "FIXING_FINISHED")?._count ?? 0,
+      attente:
+        statusGroups.find((g) => g.int_status === "WAITING_FOR_PARTS")?._count ?? 0,
+      annulees: annuleesCount,
+      refusees: refuseesCount,
+    };
+
+    const adaptedVehicles = vehicles.map((v) => ({
+      ...v,
+      interventions: (v.interventions ?? []).map(adaptLegacyIntervention),
+    }));
+
+    return NextResponse.json({
+      vehicles: adaptedVehicles,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.max(1, Math.ceil(total / pageSize)),
+      stats,
     });
-
-
-
-    return NextResponse.json({ vehicles });
   } catch (error) {
     logError("Failed to fetch vehicles", error);
     return NextResponse.json(

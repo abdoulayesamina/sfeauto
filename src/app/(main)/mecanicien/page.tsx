@@ -31,10 +31,13 @@ import { useClients } from "./shared/useClient.api";
 import InterventionDetail from "./shared/components/intervention-detail";
 import { Modal } from "@/src/shared/components/modal";
 import { Spinner } from "@/src/shared/components/spinner";
-import { errorAlert } from "@/src/lib/alerts";
+import { errorAlert, confirmAlert } from "@/src/lib/alerts";
 import { toast } from "sonner";
+import { getInterventionAgeMeta } from "@/src/utils/constants/intervention-age";
 
 export const statusStyles: Record<string, string> = {
+  EN_ATTENTE_ACCORD: "bg-purple-100 text-purple-700",
+  REFUSE: "bg-red-100 text-red-700",
   EN_COURS: "bg-blue-100 text-blue-700",
   ATTENTE_PIECES: "bg-orange-100 text-orange-700",
   TERMINEE: "bg-green-100 text-green-700",
@@ -50,6 +53,7 @@ const STATUS_UI_MAP: Record<string, string> = {
 export const getStatusMeta = (status?: string) => {
   switch (status) {
     case "FIXING_STARTED":
+    case "EN_COURS":
       return {
         label: "Réparation en cours",
         icon: Wrench,
@@ -57,11 +61,44 @@ export const getStatusMeta = (status?: string) => {
         bg: "bg-blue-100",
       };
     case "WAITING_FOR_PARTS":
+    case "ATTENTE_PIECES":
       return {
         label: "En attente de pièces",
         icon: Clock,
         color: "text-orange-700",
         bg: "bg-orange-100",
+      };
+    case "FIXING_FINISHED":
+    case "TERMINEE":
+      return {
+        label: "Réparation terminée",
+        icon: CheckCircle2,
+        color: "text-green-700",
+        bg: "bg-green-100",
+      };
+    case "WAITING_FOR_APPROVAL":
+    case "EN_ATTENTE_ACCORD":
+      return {
+        label: "En attente d'accord",
+        icon: Clock,
+        color: "text-purple-700",
+        bg: "bg-purple-100",
+      };
+    case "REFUSED":
+    case "REFUSE":
+      return {
+        label: "Refusé",
+        icon: XCircle,
+        color: "text-red-700",
+        bg: "bg-red-100",
+      };
+    case "CANCELLED":
+    case "ANNULEE":
+      return {
+        label: "Annulée",
+        icon: XCircle,
+        color: "text-red-700",
+        bg: "bg-red-100",
       };
     case "FIXING_DONE":
       return {
@@ -69,13 +106,6 @@ export const getStatusMeta = (status?: string) => {
         icon: CheckCircle2,
         color: "text-green-700",
         bg: "bg-green-100",
-      };
-    case "CANCELLED":
-      return {
-        label: "Annulée",
-        icon: XCircle,
-        color: "text-red-700",
-        bg: "bg-red-100",
       };
     default:
       return {
@@ -100,7 +130,7 @@ const STATUS_TRANSLATIONS: Record<string, string> = {
 
 export default function MecanicienPage() {
   const [filterStatus, setFilterStatus] = useState<
-    "EN_COURS" | "TERMINEE" | "ATTENTE_PIECES" | "EN_ATTENTE-ACCORD" | ""
+    "EN_ATTENTE_ACCORD" | "EN_COURS" | "TERMINEE" | "ATTENTE_PIECES" | "REFUSEE" | "ANNULEE" | ""
   >("EN_COURS");
   const [clientId, setClientId] = useState<string>();
   const [baseId, setBaseId] = useState<string>();
@@ -163,20 +193,8 @@ export default function MecanicienPage() {
       setFilteredInterventions([]);
       return;
     }
-
-    let result = [...interventions];
-
-    // Note: Status, search, client, and base are now filtered server-side.
-    // We only need to handle special client-side cases here if any.
-    // For "EN_ATTENTE-ACCORD", it's currently a client-side filter.
-    if (filterStatus === "EN_ATTENTE-ACCORD") {
-      result = result.filter(
-        (inv: any) => !inv.accordNumber
-      );
-    }
-
-    setFilteredInterventions(result);
-  }, [interventions, filterStatus]);
+    setFilteredInterventions([...interventions]);
+  }, [interventions]);
 
   useEffect(() => {
     applyFilters();
@@ -193,8 +211,8 @@ export default function MecanicienPage() {
         </div>
 
         {/* Filtres */}
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-row gap-2 sm:gap-3">
             <Select
               value={clientId || "all"}
               onValueChange={(value) => {
@@ -212,7 +230,7 @@ export default function MecanicienPage() {
                 }
               }}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="flex-1 min-w-0 sm:w-[180px]">
                 <SelectValue placeholder="Client" />
               </SelectTrigger>
               <SelectContent>
@@ -244,7 +262,7 @@ export default function MecanicienPage() {
                 }
               }}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="flex-1 min-w-0 sm:w-[180px]">
                 <SelectValue placeholder="Agence" />
               </SelectTrigger>
               <SelectContent>
@@ -283,8 +301,8 @@ export default function MecanicienPage() {
         {/* Statut filter */}
         <div className="flex gap-2 flex-wrap">
           <Button
-            onClick={() => setFilterStatus("EN_ATTENTE-ACCORD")}
-            variant={filterStatus === "EN_ATTENTE-ACCORD" ? "default" : "outline"}
+            onClick={() => setFilterStatus("EN_ATTENTE_ACCORD")}
+            variant={filterStatus === "EN_ATTENTE_ACCORD" ? "default" : "outline"}
           >
             En attente d'accord
           </Button>
@@ -307,6 +325,20 @@ export default function MecanicienPage() {
             variant={filterStatus === "TERMINEE" ? "default" : "outline"}
           >
             Terminées
+          </Button>
+
+          <Button
+            onClick={() => setFilterStatus("REFUSEE")}
+            variant={filterStatus === "REFUSEE" ? "default" : "outline"}
+          >
+            Refusées
+          </Button>
+
+          <Button
+            onClick={() => setFilterStatus("ANNULEE")}
+            variant={filterStatus === "ANNULEE" ? "default" : "outline"}
+          >
+            Annulées
           </Button>
         </div>
 
@@ -331,51 +363,66 @@ export default function MecanicienPage() {
           )}
           {!loading &&
             filteredInterventions.map((inv) => {
-              const uiStatus = STATUS_UI_MAP[inv.status];
+              const uiStatus = inv.status;
+              const ageMeta = getInterventionAgeMeta(inv.status, inv.createdAt);
 
               return (
                 <div
                   key={inv.id}
-                  className="border rounded-xl p-5 flex flex-col gap-4 lg:flex-row lg:items-center hover:shadow-md transition"
+                  title={ageMeta?.title}
+                  className={`border rounded-xl p-3 sm:p-5 flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-center hover:shadow-md transition ${ageMeta?.className ?? ""}`}
                 >
-                  <div className="flex items-start gap-3 flex-1">
-                    {/* <Car className="text-gray-400 mt-1" /> */}
-                    <Car size={18} className="text-gray-400 mt-1 shrink-0" />
-                    <div>
-                      <p className="font-bold">{inv.vehicle.licensePlate}</p>
-                      <p className="text-sm text-gray-500">
-                        {inv.vehicle.brand} {inv.vehicle.model}
+                  <div className="flex flex-col gap-1.5 flex-1">
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                      <Car size={18} className="text-gray-400 shrink-0" />
+                      <p className="truncate">
+                        <span className="font-bold">{inv.vehicle.licensePlate}</span>{" "}
+                        <span className="text-sm text-gray-500">
+                          {inv.vehicle.brand} {inv.vehicle.model}
+                        </span>
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                      <Calendar size={18} className="text-gray-400 shrink-0" />
+                      <p className="truncate">
+                        <span className="font-medium">{inv.accordNumber || "—"}</span>{" "}
+                        <span className="text-sm text-gray-500">
+                          {inv.createdAt.slice(0, 10)}
+                        </span>
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                      <User size={18} className="text-gray-400 shrink-0" />
+                      <p className="truncate">
+                        <span className="font-medium">{inv.vehicle.client.name}</span>{" "}
+                        <span className="text-sm text-gray-500 inline-flex items-center gap-1">
+                          <MapPin size={14} />
+                          {inv.vehicle.base.location}
+                        </span>
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3 flex-1">
-                    {/* <Calendar className="text-gray-400 mt-1" /> */}
-                    <Calendar
-                      size={18}
-                      className="text-gray-400 mt-1 shrink-0"
-                    />
-                    <div>
-                      <p className="font-medium">{inv.accordNumber || "—"}</p>
-                      <p className="text-sm text-gray-500">
-                        {inv.createdAt.slice(0, 10)}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3 flex-1">
-                    <User size={18} className="text-gray-400 mt-1 shrink-0" />
-                    <div>
-                      <p className="font-medium">{inv.vehicle.client.name}</p>
-                      <p className="text-sm text-gray-500 flex items-center gap-1">
-                        <MapPin size={14} />
-                        {inv.vehicle.base.location}
-                      </p>
-                    </div>
-                  </div>
-
+                  <div className="flex items-center gap-2">
+                  {uiStatus === "REFUSE" || uiStatus === "ANNULEE" || filterStatus === "REFUSEE" || filterStatus === "ANNULEE" ? (
+                    <span
+                      className={`inline-flex items-center gap-1.5 w-[140px] sm:w-[180px] justify-center rounded-md border px-3 py-2 text-sm font-medium ${statusStyles[uiStatus]}`}
+                    >
+                      {uiStatus === "REFUSE" ? "Refusé" : "Annulée"}
+                    </span>
+                  ) : (
                   <Select
                     onValueChange={async (val) => {
+                      if (val === "EN_ATTENTE_ACCORD" && inv.accordNumber) {
+                        const confirmed = await confirmAlert(
+                          "Retour en attente d'accord",
+                          `Un numéro d'accord existe (${inv.accordNumber}). Il sera supprimé. Confirmer ?`
+                        );
+                        if (!confirmed) return;
+                      }
+
                       setInterventionId(inv.id);
                       const result = await updateStatus(inv.id, val as any);
 
@@ -388,21 +435,11 @@ export default function MecanicienPage() {
                       setInterventions((prev: any) =>
                         prev.map((item: any) =>
                           item.id === inv.id
-                            ? { ...item, status: result.data.status }
-                            : item,
-                        ),
-                      );
-
-                      setInterventions((prev: any) =>
-                        prev.map((item: any) =>
-                          item.id === inv.id
                             ? {
-                              ...item,
-                              status:
-                                Object.keys(STATUS_UI_MAP).find(
-                                  (key) => STATUS_UI_MAP[key] === val,
-                                ) || item.status,
-                            }
+                                ...item,
+                                status: result.data.status,
+                                accordNumber: result.data.accordNumber,
+                              }
                             : item,
                         ),
                       );
@@ -410,29 +447,30 @@ export default function MecanicienPage() {
                     value={uiStatus}
                   >
                     <SelectTrigger
-                      className={`w-[180px] ${statusStyles[uiStatus]}`}
+                      className={`w-[140px] sm:w-[180px] ${statusStyles[uiStatus]}`}
                       disabled={inv.id == interventionId}
                     >
                       {inv.id == interventionId ? <Spinner /> : ""}
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="EN_ATTENTE_ACCORD">En attente d'accord</SelectItem>
                       <SelectItem value="EN_COURS">En cours</SelectItem>
-                      <SelectItem value="ATTENTE_PIECES">
-                        Attente pièces
-                      </SelectItem>
+                      <SelectItem value="ATTENTE_PIECES">Attente pièces</SelectItem>
                       <SelectItem value="TERMINEE">Terminée</SelectItem>
                     </SelectContent>
                   </Select>
+                  )}
 
                   <Button
                     variant="outline"
-                    className="gap-2"
+                    className="gap-2 shrink-0"
                     onClick={() => openModal(inv)}
                   >
                     <Eye size={16} />
                     Détails
                   </Button>
+                  </div>
                 </div>
               );
             })}

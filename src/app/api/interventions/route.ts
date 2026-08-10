@@ -4,6 +4,8 @@ import { auth } from "@/auth";
 import { logError } from "@/src/lib/logger";
 import { randomUUID } from "crypto";
 import { getContainerClient, getSasUrlForBlob } from "@/src/lib/azureBlob";
+import { notifyAdmins } from "@/src/lib/notifications";
+import { adaptLegacyIntervention } from "@/src/utils/constants/intervention-status";
 
 export const runtime = "nodejs";
 
@@ -28,6 +30,137 @@ function parseOptionalDate(value: string | null): Date | null {
     throw new Error("INVALID_DATE");
   }
   return d;
+}
+
+function normalizeOptionalString(value: string | null): string | null {
+  const s = value?.trim();
+  return s ? s : null;
+}
+
+// ============================
+// GET /api/interventions
+// Liste allégée + stats agrégées, pensée pour le tableau de bord (pas de
+// photos/devis embarqués — chaque écran de détail les refetch lui-même).
+// ============================
+export async function GET(request: NextRequest) {
+  try {
+    const session = await auth();
+    const role = session?.user?.role;
+
+    if (!session || !["ADMIN", "MECHANIC"].includes(role as string)) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const clientIdParam = normalizeOptionalString(searchParams.get("clientId"));
+    const agenceIdParam = normalizeOptionalString(searchParams.get("agenceId"));
+    const searchParam = normalizeOptionalString(searchParams.get("search"));
+    const dateParam = normalizeOptionalString(searchParams.get("date"));
+
+    let dateRange: { gte: Date; lt: Date } | null = null;
+    if (dateParam) {
+      const start = parseOptionalDate(dateParam);
+      if (start) {
+        const end = new Date(start);
+        end.setDate(end.getDate() + 1);
+        dateRange = { gte: start, lt: end };
+      }
+    }
+
+    const vehicleScope =
+      clientIdParam || agenceIdParam
+        ? {
+            ...(clientIdParam ? { veh_clientId: clientIdParam } : {}),
+            ...(agenceIdParam ? { veh_baseId: agenceIdParam } : {}),
+          }
+        : undefined;
+
+    const baseWhere = {
+      int_supprimee: false,
+      int_status: { not: "DELETED" as const },
+      ...(vehicleScope ? { int_vehicle: vehicleScope } : {}),
+      ...(searchParam
+        ? {
+            OR: [
+              { int_vehicle: { veh_licensePlate: { contains: searchParam } } },
+              { int_vehicle: { veh_brand: { bra_name: { contains: searchParam } } } },
+              { int_vehicle: { veh_model: { mod_name: { contains: searchParam } } } },
+            ],
+          }
+        : {}),
+      ...(dateRange ? { int_updatedAt: dateRange } : {}),
+    };
+
+    const [interventions, statusGroups, annuleesCount, refuseesCount] = await Promise.all([
+      prisma.intervention_int.findMany({
+        where: baseWhere,
+        select: {
+          int_id: true,
+          int_accordNumber: true,
+          int_dateOfConfirmation: true,
+          int_status: true,
+          int_statusUpdatedAt: true,
+          int_workDescription: true,
+          int_comments: true,
+          int_didOrderParts: true,
+          int_ordersDetails: true,
+          int_createdAt: true,
+          int_updatedAt: true,
+          int_handledBy: {
+            select: { usr_id: true, usr_name: true, usr_email: true },
+          },
+          int_vehicle: {
+            select: {
+              veh_id: true,
+              veh_licensePlate: true,
+              veh_year: true,
+              veh_color: true,
+              veh_entryDate: true,
+              veh_brand: { select: { bra_name: true } },
+              veh_model: { select: { mod_name: true } },
+              veh_client: { select: { cli_id: true, cli_name: true } },
+              veh_base: { select: { bas_id: true, bas_location: true } },
+            },
+          },
+        },
+        orderBy: { int_updatedAt: "desc" },
+        take: 5000,
+      }),
+      prisma.intervention_int.groupBy({
+        by: ["int_status"],
+        where: baseWhere,
+        _count: true,
+      }) as any,
+      prisma.intervention_int.count({
+        where: { int_supprimee: false, AND: [vehicleScope ? { int_vehicle: vehicleScope } : {}, { OR: [{ int_status: "CANCELLED" }, { int_annulee: true }] }] },
+      }),
+      prisma.intervention_int.count({
+        where: { int_supprimee: false, AND: [vehicleScope ? { int_vehicle: vehicleScope } : {}, { OR: [{ int_status: "REFUSED" }, { int_accordNumber: "REFUSE" }] }] },
+      }),
+    ]);
+
+    const stats = {
+      total: statusGroups.reduce((sum: number, g: any) => sum + g._count, 0) + annuleesCount + refuseesCount,
+      enCours:
+        statusGroups.find((g: any) => g.int_status === "FIXING_STARTED")?._count ?? 0,
+      terminees:
+        statusGroups.find((g: any) => g.int_status === "FIXING_FINISHED")?._count ?? 0,
+      attente:
+        statusGroups.find((g: any) => g.int_status === "WAITING_FOR_PARTS")?._count ?? 0,
+      annulees: annuleesCount,
+      refusees: refuseesCount,
+    };
+
+    const adaptedInterventions = interventions.map(adaptLegacyIntervention);
+
+    return NextResponse.json({ interventions: adaptedInterventions, stats });
+  } catch (error) {
+    logError("Failed to fetch interventions", error);
+    return NextResponse.json(
+      { error: "Échec de la récupération des interventions" },
+      { status: 500 }
+    );
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -81,7 +214,7 @@ export async function POST(request: NextRequest) {
 
     const vehicle = await prisma.vehicle_veh.findUnique({
       where: { veh_id: vehicleId },
-      select: { veh_id: true, veh_baseId: true, veh_clientId: true, veh_kilometrage: true, veh_absent: true },
+      select: { veh_id: true, veh_baseId: true, veh_clientId: true, veh_kilometrage: true, veh_absent: true, veh_licensePlate: true },
     });
 
     if (!vehicle) {
@@ -237,6 +370,14 @@ export async function POST(request: NextRequest) {
         }
 
         return { intervention, photos: createdPhotos };
+      });
+
+      await notifyAdmins({
+        type: "INTERVENTION_CREATED",
+        title: "Nouvelle intervention",
+        message: `Nouvelle intervention pour le véhicule ${vehicle.veh_licensePlate}.`,
+        interventionId: result.intervention.int_id,
+        excludeUserId: session.user.id ?? null,
       });
 
       return NextResponse.json(

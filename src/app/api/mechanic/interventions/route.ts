@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/src/lib/prisma";
 import { logError } from "@/src/lib/logger";
 import { normalizePlate } from "@/src/utils/searchSmart";
+import { adaptLegacyIntervention, STATUS_UI_MAP } from "@/src/utils/constants/intervention-status";
 
 export async function GET(request: NextRequest) {
   try {
@@ -24,31 +25,67 @@ export async function GET(request: NextRequest) {
 
     // console.log(`[API Interventions] GET started. search=${search}, clientId=${clientId}, baseId=${baseId}, status=${uiStatus}`);
 
-    const whereClause: any = {
+    let whereClause: any = {
       int_supprimee: false,
       int_annulee: false,
       int_vehicle: { veh_absent: false },
     };
 
-    if (uiStatus && uiStatus !== "ALL") {
-      if (uiStatus === "EN_COURS") {
-        whereClause.int_status = {
-          in: ["FIXING_STARTED"],
-        };
-      } else if (uiStatus === "TERMINEE") {
-        whereClause.int_status = "FIXING_FINISHED";
-      } else if (uiStatus === "ATTENTE_PIECES") {
-        whereClause.int_status = "WAITING_FOR_PARTS";
-      }
+    // Handle different status filters
+    if (uiStatus === "EN_ATTENTE_ACCORD") {
+      // Interventions waiting for approval: FIXING_STARTED with no accordNumber
+      whereClause.int_status = "FIXING_STARTED";
+      whereClause.int_accordNumber = null;
+    } else if (uiStatus === "EN_COURS") {
+      // Interventions in progress: FIXING_STARTED with accordNumber (and not "REFUSE")
+      whereClause.int_status = "FIXING_STARTED";
+      whereClause.AND = [
+        { int_accordNumber: { not: null } },
+        { int_accordNumber: { not: "REFUSE" } }
+      ];
+    } else if (uiStatus === "TERMINEE") {
+      whereClause.int_status = "FIXING_FINISHED";
+    } else if (uiStatus === "ATTENTE_PIECES") {
+      whereClause.int_status = "WAITING_FOR_PARTS";
+    } else if (uiStatus === "REFUSEE") {
+      // Show only refused interventions (read-only)
+      whereClause.OR = [
+        { int_status: "REFUSED" },
+        { int_accordNumber: "REFUSE" }
+      ];
+    } else if (uiStatus === "ANNULEE") {
+      // Show only cancelled interventions (read-only)
+      whereClause.int_annulee = true;
+    } else {
+      // Default: exclude refused, cancelled, and deleted
+      whereClause.int_status = { notIn: ["CANCELLED", "REFUSED", "DELETED"] };
     }
 
+    // Always exclude "REFUSE" accordNumber for non-refused/non-cancelled tabs
+    if (uiStatus !== "REFUSEE" && uiStatus !== "ANNULEE" && uiStatus !== "EN_ATTENTE_ACCORD" && uiStatus !== "EN_COURS") {
+      whereClause.AND = [
+        { int_accordNumber: { not: "REFUSE" } }
+      ];
+    }
+
+    // Handle vehicle filters (client/base)
     if (baseId || clientId) {
-      whereClause.int_vehicle = {
-        is: {
-          ...(baseId ? { veh_baseId: baseId } : {}),
-          ...(clientId ? { veh_clientId: clientId } : {}),
-        },
-      };
+      const vehicleFilter: any = { veh_absent: false };
+      if (baseId) vehicleFilter.veh_baseId = baseId;
+      if (clientId) vehicleFilter.veh_clientId = clientId;
+      
+      if (whereClause.OR) {
+        // For refused tab with OR, we need to wrap it properly
+        whereClause = {
+          int_supprimee: false,
+          int_annulee: uiStatus === "ANNULEE" ? true : false,
+          int_vehicle: { veh_absent: false, ...vehicleFilter },
+          OR: whereClause.OR
+        };
+      } else {
+        // Merge vehicle filter
+        whereClause.int_vehicle = { is: vehicleFilter };
+      }
     }
 
     if (search) {
@@ -128,51 +165,57 @@ export async function GET(request: NextRequest) {
 
     console.log(`[API Interventions] Prisma query finished in ${Date.now() - startTime}ms. Found ${interventions.length} results.`);
 
-    const serialized = interventions.map((intervention) => ({
-      id: intervention.int_id,
-      accordNumber: intervention.int_accordNumber,
-      dateOfConfirmation:
-        intervention.int_dateOfConfirmation?.toISOString() ?? null,
-      interventionConfirmed: intervention.int_interventionConfirmed,
-      status: intervention.int_status,
-      statusUpdatedAt: intervention.int_statusUpdatedAt.toISOString(),
-      workDescription: intervention.int_workDescription,
-      didOrderParts: intervention.int_didOrderParts,
-      ordersDetails: intervention.int_ordersDetails,
-      comments: intervention.int_comments,
-      createdAt: intervention.int_createdAt.toISOString(),
-      updatedAt: intervention.int_updatedAt.toISOString(),
-      vehicle: {
-        id: intervention.int_vehicle?.veh_id ?? "unknown",
-        licensePlate: intervention.int_vehicle?.veh_licensePlate ?? "Inconnue",
-        brand: intervention.int_vehicle?.veh_brand?.bra_name ?? null,
-        model: intervention.int_vehicle?.veh_model?.mod_name ?? null,
-        year: intervention.int_vehicle?.veh_year,
-        color: intervention.int_vehicle?.veh_color,
-        client: {
-          id: intervention.int_clientId ?? intervention.int_vehicle?.veh_client?.cli_id ?? "unknown",
-          name: intervention.int_client?.cli_name ?? intervention.int_vehicle?.veh_client?.cli_name ?? "Client inconnu",
+    const serialized = interventions.map((intervention) => {
+      const adapted = adaptLegacyIntervention(intervention);
+      const uiStatus = STATUS_UI_MAP[adapted.int_status as keyof typeof STATUS_UI_MAP] || "FIXING_STARTED";
+      
+      return {
+        id: intervention.int_id,
+        accordNumber: intervention.int_accordNumber,
+        dateOfConfirmation:
+          intervention.int_dateOfConfirmation?.toISOString() ?? null,
+        interventionConfirmed: intervention.int_interventionConfirmed,
+        status: uiStatus,
+        dbStatus: adapted.int_status,
+        statusUpdatedAt: intervention.int_statusUpdatedAt.toISOString(),
+        workDescription: intervention.int_workDescription,
+        didOrderParts: intervention.int_didOrderParts,
+        ordersDetails: intervention.int_ordersDetails,
+        comments: intervention.int_comments,
+        createdAt: intervention.int_createdAt.toISOString(),
+        updatedAt: intervention.int_updatedAt.toISOString(),
+        vehicle: {
+          id: intervention.int_vehicle?.veh_id ?? "unknown",
+          licensePlate: intervention.int_vehicle?.veh_licensePlate ?? "Inconnue",
+          brand: intervention.int_vehicle?.veh_brand?.bra_name ?? null,
+          model: intervention.int_vehicle?.veh_model?.mod_name ?? null,
+          year: intervention.int_vehicle?.veh_year,
+          color: intervention.int_vehicle?.veh_color,
+          client: {
+            id: intervention.int_clientId ?? intervention.int_vehicle?.veh_client?.cli_id ?? "unknown",
+            name: intervention.int_client?.cli_name ?? intervention.int_vehicle?.veh_client?.cli_name ?? "Client inconnu",
+          },
+          base: {
+            id: intervention.int_baseId ?? intervention.int_vehicle?.veh_base?.bas_id ?? "unknown",
+            location: intervention.int_base?.bas_location ?? intervention.int_vehicle?.veh_base?.bas_location ?? "Lieu inconnu",
+          },
         },
-        base: {
-          id: intervention.int_baseId ?? intervention.int_vehicle?.veh_base?.bas_id ?? "unknown",
-          location: intervention.int_base?.bas_location ?? intervention.int_vehicle?.veh_base?.bas_location ?? "Lieu inconnu",
-        },
-      },
-      handledBy: intervention.int_handledBy
-        ? {
-          name: intervention.int_handledBy.usr_name,
-          email: intervention.int_handledBy.usr_email,
-        }
-        : null,
-      statusHistory: intervention.history.map((h) => ({
-        id: h.sth_id,
-        previousStatus: h.sth_previousStatus,
-        newStatus: h.sth_newStatus,
-        changedAt: h.sth_changedAt.toISOString(),
-        changedBy: h.sth_changedById,
-        changedByName: h.sth_user.usr_name,
-      })),
-    }));
+        handledBy: intervention.int_handledBy
+          ? {
+            name: intervention.int_handledBy.usr_name,
+            email: intervention.int_handledBy.usr_email,
+          }
+          : null,
+        statusHistory: intervention.history.map((h) => ({
+          id: h.sth_id,
+          previousStatus: h.sth_previousStatus,
+          newStatus: h.sth_newStatus,
+          changedAt: h.sth_changedAt.toISOString(),
+          changedBy: h.sth_changedById,
+          changedByName: h.sth_user.usr_name,
+        })),
+      };
+    });
 
     return NextResponse.json(serialized);
   } catch (error) {

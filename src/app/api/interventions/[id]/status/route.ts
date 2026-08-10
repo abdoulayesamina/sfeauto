@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/src/lib/prisma";
 import {
-  intervention_status,
-  statushistory_sth_sth_newStatus,
-  statushistory_sth_sth_previousStatus,
+  InterventionStatus,
 } from "@/generated/prisma";
 import { logError } from "@/src/lib/logger";
 
@@ -19,39 +17,58 @@ async function getParamId(ctx: Ctx): Promise<string> {
   return p?.id;
 }
 
-function isValidStatus(value: unknown): value is intervention_status {
-  return typeof value === "string" && Object.values(intervention_status).includes(value as intervention_status);
+function isValidStatus(value: unknown): value is InterventionStatus {
+  const validStatuses: InterventionStatus[] = [
+    "WAITING_FOR_PARTS",
+    "FIXING_STARTED",
+    "FIXING_FINISHED",
+    "WAITING_FOR_APPROVAL",
+    "REFUSED",
+    "CANCELLED",
+    "DELETED",
+  ];
+  return typeof value === "string" && validStatuses.includes(value as InterventionStatus);
 }
 
 function isValidStatusTransition(
-  currentStatus: intervention_status,
-  newStatus: intervention_status
+  currentStatus: InterventionStatus,
+  newStatus: InterventionStatus
 ): boolean {
-  const transitions: Record<intervention_status, intervention_status[]> = {
+  if (currentStatus === newStatus) return true;
+
+  const blockedStatuses: InterventionStatus[] = ["REFUSED", "CANCELLED", "DELETED"];
+  if (blockedStatuses.includes(currentStatus)) return false;
+
+  const transitions: Record<InterventionStatus, InterventionStatus[]> = {
     WAITING_FOR_PARTS: [
-      intervention_status.FIXING_STARTED,
-      intervention_status.FIXING_FINISHED,
+      "FIXING_STARTED",
+      "FIXING_FINISHED",
+      "WAITING_FOR_APPROVAL",
+      "CANCELLED",
     ],
     FIXING_STARTED: [
-      intervention_status.WAITING_FOR_PARTS,
-      intervention_status.FIXING_FINISHED,
+      "WAITING_FOR_PARTS",
+      "FIXING_FINISHED",
+      "WAITING_FOR_APPROVAL",
+      "CANCELLED",
     ],
     FIXING_FINISHED: [
-      intervention_status.FIXING_STARTED,
-      intervention_status.WAITING_FOR_PARTS,
+      "FIXING_STARTED",
+      "WAITING_FOR_PARTS",
+      "CANCELLED",
     ],
+    WAITING_FOR_APPROVAL: [
+      "FIXING_STARTED",
+      "WAITING_FOR_PARTS",
+      "REFUSED",
+      "CANCELLED",
+    ],
+    REFUSED: [],
+    CANCELLED: [],
+    DELETED: [],
   };
 
-  if (currentStatus === newStatus) return true;
   return transitions[currentStatus]?.includes(newStatus) ?? false;
-}
-
-function toHistoryPreviousStatus(value: intervention_status): statushistory_sth_sth_previousStatus {
-  return value as unknown as statushistory_sth_sth_previousStatus;
-}
-
-function toHistoryNewStatus(value: intervention_status): statushistory_sth_sth_newStatus {
-  return value as unknown as statushistory_sth_sth_newStatus;
 }
 
 export async function PATCH(request: NextRequest, context: Ctx) {
@@ -59,10 +76,7 @@ export async function PATCH(request: NextRequest, context: Ctx) {
     const id = await getParamId(context);
 
     if (!id || typeof id !== "string") {
-      return NextResponse.json(
-        { error: "ID d'intervention invalide" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "ID d'intervention invalide" }, { status: 400 });
     }
 
     const session = await auth();
@@ -81,49 +95,19 @@ export async function PATCH(request: NextRequest, context: Ctx) {
     const body = await request.json();
     const newStatus = body?.status;
 
-    if (!isValidStatus(newStatus)) {
-      return NextResponse.json(
-        { error: "Valeur de statut invalide" },
-        { status: 400 }
-      );
-    }
-
     const intervention = await prisma.intervention_int.findUnique({
       where: { int_id: id },
       include: {
         int_vehicle: {
           include: {
-            veh_client: {
-              select: {
-                cli_id: true,
-                cli_name: true,
-              },
-            },
-            veh_base: {
-              select: {
-                bas_id: true,
-                bas_location: true,
-              },
-            },
+            veh_client: { select: { cli_id: true, cli_name: true } },
+            veh_base: { select: { bas_id: true, bas_location: true } },
           },
         },
-        int_handledBy: {
-          select: {
-            usr_id: true,
-            usr_name: true,
-          },
-        },
+        int_handledBy: { select: { usr_id: true, usr_name: true } },
         history: {
-          include: {
-            sth_user: {
-              select: {
-                usr_name: true,
-              },
-            },
-          },
-          orderBy: {
-            sth_changedAt: "asc",
-          },
+          include: { sth_user: { select: { usr_name: true } } },
+          orderBy: { sth_changedAt: "asc" },
         },
       },
     });
@@ -135,9 +119,9 @@ export async function PATCH(request: NextRequest, context: Ctx) {
       );
     }
 
-    if (intervention.int_annulee) {
+    if (intervention.int_status === "CANCELLED" || intervention.int_status === "DELETED") {
       return NextResponse.json(
-        { error: "Intervention annulée : le statut ne peut plus être modifié" },
+        { error: "Intervention annulée ou supprimée : le statut ne peut plus être modifié" },
         { status: 409 }
       );
     }
@@ -149,21 +133,13 @@ export async function PATCH(request: NextRequest, context: Ctx) {
       );
     }
 
-    if (!intervention.int_accordNumber) {
-      return NextResponse.json(
-        {
-          error:
-            "Veuillez attribuer un numéro d'accord avant de modifier le statut de cette intervention.",
-        },
-        { status: 403 }
-      );
+    if (!isValidStatus(newStatus)) {
+      return NextResponse.json({ error: "Valeur de statut invalide" }, { status: 400 });
     }
 
     if (!isValidStatusTransition(intervention.int_status, newStatus)) {
       return NextResponse.json(
-        {
-          error: `Transition de statut invalide de ${intervention.int_status} vers ${newStatus}`,
-        },
+        { error: `Transition de statut invalide de ${intervention.int_status} vers ${newStatus}` },
         { status: 400 }
       );
     }
@@ -175,8 +151,8 @@ export async function PATCH(request: NextRequest, context: Ctx) {
         await tx.statushistory_sth.create({
           data: {
             sth_interventionId: id,
-            sth_previousStatus: toHistoryPreviousStatus(intervention.int_status),
-            sth_newStatus: toHistoryNewStatus(newStatus),
+            sth_previousStatus: intervention.int_status,
+            sth_newStatus: newStatus,
             sth_changedById: session.user.id,
           },
         });
@@ -195,10 +171,7 @@ export async function PATCH(request: NextRequest, context: Ctx) {
 
       await tx.intervention_int.update({
         where: { int_id: id },
-        data: {
-          int_status: newStatus,
-          int_statusUpdatedAt: new Date(),
-        },
+        data: { int_status: newStatus, int_statusUpdatedAt: new Date() },
       });
     });
 
@@ -207,38 +180,14 @@ export async function PATCH(request: NextRequest, context: Ctx) {
       include: {
         int_vehicle: {
           include: {
-            veh_client: {
-              select: {
-                cli_id: true,
-                cli_name: true,
-              },
-            },
-            veh_base: {
-              select: {
-                bas_id: true,
-                bas_location: true,
-              },
-            },
+            veh_client: { select: { cli_id: true, cli_name: true } },
+            veh_base: { select: { bas_id: true, bas_location: true } },
           },
         },
-        int_handledBy: {
-          select: {
-            usr_id: true,
-            usr_name: true,
-            usr_email: true,
-          },
-        },
+        int_handledBy: { select: { usr_id: true, usr_name: true, usr_email: true } },
         history: {
-          include: {
-            sth_user: {
-              select: {
-                usr_name: true,
-              },
-            },
-          },
-          orderBy: {
-            sth_changedAt: "asc",
-          },
+          include: { sth_user: { select: { usr_name: true } } },
+          orderBy: { sth_changedAt: "asc" },
         },
       },
     });
@@ -250,66 +199,56 @@ export async function PATCH(request: NextRequest, context: Ctx) {
       );
     }
 
-    const serialized = {
-      id: updated.int_id,
-      accordNumber: updated.int_accordNumber,
-      dateOfConfirmation: updated.int_dateOfConfirmation?.toISOString(),
-      status: updated.int_status,
-      statusUpdatedAt: updated.int_statusUpdatedAt.toISOString(),
-      workDescription: updated.int_workDescription,
-      didOrderParts: updated.int_didOrderParts,
-      ordersDetails: updated.int_ordersDetails,
-      comments: updated.int_comments,
-      createdAt: updated.int_createdAt.toISOString(),
-      vehicle: updated.int_vehicle
-        ? {
-            id: updated.int_vehicle.veh_id,
-            licensePlate: updated.int_vehicle.veh_licensePlate,
-            brand: updated.int_vehicle.veh_brandId,
-            model: updated.int_vehicle.veh_modelId,
-            year: updated.int_vehicle.veh_year,
-            color: updated.int_vehicle.veh_color,
-            client: updated.int_vehicle.veh_client
-              ? {
-                  id: updated.int_vehicle.veh_client.cli_id,
-                  name: updated.int_vehicle.veh_client.cli_name,
-                }
-              : null,
-            base: updated.int_vehicle.veh_base
-              ? {
-                  id: updated.int_vehicle.veh_base.bas_id,
-                  location: updated.int_vehicle.veh_base.bas_location,
-                }
-              : null,
-          }
-        : null,
-      handledBy: updated.int_handledBy
-        ? {
-            id: updated.int_handledBy.usr_id,
-            name: updated.int_handledBy.usr_name,
-            email: updated.int_handledBy.usr_email,
-          }
-        : null,
-      statusHistory: updated.history.map((h) => ({
-        id: h.sth_id,
-        previousStatus: h.sth_previousStatus,
-        newStatus: h.sth_newStatus,
-        changedAt: h.sth_changedAt.toISOString(),
-        changedBy: h.sth_changedById,
-        changedByUser: h.sth_user
-          ? {
-              name: h.sth_user.usr_name,
-            }
-          : null,
-      })),
-    };
-
-    return NextResponse.json(serialized);
+    return NextResponse.json(serializeIntervention(updated));
   } catch (error: any) {
     logError("Failed to update intervention status", error);
-    return NextResponse.json(
-      { error: "Erreur serveur inconnue" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur serveur inconnue" }, { status: 500 });
   }
+}
+
+function serializeIntervention(updated: any) {
+  return {
+    id: updated.int_id,
+    accordNumber: updated.int_accordNumber,
+    interventionConfirmed: updated.int_interventionConfirmed,
+    dateOfConfirmation: updated.int_dateOfConfirmation?.toISOString(),
+    status: updated.int_status,
+    statusUpdatedAt: updated.int_statusUpdatedAt.toISOString(),
+    workDescription: updated.int_workDescription,
+    didOrderParts: updated.int_didOrderParts,
+    ordersDetails: updated.int_ordersDetails,
+    comments: updated.int_comments,
+    createdAt: updated.int_createdAt.toISOString(),
+    vehicle: updated.int_vehicle
+      ? {
+          id: updated.int_vehicle.veh_id,
+          licensePlate: updated.int_vehicle.veh_licensePlate,
+          brand: updated.int_vehicle.veh_brandId,
+          model: updated.int_vehicle.veh_modelId,
+          year: updated.int_vehicle.veh_year,
+          color: updated.int_vehicle.veh_color,
+          client: updated.int_vehicle.veh_client
+            ? { id: updated.int_vehicle.veh_client.cli_id, name: updated.int_vehicle.veh_client.cli_name }
+            : null,
+          base: updated.int_vehicle.veh_base
+            ? { id: updated.int_vehicle.veh_base.bas_id, location: updated.int_vehicle.veh_base.bas_location }
+            : null,
+        }
+      : null,
+    handledBy: updated.int_handledBy
+      ? {
+          id: updated.int_handledBy.usr_id,
+          name: updated.int_handledBy.usr_name,
+          email: updated.int_handledBy.usr_email,
+        }
+      : null,
+    statusHistory: updated.history.map((h: any) => ({
+      id: h.sth_id,
+      previousStatus: h.sth_previousStatus,
+      newStatus: h.sth_newStatus,
+      changedAt: h.sth_changedAt.toISOString(),
+      changedBy: h.sth_changedById,
+      changedByUser: h.sth_user ? { name: h.sth_user.usr_name } : null,
+    })),
+  };
 }

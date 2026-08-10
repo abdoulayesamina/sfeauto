@@ -45,7 +45,7 @@ export function EditInterventionModal({ open, onClose, intervention, onUpdated, 
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
 
-  const isAnnulee = Boolean(intervention?.int_annulee);
+  const isAnnulee = intervention?.int_status === "CANCELLED" || intervention?.int_status === "DELETED";
 
   const { photos, loading: photosLoading, error: photosError, refetch } =
     useInterventionPhotos(intervention?.int_id);

@@ -184,9 +184,9 @@ model intervention_int {
   int_accordNumber          String?
   int_dateOfConfirmation    DateTime?
   int_interventionConfirmed Boolean                 @default(false)
-  int_status                intervention_status     @default(FIXING_STARTED)
+  int_status                InterventionStatus      @default(FIXING_STARTED)
   int_statusUpdatedAt       DateTime                @default(now())
-  int_workDescription       String?
+  int_workDescription       String?                 @db.Text
   int_didOrderParts         Boolean                 @default(false)
   int_ordersDetails         String?
   int_comments              String?                 @db.Text
@@ -207,6 +207,7 @@ model intervention_int {
   int_vehicle               vehicle_veh             @relation("VehicleInterventions", fields: [int_vehicleId], references: [veh_id], onDelete: Cascade)
   photos                    interventionphoto_itp[]
   history                   statushistory_sth[]
+  notification              notification_not[]
   devis                     te_devis_dev?
 
   @@index([int_accordNumber])
@@ -288,6 +289,7 @@ model user_usr {
   usr_base                   base_bas?               @relation(fields: [usr_baseId], references: [bas_id])
   usr_client                 client_cli?             @relation(fields: [usr_clientId], references: [cli_id])
   vehiclesHandled            vehicle_veh[]           @relation("VehicleHandler")
+  notification               notification_not[]
 
   @@index([usr_email])
   @@index([usr_role])
@@ -317,6 +319,30 @@ model model_mod {
   @@index([mod_brandId], map: "model_mod_mod_brandId_fkey")
 }
 
+model notification_not {
+  not_id             String            @id @default(cuid())
+  not_title          String
+  not_message        String            @db.Text
+  not_url            String?
+  not_type           NotificationType
+  not_isRead         Boolean           @default(false)
+  not_userId         String
+  not_interventionId String?
+  not_createdAt      DateTime          @default(now())
+  user               user_usr          @relation(fields: [not_userId], references: [usr_id])
+  intervention       intervention_int? @relation(fields: [not_interventionId], references: [int_id], onDelete: SetNull)
+
+  @@index([not_userId])
+  @@index([not_isRead])
+  @@index([not_createdAt])
+}
+
+enum NotificationType {
+  INTERVENTION_CREATED
+  INTERVENTION_UPDATED
+  INTERVENTION_CANCELLED
+}
+
 enum user_role {
   ADMIN
   MANAGER
@@ -326,10 +352,14 @@ enum user_role {
   AGENCE
 }
 
-enum intervention_status {
+enum InterventionStatus {
   WAITING_FOR_PARTS
   FIXING_STARTED
   FIXING_FINISHED
+  WAITING_FOR_APPROVAL
+  REFUSED
+  CANCELLED
+  DELETED
 }
 
 enum vehicle_bodyType {
@@ -361,15 +391,28 @@ enum statushistory_sth_sth_previousStatus {
   WAITING_FOR_PARTS
   FIXING_STARTED
   FIXING_FINISHED
+  WAITING_FOR_APPROVAL
+  REFUSED
+  CANCELLED
+  DELETED
 }
 
 enum statushistory_sth_sth_newStatus {
   WAITING_FOR_PARTS
   FIXING_STARTED
   FIXING_FINISHED
+  WAITING_FOR_APPROVAL
+  REFUSED
+  CANCELLED
+  DELETED
 }
+
 enum WorkStatus {
   WAITING_FOR_PARTS
   FIXING_STARTED
   FIXING_FINISHED
+  WAITING_FOR_APPROVAL
+  REFUSED
+  CANCELLED
+  DELETED
 }

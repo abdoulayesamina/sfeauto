@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/src/shared/components/ui/button"
-import { toUIStatus } from "@/src/utils/constants/intervention-status"
+import { computeUIStatus } from "@/src/utils/constants/intervention-status"
 import { useEffect, useState } from "react"
 import { getBrandNameById, getModelNameById } from "../../brands/shared/hooks/GetBrandOrModelName"
 
@@ -32,10 +32,10 @@ function computeCounts(intervention: any) {
     terminee = 0
 
   for (const inv of interventions) {
-    const ui = toUIStatus(inv.status)
-    if (ui === "EN_COURS") enCours++
-    else if (ui === "ATTENTE_PIECES") attentePieces++
-    else if (ui === "TERMINEE") terminee++
+    const ui = computeUIStatus({ int_status: inv.status })
+    if (ui === "FIXING_STARTED") enCours++
+    else if (ui === "WAITING_FOR_PARTS") attentePieces++
+    else if (ui === "FIXING_FINISHED") terminee++
   }
 
   return { EN_COURS: enCours, ATTENTE_PIECES: attentePieces, TERMINEE: terminee }
@@ -49,7 +49,7 @@ function Badge({ label, variant }: { label: string; variant: "blue" | "orange" |
         ? "bg-orange-100 text-orange-700"
         : "bg-emerald-100 text-emerald-700"
 
-  return <span className={`px-3 py-1 rounded-full text-sm font-medium ${cls}`}>{label}</span>
+  return <span className={`px-2 py-0.5 sm:px-3 sm:py-1 rounded-full text-[11px] sm:text-sm font-medium ${cls}`}>{label}</span>
 }
 
 const displayValue = (v: any) => {
@@ -88,7 +88,7 @@ export default function InterventionCard({
   return (
     <div
       // onClick={onViewDetails}
-      className="bg-white border rounded-2xl p-5 shadow-sm hover:shadow-md transition
+      className="bg-white border rounded-lg sm:rounded-xl lg:rounded-2xl p-3 sm:p-4 lg:p-5 shadow-sm hover:shadow-md transition
       hover:border-[#F5963A]"
       // role="button"
       tabIndex={0}
@@ -99,20 +99,20 @@ export default function InterventionCard({
         }
       }}
     >
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 sm:gap-3 lg:gap-4">
         <div className="min-w-0">
-          <div className="flex items-center gap-3 flex-wrap">
-            <h3 className="text-lg font-bold text-gray-900 truncate">{displayValue(v?.licensePlate)}</h3>
-            {<p className="text-gray-500 text-sm truncate">{displayValue(v?.brand)} {displayValue(v?.model)}</p>}
-            {v?.year != null && <p className="text-gray-400 text-sm">· {displayValue(v.year)}</p>}
+          <div className="flex items-center gap-1.5 sm:gap-3 flex-wrap">
+            <h3 className="text-sm sm:text-base lg:text-lg font-bold text-gray-900 truncate">{displayValue(v?.licensePlate)}</h3>
+            {<p className="text-gray-500 text-xs sm:text-sm truncate">{displayValue(v?.brand)} {displayValue(v?.model)}</p>}
+            {v?.year != null && <p className="text-gray-400 text-xs sm:text-sm">· {displayValue(v.year)}</p>}
             {isTransferred && (
-              <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-100 text-zinc-500 border border-zinc-200">
+              <span className="px-1.5 py-0.5 sm:px-2 rounded-full text-[10px] sm:text-xs font-medium bg-zinc-100 text-zinc-500 border border-zinc-200">
                 Véhicule transféré
               </span>
             )}
           </div>
 
-          <div className="mt-1 text-sm text-gray-500 flex flex-wrap gap-2">
+          <div className="mt-0.5 sm:mt-1 text-[11px] sm:text-sm text-gray-500 flex flex-wrap gap-1.5 sm:gap-2">
             <span>{displayValue(v?.client)}</span>
             <span>•</span>
             <span>{displayValue(v?.base?.location)}</span>
@@ -124,7 +124,7 @@ export default function InterventionCard({
             )}
           </div>
 
-          <div className="mt-3 flex items-center gap-2 flex-wrap">
+          <div className="mt-1.5 sm:mt-3 flex items-center gap-1.5 sm:gap-2 flex-wrap">
             {counts.EN_COURS > 0 && (
               <Badge variant="blue" label={`${counts.EN_COURS} En cours`} />
             )}
@@ -132,15 +132,17 @@ export default function InterventionCard({
               <Badge variant="orange" label={`${counts.ATTENTE_PIECES} En attente de pièces`} />
             )}
             {counts.TERMINEE > 0 && <Badge variant="green" label={`${counts.TERMINEE} Terminée`} />}
-            {totalInterventions === 0 && <span className="text-sm text-gray-400 italic">Aucune intervention</span>}
+            {totalInterventions === 0 && <span className="text-xs sm:text-sm text-gray-400 italic">Aucune intervention</span>}
           </div>
         </div>
 
         {!hideVehicleActions && (
-          <div className="flex items-center gap-2 justify-end">
+          <div className="flex items-center gap-1.5 sm:gap-2 justify-end">
             {hideDetailsButton && (
               <Button
+                size="sm"
                 variant="outline"
+                className="text-xs sm:text-sm h-auto px-2.5 py-1 sm:px-4 sm:py-2"
                 onClick={(e) => {
                   e.stopPropagation()
                   onViewDetails()
@@ -150,6 +152,8 @@ export default function InterventionCard({
               </Button>
             )}
             <Button
+              size="sm"
+              className="text-xs sm:text-sm h-auto px-2.5 py-1 sm:px-4 sm:py-2"
               onClick={(e) => {
                 e.stopPropagation()
                 onViewInterventions()

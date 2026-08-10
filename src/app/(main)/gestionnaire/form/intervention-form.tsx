@@ -22,6 +22,8 @@ interface InterventionFormProps {
   vehicleDisplayText: string
   kilometrage: string
   defaultAccordNumber?: string
+  initialPhotos?: File[]
+  initialDescription?: string
   onSubmit?: (data: any) => void
   onClose?: () => void
   loading?: boolean
@@ -32,6 +34,8 @@ export function InterventionForm({
   vehicleId,
   vehicleDisplayText,
   defaultAccordNumber = "ACC-2026-001",
+  initialPhotos,
+  initialDescription,
   onSubmit,
   onClose,
   loading = false,
@@ -39,11 +43,13 @@ export function InterventionForm({
   const [piecesCommande, setPiecesCommande] =
     useState<PiecesCommande>("non");
 
-  const [imagesBlob, setImagesBlob] = useState<string[]>([]);
-  const [images, setImages] = useState<File[]>([]);
+  const [imagesBlob, setImagesBlob] = useState<string[]>(
+    () => (initialPhotos ?? []).map((f) => URL.createObjectURL(f))
+  );
+  const [images, setImages] = useState<File[]>(initialPhotos ?? []);
 
   // ✅ champs contrôlés
-  const [description, setDescription] = useState("");
+  const [description, setDescription] = useState(initialDescription ?? "");
   const [numeroAccord, setNumeroAccord] = useState("");
   const [dateConfirmation, setDateConfirmation] = useState("");
   const [detailsCommande, setDetailsCommande] = useState("");
@@ -56,6 +62,17 @@ export function InterventionForm({
   useEffect(() => {
     console.log("Images selected:", imagesBlob);
   }, [imagesBlob]);
+
+  // Garde toujours la dernière valeur pour le cleanup au démontage,
+  // sans re-déclencher l'effet à chaque changement de imagesBlob.
+  const imagesBlobRef = useRef<string[]>(imagesBlob);
+  imagesBlobRef.current = imagesBlob;
+
+  useEffect(() => {
+    return () => {
+      imagesBlobRef.current.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, []);
 
   // 🔥 focus automatique si champ rempli (ou après erreur)
   useEffect(() => {
@@ -139,7 +156,6 @@ export function InterventionForm({
         <Textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Décrivez les travaux à effectuer..."
           className="min-h-[120px]"
         />
       </div>
@@ -262,7 +278,6 @@ export function InterventionForm({
           onChange={(e) =>
             setCommentaires(e.target.value)
           }
-          placeholder="Notes ou commentaires supplémentaires..."
           className="min-h-[100px]"
         />
       </div>
@@ -277,7 +292,6 @@ export function InterventionForm({
               setNumeroAccord(e.target.value)
             }
             className="h-15"
-            placeholder={defaultAccordNumber}
           />
         </div>
 

@@ -2,10 +2,10 @@ import { z } from "zod"
 
 export const InterventionSchema = z.object({
   int_id: z.string().optional(),
-  int_accordNumber: z.string(),
+  int_accordNumber: z.string().nullable().optional(),
   int_dateOfConfirmation: z.string().datetime().optional(),
   int_interventionConfirmed: z.boolean(),
-  int_status: z.enum(['WAITING_FOR_PARTS', 'FIXING_STARTED', 'FIXING_FINISHED']),
+  int_status: z.enum(['WAITING_FOR_PARTS', 'FIXING_STARTED', 'FIXING_FINISHED', 'WAITING_FOR_APPROVAL', 'REFUSED', 'CANCELLED', 'DELETED']).optional(),
   int_statusUpdatedAt: z.string().datetime().optional(),
   int_workDescription: z.string(),
   int_didOrderParts: z.boolean(),
@@ -16,6 +16,13 @@ export const InterventionSchema = z.object({
   int_vehicleId: z.string(),
   int_handledById: z.string(),
   int_kilometrage: z.string().optional(),
+  int_annulee: z.boolean().optional(),
+  int_supprimee: z.boolean().optional(),
+  int_dateAnnulation: z.string().datetime().optional(),
+  devis: z.object({
+    dev_id: z.number().optional(),
+    dev_numdevis: z.string().optional(),
+  }).optional(),
 })
 
 export type Intervention = z.infer<typeof InterventionSchema>

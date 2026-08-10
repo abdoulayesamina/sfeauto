@@ -2,9 +2,42 @@ import { Vehicule } from "@/src/utils/types/vehicule"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL + "/vehicles"
 
+export type GetVehiclesOptions = {
+  page?: number
+  pageSize?: number
+  clientId?: string
+  agenceId?: string
+  statut?: string
+  accordSearch?: string
+}
+
+export type GetVehiclesResult = {
+  vehicles: Vehicule[]
+  total: number
+  totalPages: number
+  stats: {
+    total: number
+    enCours: number
+    terminees: number
+    attente: number
+    annulees: number
+    refusees: number
+  }
+}
+
 export function useManageApi() {
-  const getVehicles = async (options?: { includeInterventions?: boolean }): Promise<any> => {
-    const url = options?.includeInterventions ? `${API_URL}?includeInterventions=true` : API_URL
+  const getVehicles = async (options?: GetVehiclesOptions): Promise<GetVehiclesResult> => {
+    const params = new URLSearchParams()
+
+    if (options?.page) params.set("page", String(options.page))
+    if (options?.pageSize) params.set("pageSize", String(options.pageSize))
+    if (options?.clientId) params.set("clientId", options.clientId)
+    if (options?.agenceId) params.set("agenceId", options.agenceId)
+    if (options?.statut) params.set("statut", options.statut)
+    if (options?.accordSearch) params.set("accordSearch", options.accordSearch)
+
+    const qs = params.toString()
+    const url = qs ? `${API_URL}?${qs}` : API_URL
 
     const res = await fetch(url)
 
@@ -16,7 +49,7 @@ export function useManageApi() {
     return res.json()
   }
 
-  const searchVehicles = async (search: string): Promise<Vehicule[]> => {
+  const searchVehicles = async (search: string): Promise<GetVehiclesResult> => {
     const res = await fetch(`${API_URL}?search=${encodeURIComponent(search)}`)
 
     if (!res.ok) {

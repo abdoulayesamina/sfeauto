@@ -19,7 +19,7 @@ export function BrandSelect({
   disabled,
 }: {
   value: string | null
-  onChange: (id: string) => void
+  onChange: (id: string, name?: string) => void
   disabled?: boolean
 }) {
   const [brands, setBrands] = useState<Brand[]>([])
@@ -41,7 +41,7 @@ export function BrandSelect({
 
     const brand = await res.json()
     setBrands(prev => [...prev, brand])
-    onChange(brand.id)
+    onChange(brand.id, brand.name)
     setNewName("")
     setCreating(false)
   }
@@ -55,7 +55,7 @@ export function BrandSelect({
           if (v === "__create__") {
             setCreating(true)
           } else {
-            onChange(v)
+            onChange(v, brands.find((b) => b.id === v)?.name)
           }
         }}
       >

@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 
 import { Modal } from "@/src/shared/components/modal";
 import { Button } from "@/src/shared/components/ui/button";
-import { toUIStatus } from "@/src/utils/constants/intervention-status";
+import { computeUIStatus } from "@/src/utils/constants/intervention-status";
 
 import { useAgenceClient } from "./shared/useAgenceClient";
 import { useInterventionApi } from "../gestionnaire/shared/useIntervention.api";
@@ -120,10 +120,10 @@ export default function AgencePage() {
         if (b > a) row.lastIntervention = inv;
       }
 
-      const ui = toUIStatus(inv.status);
-      if (ui === "EN_COURS") row.counts.EN_COURS += 1;
-      if (ui === "ATTENTE_PIECES") row.counts.ATTENTE_PIECES += 1;
-      if (ui === "TERMINEE") row.counts.TERMINEE += 1;
+      const ui = computeUIStatus({ int_status: inv.status });
+      if (ui === "FIXING_STARTED") row.counts.EN_COURS += 1;
+      if (ui === "WAITING_FOR_PARTS") row.counts.ATTENTE_PIECES += 1;
+      if (ui === "FIXING_FINISHED") row.counts.TERMINEE += 1;
     }
 
     return Array.from(map.values()).map((x) => ({
@@ -158,13 +158,13 @@ export default function AgencePage() {
   const stats = useMemo(() => {
     const total = interventions.length;
     const enCours = interventions.filter(
-      (i) => toUIStatus(i.status) === "EN_COURS",
+      (i) => computeUIStatus({ int_status: i.status }) === "FIXING_STARTED",
     ).length;
     const termine = interventions.filter(
-      (i) => toUIStatus(i.status) === "TERMINEE",
+      (i) => computeUIStatus({ int_status: i.status }) === "FIXING_FINISHED",
     ).length;
     const attentePieces = interventions.filter(
-      (i) => toUIStatus(i.status) === "ATTENTE_PIECES",
+      (i) => computeUIStatus({ int_status: i.status }) === "WAITING_FOR_PARTS",
     ).length;
     return { total, enCours, termine, attentePieces };
   }, [interventions]);

@@ -6,6 +6,8 @@ import {
   ClipboardList,
   SearchX,
   Eye,
+  XCircle,
+  Ban,
 } from "lucide-react";
 
 import {
@@ -14,11 +16,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/src/shared/components/ui/card";
-import { useManageApi } from "@/src/app/(main)/gestionnaire/shared/useManage.api";
+import { useInterventionsStatsApi } from "@/src/shared/hooks/useInterventionsStats.api";
 import { useAgenceApi } from "@/src/app/(main)/agence/shared/useAgence.api";
 import { useEffect, useMemo, useState } from "react";
 import { Agence } from "@/src/utils/types/agence";
-import { Vehicule } from "@/src/utils/types/vehicule";
 import { Label } from "./ui/label";
 import {
   Select,
@@ -34,13 +35,15 @@ import { Button } from "./ui/button";
 import {
   getStatusMeta,
   STATUS_UI_MAP,
+  computeUIStatus,
 } from "@/src/utils/constants/intervention-status";
+import { getInterventionAgeMeta } from "@/src/utils/constants/intervention-age";
 import { Modal } from "./modal";
 import IntervDetailGes from "@/src/app/(main)/gestionnaire/shared/components/Intervention";
 import { Intervention } from "@/src/utils/types/intervention";
 
 export function SectionCards({ user }: { user?: any }) {
-  const { getVehicles } = useManageApi();
+  const { getInterventionsStats } = useInterventionsStatsApi();
   const { getAgences } = useAgenceApi();
   const { getClients } = useClientApi();
 
@@ -49,9 +52,6 @@ export function SectionCards({ user }: { user?: any }) {
   const [agences, setAgences] = useState<Agence[]>([]);
   const [agencesFiltered, setAgencesFiltered] = useState<Agence[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
-  const [vehicles, setVehicles] = useState<{ vehicles: Vehicule[] } | null>(
-    null,
-  );
   const [agenceId, setAgenceId] = useState<string>("");
   const [clientId, setClientId] = useState<string>("");
 
@@ -59,22 +59,36 @@ export function SectionCards({ user }: { user?: any }) {
   const [nombreInterventionsEnCours, setNombreInterventionsEnCours] = useState(0);
   const [nombreInterventionsTerminees, setNombreInterventionsTerminees] = useState(0);
   const [nombreInterventionsEnAttenteDePiece,setNombreInterventionsEnAttenteDePiece,] = useState(0);
+  const [nombreInterventionsAnnulees, setNombreInterventionsAnnulees] = useState(0);
+  const [nombreInterventionsRefusees, setNombreInterventionsRefusees] = useState(0);
 
   const [totalInterventions, setTotalInterventions] = useState<any[]>([]);
   const [interventionsEnCours, setInterventionsEnCours] = useState<any[]>([]);
   const [interventionsTerminees, setInterventionsTerminees] = useState<any[]>([]);
   const [interventionsEnAttenteDePiece, setInterventionsEnAttenteDePiece] = useState<any[]>([]);
+  const [interventionsAnnulees, setInterventionsAnnulees] = useState<any[]>([]);
+  const [interventionsRefusees, setInterventionsRefusees] = useState<any[]>([]);
 
   const [displayedInterventions, setDisplayedInterventions] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [searchDate, setSearchDate] = useState("");
   
-  const [selectedStat, setSelectedStat] = useState<"total" | "encours" | "terminees" | "attente" | null>(null);
+  const [selectedStat, setSelectedStat] = useState<"total" | "encours" | "terminees" | "attente" | "annulees" | "refusees" | null>(null);
 
-  const [ globalInterventions, setGlobalInterventions] = useState<any[]>([]);
-
-
-  const updateInterventionsStats = (interventions: any[] = []) => {
+  // Compteurs des cards : viennent des stats calculées côté serveur (sur tout
+  // le périmètre client/agence, pas juste ce qui a été rapatrié) quand
+  // disponibles ; sinon on retombe sur un calcul local.
+  const updateInterventionsStats = (
+    interventions: any[] = [],
+    serverStats?: {
+      total: number;
+      enCours: number;
+      terminees: number;
+      attente: number;
+      annulees: number;
+      refusees: number;
+    },
+  ) => {
 
     const sortedInterventions = [...interventions].sort(
       (a, b) =>
@@ -82,7 +96,6 @@ export function SectionCards({ user }: { user?: any }) {
         new Date(a.int_updatedAt).getTime()
     );
 
-    setNombreTotalInterventions(sortedInterventions.length);
     setTotalInterventions(sortedInterventions);
 
     setSelectedStat("total");
@@ -101,38 +114,59 @@ export function SectionCards({ user }: { user?: any }) {
       (i) => i.int_status === "WAITING_FOR_PARTS",
     );
 
-    setNombreInterventionsEnCours(enCours.length);
-    setNombreInterventionsTerminees(terminees.length);
-    setNombreInterventionsEnAttenteDePiece(attenteDePiece.length);
+    const annulees = sortedInterventions.filter((i) => i.int_status === "CANCELLED");
+
+    const refusees = sortedInterventions.filter(
+      (i) => i.int_status === "REFUSED",
+    );
+
+    setNombreTotalInterventions(serverStats?.total ?? sortedInterventions.length);
+    setNombreInterventionsEnCours(serverStats?.enCours ?? enCours.length);
+    setNombreInterventionsTerminees(serverStats?.terminees ?? terminees.length);
+    setNombreInterventionsEnAttenteDePiece(serverStats?.attente ?? attenteDePiece.length);
+    setNombreInterventionsAnnulees(serverStats?.annulees ?? annulees.length);
+    setNombreInterventionsRefusees(serverStats?.refusees ?? refusees.length);
 
     setInterventionsEnCours(enCours);
     setInterventionsTerminees(terminees);
     setInterventionsEnAttenteDePiece(attenteDePiece);
+    setInterventionsAnnulees(annulees);
+    setInterventionsRefusees(refusees);
   };
 
-  const displayGlobalStatistiques = () => {
+  const fetchStats = async (scope: { clientId?: string; agenceId?: string }) => {
+    const result = await getInterventionsStats(scope);
+    updateInterventionsStats(result.interventions, result.stats);
+  };
+
+  const displayGlobalStatistiques = async () => {
     clientIdChanged("");
     setAgenceId("");
-    const interventions =
-      vehicles?.vehicles.flatMap((v: any) => v.interventions) ?? [];
-    updateInterventionsStats(interventions);
+    setSearch("");
+    setSearchDate("");
+
+    setLoading(true);
+    try {
+      await fetchStats({});
+    } catch (error) {
+      console.error("Erreur lors du chargement des statistiques : ", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const loadAllData = async () => {
     try {
       setLoading(true);
-      const agences = await getAgences();
-      setAgences(agences);
+      const [agencesRes, clientsRes] = await Promise.all([
+        getAgences(),
+        getClients(),
+      ]);
 
-      const vehicles = await getVehicles();
-      setVehicles(vehicles);
+      setAgences(agencesRes);
+      setClients(clientsRes);
 
-      const clients = await getClients();
-      setClients(clients);
-
-      const interventions =
-        vehicles?.vehicles.flatMap((v: any) => v.interventions) ?? [];
-      updateInterventionsStats(interventions);
+      await fetchStats({});
     } catch (error) {
       console.error("Erreur lors du chargement des données : ", error);
     } finally {
@@ -141,13 +175,8 @@ export function SectionCards({ user }: { user?: any }) {
   };
 
   useEffect(() => {
-    const interventions = vehicles?.vehicles.flatMap((v: any) => v.interventions) ?? [];
-    setGlobalInterventions(interventions);
-    console.log("Toutes les interventions globales : ", interventions);
-  },[vehicles]);
-
-  useEffect(() => {
     loadAllData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -155,25 +184,20 @@ export function SectionCards({ user }: { user?: any }) {
   }, [agences]);
 
   useEffect(() => {
-    console.log("Liste des vehicules : ", vehicles?.vehicles);
-
     if (!clientId && agenceId) {
       const ag = agences.find((a) => a.bas_id === agenceId);
       clientIdChanged(ag?.bas_clientId ?? "");
     }
 
     if (agenceId) {
-      const interventions = vehicles?.vehicles
-        .filter((v: any) => v.veh_base.bas_id === agenceId)
-        .flatMap((v: any) => v.interventions);
-
-      updateInterventionsStats(interventions);
-
-      setLoading(true);
-      setTimeout(() => {
-        setLoading(false);
-      }, 600);
+      setAgenceIntloading(true);
+      fetchStats({ agenceId })
+        .catch((error) =>
+          console.error("Erreur lors du chargement des statistiques d'agence : ", error),
+        )
+        .finally(() => setAgenceIntloading(false));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [agenceId]);
 
   const resetStats = () => {
@@ -183,11 +207,15 @@ export function SectionCards({ user }: { user?: any }) {
     setNombreInterventionsEnCours(0);
     setNombreInterventionsTerminees(0);
     setNombreInterventionsEnAttenteDePiece(0);
+    setNombreInterventionsAnnulees(0);
+    setNombreInterventionsRefusees(0);
 
     setTotalInterventions([]);
     setInterventionsEnCours([]);
     setInterventionsTerminees([]);
     setInterventionsEnAttenteDePiece([]);
+    setInterventionsAnnulees([]);
+    setInterventionsRefusees([]);
   };
 
   const clientIdChanged = (id: string) => {
@@ -259,12 +287,11 @@ export function SectionCards({ user }: { user?: any }) {
 
     return {
       total: base.length,
-
       enCours: base.filter((i) => i.int_status === "FIXING_STARTED").length,
-
       terminees: base.filter((i) => i.int_status === "FIXING_FINISHED").length,
-
       attente: base.filter((i) => i.int_status === "WAITING_FOR_PARTS").length,
+      annulees: base.filter((i) => i.int_status === "CANCELLED").length,
+      refusees: base.filter((i) => i.int_status === "REFUSED").length,
     };
   }, [totalInterventions, search, searchDate]);
 
@@ -292,8 +319,8 @@ export function SectionCards({ user }: { user?: any }) {
 
   return (
     <div>
-      <div className="flex px-6 pt-6 gap-2 flex-wrap">
-        <div className="w-full max-w-xl">
+      <div className="flex px-3 pt-3 sm:px-6 sm:pt-6 gap-2 flex-wrap">
+        <div className="flex-1 min-w-0 max-w-xl">
           <Select
             open={open}
             onOpenChange={setOpen}
@@ -304,7 +331,7 @@ export function SectionCards({ user }: { user?: any }) {
               resetStats();
             }}
           >
-            <SelectTrigger className="h-12">
+            <SelectTrigger className="h-9 sm:h-12">
               <SelectValue placeholder={"Sélectionnez un client"} />
               {loading && <Spinner className="size-4" />}
             </SelectTrigger>
@@ -341,12 +368,12 @@ export function SectionCards({ user }: { user?: any }) {
               : ""}
           </p>
         </div>
-        <div className="w-full max-w-xl">
+        <div className="flex-1 min-w-0 max-w-xl">
           <Select
             value={agenceId}
             onValueChange={(baseId) => setAgenceId(baseId)}
           >
-            <SelectTrigger className="h-12">
+            <SelectTrigger className="h-9 sm:h-12">
               <SelectValue placeholder={"Sélectionnez une agence"} />
               {loading && <Spinner className="size-4" />}
             </SelectTrigger>
@@ -376,7 +403,7 @@ export function SectionCards({ user }: { user?: any }) {
         )}
       </div> */}
       {
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 px-6">
+        <div className="grid grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4 px-3 sm:px-6">
           {[
             {
               key: "total",
@@ -400,7 +427,6 @@ export function SectionCards({ user }: { user?: any }) {
               value: loading ? (
                 <Spinner className="size-4 text-white" />
               ) : (
-                // nombreInterventionsEnCours
                 isFilterMode ? filteredStats.enCours : nombreInterventionsEnCours
               ),
               subtitle: "Actives",
@@ -417,7 +443,6 @@ export function SectionCards({ user }: { user?: any }) {
               value: loading ? (
                 <Spinner className="size-4 text-white" />
               ) : (
-                // nombreInterventionsTerminees
                 isFilterMode ? filteredStats.terminees : nombreInterventionsTerminees
               ),
               subtitle: "Clôturées",
@@ -434,7 +459,6 @@ export function SectionCards({ user }: { user?: any }) {
               value: AgenceIntloading ? (
                 <Spinner className="size-4 text-white" />
               ) : (
-                // nombreInterventionsEnAttenteDePiece
                 isFilterMode ? filteredStats.attente : nombreInterventionsEnAttenteDePiece
               ),
               subtitle: "Attente de pièce",
@@ -443,6 +467,38 @@ export function SectionCards({ user }: { user?: any }) {
                 bg: "bg-gradient-to-br from-amber-50 via-white to-orange-50",
                 accent: "text-orange-700",
                 iconBg: "bg-orange-600/10 ring-orange-600/20",
+              },
+            },
+            {
+              key: "annulees",
+              title: "Annulées",
+              value: loading ? (
+                <Spinner className="size-4 text-white" />
+              ) : (
+                isFilterMode ? filteredStats.annulees : nombreInterventionsAnnulees
+              ),
+              subtitle: "Interventions annulées",
+              icon: Ban,
+              tone: {
+                bg: "bg-gradient-to-br from-red-50 via-white to-rose-50",
+                accent: "text-red-700",
+                iconBg: "bg-red-600/10 ring-red-600/20",
+              },
+            },
+            {
+              key: "refusees",
+              title: "Refusées",
+              value: loading ? (
+                <Spinner className="size-4 text-white" />
+              ) : (
+                isFilterMode ? filteredStats.refusees : nombreInterventionsRefusees
+              ),
+              subtitle: "Accord refusé",
+              icon: XCircle,
+              tone: {
+                bg: "bg-gradient-to-br from-red-50 via-white to-pink-50",
+                accent: "text-rose-700",
+                iconBg: "bg-rose-600/10 ring-rose-600/20",
               },
             },
           ].map((c) => (
@@ -459,35 +515,39 @@ export function SectionCards({ user }: { user?: any }) {
                   setDisplayedInterventions(interventionsTerminees);
                 if (c.key === "attente")
                   setDisplayedInterventions(interventionsEnAttenteDePiece);
+                if (c.key === "annulees")
+                  setDisplayedInterventions(interventionsAnnulees);
+                if (c.key === "refusees")
+                  setDisplayedInterventions(interventionsRefusees);
               }}
               className={`cursor-pointer transform transition-all hover:-translate-y-1 hover:scale-[1.02]
-              @container/card group relative overflow-hidden rounded-3xl border border-gray-200/60
-              shadow-[0_12px_34px_rgba(0,0,0,0.08)]
-              hover:shadow-[0_18px_52px_rgba(0,0,0,0.10)] ${c.tone.bg}`}
+              @container/card group relative overflow-hidden rounded-xl sm:rounded-2xl border border-gray-200/60
+              shadow-[0_6px_18px_rgba(0,0,0,0.06)]
+              hover:shadow-[0_10px_28px_rgba(0,0,0,0.09)] ${c.tone.bg}`}
             >
               <div className="absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b from-black/0 via-black/0 to-black/0" />
               <div className="absolute inset-0 bg-gradient-to-t from-white/70 via-white/20 to-white/0" />
               <div className="absolute -right-12 -top-12 h-32 w-32 rounded-full bg-white/70 blur-2xl opacity-70 group-hover:opacity-90 transition-opacity" />
               <div className="absolute inset-0 ring-1 ring-inset ring-white/50" />
 
-              <CardHeader className="relative">
-                <div className="flex items-start justify-between gap-3">
+              <CardHeader className="relative p-2 sm:p-3">
+                <div className="flex items-center justify-between gap-2">
                   <div className="min-w-0">
-                    <div className="text-sm font-medium text-gray-900">
+                    <div className="text-[11px] sm:text-sm font-medium text-gray-900 truncate">
                       {c.title}
                     </div>
-                    <div className="text-xs text-gray-600 mt-0.5">
+                    <div className="hidden sm:block text-xs text-gray-600 mt-0.5 truncate">
                       {c.subtitle}
                     </div>
                   </div>
                   <div
-                    className={`grid place-items-center h-10 w-10 rounded-2xl ${c.tone.iconBg} ring-1`}
+                    className={`hidden sm:grid place-items-center h-7 w-7 lg:h-8 lg:w-8 rounded-lg lg:rounded-xl shrink-0 ${c.tone.iconBg} ring-1`}
                   >
-                    <c.icon className={`h-5 w-5 ${c.tone.accent}`} />
+                    <c.icon className={`h-3.5 w-3.5 lg:h-4 lg:w-4 ${c.tone.accent}`} />
                   </div>
                 </div>
 
-                <CardTitle className="mt-4 @[250px]/card:text-4xl text-3xl font-semibold tabular-nums tracking-tight text-gray-900">
+                <CardTitle className="mt-0.5 sm:mt-1 text-lg sm:text-xl lg:text-2xl font-semibold tabular-nums tracking-tight text-gray-900">
                   {loading || AgenceIntloading ? (
                     <span className="inline-flex items-center">
                       <Spinner className={`size-4 ${c.tone.accent}`} />
@@ -498,9 +558,9 @@ export function SectionCards({ user }: { user?: any }) {
                 </CardTitle>
               </CardHeader>
 
-              <CardFooter className="relative pt-0">
-                <div className={`text-xs ${c.tone.accent}`}>
-                  {!clientId ? "Interventions globales du système" : ""}
+              <CardFooter className="relative pt-0 pb-2 sm:pb-3 px-2 sm:px-3">
+                <div className={`text-[9px] sm:text-[11px] leading-tight truncate w-full ${c.tone.accent}`}>
+                  {!clientId ? "Interventions globales" : ""}
                 </div>
               </CardFooter>
             </Card>
@@ -508,70 +568,82 @@ export function SectionCards({ user }: { user?: any }) {
         </div>
       }
       {selectedStat && (
-        <div className="mt-8 px-6">
-          <div className="rounded-3xl bg-white shadow-xl border border-gray-200/70 overflow-hidden">
+        <div className="mt-4 sm:mt-6 lg:mt-8 px-3 sm:px-6">
+          <div className="rounded-xl sm:rounded-2xl lg:rounded-3xl bg-white shadow-xl border border-gray-200/70 overflow-hidden">
             {/* Header */}
-            <div className="px-6 py-4 border-b bg-gradient-to-r from-gray-50 to-white">
-              <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="px-3 py-2.5 sm:px-6 sm:py-4 border-b bg-gradient-to-r from-gray-50 to-white">
+              <div className="flex items-center justify-between gap-2 sm:gap-4 flex-wrap">
 
-                  <h2 className="text-lg font-semibold text-gray-900">
+                  <h2 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900">
                     {selectedStat === "encours" && "Interventions en cours"}
                     {selectedStat === "terminees" && "Interventions terminées"}
                     {selectedStat === "attente" && "En attente de pièces"}
                     {selectedStat === "total" && "Toutes les interventions"}
+                    {selectedStat === "annulees" && "Interventions annulées"}
+                    {selectedStat === "refusees" && "Interventions refusées"}
                   </h2>
 
-                  <div className="flex items-center gap-3 flex-wrap">
+                  <div className="flex items-center gap-1.5 sm:gap-3 flex-wrap">
 
                     <input
                       type="text"
                       placeholder="Plaque, marque ou modèle..."
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
-                      className="w-72 rounded-lg border px-3 py-2"
+                      className="w-full sm:w-72 rounded-lg border px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm"
                     />
 
                     <input
                       type="date"
                       value={searchDate}
                       onChange={(e) => setSearchDate(e.target.value)}
-                      className="rounded-lg border px-3 py-2"
+                      className="rounded-lg border px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm"
                     />
 
                     <Button
+                      size="sm"
                       variant="outline"
                       onClick={() => {
-                          setSearch("");
-                          setSearchDate("");
+                        setSearch("");
+                        setSearchDate("");
                       }}
+                      title={
+                        isFilterMode
+                          ? "Cliquez ici pour supprimer tous les filtres (recherche et/ou date)."
+                          : "Aucun filtre actif."
+                      }
+                      className={`text-xs sm:text-sm transition-all duration-800 ${
+                        isFilterMode
+                          ? "border-black text-black animate-pulse hover:bg-black hover:text-white"
+                          : ""
+                      }`}
                     >
                       Réinitialiser
                     </Button>
-
                   </div>
 
               </div>
             </div>
 
             {/* Liste */}
-            <div className="divide-y min-h-[420px] max-h-[420px] overflow-auto">
+            <div className="divide-y min-h-[300px] max-h-[300px] sm:min-h-[420px] sm:max-h-[420px] overflow-auto">
               {filteredInterventions.length === 0 ? (
-                <div className="py-16 flex flex-col items-center justify-center text-center">
+                <div className="py-8 sm:py-12 lg:py-16 flex flex-col items-center justify-center text-center">
                   {/* Icône */}
                   <div
-                    className="h-16 w-16 rounded-2xl bg-gradient-to-br 
+                    className="h-12 w-12 sm:h-16 sm:w-16 rounded-xl sm:rounded-2xl bg-gradient-to-br
                                     from-gray-100 to-gray-200 flex items-center justify-center shadow-sm"
                   >
                     <SearchX />
                   </div>
 
                   {/* Titre */}
-                  <h3 className="mt-4 text-lg font-semibold text-gray-900">
+                  <h3 className="mt-3 sm:mt-4 text-sm sm:text-lg font-semibold text-gray-900">
                     Aucune intervention
                   </h3>
 
                   {/* Description */}
-                  <p className="mt-1 text-sm text-gray-500 max-w-sm">
+                  <p className="mt-1 text-xs sm:text-sm text-gray-500 max-w-sm">
                     {
                         filteredInterventions.length === 0 && (
                             search ? (
@@ -585,68 +657,67 @@ export function SectionCards({ user }: { user?: any }) {
                 </div>
               ) : (
                 filteredInterventions.map((inv) => {
-                  const status =
-                    STATUS_UI_MAP[
-                      inv.int_status as
-                        | "WAITING_FOR_PARTS"
-                        | "FIXING_STARTED"
-                        | "FIXING_FINISHED"
-                    ];
-                  const statusMeta = getStatusMeta(status);
+                  const uiStatus = computeUIStatus(inv);
+                  const statusMeta = getStatusMeta(uiStatus);
+                  const ageMeta = getInterventionAgeMeta(
+                    inv.int_status,
+                    inv.int_createdAt,
+                  );
 
                   return (
                     <div
                       key={inv.int_id}
-                      className="group p-5 flex flex-col-reverse lg:flex-row lg:items-center gap-5 hover:bg-gray-50 transition rounded-2xl"
+                      title={ageMeta?.title}
+                      className={`group p-2.5 sm:p-3.5 lg:p-5 flex flex-col-reverse lg:flex-row lg:items-center gap-2.5 sm:gap-3.5 lg:gap-5 hover:bg-gray-50 transition rounded-lg sm:rounded-xl lg:rounded-2xl ${ageMeta?.className ?? ""}`}
                     >
-                      <div className="flex items-center gap-5 flex-1">
+                      <div className="flex items-center gap-2.5 sm:gap-3.5 lg:gap-5 flex-1">
                         <div
-                          className="h-14 w-14 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 
-                                          flex items-center justify-center text-sm font-semibold text-gray-700 shadow-sm"
+                          className="h-9 w-9 sm:h-11 sm:w-11 lg:h-14 lg:w-14 rounded-lg sm:rounded-xl lg:rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200
+                                          flex items-center justify-center text-xs sm:text-sm font-semibold text-gray-700 shadow-sm shrink-0"
                         >
                           {inv.int_vehicle?.veh_brand?.bra_name[0] ?? ""}
                           {inv.int_vehicle?.veh_model?.mod_name[0] ?? ""}
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between flex-wrap lg:justify-start gap-3">
-                            <div className="font-semibold text-gray-900 truncate">
+                          <div className="flex items-center justify-between flex-wrap lg:justify-start gap-1.5 sm:gap-3">
+                            <div className="text-xs sm:text-sm lg:text-base font-semibold text-gray-900 truncate">
                               {inv.int_vehicle?.veh_brand?.bra_name ?? ""}{" "}
                               {inv.int_vehicle?.veh_model?.mod_name ?? ""}
                             </div>
-                            <span className="flex items-center gap-3">
-                              <span className="text-xs bg-gray-100 px-2 py-0.5 rounded-md text-gray-600">
+                            <span className="flex items-center gap-1.5 sm:gap-3">
+                              <span className="text-[10px] sm:text-xs bg-gray-100 px-1.5 py-0.5 sm:px-2 rounded-md text-gray-600">
                                 {inv.int_vehicle?.veh_year ?? ""}
                               </span>
 
-                              <span className="text-xs bg-slate-100 px-2 py-0.5 rounded-md text-gray-600">
+                              <span className="text-[10px] sm:text-xs bg-slate-100 px-1.5 py-0.5 sm:px-2 rounded-md text-gray-600">
                                 {inv.int_vehicle?.veh_color ?? ""}
                               </span>
                             </span>
                           </div>
 
-                          <div className="text-sm text-gray-600 mt-1">
+                          <div className="text-[11px] sm:text-sm text-gray-600 mt-0.5 sm:mt-1">
                             Plaque :{" "}
                             <span className="font-medium text-gray-800">
                               {inv.int_vehicle?.veh_licensePlate ?? ""}
                             </span>
                           </div>
 
-                          <div className="text-sm mt-1 text-gray-500 truncate lg:max-w-[300px]">
+                          <div className="text-[11px] sm:text-sm mt-0.5 sm:mt-1 text-gray-500 truncate lg:max-w-[300px]">
                             {inv.int_workDescription ?? ""}
                           </div>
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-start flex-row lg:items-end gap-2">
+                      <div className="flex items-center justify-start flex-row lg:items-end gap-1.5 sm:gap-2">
                         <span
                           className={`${statusMeta.bg} ${statusMeta.color}
-                            text-xs font-medium px-3 py-1 rounded-full`}
+                            text-[10px] sm:text-xs font-medium px-2 py-0.5 sm:px-3 sm:py-1 rounded-full`}
                         >
                           {statusMeta.label}
                         </span>
 
-                        <div className="text-xs text-gray-400">
+                        <div className="text-[10px] sm:text-xs text-gray-400">
                           {new Date(inv.int_updatedAt).toLocaleString("fr-FR", {
                             day: "2-digit",
                             month: "2-digit",
@@ -656,7 +727,7 @@ export function SectionCards({ user }: { user?: any }) {
                           })}
                         </div>
                         <button
-                          className="flex items-center gap-1 text-blue-600 text-[12px] font-medium hover:underline"
+                          className="flex items-center gap-1 text-blue-600 text-[10px] sm:text-[12px] font-medium hover:underline"
                           onClick={() => handleViewDetail(inv)}
                         >
                           <Eye size={12} />
