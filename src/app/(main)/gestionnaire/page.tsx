@@ -336,8 +336,8 @@ export default function GestionnairePage() {
       attente: interventions.filter(
         (i) => i.int_status === "WAITING_FOR_PARTS",
       ).length,
-      annulees: interventions.filter((i) => computeUIStatus(i) === "ANNULEE").length,
-      refusees: interventions.filter((i) => computeUIStatus(i) === "REFUSE").length,
+      annulees: interventions.filter((i) => i.int_status === "CANCELLED").length,
+      refusees: interventions.filter((i) => i.int_status === "REFUSED").length,
     };
   }, [vehicles]);
 

@@ -184,7 +184,7 @@ model intervention_int {
   int_accordNumber          String?
   int_dateOfConfirmation    DateTime?
   int_interventionConfirmed Boolean                 @default(false)
-  int_status                intervention_status     @default(FIXING_STARTED)
+  int_status                InterventionStatus      @default(FIXING_STARTED)
   int_statusUpdatedAt       DateTime                @default(now())
   int_workDescription       String?                 @db.Text
   int_didOrderParts         Boolean                 @default(false)
@@ -352,10 +352,14 @@ enum user_role {
   AGENCE
 }
 
-enum intervention_status {
+enum InterventionStatus {
   WAITING_FOR_PARTS
   FIXING_STARTED
   FIXING_FINISHED
+  WAITING_FOR_APPROVAL
+  REFUSED
+  CANCELLED
+  DELETED
 }
 
 enum vehicle_bodyType {
@@ -387,16 +391,28 @@ enum statushistory_sth_sth_previousStatus {
   WAITING_FOR_PARTS
   FIXING_STARTED
   FIXING_FINISHED
+  WAITING_FOR_APPROVAL
+  REFUSED
+  CANCELLED
+  DELETED
 }
 
 enum statushistory_sth_sth_newStatus {
   WAITING_FOR_PARTS
   FIXING_STARTED
   FIXING_FINISHED
+  WAITING_FOR_APPROVAL
+  REFUSED
+  CANCELLED
+  DELETED
 }
 
 enum WorkStatus {
   WAITING_FOR_PARTS
   FIXING_STARTED
   FIXING_FINISHED
+  WAITING_FOR_APPROVAL
+  REFUSED
+  CANCELLED
+  DELETED
 }

@@ -13,7 +13,7 @@ import { Modal } from "@/src/shared/components/modal"
 
 import { InterventionForm } from "../../form/intervention-form"
 import { useInterventionApi } from "../useIntervention.api"
-import { toUIStatus, getStatusMeta } from "@/src/utils/constants/intervention-status"
+import { getStatusMeta } from "@/src/utils/constants/intervention-status"
 import { groupInterventionsByStatus } from "@/src/utils/constants/groupInterventionsByStatus"
 import { formatLicensePlate } from "@/src/utils/formatters"
 import { toast } from "sonner"

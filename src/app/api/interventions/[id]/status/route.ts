@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/src/lib/prisma";
 import {
-  intervention_status,
-  statushistory_sth_sth_newStatus,
-  statushistory_sth_sth_previousStatus,
+  InterventionStatus,
 } from "@/generated/prisma";
 import { logError } from "@/src/lib/logger";
 
@@ -19,39 +17,58 @@ async function getParamId(ctx: Ctx): Promise<string> {
   return p?.id;
 }
 
-function isValidStatus(value: unknown): value is intervention_status {
-  return typeof value === "string" && Object.values(intervention_status).includes(value as intervention_status);
+function isValidStatus(value: unknown): value is InterventionStatus {
+  const validStatuses: InterventionStatus[] = [
+    "WAITING_FOR_PARTS",
+    "FIXING_STARTED",
+    "FIXING_FINISHED",
+    "WAITING_FOR_APPROVAL",
+    "REFUSED",
+    "CANCELLED",
+    "DELETED",
+  ];
+  return typeof value === "string" && validStatuses.includes(value as InterventionStatus);
 }
 
 function isValidStatusTransition(
-  currentStatus: intervention_status,
-  newStatus: intervention_status
+  currentStatus: InterventionStatus,
+  newStatus: InterventionStatus
 ): boolean {
-  const transitions: Record<intervention_status, intervention_status[]> = {
+  if (currentStatus === newStatus) return true;
+
+  const blockedStatuses: InterventionStatus[] = ["REFUSED", "CANCELLED", "DELETED"];
+  if (blockedStatuses.includes(currentStatus)) return false;
+
+  const transitions: Record<InterventionStatus, InterventionStatus[]> = {
     WAITING_FOR_PARTS: [
-      intervention_status.FIXING_STARTED,
-      intervention_status.FIXING_FINISHED,
+      "FIXING_STARTED",
+      "FIXING_FINISHED",
+      "WAITING_FOR_APPROVAL",
+      "CANCELLED",
     ],
     FIXING_STARTED: [
-      intervention_status.WAITING_FOR_PARTS,
-      intervention_status.FIXING_FINISHED,
+      "WAITING_FOR_PARTS",
+      "FIXING_FINISHED",
+      "WAITING_FOR_APPROVAL",
+      "CANCELLED",
     ],
     FIXING_FINISHED: [
-      intervention_status.FIXING_STARTED,
-      intervention_status.WAITING_FOR_PARTS,
+      "FIXING_STARTED",
+      "WAITING_FOR_PARTS",
+      "CANCELLED",
     ],
+    WAITING_FOR_APPROVAL: [
+      "FIXING_STARTED",
+      "WAITING_FOR_PARTS",
+      "REFUSED",
+      "CANCELLED",
+    ],
+    REFUSED: [],
+    CANCELLED: [],
+    DELETED: [],
   };
 
-  if (currentStatus === newStatus) return true;
   return transitions[currentStatus]?.includes(newStatus) ?? false;
-}
-
-function toHistoryPreviousStatus(value: intervention_status): statushistory_sth_sth_previousStatus {
-  return value as unknown as statushistory_sth_sth_previousStatus;
-}
-
-function toHistoryNewStatus(value: intervention_status): statushistory_sth_sth_newStatus {
-  return value as unknown as statushistory_sth_sth_newStatus;
 }
 
 export async function PATCH(request: NextRequest, context: Ctx) {
@@ -76,7 +93,6 @@ export async function PATCH(request: NextRequest, context: Ctx) {
     }
 
     const body = await request.json();
-    const waitingForApproval = body?.waitingForApproval === true;
     const newStatus = body?.status;
 
     const intervention = await prisma.intervention_int.findUnique({
@@ -103,9 +119,9 @@ export async function PATCH(request: NextRequest, context: Ctx) {
       );
     }
 
-    if (intervention.int_annulee) {
+    if (intervention.int_status === "CANCELLED" || intervention.int_status === "DELETED") {
       return NextResponse.json(
-        { error: "Intervention annulée : le statut ne peut plus être modifié" },
+        { error: "Intervention annulée ou supprimée : le statut ne peut plus être modifié" },
         { status: 409 }
       );
     }
@@ -117,58 +133,8 @@ export async function PATCH(request: NextRequest, context: Ctx) {
       );
     }
 
-    if (waitingForApproval) {
-      await prisma.$transaction(async (tx) => {
-        await tx.intervention_int.update({
-          where: { int_id: id },
-          data: {
-            int_accordNumber: null,
-            int_interventionConfirmed: false,
-            int_statusUpdatedAt: new Date(),
-          },
-        });
-
-        await tx.changehistory_chg.create({
-          data: {
-            chg_interventionId: id,
-            chg_changedBy: session.user.id,
-            chg_fieldName: "accordNumber",
-            chg_oldValue: intervention.int_accordNumber,
-            chg_newValue: null,
-            chg_changeType: "waiting_for_approval",
-          },
-        });
-      });
-
-      const updated = await prisma.intervention_int.findUnique({
-        where: { int_id: id },
-        include: {
-          int_vehicle: {
-            include: {
-              veh_client: { select: { cli_id: true, cli_name: true } },
-              veh_base: { select: { bas_id: true, bas_location: true } },
-            },
-          },
-          int_handledBy: { select: { usr_id: true, usr_name: true, usr_email: true } },
-          history: {
-            include: { sth_user: { select: { usr_name: true } } },
-            orderBy: { sth_changedAt: "asc" },
-          },
-        },
-      });
-
-      return NextResponse.json(serializeIntervention(updated!));
-    }
-
     if (!isValidStatus(newStatus)) {
       return NextResponse.json({ error: "Valeur de statut invalide" }, { status: 400 });
-    }
-
-    if (!intervention.int_accordNumber) {
-      return NextResponse.json(
-        { error: "Veuillez attribuer un numéro d'accord avant de modifier le statut de cette intervention." },
-        { status: 403 }
-      );
     }
 
     if (!isValidStatusTransition(intervention.int_status, newStatus)) {
@@ -185,8 +151,8 @@ export async function PATCH(request: NextRequest, context: Ctx) {
         await tx.statushistory_sth.create({
           data: {
             sth_interventionId: id,
-            sth_previousStatus: toHistoryPreviousStatus(intervention.int_status),
-            sth_newStatus: toHistoryNewStatus(newStatus),
+            sth_previousStatus: intervention.int_status,
+            sth_newStatus: newStatus,
             sth_changedById: session.user.id,
           },
         });

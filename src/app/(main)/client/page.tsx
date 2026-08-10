@@ -12,7 +12,7 @@ import SearchFilters from "./components/SearchFilters";
 import InterventionCard from "./components/InterventionCard";
 import VehicleInterventionsModal from "./components/VehicleInterventionsModal";
 import EmptyState from "./components/EmptyState";
-import { toUIStatus } from "@/src/utils/constants/intervention-status";
+import { computeUIStatus } from "@/src/utils/constants/intervention-status";
 
 type UIStatus =
   | "ALL"
@@ -105,7 +105,7 @@ export default function ClientPage() {
           statusMatch =
             v.interventions.length > 0 &&
             v.interventions.some(
-              (i: any) => toUIStatus(i.status, i.accordNumber) === "EN_COURS",
+              (i: any) => computeUIStatus({ int_status: i.status }) === "FIXING_STARTED",
             );
         }
 
@@ -113,7 +113,7 @@ export default function ClientPage() {
           statusMatch =
             v.interventions.length > 0 &&
             v.interventions.some(
-              (i: any) => toUIStatus(i.status, i.accordNumber) === "ATTENTE_PIECES",
+              (i: any) => computeUIStatus({ int_status: i.status }) === "WAITING_FOR_PARTS",
             );
         }
 
@@ -121,7 +121,7 @@ export default function ClientPage() {
           statusMatch =
             v.interventions.length > 0 &&
             v.interventions.every(
-              (i: any) => toUIStatus(i.status, i.accordNumber) === "TERMINEE",
+              (i: any) => computeUIStatus({ int_status: i.status }) === "FIXING_FINISHED",
             );
         }
 
@@ -141,7 +141,7 @@ export default function ClientPage() {
       (v) =>
         Array.isArray(v.interventions) &&
         v.interventions.some(
-          (i: any) => toUIStatus(i.status, i.accordNumber) === "EN_COURS",
+          (i: any) => computeUIStatus({ int_status: i.status }) === "FIXING_STARTED",
         ),
     ).length;
 
@@ -151,7 +151,7 @@ export default function ClientPage() {
         Array.isArray(v.interventions) &&
         v.interventions.length > 0 &&
         v.interventions.every(
-          (i: any) => toUIStatus(i.status, i.accordNumber) === "TERMINEE",
+          (i: any) => computeUIStatus({ int_status: i.status }) === "FIXING_FINISHED",
         ),
     ).length;
 

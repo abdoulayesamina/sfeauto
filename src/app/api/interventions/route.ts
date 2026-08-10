@@ -5,6 +5,7 @@ import { logError } from "@/src/lib/logger";
 import { randomUUID } from "crypto";
 import { getContainerClient, getSasUrlForBlob } from "@/src/lib/azureBlob";
 import { notifyAdmins } from "@/src/lib/notifications";
+import { adaptLegacyIntervention } from "@/src/utils/constants/intervention-status";
 
 export const runtime = "nodejs";
 
@@ -74,8 +75,9 @@ export async function GET(request: NextRequest) {
           }
         : undefined;
 
-    const where = {
+    const baseWhere = {
       int_supprimee: false,
+      int_status: { not: "DELETED" as const },
       ...(vehicleScope ? { int_vehicle: vehicleScope } : {}),
       ...(searchParam
         ? {
@@ -91,7 +93,7 @@ export async function GET(request: NextRequest) {
 
     const [interventions, statusGroups, annuleesCount, refuseesCount] = await Promise.all([
       prisma.intervention_int.findMany({
-        where,
+        where: baseWhere,
         select: {
           int_id: true,
           int_accordNumber: true,
@@ -102,7 +104,6 @@ export async function GET(request: NextRequest) {
           int_comments: true,
           int_didOrderParts: true,
           int_ordersDetails: true,
-          int_annulee: true,
           int_createdAt: true,
           int_updatedAt: true,
           int_handledBy: {
@@ -127,30 +128,32 @@ export async function GET(request: NextRequest) {
       }),
       prisma.intervention_int.groupBy({
         by: ["int_status"],
-        where,
+        where: baseWhere,
         _count: true,
+      }) as any,
+      prisma.intervention_int.count({
+        where: { int_supprimee: false, AND: [vehicleScope ? { int_vehicle: vehicleScope } : {}, { OR: [{ int_status: "CANCELLED" }, { int_annulee: true }] }] },
       }),
       prisma.intervention_int.count({
-        where: { ...where, int_annulee: true },
-      }),
-      prisma.intervention_int.count({
-        where: { ...where, int_annulee: false, int_accordNumber: "REFUSE" },
+        where: { int_supprimee: false, AND: [vehicleScope ? { int_vehicle: vehicleScope } : {}, { OR: [{ int_status: "REFUSED" }, { int_accordNumber: "REFUSE" }] }] },
       }),
     ]);
 
     const stats = {
-      total: statusGroups.reduce((sum, g) => sum + g._count, 0),
+      total: statusGroups.reduce((sum: number, g: any) => sum + g._count, 0) + annuleesCount + refuseesCount,
       enCours:
-        statusGroups.find((g) => g.int_status === "FIXING_STARTED")?._count ?? 0,
+        statusGroups.find((g: any) => g.int_status === "FIXING_STARTED")?._count ?? 0,
       terminees:
-        statusGroups.find((g) => g.int_status === "FIXING_FINISHED")?._count ?? 0,
+        statusGroups.find((g: any) => g.int_status === "FIXING_FINISHED")?._count ?? 0,
       attente:
-        statusGroups.find((g) => g.int_status === "WAITING_FOR_PARTS")?._count ?? 0,
+        statusGroups.find((g: any) => g.int_status === "WAITING_FOR_PARTS")?._count ?? 0,
       annulees: annuleesCount,
       refusees: refuseesCount,
     };
 
-    return NextResponse.json({ interventions, stats });
+    const adaptedInterventions = interventions.map(adaptLegacyIntervention);
+
+    return NextResponse.json({ interventions: adaptedInterventions, stats });
   } catch (error) {
     logError("Failed to fetch interventions", error);
     return NextResponse.json(

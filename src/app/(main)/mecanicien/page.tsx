@@ -34,7 +34,6 @@ import { Spinner } from "@/src/shared/components/spinner";
 import { errorAlert, confirmAlert } from "@/src/lib/alerts";
 import { toast } from "sonner";
 import { getInterventionAgeMeta } from "@/src/utils/constants/intervention-age";
-import { computeUIStatus, getStatusMeta as getUIStatusMeta } from "@/src/utils/constants/intervention-status";
 
 export const statusStyles: Record<string, string> = {
   EN_ATTENTE_ACCORD: "bg-purple-100 text-purple-700",
@@ -54,6 +53,7 @@ const STATUS_UI_MAP: Record<string, string> = {
 export const getStatusMeta = (status?: string) => {
   switch (status) {
     case "FIXING_STARTED":
+    case "EN_COURS":
       return {
         label: "Réparation en cours",
         icon: Wrench,
@@ -61,11 +61,44 @@ export const getStatusMeta = (status?: string) => {
         bg: "bg-blue-100",
       };
     case "WAITING_FOR_PARTS":
+    case "ATTENTE_PIECES":
       return {
         label: "En attente de pièces",
         icon: Clock,
         color: "text-orange-700",
         bg: "bg-orange-100",
+      };
+    case "FIXING_FINISHED":
+    case "TERMINEE":
+      return {
+        label: "Réparation terminée",
+        icon: CheckCircle2,
+        color: "text-green-700",
+        bg: "bg-green-100",
+      };
+    case "WAITING_FOR_APPROVAL":
+    case "EN_ATTENTE_ACCORD":
+      return {
+        label: "En attente d'accord",
+        icon: Clock,
+        color: "text-purple-700",
+        bg: "bg-purple-100",
+      };
+    case "REFUSED":
+    case "REFUSE":
+      return {
+        label: "Refusé",
+        icon: XCircle,
+        color: "text-red-700",
+        bg: "bg-red-100",
+      };
+    case "CANCELLED":
+    case "ANNULEE":
+      return {
+        label: "Annulée",
+        icon: XCircle,
+        color: "text-red-700",
+        bg: "bg-red-100",
       };
     case "FIXING_DONE":
       return {
@@ -73,13 +106,6 @@ export const getStatusMeta = (status?: string) => {
         icon: CheckCircle2,
         color: "text-green-700",
         bg: "bg-green-100",
-      };
-    case "CANCELLED":
-      return {
-        label: "Annulée",
-        icon: XCircle,
-        color: "text-red-700",
-        bg: "bg-red-100",
       };
     default:
       return {
@@ -104,7 +130,7 @@ const STATUS_TRANSLATIONS: Record<string, string> = {
 
 export default function MecanicienPage() {
   const [filterStatus, setFilterStatus] = useState<
-    "EN_ATTENTE_ACCORD" | "EN_COURS" | "TERMINEE" | "ATTENTE_PIECES" | ""
+    "EN_ATTENTE_ACCORD" | "EN_COURS" | "TERMINEE" | "ATTENTE_PIECES" | "REFUSEE" | "ANNULEE" | ""
   >("EN_COURS");
   const [clientId, setClientId] = useState<string>();
   const [baseId, setBaseId] = useState<string>();
@@ -300,6 +326,20 @@ export default function MecanicienPage() {
           >
             Terminées
           </Button>
+
+          <Button
+            onClick={() => setFilterStatus("REFUSEE")}
+            variant={filterStatus === "REFUSEE" ? "default" : "outline"}
+          >
+            Refusées
+          </Button>
+
+          <Button
+            onClick={() => setFilterStatus("ANNULEE")}
+            variant={filterStatus === "ANNULEE" ? "default" : "outline"}
+          >
+            Annulées
+          </Button>
         </div>
 
         {/* Liste */}
@@ -323,11 +363,7 @@ export default function MecanicienPage() {
           )}
           {!loading &&
             filteredInterventions.map((inv) => {
-              const uiStatus = computeUIStatus({
-                int_status: inv.status,
-                int_accordNumber: inv.accordNumber,
-                int_annulee: inv.annulee,
-              });
+              const uiStatus = inv.status;
               const ageMeta = getInterventionAgeMeta(inv.status, inv.createdAt);
 
               return (
@@ -370,11 +406,11 @@ export default function MecanicienPage() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                  {uiStatus === "REFUSE" || uiStatus === "ANNULEE" ? (
+                  {uiStatus === "REFUSE" || uiStatus === "ANNULEE" || filterStatus === "REFUSEE" || filterStatus === "ANNULEE" ? (
                     <span
-                      className={`inline-flex items-center gap-1.5 w-[140px] sm:w-[180px] justify-center rounded-md border px-3 py-2 text-sm font-medium ${getUIStatusMeta(uiStatus).bg} ${getUIStatusMeta(uiStatus).color}`}
+                      className={`inline-flex items-center gap-1.5 w-[140px] sm:w-[180px] justify-center rounded-md border px-3 py-2 text-sm font-medium ${statusStyles[uiStatus]}`}
                     >
-                      {getUIStatusMeta(uiStatus).label}
+                      {uiStatus === "REFUSE" ? "Refusé" : "Annulée"}
                     </span>
                   ) : (
                   <Select

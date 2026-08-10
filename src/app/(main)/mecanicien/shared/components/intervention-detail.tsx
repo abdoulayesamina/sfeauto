@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react"
 import { Car, User, MapPin, Wrench, Images, X, CheckCircle, Sparkles, RefreshCw, Loader2 } from "lucide-react"
 import { Button } from "@/src/shared/components/ui/button"
-import { toUIStatus, getStatusMeta, HISTORY_LABELS, UIStatus } from "@/src/utils/constants/intervention-status"
+import { getStatusMeta, HISTORY_LABELS, UIStatus, computeUIStatus } from "@/src/utils/constants/intervention-status"
 import { errorAlert, successAlert } from "@/src/lib/alerts"
 import { useInterventionPhotos } from "../../../gestionnaire/shared/hooks/useInterventionPhotos.api"
 import { useAiReport, AiReportStyle } from "../../../gestionnaire/shared/hooks/useAiReport.api"
@@ -33,7 +33,7 @@ export default function InterventionDetail({
   translateStatus,
 }: Props) {
 
-  const uiStatus: UIStatus = toUIStatus(selectedIntervention?.status, selectedIntervention?.accordNumber)
+  const uiStatus: UIStatus = computeUIStatus({ int_status: selectedIntervention?.dbStatus || selectedIntervention?.status as any })
 
   const history = selectedIntervention?.statusHistory ?? []
 

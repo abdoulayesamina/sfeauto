@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/src/shared/components/ui/button"
-import { toUIStatus } from "@/src/utils/constants/intervention-status"
+import { computeUIStatus } from "@/src/utils/constants/intervention-status"
 import { useEffect, useState } from "react"
 import { getBrandNameById, getModelNameById } from "../../brands/shared/hooks/GetBrandOrModelName"
 
@@ -32,10 +32,10 @@ function computeCounts(intervention: any) {
     terminee = 0
 
   for (const inv of interventions) {
-    const ui = toUIStatus(inv.status, inv.accordNumber)
-    if (ui === "EN_COURS") enCours++
-    else if (ui === "ATTENTE_PIECES") attentePieces++
-    else if (ui === "TERMINEE") terminee++
+    const ui = computeUIStatus({ int_status: inv.status })
+    if (ui === "FIXING_STARTED") enCours++
+    else if (ui === "WAITING_FOR_PARTS") attentePieces++
+    else if (ui === "FIXING_FINISHED") terminee++
   }
 
   return { EN_COURS: enCours, ATTENTE_PIECES: attentePieces, TERMINEE: terminee }

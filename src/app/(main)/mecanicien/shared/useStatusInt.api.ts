@@ -1,6 +1,5 @@
-// src/app/(main)/mecanicien/shared/useStatusInt.api.ts
 import { useState } from "react"
-import { UI_TO_WORKSTATUS, UIStatus } from "@/src/utils/constants/intervention-status"
+import { UI_TO_INTERVENTIONSTATUS, UIStatus } from "@/src/utils/constants/intervention-status"
 
 type UpdateStatusResult =
   | { success: true; data: any }
@@ -27,23 +26,19 @@ export function useStatusInt(): UseStatusIntReturn {
     setError(null)
 
     try {
-      const isWaitingForApproval = newStatus === "EN_ATTENTE_ACCORD"
-      const isRefuse = newStatus === "REFUSE"
-      const isAnnulee = newStatus === "ANNULEE"
-
-      if (isRefuse || isAnnulee) {
-        setError("Impossible de changer vers ce statut")
-        return { success: false, message: "Statut non modifiable" }
+      // Convert UI status to database status
+      const dbStatus = UI_TO_INTERVENTIONSTATUS[newStatus]
+      
+      if (!dbStatus) {
+        const message = `Statut invalide: ${newStatus}`
+        setError(message)
+        return { success: false, message }
       }
 
       const res = await fetch(`/api/interventions/${interventionId}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(
-          isWaitingForApproval
-            ? { waitingForApproval: true }
-            : { status: UI_TO_WORKSTATUS[newStatus as keyof typeof UI_TO_WORKSTATUS] }
-        ),
+        body: JSON.stringify({ status: dbStatus }),
       })
 
       const data = await res.json().catch(() => ({}))

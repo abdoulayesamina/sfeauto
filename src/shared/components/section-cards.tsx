@@ -114,10 +114,10 @@ export function SectionCards({ user }: { user?: any }) {
       (i) => i.int_status === "WAITING_FOR_PARTS",
     );
 
-    const annulees = sortedInterventions.filter((i) => i.int_annulee === true);
+    const annulees = sortedInterventions.filter((i) => i.int_status === "CANCELLED");
 
     const refusees = sortedInterventions.filter(
-      (i) => !i.int_annulee && i.int_accordNumber === "REFUSE",
+      (i) => i.int_status === "REFUSED",
     );
 
     setNombreTotalInterventions(serverStats?.total ?? sortedInterventions.length);
@@ -290,8 +290,8 @@ export function SectionCards({ user }: { user?: any }) {
       enCours: base.filter((i) => i.int_status === "FIXING_STARTED").length,
       terminees: base.filter((i) => i.int_status === "FIXING_FINISHED").length,
       attente: base.filter((i) => i.int_status === "WAITING_FOR_PARTS").length,
-      annulees: base.filter((i) => i.int_annulee === true).length,
-      refusees: base.filter((i) => !i.int_annulee && i.int_accordNumber === "REFUSE").length,
+      annulees: base.filter((i) => i.int_status === "CANCELLED").length,
+      refusees: base.filter((i) => i.int_status === "REFUSED").length,
     };
   }, [totalInterventions, search, searchDate]);
 

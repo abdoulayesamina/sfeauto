@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/src/shared/components/ui/button";
 import { Modal } from "@/src/shared/components/modal";
-import { toUIStatus, getStatusMeta, computeUIStatus } from "@/src/utils/constants/intervention-status";
+import { getStatusMeta, computeUIStatus } from "@/src/utils/constants/intervention-status";
 import { getInterventionAgeMeta } from "@/src/utils/constants/intervention-age";
 import { canCreateDevis } from "@/src/utils/permissions";
 import { useManageApi } from "../useManage.api";
@@ -160,8 +160,8 @@ export function VehiclePreview({
   };
 
   const handleEditIntervention = (intervention: any) => {
-    if(toUIStatus(intervention?.int_status, intervention?.int_accordNumber) === "TERMINEE") return;
-    if(intervention?.int_annulee) return;
+    if(computeUIStatus({ int_status: intervention?.int_status }) === "FIXING_FINISHED") return;
+    if(computeUIStatus({ int_status: intervention?.int_status }) === "CANCELLED") return;
     if(isAbsent) return;
 
     setInterventionForEdit(intervention);
@@ -169,7 +169,7 @@ export function VehiclePreview({
   };
 
   const countEnCours = useMemo(
-    () => (mappedInterventions ?? []).filter((i) => !i.int_annulee && i.uiStatus !== "TERMINEE").length,
+    () => (mappedInterventions ?? []).filter((i) => i.uiStatus !== "TERMINEE" && i.uiStatus !== "CANCELLED" && i.uiStatus !== "DELETED").length,
     [mappedInterventions]
   );
 
@@ -320,7 +320,7 @@ export function VehiclePreview({
           const hasDevis = Boolean(inv?.devis?.dev_id);
           const devisId = inv?.devis?.dev_id ?? null;
           const isTerminee = inv?.uiStatus === "TERMINEE";
-          const isAnnulee = Boolean(inv?.int_annulee);
+          const isAnnulee = inv?.uiStatus === "CANCELLED" || inv?.uiStatus === "DELETED";
 
           // Client/agence historiques avec fallback sur le véhicule courant
           const historicalClient = inv?.int_client?.cli_name ?? client;

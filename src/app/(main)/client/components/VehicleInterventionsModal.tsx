@@ -4,12 +4,19 @@ import { Card, CardContent } from "@/src/shared/components/ui/card";
 import { Button } from "@/src/shared/components/ui/button";
 import { Badge } from "@/src/shared/components/ui/badge";
 import { Calendar, Clock, Eye, ChevronLeft, FileText } from "lucide-react";
-import {
-  filterByUIStatus,
-  toUIStatus,
-} from "@/src/utils/constants/intervention-status";
+import { getStatusMeta, computeUIStatus, STATUS_UI_MAP } from "@/src/utils/constants/intervention-status";
 import InterventionStatusBadge from "./InterventionStatusBadge";
 import { getInterventionAgeMeta } from "@/src/utils/constants/intervention-age";
+
+const filterByUIStatus = (interventions: any[], status: string) => {
+  if (status === "ALL") return interventions;
+  
+  return interventions.filter((i) => {
+    const dbStatus = i.status as string; // Cast to string
+    const uiStatus = STATUS_UI_MAP[dbStatus as keyof typeof STATUS_UI_MAP] || "EN_COURS";
+    return uiStatus === status;
+  });
+};
 
 interface VehicleInterventionsModalProps {
   vehicle: any;
@@ -50,12 +57,12 @@ export default function VehicleInterventionsModal({
 
   const stats = {
     total: interventions.length,
-    enCours: interventions.filter((i) => toUIStatus(i.status, i.accordNumber) === "EN_COURS")
+    enCours: interventions.filter((i) => STATUS_UI_MAP[i.status as keyof typeof STATUS_UI_MAP] === "EN_COURS" || STATUS_UI_MAP[i.status as keyof typeof STATUS_UI_MAP] === "FIXING_STARTED")
       .length,
     attentePieces: interventions.filter(
-      (i) => toUIStatus(i.status, i.accordNumber) === "ATTENTE_PIECES",
+      (i) => STATUS_UI_MAP[i.status as keyof typeof STATUS_UI_MAP] === "ATTENTE_PIECES" || STATUS_UI_MAP[i.status as keyof typeof STATUS_UI_MAP] === "WAITING_FOR_PARTS",
     ).length,
-    terminee: interventions.filter((i) => toUIStatus(i.status, i.accordNumber) === "TERMINEE")
+    terminee: interventions.filter((i) => STATUS_UI_MAP[i.status as keyof typeof STATUS_UI_MAP] === "TERMINEE" || STATUS_UI_MAP[i.status as keyof typeof STATUS_UI_MAP] === "FIXING_FINISHED")
       .length,
   };
 

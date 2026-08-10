@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { logError } from "@/src/lib/logger";
 import { prisma } from "@/src/lib/prisma";
 import { normalizePlate } from "@/src/lib/normalizePlate";
+import { adaptLegacyIntervention } from "@/src/utils/constants/intervention-status";
 
 const BODY_TYPES = [
   "BERLINE",
@@ -335,20 +336,19 @@ export async function GET(request: NextRequest) {
         _count: true,
       }),
       prisma.intervention_int.count({
-        where: { int_supprimee: false, int_annulee: true, int_vehicle: where },
+        where: { int_supprimee: false, OR: [{ int_status: "CANCELLED" }, { int_annulee: true }], int_vehicle: where },
       }),
       prisma.intervention_int.count({
         where: {
           int_supprimee: false,
-          int_annulee: false,
-          int_accordNumber: "REFUSE",
+          OR: [{ int_status: "REFUSED" }, { int_accordNumber: "REFUSE" }],
           int_vehicle: where,
         },
       }),
     ]);
 
     const stats = {
-      total: statusGroups.reduce((sum, g) => sum + g._count, 0),
+      total: statusGroups.reduce((sum, g) => sum + g._count, 0) + annuleesCount + refuseesCount,
       enCours:
         statusGroups.find((g) => g.int_status === "FIXING_STARTED")?._count ?? 0,
       terminees:
@@ -359,8 +359,13 @@ export async function GET(request: NextRequest) {
       refusees: refuseesCount,
     };
 
+    const adaptedVehicles = vehicles.map((v) => ({
+      ...v,
+      interventions: (v.interventions ?? []).map(adaptLegacyIntervention),
+    }));
+
     return NextResponse.json({
-      vehicles,
+      vehicles: adaptedVehicles,
       total,
       page,
       pageSize,
