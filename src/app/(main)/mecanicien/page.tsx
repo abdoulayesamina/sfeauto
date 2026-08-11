@@ -433,15 +433,19 @@ export default function MecanicienPage() {
 
                       setInterventionId(null);
                       setInterventions((prev: any) =>
-                        prev.map((item: any) =>
-                          item.id === inv.id
-                            ? {
-                                ...item,
-                                status: result.data.status,
-                                accordNumber: result.data.accordNumber,
-                              }
-                            : item,
-                        ),
+                        prev
+                          .map((item: any) =>
+                            item.id === inv.id
+                              ? {
+                                  ...item,
+                                  status: val,
+                                  accordNumber: result.data.accordNumber,
+                                }
+                              : item,
+                          )
+                          .filter(
+                            (item: any) => !filterStatus || item.status === filterStatus,
+                          ),
                       );
                     }}
                     value={uiStatus}
