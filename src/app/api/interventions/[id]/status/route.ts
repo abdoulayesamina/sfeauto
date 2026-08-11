@@ -138,8 +138,34 @@ export async function PATCH(request: NextRequest, context: Ctx) {
     }
 
     if (!isValidStatusTransition(intervention.int_status, newStatus)) {
+      // Create a user-friendly error message based on the current and new status
+      const statusLabels: Record<string, string> = {
+        FIXING_STARTED: "En cours",
+        WAITING_FOR_PARTS: "En attente de pièces",
+        FIXING_FINISHED: "Terminée",
+        WAITING_FOR_APPROVAL: "En attente d'accord",
+        REFUSED: "Refusée",
+        CANCELLED: "Annulée",
+        DELETED: "Supprimée",
+      };
+
+      const currentStatusLabel = statusLabels[intervention.int_status] || intervention.int_status;
+      const newStatusLabel = statusLabels[newStatus] || newStatus;
+
+      let errorMessage = "";
+
+      if (intervention.int_status === "FIXING_FINISHED" && newStatus === "WAITING_FOR_APPROVAL") {
+        errorMessage = "Une intervention terminée ne peut pas retourner en attente d'accord.";
+      } else if (intervention.int_status === "FIXING_FINISHED") {
+        errorMessage = `Une intervention terminée ne peut pas passer au statut "${newStatusLabel}".`;
+      } else if (["REFUSED", "CANCELLED", "DELETED"].includes(intervention.int_status)) {
+        errorMessage = `Une intervention ${currentStatusLabel.toLowerCase()} ne peut pas être modifiée.`;
+      } else {
+        errorMessage = `Impossible de passer de "${currentStatusLabel}" à "${newStatusLabel}". Cette transition n'est pas autorisée.`;
+      }
+
       return NextResponse.json(
-        { error: `Transition de statut invalide de ${intervention.int_status} vers ${newStatus}` },
+        { error: errorMessage },
         { status: 400 }
       );
     }
