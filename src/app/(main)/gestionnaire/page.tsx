@@ -75,6 +75,7 @@ export default function GestionnairePage() {
     enCours: 0,
     terminees: 0,
     attente: 0,
+    attenteAccord: 0,
     annulees: 0,
     refusees: 0,
   };
@@ -336,6 +337,9 @@ export default function GestionnairePage() {
       attente: interventions.filter(
         (i) => i.int_status === "WAITING_FOR_PARTS",
       ).length,
+      attenteAccord: interventions.filter(
+        (i) => i.int_status === "WAITING_FOR_APPROVAL",
+      ).length,
       annulees: interventions.filter((i) => i.int_status === "CANCELLED").length,
       refusees: interventions.filter((i) => i.int_status === "REFUSED").length,
     };
@@ -467,6 +471,7 @@ export default function GestionnairePage() {
               enCours={displayStats.enCours}
               terminees={displayStats.terminees}
               attente={displayStats.attente}
+              attenteAccord={displayStats.attenteAccord}
               annulees={displayStats.annulees}
               refusees={displayStats.refusees}
               loading={loading}

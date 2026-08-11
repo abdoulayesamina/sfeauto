@@ -140,13 +140,21 @@ export async function GET(request: NextRequest) {
               : { some: { int_supprimee: false, int_status: statutParam as any } }
         : undefined;
 
-    const where = {
+    // Filtre "scope" (client/agence/recherche) commun à la liste et aux stats,
+    // SANS le filtre par statut : les stats des cartes doivent rester stables
+    // quel que soit l'onglet de statut actif, seule la liste de véhicules doit
+    // se réduire.
+    const scopeWhere = {
       ...(session.user.role === "AGENCE"
         ? { veh_baseId: session.user.baseId! }
         : {}),
       ...(orFilters.length > 0 ? { OR: orFilters } : {}),
       ...(!accordSearchParam && clientIdParam ? { veh_clientId: clientIdParam } : {}),
       ...(!accordSearchParam && agenceIdParam ? { veh_baseId: agenceIdParam } : {}),
+    };
+
+    const where = {
+      ...scopeWhere,
       ...(interventionsFilter ? { interventions: interventionsFilter } : {}),
     };
 
@@ -327,22 +335,23 @@ export async function GET(request: NextRequest) {
       },
       }),
       prisma.vehicle_veh.count({ where }),
-      // Stats calculées sur TOUTES les interventions des véhicules qui
-      // correspondent aux filtres actuels (pas seulement la page affichée),
-      // pour reproduire le comportement du calcul précédent côté client.
+      // Stats calculées sur le scope actuel (client/agence/recherche) mais
+      // SANS le filtre par statut, pour que les cartes ne bougent pas quand on
+      // clique sur un onglet de statut — seule la liste de véhicules ci-dessus
+      // (qui utilise `where`, avec le statut) doit se réduire.
       prisma.intervention_int.groupBy({
         by: ["int_status"],
-        where: { int_supprimee: false, int_vehicle: where },
+        where: { int_supprimee: false, int_vehicle: scopeWhere },
         _count: true,
       }),
       prisma.intervention_int.count({
-        where: { int_supprimee: false, OR: [{ int_status: "CANCELLED" }, { int_annulee: true }], int_vehicle: where },
+        where: { int_supprimee: false, OR: [{ int_status: "CANCELLED" }, { int_annulee: true }], int_vehicle: scopeWhere },
       }),
       prisma.intervention_int.count({
         where: {
           int_supprimee: false,
           OR: [{ int_status: "REFUSED" }, { int_accordNumber: "REFUSE" }],
-          int_vehicle: where,
+          int_vehicle: scopeWhere,
         },
       }),
     ]);
@@ -355,6 +364,8 @@ export async function GET(request: NextRequest) {
         statusGroups.find((g) => g.int_status === "FIXING_FINISHED")?._count ?? 0,
       attente:
         statusGroups.find((g) => g.int_status === "WAITING_FOR_PARTS")?._count ?? 0,
+      attenteAccord:
+        statusGroups.find((g) => g.int_status === "WAITING_FOR_APPROVAL")?._count ?? 0,
       annulees: annuleesCount,
       refusees: refuseesCount,
     };

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { ClipboardList, Clock3, CheckCircle2, Ban, XCircle } from "lucide-react";
+import { ClipboardList, Clock3, Hourglass, CheckCircle2, Ban, XCircle } from "lucide-react";
 import {
   Card,
   CardHeader,
@@ -14,6 +14,7 @@ type InterventionStatsProps = {
   enCours: number;
   terminees: number;
   attente: number;
+  attenteAccord: number;
   annulees: number;
   refusees: number;
   loading?: boolean;
@@ -26,6 +27,7 @@ export function InterventionStats({
   enCours,
   terminees,
   attente,
+  attenteAccord,
   annulees,
   refusees,
   loading,
@@ -46,6 +48,19 @@ export function InterventionStats({
         iconBg: "bg-violet-600/10 ring-violet-600/20",
       },
       statut: "all",
+    },
+    {
+      key: "attenteAccord",
+      title: "En attente d'accord",
+      value: attenteAccord,
+      subtitle: "Accord en attente",
+      icon: Hourglass,
+      tone: {
+        bg: "bg-gradient-to-br from-purple-50 via-white to-fuchsia-50",
+        accent: "text-purple-700",
+        iconBg: "bg-purple-600/10 ring-purple-600/20",
+      },
+      statut: "WAITING_FOR_APPROVAL",
     },
     {
       key: "encours",

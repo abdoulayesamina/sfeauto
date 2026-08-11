@@ -20,6 +20,7 @@ export type GetVehiclesResult = {
     enCours: number
     terminees: number
     attente: number
+    attenteAccord: number
     annulees: number
     refusees: number
   }
