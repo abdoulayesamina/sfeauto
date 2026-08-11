@@ -5,7 +5,8 @@ import {
   InterventionStatus,
 } from "@/generated/prisma";
 import { logError } from "@/src/lib/logger";
-import { notifyFacturation } from "@/src/lib/notifications";
+import { notifyAdmins, notifyFacturation } from "@/src/lib/notifications";
+import { getStatusLabel } from "@/src/utils/constants/status-labels";
 
 type Ctx = { params: Promise<{ id: string }> | { id: string } };
 
@@ -198,6 +199,16 @@ export async function PATCH(request: NextRequest, context: Ctx) {
         { error: "Intervention non trouvée après mise à jour" },
         { status: 404 }
       );
+    }
+
+    if (statusChanged) {
+      await notifyAdmins({
+        type: "INTERVENTION_UPDATED",
+        title: "Statut d'intervention modifié",
+        message: `L'intervention du véhicule ${updated.int_vehicle?.veh_licensePlate ?? ""} est passée de "${getStatusLabel(intervention.int_status)}" à "${getStatusLabel(newStatus)}".`,
+        interventionId: id,
+        excludeUserId: session.user.id ?? null,
+      });
     }
 
     if (statusChanged && newStatus === "FIXING_FINISHED") {
