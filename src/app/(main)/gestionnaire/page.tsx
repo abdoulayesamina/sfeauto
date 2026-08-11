@@ -78,6 +78,7 @@ export default function GestionnairePage() {
     attenteAccord: 0,
     annulees: 0,
     refusees: 0,
+    sansIntervention: 0,
   };
   const [stats, setStats] = useState(DEFAULT_STATS);
 
@@ -342,6 +343,7 @@ export default function GestionnairePage() {
       ).length,
       annulees: interventions.filter((i) => i.int_status === "CANCELLED").length,
       refusees: interventions.filter((i) => i.int_status === "REFUSED").length,
+      sansIntervention: vehicles.filter((v) => !(v.interventions?.length)).length,
     };
   }, [vehicles]);
 
@@ -474,6 +476,7 @@ export default function GestionnairePage() {
               attenteAccord={displayStats.attenteAccord}
               annulees={displayStats.annulees}
               refusees={displayStats.refusees}
+              sansIntervention={displayStats.sansIntervention}
               loading={loading}
               activeStatut={statut}
               onStatutClick={setStatut}

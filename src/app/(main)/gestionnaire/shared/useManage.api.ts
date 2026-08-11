@@ -23,6 +23,7 @@ export type GetVehiclesResult = {
     attenteAccord: number
     annulees: number
     refusees: number
+    sansIntervention: number
   }
 }
 

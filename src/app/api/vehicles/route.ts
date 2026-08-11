@@ -158,7 +158,7 @@ export async function GET(request: NextRequest) {
       ...(interventionsFilter ? { interventions: interventionsFilter } : {}),
     };
 
-    const [vehicles, total, statusGroups, annuleesCount, refuseesCount] = await Promise.all([
+    const [vehicles, total, statusGroups, annuleesCount, refuseesCount, excludedInterventionsCount, sansInterventionCount] = await Promise.all([
       prisma.vehicle_veh.findMany({
       where,
       ...(isPaginated ? { skip: (page - 1) * pageSize, take: pageSize } : {}),
@@ -339,9 +339,33 @@ export async function GET(request: NextRequest) {
       // SANS le filtre par statut, pour que les cartes ne bougent pas quand on
       // clique sur un onglet de statut — seule la liste de véhicules ci-dessus
       // (qui utilise `where`, avec le statut) doit se réduire.
+      //
+      // L'annulation (cancel/route.ts) et le refus (accordNumber="REFUSE",
+      // [id]/route.ts) ne remettent JAMAIS int_status à jour : une
+      // intervention annulée en cours de réparation reste avec
+      // int_status="FIXING_STARTED" en base. Sans cette exclusion, elle
+      // serait comptée à la fois ici (sous son ancien statut) ET dans
+      // annuleesCount/refuseesCount ci-dessous, gonflant "Total" et les
+      // compteurs par statut.
+      //
+      // Attention piège SQL : `int_accordNumber` est nullable. Un simple
+      // `NOT: { OR: [..., { int_accordNumber: "REFUSE" }] }` est FAUX pour
+      // les lignes où int_accordNumber est NULL — en logique à 3 valeurs SQL,
+      // `NULL = 'REFUSE'` vaut NULL (ni vrai ni faux), donc le OR global vaut
+      // NULL pour ces lignes et le NOT(NULL) vaut aussi NULL : la ligne
+      // disparaît alors de la requête (ni incluse, ni exclue). Vérifié
+      // empiriquement sur la base réelle (voir discussion) : ça faisait
+      // disparaître ~24 interventions du décompte. On gère donc le cas NULL
+      // explicitement via un OR séparé plutôt que de nier un OR global.
       prisma.intervention_int.groupBy({
         by: ["int_status"],
-        where: { int_supprimee: false, int_vehicle: scopeWhere },
+        where: {
+          int_supprimee: false,
+          int_vehicle: scopeWhere,
+          int_annulee: false,
+          int_status: { notIn: ["CANCELLED", "REFUSED"] },
+          OR: [{ int_accordNumber: null }, { int_accordNumber: { not: "REFUSE" } }],
+        },
         _count: true,
       }),
       prisma.intervention_int.count({
@@ -354,10 +378,33 @@ export async function GET(request: NextRequest) {
           int_vehicle: scopeWhere,
         },
       }),
+      // Total EXACT des interventions annulées/refusées, pour le calcul du
+      // "Total" ci-dessous : contrairement à `annuleesCount + refuseesCount`,
+      // ceci ne compte PAS deux fois une intervention qui serait à la fois
+      // annulée ET refusée (cas réel trouvé en base) — count() sur un OR ne
+      // double-compte jamais une même ligne.
+      prisma.intervention_int.count({
+        where: {
+          int_supprimee: false,
+          int_vehicle: scopeWhere,
+          OR: [
+            { int_status: "CANCELLED" },
+            { int_annulee: true },
+            { int_status: "REFUSED" },
+            { int_accordNumber: "REFUSE" },
+          ],
+        },
+      }),
+      // "Sans intervention" compte des VÉHICULES (pas des interventions,
+      // contrairement à toutes les autres cartes) : les véhicules du scope
+      // actuel qui n'ont aucune intervention non supprimée.
+      prisma.vehicle_veh.count({
+        where: { ...scopeWhere, interventions: { none: { int_supprimee: false } } },
+      }),
     ]);
 
     const stats = {
-      total: statusGroups.reduce((sum, g) => sum + g._count, 0) + annuleesCount + refuseesCount,
+      total: statusGroups.reduce((sum, g) => sum + g._count, 0) + excludedInterventionsCount,
       enCours:
         statusGroups.find((g) => g.int_status === "FIXING_STARTED")?._count ?? 0,
       terminees:
@@ -368,6 +415,7 @@ export async function GET(request: NextRequest) {
         statusGroups.find((g) => g.int_status === "WAITING_FOR_APPROVAL")?._count ?? 0,
       annulees: annuleesCount,
       refusees: refuseesCount,
+      sansIntervention: sansInterventionCount,
     };
 
     const adaptedVehicles = vehicles.map((v) => ({

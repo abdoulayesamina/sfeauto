@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { ClipboardList, Clock3, Hourglass, CheckCircle2, Ban, XCircle } from "lucide-react";
+import { ClipboardList, Clock3, Hourglass, CheckCircle2, Ban, XCircle, PackageX } from "lucide-react";
 import {
   Card,
   CardHeader,
@@ -17,6 +17,7 @@ type InterventionStatsProps = {
   attenteAccord: number;
   annulees: number;
   refusees: number;
+  sansIntervention: number;
   loading?: boolean;
   activeStatut?: string;
   onStatutClick?: (statut: string | undefined) => void;
@@ -30,6 +31,7 @@ export function InterventionStats({
   attenteAccord,
   annulees,
   refusees,
+  sansIntervention,
   loading,
   activeStatut,
   onStatutClick,
@@ -129,6 +131,19 @@ export function InterventionStats({
         iconBg: "bg-rose-600/10 ring-rose-600/20",
       },
       statut: "REFUSE",
+    },
+    {
+      key: "sansIntervention",
+      title: "Sans intervention",
+      value: sansIntervention,
+      subtitle: "Véhicules",
+      icon: PackageX,
+      tone: {
+        bg: "bg-gradient-to-br from-gray-50 via-white to-slate-50",
+        accent: "text-gray-700",
+        iconBg: "bg-gray-600/10 ring-gray-600/20",
+      },
+      statut: "SANS_INTERVENTION",
     },
   ];
 
