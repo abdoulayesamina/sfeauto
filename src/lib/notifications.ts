@@ -204,11 +204,14 @@ async function notifyByEmail(input: InterventionEmailInput): Promise<void> {
 }
 
 /**
- * Adresse "facturation" : boîte de test en dev pour ne pas polluer la vraie
- * boîte facturation pendant les développements.
+ * Adresse "facturation", configurable via EMAIL_FACTURATION_TO (comme
+ * EMAIL_NOTIFY_TO). Si absente, on retombe sur le même comportement
+ * qu'avant : boîte de test en dev pour ne pas polluer la vraie boîte
+ * facturation pendant les développements.
  */
 const FACTURATION_EMAIL =
-  process.env.NODE_ENV === "production" ? "facturation@sfeauto.fr" : "actest7970@gmail.com";
+  process.env.EMAIL_FACTURATION_TO ||
+  (process.env.NODE_ENV === "production" ? "facturation@sfeauto.fr" : "actest7970@gmail.com");
 
 /**
  * Notifie la facturation par email (ex: intervention terminée), en réutilisant
