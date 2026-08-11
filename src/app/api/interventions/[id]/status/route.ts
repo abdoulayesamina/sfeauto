@@ -5,6 +5,7 @@ import {
   InterventionStatus,
 } from "@/generated/prisma";
 import { logError } from "@/src/lib/logger";
+import { notifyFacturation } from "@/src/lib/notifications";
 
 type Ctx = { params: Promise<{ id: string }> | { id: string } };
 
@@ -197,6 +198,14 @@ export async function PATCH(request: NextRequest, context: Ctx) {
         { error: "Intervention non trouvée après mise à jour" },
         { status: 404 }
       );
+    }
+
+    if (statusChanged && newStatus === "FIXING_FINISHED") {
+      await notifyFacturation({
+        title: "Intervention terminée",
+        message: `L'intervention du véhicule ${updated.int_vehicle?.veh_licensePlate ?? ""} est terminée.`,
+        interventionId: id,
+      });
     }
 
     return NextResponse.json(serializeIntervention(updated));

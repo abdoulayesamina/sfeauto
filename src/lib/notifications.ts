@@ -95,6 +95,92 @@ function row(label: string, value: string | null | undefined): string {
   `;
 }
 
+type InterventionEmailInput = {
+  title: string;
+  message: string;
+  interventionId?: string | null;
+};
+
+/**
+ * Construit le sujet + HTML enrichi (infos intervention + véhicule) partagés
+ * par tous les emails liés à une intervention (notification admin,
+ * notification facturation, etc.).
+ */
+async function buildInterventionEmailContent(
+  input: InterventionEmailInput
+): Promise<{ subject: string; html: string }> {
+  const intervention = input.interventionId
+    ? await prisma.intervention_int.findUnique({
+        where: { int_id: input.interventionId },
+        include: {
+          int_handledBy: { select: { usr_name: true, usr_email: true } },
+          int_vehicle: {
+            include: {
+              veh_brand: { select: { bra_name: true } },
+              veh_model: { select: { mod_name: true } },
+              veh_client: { select: { cli_name: true } },
+              veh_base: { select: { bas_location: true } },
+            },
+          },
+        },
+      })
+    : null;
+
+  const interventionSection = intervention
+    ? `
+      <h3 style="margin:24px 0 8px;font-size:15px;">Intervention</h3>
+      <table style="border-collapse:collapse;font-size:13px;">
+        ${row("Statut", getStatusLabel(intervention.int_status))}
+        ${row("N° d'accord", intervention.int_accordNumber)}
+        ${row("Description", intervention.int_workDescription)}
+        ${row("Pièces commandées", intervention.int_didOrderParts ? "Oui" : "Non")}
+        ${row("Détails commande", intervention.int_ordersDetails)}
+        ${row("Commentaires", intervention.int_comments)}
+        ${row("Kilométrage", intervention.int_kilometrage)}
+        ${row("Confirmée le", intervention.int_dateOfConfirmation ? formatDate(intervention.int_dateOfConfirmation) : null)}
+        ${row("Créée le", formatDate(intervention.int_createdAt))}
+        ${row("Dernière mise à jour", formatDate(intervention.int_updatedAt))}
+        ${row("Annulée", intervention.int_annulee ? "Oui" : null)}
+        ${row("Prise en charge par", intervention.int_handledBy?.usr_name)}
+      </table>
+    `
+    : "";
+
+  const vehicle = intervention?.int_vehicle;
+  const vehicleSection = vehicle
+    ? `
+      <h3 style="margin:24px 0 8px;font-size:15px;">Véhicule</h3>
+      <table style="border-collapse:collapse;font-size:13px;">
+        ${row("Plaque", vehicle.veh_licensePlate)}
+        ${row("Marque / Modèle", [vehicle.veh_brand?.bra_name, vehicle.veh_model?.mod_name].filter(Boolean).join(" "))}
+        ${row("Année", vehicle.veh_year != null ? String(vehicle.veh_year) : null)}
+        ${row("Couleur", vehicle.veh_color)}
+        ${row("Kilométrage véhicule", vehicle.veh_kilometrage)}
+        ${row("Client", vehicle.veh_client?.cli_name)}
+        ${row("Agence", vehicle.veh_base?.bas_location)}
+        ${row("Absent", vehicle.veh_absent ? "Oui" : null)}
+      </table>
+    `
+    : "";
+
+  return {
+    subject: `[SFE Auto] ${input.title}`,
+    html: `
+      <div style="font-family: sans-serif; font-size: 14px; color: #111;">
+        <h2 style="margin: 0 0 8px;">${input.title}</h2>
+        <p style="margin: 0 0 8px;">${escapeHtml(input.message)}</p>
+        ${interventionSection}
+        ${vehicleSection}
+        ${
+          input.interventionId
+            ? `<p style="margin: 24px 0 0; color: #999; font-size: 11px;">ID intervention : ${input.interventionId}</p>`
+            : ""
+        }
+      </div>
+    `,
+  };
+}
+
 /**
  * Envoie un email pour toute action sur une intervention (création, statut,
  * modification, annulation). Adresse de destination configurable via
@@ -103,88 +189,38 @@ function row(label: string, value: string | null | undefined): string {
  * Ne fait jamais échouer l'action appelante : sendMail avale déjà ses
  * propres erreurs, et toute erreur ici (ex: fetch Prisma) est aussi avalée.
  */
-async function notifyByEmail(input: {
-  title: string;
-  message: string;
-  interventionId?: string | null;
-}): Promise<void> {
+async function notifyByEmail(input: InterventionEmailInput): Promise<void> {
   const to = process.env.EMAIL_NOTIFY_TO;
   if (!to) return;
 
   try {
-    const intervention = input.interventionId
-      ? await prisma.intervention_int.findUnique({
-          where: { int_id: input.interventionId },
-          include: {
-            int_handledBy: { select: { usr_name: true, usr_email: true } },
-            int_vehicle: {
-              include: {
-                veh_brand: { select: { bra_name: true } },
-                veh_model: { select: { mod_name: true } },
-                veh_client: { select: { cli_name: true } },
-                veh_base: { select: { bas_location: true } },
-              },
-            },
-          },
-        })
-      : null;
-
-    const interventionSection = intervention
-      ? `
-        <h3 style="margin:24px 0 8px;font-size:15px;">Intervention</h3>
-        <table style="border-collapse:collapse;font-size:13px;">
-          ${row("Statut", getStatusLabel(intervention.int_status))}
-          ${row("N° d'accord", intervention.int_accordNumber)}
-          ${row("Description", intervention.int_workDescription)}
-          ${row("Pièces commandées", intervention.int_didOrderParts ? "Oui" : "Non")}
-          ${row("Détails commande", intervention.int_ordersDetails)}
-          ${row("Commentaires", intervention.int_comments)}
-          ${row("Kilométrage", intervention.int_kilometrage)}
-          ${row("Confirmée le", intervention.int_dateOfConfirmation ? formatDate(intervention.int_dateOfConfirmation) : null)}
-          ${row("Créée le", formatDate(intervention.int_createdAt))}
-          ${row("Dernière mise à jour", formatDate(intervention.int_updatedAt))}
-          ${row("Annulée", intervention.int_annulee ? "Oui" : null)}
-          ${row("Prise en charge par", intervention.int_handledBy?.usr_name)}
-        </table>
-      `
-      : "";
-
-    const vehicle = intervention?.int_vehicle;
-    const vehicleSection = vehicle
-      ? `
-        <h3 style="margin:24px 0 8px;font-size:15px;">Véhicule</h3>
-        <table style="border-collapse:collapse;font-size:13px;">
-          ${row("Plaque", vehicle.veh_licensePlate)}
-          ${row("Marque / Modèle", [vehicle.veh_brand?.bra_name, vehicle.veh_model?.mod_name].filter(Boolean).join(" "))}
-          ${row("Année", vehicle.veh_year != null ? String(vehicle.veh_year) : null)}
-          ${row("Couleur", vehicle.veh_color)}
-          ${row("Kilométrage véhicule", vehicle.veh_kilometrage)}
-          ${row("Client", vehicle.veh_client?.cli_name)}
-          ${row("Agence", vehicle.veh_base?.bas_location)}
-          ${row("Absent", vehicle.veh_absent ? "Oui" : null)}
-        </table>
-      `
-      : "";
-
-    await sendMail({
-      to,
-      subject: `[SFE Auto] ${input.title}`,
-      html: `
-        <div style="font-family: sans-serif; font-size: 14px; color: #111;">
-          <h2 style="margin: 0 0 8px;">${input.title}</h2>
-          <p style="margin: 0 0 8px;">${escapeHtml(input.message)}</p>
-          ${interventionSection}
-          ${vehicleSection}
-          ${
-            input.interventionId
-              ? `<p style="margin: 24px 0 0; color: #999; font-size: 11px;">ID intervention : ${input.interventionId}</p>`
-              : ""
-          }
-        </div>
-      `,
-    });
+    const { subject, html } = await buildInterventionEmailContent(input);
+    await sendMail({ to, subject, html });
   } catch (error) {
     logError("Failed to build/send intervention email", error, {
+      interventionId: input.interventionId,
+    });
+  }
+}
+
+/**
+ * Adresse "facturation" : boîte de test en dev pour ne pas polluer la vraie
+ * boîte facturation pendant les développements.
+ */
+const FACTURATION_EMAIL =
+  process.env.NODE_ENV === "production" ? "facturation@sfeauto.fr" : "actest7970@gmail.com";
+
+/**
+ * Notifie la facturation par email (ex: intervention terminée), en réutilisant
+ * le même contenu enrichi (intervention + véhicule) que notifyByEmail. Ne fait
+ * jamais échouer l'action appelante.
+ */
+export async function notifyFacturation(input: InterventionEmailInput): Promise<void> {
+  try {
+    const { subject, html } = await buildInterventionEmailContent(input);
+    await sendMail({ to: FACTURATION_EMAIL, subject, html });
+  } catch (error) {
+    logError("Failed to build/send facturation email", error, {
       interventionId: input.interventionId,
     });
   }
