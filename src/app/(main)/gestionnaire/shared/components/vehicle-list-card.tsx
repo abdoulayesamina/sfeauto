@@ -1,9 +1,11 @@
 "use client";
 
+import { useMemo } from "react";
 import { Search, X } from "lucide-react";
 
 import { VehicleListAll } from "./vehicle-list-all";
 import { VehicleListByAgence } from "./vehicle-list-by-agence";
+import { vehicleMatchesStatutFilter } from "@/src/utils/constants/intervention-status";
 
 type VehicleListCardProps = {
   filterByAllVehicule: boolean;
@@ -14,6 +16,7 @@ type VehicleListCardProps = {
   onAccordSearchChange?: (value: string) => void;
   onSelect: (vehicle: any) => void;
   reloadVehicles?: () => void;
+  activeStatut?: string;
 };
 
 export function VehicleListCard({
@@ -25,7 +28,17 @@ export function VehicleListCard({
   onAccordSearchChange,
   onSelect,
   reloadVehicles,
+  activeStatut,
 }: VehicleListCardProps) {
+  // Le backend inclut un véhicule dès qu'une de ses interventions a le statut
+  // brut demandé, mais le statut affiché (adapté côté client) peut différer
+  // pour des interventions "legacy" — on revérifie ici pour ne montrer que
+  // les véhicules ayant vraiment une intervention au statut filtré.
+  const filteredVehicles = useMemo(
+    () => vehicles.filter((v) => vehicleMatchesStatutFilter(v, activeStatut)),
+    [vehicles, activeStatut],
+  );
+
   return (
     <div className="mt-2 border p-3 rounded">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b p-2 bg-gray-700 backdrop-blur-xl text-white rounded">
@@ -58,7 +71,7 @@ export function VehicleListCard({
       <div className="max-h-[500px] overflow-auto mb-4">
         {filterByAllVehicule ? (
           <VehicleListAll
-            vehicles={vehicles}
+            vehicles={filteredVehicles}
             clients={clients}
             agences={agences}
             onSelect={onSelect}
@@ -66,7 +79,7 @@ export function VehicleListCard({
           />
         ) : (
           <VehicleListByAgence
-            vehicles={vehicles}
+            vehicles={filteredVehicles}
             agences={agences}
             clients={clients}
             onSelect={onSelect}

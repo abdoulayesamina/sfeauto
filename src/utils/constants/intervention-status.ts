@@ -23,6 +23,32 @@ export const UI_TO_INTERVENTIONSTATUS: Record<string, InterventionStatus> = {
   SUPPRIMEE: "DELETED",
 }
 
+/**
+ * Un véhicule est inclus dans une liste filtrée par statut côté serveur dès
+ * qu'il a une intervention dont le statut BRUT correspond (`int_status`).
+ * Mais côté client, `adaptLegacyIntervention` peut reclassifier le statut
+ * affiché d'une intervention (ex: FIXING_STARTED sans n° d'accord devient
+ * "en attente d'accord"). Un véhicule peut donc être sélectionné par le
+ * serveur sans qu'aucune de ses interventions n'affiche réellement le statut
+ * filtré une fois adapté. Cette fonction revérifie côté client, sur les
+ * statuts déjà adaptés, si le véhicule doit vraiment apparaître dans la liste
+ * filtrée — sans quoi on l'exclut, plutôt que de montrer des badges qui ne
+ * correspondent pas au filtre demandé.
+ */
+export const vehicleMatchesStatutFilter = (
+  vehicle: { interventions?: { int_status?: UIStatus | null }[] },
+  activeStatut?: string,
+): boolean => {
+  if (!activeStatut || activeStatut === "all") return true
+
+  const interventions = vehicle.interventions ?? []
+
+  if (activeStatut === "SANS_INTERVENTION") return interventions.length === 0
+
+  const targetStatus = UI_TO_INTERVENTIONSTATUS[activeStatut] ?? activeStatut
+  return interventions.some((i) => i.int_status === targetStatus)
+}
+
 export const adaptLegacyIntervention = (intervention: any): any => {
   if (!intervention) return intervention
   

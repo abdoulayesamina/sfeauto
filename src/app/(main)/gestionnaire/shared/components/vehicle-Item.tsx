@@ -128,6 +128,10 @@ export function VehicleItem({
   //   return groupInterventionsByStatus(localInterventions as any[])
   // }, [localInterventions])
 
+  // Le filtrage "ce véhicule correspond-il au statut sélectionné ?" se fait
+  // en amont (voir vehicleMatchesStatutFilter dans VehicleListCard) : un
+  // véhicule affiché ici a forcément au moins une intervention au statut
+  // filtré, donc on peut afficher tous ses badges sans distinction.
   const groupedBadges = useMemo(() => {
     if (!vehicle?.interventions?.length) return []
     return groupInterventionsByStatus(vehicle.interventions)

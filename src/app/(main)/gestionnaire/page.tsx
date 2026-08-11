@@ -493,6 +493,7 @@ export default function GestionnairePage() {
                 setApercuVehiculeOpen(true);
               }}
               reloadVehicles={loadAll}
+              activeStatut={statut}
             />
             <VehiclePagination
               currentPage={currentPage}
