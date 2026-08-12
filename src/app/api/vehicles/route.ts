@@ -136,13 +136,13 @@ export async function GET(request: NextRequest) {
               }
             : statutParam === "REFUSE"
               ? {
-                  // Pas d'exclusion int_annulee ici : la carte de stats
-                  // "Refusées" (14) ne l'exclut pas non plus — une
-                  // intervention à la fois refusée et annulée doit compter
-                  // (et donc apparaître) dans les deux filtres, sans quoi
-                  // liste et carte affichent des totaux différents.
+                  // int_annulee: false : une intervention à la fois refusée
+                  // et annulée compte comme "Annulée" (priorité déjà
+                  // appliquée par adaptLegacyIntervention et par l'endpoint
+                  // mécanicien) — donc pas dans "Refusées", ni carte ni liste.
                   some: {
                     int_supprimee: false,
+                    int_annulee: false,
                     OR: [{ int_status: "REFUSED" }, { int_accordNumber: "REFUSE" }],
                   },
                 }
@@ -380,9 +380,14 @@ export async function GET(request: NextRequest) {
       prisma.intervention_int.count({
         where: { int_supprimee: false, OR: [{ int_status: "CANCELLED" }, { int_annulee: true }], int_vehicle: scopeWhere },
       }),
+      // int_annulee: false : une intervention refusée ET annulée doit
+      // compter comme "Annulée" seulement (même priorité que
+      // adaptLegacyIntervention et l'endpoint mécanicien), pour que ce
+      // chiffre corresponde à ce qui s'affiche réellement dans la liste.
       prisma.intervention_int.count({
         where: {
           int_supprimee: false,
+          int_annulee: false,
           OR: [{ int_status: "REFUSED" }, { int_accordNumber: "REFUSE" }],
           int_vehicle: scopeWhere,
         },
