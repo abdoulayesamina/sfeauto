@@ -224,6 +224,8 @@ export default function GestionnairePage() {
       toast.success("Véhicule créé");
       setOpenCreateVehiculeModal(false);
       setVehiculeNotFound(false);
+      setSearchMode(false);
+      setSearch("");
       await loadAll();
 
       if (pendingPhotoIntervention) {
@@ -255,6 +257,8 @@ export default function GestionnairePage() {
       toast.success("Véhicule créé");
       setOpenCreateVehiculeModal(false);
       setVehiculeNotFound(false);
+      setSearchMode(false);
+      setSearch("");
 
       setSelectedVehicle(newVehicle);
 
