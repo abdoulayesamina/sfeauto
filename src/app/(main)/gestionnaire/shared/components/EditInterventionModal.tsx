@@ -530,7 +530,23 @@ export function EditInterventionModal({ open, onClose, intervention, onUpdated, 
               <Input
                 className="h-15"
                 value={accordNumber}
-                onChange={(e) => setAccordNumber(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setAccordNumber(value);
+
+                  // Saisir un numéro d'accord confirme de fait l'accord — on
+                  // pré-remplit la date du jour si elle n'est pas déjà
+                  // renseignée, pour éviter d'oublier ce second champ requis
+                  // (source de confusion récurrente : le statut ne passe en
+                  // "En cours" que si les deux champs sont remplis).
+                  if (
+                    value.trim() &&
+                    value.trim().toUpperCase() !== "REFUSÉ" &&
+                    !dateOfConfirmation
+                  ) {
+                    setDateOfConfirmation(toDateInputValue(new Date()));
+                  }
+                }}
                 placeholder="ACC-2026-001"
               />
               <Button

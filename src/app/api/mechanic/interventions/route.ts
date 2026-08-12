@@ -33,9 +33,15 @@ export async function GET(request: NextRequest) {
 
     // Handle different status filters
     if (uiStatus === "EN_ATTENTE_ACCORD") {
-      // Interventions waiting for approval: FIXING_STARTED with no accordNumber
-      whereClause.int_status = "FIXING_STARTED";
-      whereClause.int_accordNumber = null;
+      // Interventions waiting for approval : le nouveau statut dédié
+      // (interventions créées après la migration) OU l'ancien schéma
+      // "FIXING_STARTED sans n° d'accord" (interventions plus anciennes,
+      // jamais retro-migrées) — même logique de compatibilité que
+      // adaptLegacyIntervention côté client.
+      whereClause.OR = [
+        { int_status: "WAITING_FOR_APPROVAL" },
+        { int_status: "FIXING_STARTED", int_accordNumber: null },
+      ];
     } else if (uiStatus === "EN_COURS") {
       // Interventions in progress: FIXING_STARTED with accordNumber (and not "REFUSE")
       whereClause.int_status = "FIXING_STARTED";

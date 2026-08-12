@@ -117,7 +117,7 @@ export async function GET(request: NextRequest) {
 
     // Recherche par n° d'accord : mode exclusif, comme côté front — quand elle
     // est active, on ignore volontairement client/agence/statut.
-    const interventionsFilter = accordSearchParam
+    const interventionsFilter: any = accordSearchParam
       ? {
           some: {
             int_supprimee: false,
@@ -128,13 +128,22 @@ export async function GET(request: NextRequest) {
         ? statutParam === "SANS_INTERVENTION"
           ? { none: { int_supprimee: false } }
           : statutParam === "ANNULEE"
-            ? { some: { int_supprimee: false, int_annulee: true } }
+            ? {
+                some: {
+                  int_supprimee: false,
+                  OR: [{ int_status: "CANCELLED" }, { int_annulee: true }],
+                },
+              }
             : statutParam === "REFUSE"
               ? {
+                  // Pas d'exclusion int_annulee ici : la carte de stats
+                  // "Refusées" (14) ne l'exclut pas non plus — une
+                  // intervention à la fois refusée et annulée doit compter
+                  // (et donc apparaître) dans les deux filtres, sans quoi
+                  // liste et carte affichent des totaux différents.
                   some: {
                     int_supprimee: false,
-                    int_annulee: false,
-                    int_accordNumber: "REFUSE",
+                    OR: [{ int_status: "REFUSED" }, { int_accordNumber: "REFUSE" }],
                   },
                 }
               : { some: { int_supprimee: false, int_status: statutParam as any } }

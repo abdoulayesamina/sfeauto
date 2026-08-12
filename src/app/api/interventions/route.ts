@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
       ...(dateRange ? { int_updatedAt: dateRange } : {}),
     };
 
-    const [interventions, statusGroups, annuleesCount, refuseesCount] = await Promise.all([
+    const [interventions, statusGroups, annuleesCount, refuseesCount, excludedInterventionsCount, sansInterventionCount] = await Promise.all([
       prisma.intervention_int.findMany({
         where: baseWhere,
         select: {
@@ -128,7 +128,33 @@ export async function GET(request: NextRequest) {
       }),
       prisma.intervention_int.groupBy({
         by: ["int_status"],
-        where: baseWhere,
+        // where plus strict que baseWhere (liste ci-dessus) : on exclut les
+        // interventions annulées/refusées, sinon une intervention annulée
+        // dont le int_status est resté "FIXING_STARTED" en base (l'annulation
+        // ne remet jamais int_status à jour, seulement int_annulee) serait
+        // comptée à la fois dans son ancien statut ET dans "Annulées" — même
+        // logique et mêmes pièges que dans api/vehicles/route.ts.
+        where: {
+          int_supprimee: false,
+          int_annulee: false,
+          int_status: { notIn: ["CANCELLED", "REFUSED"] },
+          ...(vehicleScope ? { int_vehicle: vehicleScope } : {}),
+          ...(dateRange ? { int_updatedAt: dateRange } : {}),
+          AND: [
+            { OR: [{ int_accordNumber: null }, { int_accordNumber: { not: "REFUSE" } }] },
+            ...(searchParam
+              ? [
+                  {
+                    OR: [
+                      { int_vehicle: { veh_licensePlate: { contains: searchParam } } },
+                      { int_vehicle: { veh_brand: { bra_name: { contains: searchParam } } } },
+                      { int_vehicle: { veh_model: { mod_name: { contains: searchParam } } } },
+                    ],
+                  },
+                ]
+              : []),
+          ],
+        },
         _count: true,
       }) as any,
       prisma.intervention_int.count({
@@ -137,18 +163,45 @@ export async function GET(request: NextRequest) {
       prisma.intervention_int.count({
         where: { int_supprimee: false, AND: [vehicleScope ? { int_vehicle: vehicleScope } : {}, { OR: [{ int_status: "REFUSED" }, { int_accordNumber: "REFUSE" }] }] },
       }),
+      // Compte dédoublonné (OR, pas addition) pour le Total : une intervention
+      // à la fois annulée ET refusée ne doit être comptée qu'une seule fois.
+      prisma.intervention_int.count({
+        where: {
+          int_supprimee: false,
+          ...(vehicleScope ? { int_vehicle: vehicleScope } : {}),
+          OR: [
+            { int_status: "CANCELLED" },
+            { int_annulee: true },
+            { int_status: "REFUSED" },
+            { int_accordNumber: "REFUSE" },
+          ],
+        },
+      }),
+      // "Sans intervention" compte des véhicules (pas des interventions,
+      // contrairement aux autres cartes) : ceux du scope actuel qui n'ont
+      // aucune intervention non supprimée — même logique que
+      // api/vehicles/route.ts.
+      prisma.vehicle_veh.count({
+        where: {
+          ...(vehicleScope ?? {}),
+          interventions: { none: { int_supprimee: false } },
+        },
+      }),
     ]);
 
     const stats = {
-      total: statusGroups.reduce((sum: number, g: any) => sum + g._count, 0) + annuleesCount + refuseesCount,
+      total: statusGroups.reduce((sum: number, g: any) => sum + g._count, 0) + excludedInterventionsCount,
       enCours:
         statusGroups.find((g: any) => g.int_status === "FIXING_STARTED")?._count ?? 0,
       terminees:
         statusGroups.find((g: any) => g.int_status === "FIXING_FINISHED")?._count ?? 0,
       attente:
         statusGroups.find((g: any) => g.int_status === "WAITING_FOR_PARTS")?._count ?? 0,
+      attenteAccord:
+        statusGroups.find((g: any) => g.int_status === "WAITING_FOR_APPROVAL")?._count ?? 0,
       annulees: annuleesCount,
       refusees: refuseesCount,
+      sansIntervention: sansInterventionCount,
     };
 
     const adaptedInterventions = interventions.map(adaptLegacyIntervention);
@@ -337,9 +390,11 @@ export async function POST(request: NextRequest) {
             int_dateOfConfirmation: confirmationDate,
             int_interventionConfirmed: true,
             int_kilometrage: kilometrage,
-            int_status: didOrderParts
-              ? "WAITING_FOR_PARTS"
-              : "FIXING_STARTED",
+            int_status: !hasAccordNumber
+              ? "WAITING_FOR_APPROVAL"
+              : didOrderParts
+                ? "WAITING_FOR_PARTS"
+                : "FIXING_STARTED",
             int_statusUpdatedAt: new Date(),
             int_workDescription: workDescription,
             int_didOrderParts: didOrderParts,
