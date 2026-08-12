@@ -8,6 +8,8 @@ import {
   Eye,
   XCircle,
   Ban,
+  Hourglass,
+  PackageX,
 } from "lucide-react";
 
 import {
@@ -61,6 +63,8 @@ export function SectionCards({ user }: { user?: any }) {
   const [nombreInterventionsEnAttenteDePiece,setNombreInterventionsEnAttenteDePiece,] = useState(0);
   const [nombreInterventionsAnnulees, setNombreInterventionsAnnulees] = useState(0);
   const [nombreInterventionsRefusees, setNombreInterventionsRefusees] = useState(0);
+  const [nombreInterventionsAttenteAccord, setNombreInterventionsAttenteAccord] = useState(0);
+  const [nombreVehiculesSansIntervention, setNombreVehiculesSansIntervention] = useState(0);
 
   const [totalInterventions, setTotalInterventions] = useState<any[]>([]);
   const [interventionsEnCours, setInterventionsEnCours] = useState<any[]>([]);
@@ -68,12 +72,13 @@ export function SectionCards({ user }: { user?: any }) {
   const [interventionsEnAttenteDePiece, setInterventionsEnAttenteDePiece] = useState<any[]>([]);
   const [interventionsAnnulees, setInterventionsAnnulees] = useState<any[]>([]);
   const [interventionsRefusees, setInterventionsRefusees] = useState<any[]>([]);
+  const [interventionsAttenteAccord, setInterventionsAttenteAccord] = useState<any[]>([]);
 
   const [displayedInterventions, setDisplayedInterventions] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [searchDate, setSearchDate] = useState("");
-  
-  const [selectedStat, setSelectedStat] = useState<"total" | "encours" | "terminees" | "attente" | "annulees" | "refusees" | null>(null);
+
+  const [selectedStat, setSelectedStat] = useState<"total" | "encours" | "terminees" | "attente" | "annulees" | "refusees" | "attenteAccord" | "sansIntervention" | null>(null);
 
   // Compteurs des cards : viennent des stats calculées côté serveur (sur tout
   // le périmètre client/agence, pas juste ce qui a été rapatrié) quand
@@ -85,8 +90,10 @@ export function SectionCards({ user }: { user?: any }) {
       enCours: number;
       terminees: number;
       attente: number;
+      attenteAccord: number;
       annulees: number;
       refusees: number;
+      sansIntervention: number;
     },
   ) => {
 
@@ -120,18 +127,25 @@ export function SectionCards({ user }: { user?: any }) {
       (i) => i.int_status === "REFUSED",
     );
 
+    const attenteAccord = sortedInterventions.filter(
+      (i) => i.int_status === "WAITING_FOR_APPROVAL",
+    );
+
     setNombreTotalInterventions(serverStats?.total ?? sortedInterventions.length);
     setNombreInterventionsEnCours(serverStats?.enCours ?? enCours.length);
     setNombreInterventionsTerminees(serverStats?.terminees ?? terminees.length);
     setNombreInterventionsEnAttenteDePiece(serverStats?.attente ?? attenteDePiece.length);
     setNombreInterventionsAnnulees(serverStats?.annulees ?? annulees.length);
     setNombreInterventionsRefusees(serverStats?.refusees ?? refusees.length);
+    setNombreInterventionsAttenteAccord(serverStats?.attenteAccord ?? attenteAccord.length);
+    setNombreVehiculesSansIntervention(serverStats?.sansIntervention ?? 0);
 
     setInterventionsEnCours(enCours);
     setInterventionsTerminees(terminees);
     setInterventionsEnAttenteDePiece(attenteDePiece);
     setInterventionsAnnulees(annulees);
     setInterventionsRefusees(refusees);
+    setInterventionsAttenteAccord(attenteAccord);
   };
 
   const fetchStats = async (scope: { clientId?: string; agenceId?: string }) => {
@@ -209,6 +223,8 @@ export function SectionCards({ user }: { user?: any }) {
     setNombreInterventionsEnAttenteDePiece(0);
     setNombreInterventionsAnnulees(0);
     setNombreInterventionsRefusees(0);
+    setNombreInterventionsAttenteAccord(0);
+    setNombreVehiculesSansIntervention(0);
 
     setTotalInterventions([]);
     setInterventionsEnCours([]);
@@ -216,6 +232,7 @@ export function SectionCards({ user }: { user?: any }) {
     setInterventionsEnAttenteDePiece([]);
     setInterventionsAnnulees([]);
     setInterventionsRefusees([]);
+    setInterventionsAttenteAccord([]);
   };
 
   const clientIdChanged = (id: string) => {
@@ -292,6 +309,7 @@ export function SectionCards({ user }: { user?: any }) {
       attente: base.filter((i) => i.int_status === "WAITING_FOR_PARTS").length,
       annulees: base.filter((i) => i.int_status === "CANCELLED").length,
       refusees: base.filter((i) => i.int_status === "REFUSED").length,
+      attenteAccord: base.filter((i) => i.int_status === "WAITING_FOR_APPROVAL").length,
     };
   }, [totalInterventions, search, searchDate]);
 
@@ -501,6 +519,38 @@ export function SectionCards({ user }: { user?: any }) {
                 iconBg: "bg-rose-600/10 ring-rose-600/20",
               },
             },
+            {
+              key: "attenteAccord",
+              title: "En attente d'accord",
+              value: loading ? (
+                <Spinner className="size-4 text-white" />
+              ) : (
+                isFilterMode ? filteredStats.attenteAccord : nombreInterventionsAttenteAccord
+              ),
+              subtitle: "Accord non confirmé",
+              icon: Hourglass,
+              tone: {
+                bg: "bg-gradient-to-br from-purple-50 via-white to-fuchsia-50",
+                accent: "text-purple-700",
+                iconBg: "bg-purple-600/10 ring-purple-600/20",
+              },
+            },
+            {
+              key: "sansIntervention",
+              title: "Sans intervention",
+              value: loading ? (
+                <Spinner className="size-4 text-white" />
+              ) : (
+                nombreVehiculesSansIntervention
+              ),
+              subtitle: "Véhicules",
+              icon: PackageX,
+              tone: {
+                bg: "bg-gradient-to-br from-gray-50 via-white to-slate-50",
+                accent: "text-gray-700",
+                iconBg: "bg-gray-600/10 ring-gray-600/20",
+              },
+            },
           ].map((c) => (
             <Card
               key={c.title}
@@ -519,6 +569,12 @@ export function SectionCards({ user }: { user?: any }) {
                   setDisplayedInterventions(interventionsAnnulees);
                 if (c.key === "refusees")
                   setDisplayedInterventions(interventionsRefusees);
+                if (c.key === "attenteAccord")
+                  setDisplayedInterventions(interventionsAttenteAccord);
+                // "sansIntervention" compte des véhicules, pas des
+                // interventions — aucune liste à afficher en dessous.
+                if (c.key === "sansIntervention")
+                  setDisplayedInterventions([]);
               }}
               className={`cursor-pointer transform transition-all hover:-translate-y-1 hover:scale-[1.02]
               @container/card group relative overflow-hidden rounded-xl sm:rounded-2xl border border-gray-200/60
@@ -581,6 +637,8 @@ export function SectionCards({ user }: { user?: any }) {
                     {selectedStat === "total" && "Toutes les interventions"}
                     {selectedStat === "annulees" && "Interventions annulées"}
                     {selectedStat === "refusees" && "Interventions refusées"}
+                    {selectedStat === "attenteAccord" && "En attente d'accord"}
+                    {selectedStat === "sansIntervention" && "Sans intervention"}
                   </h2>
 
                   <div className="flex items-center gap-1.5 sm:gap-3 flex-wrap">

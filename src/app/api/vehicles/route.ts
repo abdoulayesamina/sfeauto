@@ -117,7 +117,7 @@ export async function GET(request: NextRequest) {
 
     // Recherche par n° d'accord : mode exclusif, comme côté front — quand elle
     // est active, on ignore volontairement client/agence/statut.
-    const interventionsFilter = accordSearchParam
+    const interventionsFilter: any = accordSearchParam
       ? {
           some: {
             int_supprimee: false,
@@ -128,13 +128,22 @@ export async function GET(request: NextRequest) {
         ? statutParam === "SANS_INTERVENTION"
           ? { none: { int_supprimee: false } }
           : statutParam === "ANNULEE"
-            ? { some: { int_supprimee: false, int_annulee: true } }
+            ? {
+                some: {
+                  int_supprimee: false,
+                  OR: [{ int_status: "CANCELLED" }, { int_annulee: true }],
+                },
+              }
             : statutParam === "REFUSE"
               ? {
+                  // int_annulee: false : une intervention à la fois refusée
+                  // et annulée compte comme "Annulée" (priorité déjà
+                  // appliquée par adaptLegacyIntervention et par l'endpoint
+                  // mécanicien) — donc pas dans "Refusées", ni carte ni liste.
                   some: {
                     int_supprimee: false,
                     int_annulee: false,
-                    int_accordNumber: "REFUSE",
+                    OR: [{ int_status: "REFUSED" }, { int_accordNumber: "REFUSE" }],
                   },
                 }
               : { some: { int_supprimee: false, int_status: statutParam as any } }
@@ -371,9 +380,14 @@ export async function GET(request: NextRequest) {
       prisma.intervention_int.count({
         where: { int_supprimee: false, OR: [{ int_status: "CANCELLED" }, { int_annulee: true }], int_vehicle: scopeWhere },
       }),
+      // int_annulee: false : une intervention refusée ET annulée doit
+      // compter comme "Annulée" seulement (même priorité que
+      // adaptLegacyIntervention et l'endpoint mécanicien), pour que ce
+      // chiffre corresponde à ce qui s'affiche réellement dans la liste.
       prisma.intervention_int.count({
         where: {
           int_supprimee: false,
+          int_annulee: false,
           OR: [{ int_status: "REFUSED" }, { int_accordNumber: "REFUSE" }],
           int_vehicle: scopeWhere,
         },
