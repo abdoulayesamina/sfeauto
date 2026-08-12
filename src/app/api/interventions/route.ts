@@ -160,8 +160,11 @@ export async function GET(request: NextRequest) {
       prisma.intervention_int.count({
         where: { int_supprimee: false, AND: [vehicleScope ? { int_vehicle: vehicleScope } : {}, { OR: [{ int_status: "CANCELLED" }, { int_annulee: true }] }] },
       }),
+      // int_annulee: false : une intervention refusée ET annulée compte
+      // comme "Annulée" seulement (même priorité que adaptLegacyIntervention
+      // et api/vehicles/route.ts).
       prisma.intervention_int.count({
-        where: { int_supprimee: false, AND: [vehicleScope ? { int_vehicle: vehicleScope } : {}, { OR: [{ int_status: "REFUSED" }, { int_accordNumber: "REFUSE" }] }] },
+        where: { int_supprimee: false, int_annulee: false, AND: [vehicleScope ? { int_vehicle: vehicleScope } : {}, { OR: [{ int_status: "REFUSED" }, { int_accordNumber: "REFUSE" }] }] },
       }),
       // Compte dédoublonné (OR, pas addition) pour le Total : une intervention
       // à la fois annulée ET refusée ne doit être comptée qu'une seule fois.
