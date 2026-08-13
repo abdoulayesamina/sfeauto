@@ -245,7 +245,7 @@ export function VehiclePreview({
               </Button>
             )}
 
-            {onEditVehicle && ["MANAGER", "ADMIN"].includes(role || "") && (
+            {onEditVehicle && ["MANAGER", "ADMIN", "MECHANIC"].includes(role || "") && (
               <Button
                 type="button"
                 variant="ghost"
@@ -356,19 +356,25 @@ export function VehiclePreview({
                       Confirmé le : {inv?.int_dateOfConfirmation ? new Date(inv.int_dateOfConfirmation).toLocaleDateString() : "—"}
                     </span>
                   </div>
-                  <div className="flex flex-wrap gap-2 sm:gap-3 mt-1.5 sm:mt-2 text-[11px] sm:text-xs text-zinc-400">
+                  <div
+                    className={`flex flex-wrap gap-2 sm:gap-3 mt-1.5 sm:mt-2 text-[11px] sm:text-xs ${
+                      isHistorical
+                        ? "bg-amber-50 border border-amber-200 rounded-md px-2 py-1 text-amber-800"
+                        : "text-zinc-400"
+                    }`}
+                    title={isHistorical ? "Ce client/agence a changé depuis cette intervention" : undefined}
+                  >
                     <span>
                       <strong>Client :</strong> {historicalClient}
-                      {isHistorical && inv?.int_client?.cli_name && inv.int_client.cli_name !== client && (
-                        <span className="ml-1 text-amber-500">(historique)</span>
-                      )}
                     </span>
                     <span>
                       <strong>Agence :</strong> {historicalAgence}
-                      {isHistorical && inv?.int_base?.bas_location && inv.int_base.bas_location !== agence && (
-                        <span className="ml-1 text-amber-500">(historique)</span>
-                      )}
                     </span>
+                    {isHistorical && (
+                      <span className="inline-flex items-center rounded-full bg-amber-200 px-2 py-0.5 font-semibold text-amber-900">
+                        Historique
+                      </span>
+                    )}
                   </div>
                 </div>
 

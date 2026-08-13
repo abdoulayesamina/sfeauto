@@ -22,6 +22,17 @@ export default function IntervDetailGes({ selectedIntervention, onClose }: Props
 
   const uiStatus: UIStatus = computeUIStatus({ int_status: selectedIntervention?.int_status })
 
+  // Client/agence au moment de l'intervention (capturés à la création) vs
+  // client/agence actuels du véhicule — mêmes fallback et comparaison que
+  // vehicle-apercu.tsx.
+  const currentClient = selectedIntervention?.int_vehicle?.veh_client?.cli_name
+  const currentAgence = selectedIntervention?.int_vehicle?.veh_base?.bas_location
+  const historicalClient = selectedIntervention?.int_client?.cli_name ?? currentClient
+  const historicalAgence = selectedIntervention?.int_base?.bas_location ?? currentAgence
+  const isHistorical =
+    (selectedIntervention?.int_client?.cli_name && selectedIntervention.int_client.cli_name !== currentClient) ||
+    (selectedIntervention?.int_base?.bas_location && selectedIntervention.int_base.bas_location !== currentAgence)
+
   const history = selectedIntervention?.int_statusHistory ?? []
 
   const {
@@ -96,27 +107,37 @@ export default function IntervDetailGes({ selectedIntervention, onClose }: Props
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="flex items-center gap-4 rounded-xl border p-4">
-          <div className="p-2 rounded-lg bg-emerald-100 text-emerald-700">
+        <div
+          className={`flex items-center gap-4 rounded-xl border p-4 ${
+            isHistorical ? "bg-amber-50 border-amber-300" : ""
+          }`}
+          title={isHistorical ? "Ce client a changé depuis cette intervention" : undefined}
+        >
+          <div className={`p-2 rounded-lg ${isHistorical ? "bg-amber-200 text-amber-800" : "bg-emerald-100 text-emerald-700"}`}>
             <User />
           </div>
           <div>
-            <p className="font-semibold">
-              {selectedIntervention?.int_vehicle?.veh_client?.cli_name}
+            <p className="font-semibold">{historicalClient}</p>
+            <p className={`text-sm ${isHistorical ? "text-amber-700 font-medium" : "text-gray-500"}`}>
+              Client{isHistorical ? " (historique)" : ""}
             </p>
-            <p className="text-sm text-gray-500">Client</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-4 rounded-xl border p-4">
-          <div className="p-2 rounded-lg bg-purple-100 text-purple-700">
+        <div
+          className={`flex items-center gap-4 rounded-xl border p-4 ${
+            isHistorical ? "bg-amber-50 border-amber-300" : ""
+          }`}
+          title={isHistorical ? "Cette agence a changé depuis cette intervention" : undefined}
+        >
+          <div className={`p-2 rounded-lg ${isHistorical ? "bg-amber-200 text-amber-800" : "bg-purple-100 text-purple-700"}`}>
             <MapPin />
           </div>
           <div>
-            <p className="font-semibold">
-              {selectedIntervention?.int_vehicle?.veh_base?.bas_location}
+            <p className="font-semibold">{historicalAgence}</p>
+            <p className={`text-sm ${isHistorical ? "text-amber-700 font-medium" : "text-gray-500"}`}>
+              Base{isHistorical ? " (historique)" : ""}
             </p>
-            <p className="text-sm text-gray-500">Base</p>
           </div>
         </div>
       </div>

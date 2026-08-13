@@ -16,7 +16,7 @@ export async function PATCH(request: NextRequest, context: Ctx) {
   try {
     const session = await auth();
 
-    if (!session?.user || !["MANAGER", "ADMIN"].includes(session.user.role)) {
+    if (!session?.user || !["MANAGER", "ADMIN", "MECHANIC"].includes(session.user.role)) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
