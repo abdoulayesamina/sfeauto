@@ -146,7 +146,43 @@ export async function GET(request: NextRequest) {
                     OR: [{ int_status: "REFUSED" }, { int_accordNumber: "REFUSE" }],
                   },
                 }
-              : { some: { int_supprimee: false, int_status: statutParam as any } }
+              : statutParam === "WAITING_FOR_APPROVAL"
+                ? {
+                    // Le nouveau statut dédié OU l'ancien schéma "FIXING_STARTED
+                    // sans n° d'accord" (jamais retro-migré) — même
+                    // reclassification que adaptLegacyIntervention et
+                    // api/mechanic/interventions/route.ts. int_annulee: false
+                    // et l'exclusion de accordNumber="REFUSE" reprennent la
+                    // même priorité que adaptLegacyIntervention (annulée >
+                    // refusée > en attente d'accord).
+                    some: {
+                      int_supprimee: false,
+                      int_annulee: false,
+                      OR: [
+                        {
+                          int_status: "WAITING_FOR_APPROVAL",
+                          OR: [{ int_accordNumber: null }, { int_accordNumber: { not: "REFUSE" } }],
+                        },
+                        { int_status: "FIXING_STARTED", int_accordNumber: null },
+                      ],
+                    },
+                  }
+                : statutParam === "FIXING_STARTED"
+                  ? {
+                      // Symétrique du cas ci-dessus : "en cours" exige un n°
+                      // d'accord (et non refusé), sinon l'intervention
+                      // appartient à "en attente d'accord" ou "refusée".
+                      some: {
+                        int_supprimee: false,
+                        int_annulee: false,
+                        int_status: "FIXING_STARTED",
+                        AND: [
+                          { int_accordNumber: { not: null } },
+                          { int_accordNumber: { not: "REFUSE" } },
+                        ],
+                      },
+                    }
+                  : { some: { int_supprimee: false, int_status: statutParam as any } }
         : undefined;
 
     // Filtre "scope" (client/agence/recherche) commun à la liste et aux stats,
@@ -167,7 +203,7 @@ export async function GET(request: NextRequest) {
       ...(interventionsFilter ? { interventions: interventionsFilter } : {}),
     };
 
-    const [vehicles, total, statusGroups, annuleesCount, refuseesCount, excludedInterventionsCount, sansInterventionCount] = await Promise.all([
+    const [vehicles, total, statusGroups, enCoursCount, attenteAccordCount, annuleesCount, refuseesCount, excludedInterventionsCount, sansInterventionCount] = await Promise.all([
       prisma.vehicle_veh.findMany({
       where,
       ...(isPaginated ? { skip: (page - 1) * pageSize, take: pageSize } : {}),
@@ -377,6 +413,39 @@ export async function GET(request: NextRequest) {
         },
         _count: true,
       }),
+      // "En cours" / "En attente d'accord" ne peuvent pas se déduire du
+      // groupBy ci-dessus : une intervention FIXING_STARTED sans n° d'accord
+      // (ancien schéma, jamais retro-migré) doit compter comme "en attente
+      // d'accord", pas "en cours" — même reclassification que
+      // adaptLegacyIntervention et api/mechanic/interventions/route.ts,
+      // appliquée ici pour que les cartes correspondent à la liste affichée
+      // (qui utilise déjà les statuts adaptés / le filtre de statut ci-dessus).
+      prisma.intervention_int.count({
+        where: {
+          int_supprimee: false,
+          int_annulee: false,
+          int_status: "FIXING_STARTED",
+          int_vehicle: scopeWhere,
+          AND: [
+            { int_accordNumber: { not: null } },
+            { int_accordNumber: { not: "REFUSE" } },
+          ],
+        },
+      }),
+      prisma.intervention_int.count({
+        where: {
+          int_supprimee: false,
+          int_annulee: false,
+          int_vehicle: scopeWhere,
+          OR: [
+            {
+              int_status: "WAITING_FOR_APPROVAL",
+              OR: [{ int_accordNumber: null }, { int_accordNumber: { not: "REFUSE" } }],
+            },
+            { int_status: "FIXING_STARTED", int_accordNumber: null },
+          ],
+        },
+      }),
       prisma.intervention_int.count({
         where: { int_supprimee: false, OR: [{ int_status: "CANCELLED" }, { int_annulee: true }], int_vehicle: scopeWhere },
       }),
@@ -419,14 +488,12 @@ export async function GET(request: NextRequest) {
 
     const stats = {
       total: statusGroups.reduce((sum, g) => sum + g._count, 0) + excludedInterventionsCount,
-      enCours:
-        statusGroups.find((g) => g.int_status === "FIXING_STARTED")?._count ?? 0,
+      enCours: enCoursCount,
       terminees:
         statusGroups.find((g) => g.int_status === "FIXING_FINISHED")?._count ?? 0,
       attente:
         statusGroups.find((g) => g.int_status === "WAITING_FOR_PARTS")?._count ?? 0,
-      attenteAccord:
-        statusGroups.find((g) => g.int_status === "WAITING_FOR_APPROVAL")?._count ?? 0,
+      attenteAccord: attenteAccordCount,
       annulees: annuleesCount,
       refusees: refuseesCount,
       sansIntervention: sansInterventionCount,

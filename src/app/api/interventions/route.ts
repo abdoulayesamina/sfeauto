@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
       ...(dateRange ? { int_updatedAt: dateRange } : {}),
     };
 
-    const [interventions, statusGroups, annuleesCount, refuseesCount, excludedInterventionsCount, sansInterventionCount] = await Promise.all([
+    const [interventions, statusGroups, enCoursCount, attenteAccordCount, annuleesCount, refuseesCount, excludedInterventionsCount, sansInterventionCount] = await Promise.all([
       prisma.intervention_int.findMany({
         where: baseWhere,
         select: {
@@ -100,6 +100,8 @@ export async function GET(request: NextRequest) {
           int_dateOfConfirmation: true,
           int_status: true,
           int_statusUpdatedAt: true,
+          int_annulee: true,
+          int_supprimee: true,
           int_workDescription: true,
           int_comments: true,
           int_didOrderParts: true,
@@ -157,6 +159,67 @@ export async function GET(request: NextRequest) {
         },
         _count: true,
       }) as any,
+      // "En cours" / "En attente d'accord" ne peuvent pas se déduire du
+      // groupBy ci-dessus : une intervention FIXING_STARTED sans n° d'accord
+      // (ancien schéma, jamais retro-migré) doit compter comme "en attente
+      // d'accord", pas "en cours" — même reclassification que
+      // adaptLegacyIntervention et api/mechanic/interventions/route.ts,
+      // appliquée ici pour que la carte de stat corresponde à la liste
+      // affichée (qui utilise déjà les statuts adaptés).
+      prisma.intervention_int.count({
+        where: {
+          int_supprimee: false,
+          int_annulee: false,
+          int_status: "FIXING_STARTED",
+          int_accordNumber: { not: null },
+          ...(vehicleScope ? { int_vehicle: vehicleScope } : {}),
+          ...(dateRange ? { int_updatedAt: dateRange } : {}),
+          AND: [
+            { int_accordNumber: { not: "REFUSE" } },
+            ...(searchParam
+              ? [
+                  {
+                    OR: [
+                      { int_vehicle: { veh_licensePlate: { contains: searchParam } } },
+                      { int_vehicle: { veh_brand: { bra_name: { contains: searchParam } } } },
+                      { int_vehicle: { veh_model: { mod_name: { contains: searchParam } } } },
+                    ],
+                  },
+                ]
+              : []),
+          ],
+        },
+      }),
+      prisma.intervention_int.count({
+        where: {
+          int_supprimee: false,
+          int_annulee: false,
+          ...(vehicleScope ? { int_vehicle: vehicleScope } : {}),
+          ...(dateRange ? { int_updatedAt: dateRange } : {}),
+          AND: [
+            {
+              OR: [
+                {
+                  int_status: "WAITING_FOR_APPROVAL",
+                  OR: [{ int_accordNumber: null }, { int_accordNumber: { not: "REFUSE" } }],
+                },
+                { int_status: "FIXING_STARTED", int_accordNumber: null },
+              ],
+            },
+            ...(searchParam
+              ? [
+                  {
+                    OR: [
+                      { int_vehicle: { veh_licensePlate: { contains: searchParam } } },
+                      { int_vehicle: { veh_brand: { bra_name: { contains: searchParam } } } },
+                      { int_vehicle: { veh_model: { mod_name: { contains: searchParam } } } },
+                    ],
+                  },
+                ]
+              : []),
+          ],
+        },
+      }),
       prisma.intervention_int.count({
         where: { int_supprimee: false, AND: [vehicleScope ? { int_vehicle: vehicleScope } : {}, { OR: [{ int_status: "CANCELLED" }, { int_annulee: true }] }] },
       }),
@@ -194,14 +257,12 @@ export async function GET(request: NextRequest) {
 
     const stats = {
       total: statusGroups.reduce((sum: number, g: any) => sum + g._count, 0) + excludedInterventionsCount,
-      enCours:
-        statusGroups.find((g: any) => g.int_status === "FIXING_STARTED")?._count ?? 0,
+      enCours: enCoursCount,
       terminees:
         statusGroups.find((g: any) => g.int_status === "FIXING_FINISHED")?._count ?? 0,
       attente:
         statusGroups.find((g: any) => g.int_status === "WAITING_FOR_PARTS")?._count ?? 0,
-      attenteAccord:
-        statusGroups.find((g: any) => g.int_status === "WAITING_FOR_APPROVAL")?._count ?? 0,
+      attenteAccord: attenteAccordCount,
       annulees: annuleesCount,
       refusees: refuseesCount,
       sansIntervention: sansInterventionCount,

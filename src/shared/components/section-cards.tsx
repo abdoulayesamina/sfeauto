@@ -20,6 +20,7 @@ import {
 } from "@/src/shared/components/ui/card";
 import { useInterventionsStatsApi } from "@/src/shared/hooks/useInterventionsStats.api";
 import { useAgenceApi } from "@/src/app/(main)/agence/shared/useAgence.api";
+import { useManageApi } from "@/src/app/(main)/gestionnaire/shared/useManage.api";
 import { useEffect, useMemo, useState } from "react";
 import { Agence } from "@/src/utils/types/agence";
 import { Label } from "./ui/label";
@@ -48,9 +49,12 @@ export function SectionCards({ user }: { user?: any }) {
   const { getInterventionsStats } = useInterventionsStatsApi();
   const { getAgences } = useAgenceApi();
   const { getClients } = useClientApi();
+  const { getVehicles } = useManageApi();
 
   const [loading, setLoading] = useState(false);
   const [statsLoading, setStatsLoading] = useState(false);
+  const [sansInterventionVehicles, setSansInterventionVehicles] = useState<any[]>([]);
+  const [sansInterventionLoading, setSansInterventionLoading] = useState(false);
   const [agences, setAgences] = useState<Agence[]>([]);
   const [agencesFiltered, setAgencesFiltered] = useState<Agence[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
@@ -151,6 +155,22 @@ export function SectionCards({ user }: { user?: any }) {
   const fetchStats = async (scope: { clientId?: string; agenceId?: string }) => {
     const result = await getInterventionsStats(scope);
     updateInterventionsStats(result.interventions, result.stats);
+  };
+
+  const fetchSansIntervention = async () => {
+    setSansInterventionLoading(true);
+    try {
+      const result = await getVehicles({
+        clientId: clientId || undefined,
+        agenceId: agenceId || undefined,
+        statut: "SANS_INTERVENTION",
+      });
+      setSansInterventionVehicles(result.vehicles ?? []);
+    } catch (error) {
+      console.error("Erreur lors du chargement des véhicules sans intervention : ", error);
+    } finally {
+      setSansInterventionLoading(false);
+    }
   };
 
   const displayGlobalStatistiques = () => {
@@ -267,6 +287,17 @@ export function SectionCards({ user }: { user?: any }) {
     () => displayedInterventions.filter(matchesSearch),
     [displayedInterventions, search, searchDate],
   );
+
+  // "Sans intervention" liste des véhicules (pas des interventions), filtrée par plaque/marque/modèle uniquement
+  const filteredSansInterventionVehicles = useMemo(() => {
+    const value = search.toLowerCase().trim();
+    return sansInterventionVehicles.filter((v) => {
+      const plate = v.veh_licensePlate?.toLowerCase() ?? "";
+      const brand = v.veh_brand?.bra_name?.toLowerCase() ?? "";
+      const model = v.veh_model?.mod_name?.toLowerCase() ?? "";
+      return plate.includes(value) || brand.includes(value) || model.includes(value);
+    });
+  }, [sansInterventionVehicles, search]);
 
   // Stats des cards : TOUJOURS calculées sur l'ensemble du périmètre (totalInterventions),
   // filtré par la recherche, indépendamment de la card sélectionnée.
@@ -525,9 +556,11 @@ export function SectionCards({ user }: { user?: any }) {
                 if (c.key === "attenteAccord")
                   setDisplayedInterventions(interventionsAttenteAccord);
                 // "sansIntervention" compte des véhicules, pas des
-                // interventions — aucune liste à afficher en dessous.
-                if (c.key === "sansIntervention")
+                // interventions — liste chargée à part depuis /api/vehicles.
+                if (c.key === "sansIntervention") {
                   setDisplayedInterventions([]);
+                  fetchSansIntervention();
+                }
               }}
               className={`cursor-pointer transform transition-all hover:-translate-y-1 hover:scale-[1.02]
               @container/card group relative overflow-hidden rounded-xl sm:rounded-2xl border border-gray-200/60
@@ -638,7 +671,77 @@ export function SectionCards({ user }: { user?: any }) {
 
             {/* Liste */}
             <div className="divide-y min-h-[300px] max-h-[300px] sm:min-h-[420px] sm:max-h-[420px] overflow-auto">
-              {filteredInterventions.length === 0 ? (
+              {selectedStat === "sansIntervention" ? (
+                sansInterventionLoading ? (
+                  <div className="py-8 sm:py-12 lg:py-16 flex items-center justify-center">
+                    <Spinner className="size-6 text-gray-400" />
+                  </div>
+                ) : filteredSansInterventionVehicles.length === 0 ? (
+                  <div className="py-8 sm:py-12 lg:py-16 flex flex-col items-center justify-center text-center">
+                    <div
+                      className="h-12 w-12 sm:h-16 sm:w-16 rounded-xl sm:rounded-2xl bg-gradient-to-br
+                                      from-gray-100 to-gray-200 flex items-center justify-center shadow-sm"
+                    >
+                      <SearchX />
+                    </div>
+                    <h3 className="mt-3 sm:mt-4 text-sm sm:text-lg font-semibold text-gray-900">
+                      Aucun véhicule
+                    </h3>
+                    <p className="mt-1 text-xs sm:text-sm text-gray-500 max-w-sm">
+                      {search ? (
+                        <span>Aucun véhicule ne correspond à votre recherche.</span>
+                      ) : (
+                        <span>Tous les véhicules de ce périmètre ont au moins une intervention.</span>
+                      )}
+                    </p>
+                  </div>
+                ) : (
+                  filteredSansInterventionVehicles.map((v) => (
+                    <div
+                      key={v.veh_id}
+                      className="group p-2.5 sm:p-3.5 lg:p-5 flex items-center gap-2.5 sm:gap-3.5 lg:gap-5 hover:bg-gray-50 transition rounded-lg sm:rounded-xl lg:rounded-2xl"
+                    >
+                      <div className="flex items-center gap-2.5 sm:gap-3.5 lg:gap-5 flex-1">
+                        <div
+                          className="h-9 w-9 sm:h-11 sm:w-11 lg:h-14 lg:w-14 rounded-lg sm:rounded-xl lg:rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200
+                                          flex items-center justify-center text-xs sm:text-sm font-semibold text-gray-700 shadow-sm shrink-0"
+                        >
+                          {v.veh_brand?.bra_name?.[0] ?? ""}
+                          {v.veh_model?.mod_name?.[0] ?? ""}
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between flex-wrap lg:justify-start gap-1.5 sm:gap-3">
+                            <div className="text-xs sm:text-sm lg:text-base font-semibold text-gray-900 truncate">
+                              {v.veh_brand?.bra_name ?? ""} {v.veh_model?.mod_name ?? ""}
+                            </div>
+                            <span className="flex items-center gap-1.5 sm:gap-3">
+                              <span className="text-[10px] sm:text-xs bg-gray-100 px-1.5 py-0.5 sm:px-2 rounded-md text-gray-600">
+                                {v.veh_year ?? ""}
+                              </span>
+                              <span className="text-[10px] sm:text-xs bg-slate-100 px-1.5 py-0.5 sm:px-2 rounded-md text-gray-600">
+                                {v.veh_color ?? ""}
+                              </span>
+                            </span>
+                          </div>
+
+                          <div className="mt-0.5 sm:mt-1 flex flex-wrap gap-1 sm:gap-1.5 text-[11px] sm:text-sm text-gray-600">
+                            <span>{v.veh_client?.cli_name ?? "—"}</span>
+                            <span className="text-gray-400">• {v.veh_base?.bas_location ?? "—"}</span>
+                          </div>
+
+                          <div className="text-[11px] sm:text-sm text-gray-600 mt-0.5 sm:mt-1">
+                            Plaque :{" "}
+                            <span className="font-medium text-gray-800">
+                              {v.veh_licensePlate ?? ""}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )
+              ) : filteredInterventions.length === 0 ? (
                 <div className="py-8 sm:py-12 lg:py-16 flex flex-col items-center justify-center text-center">
                   {/* Icône */}
                   <div
