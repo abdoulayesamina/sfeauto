@@ -50,7 +50,7 @@ export function SectionCards({ user }: { user?: any }) {
   const { getClients } = useClientApi();
 
   const [loading, setLoading] = useState(false);
-  const [AgenceIntloading, setAgenceIntloading] = useState(false);
+  const [statsLoading, setStatsLoading] = useState(false);
   const [agences, setAgences] = useState<Agence[]>([]);
   const [agencesFiltered, setAgencesFiltered] = useState<Agence[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
@@ -153,20 +153,11 @@ export function SectionCards({ user }: { user?: any }) {
     updateInterventionsStats(result.interventions, result.stats);
   };
 
-  const displayGlobalStatistiques = async () => {
+  const displayGlobalStatistiques = () => {
     clientIdChanged("");
     setAgenceId("");
     setSearch("");
     setSearchDate("");
-
-    setLoading(true);
-    try {
-      await fetchStats({});
-    } catch (error) {
-      console.error("Erreur lors du chargement des statistiques : ", error);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const loadAllData = async () => {
@@ -179,8 +170,6 @@ export function SectionCards({ user }: { user?: any }) {
 
       setAgences(agencesRes);
       setClients(clientsRes);
-
-      await fetchStats({});
     } catch (error) {
       console.error("Erreur lors du chargement des données : ", error);
     } finally {
@@ -197,43 +186,27 @@ export function SectionCards({ user }: { user?: any }) {
     setAgencesFiltered(agences);
   }, [agences]);
 
+  // Charge les statistiques dès qu'un client et/ou une agence est
+  // sélectionné(e) — un client seul agrège déjà toutes ses agences, sans
+  // attendre une deuxième sélection.
   useEffect(() => {
     if (!clientId && agenceId) {
       const ag = agences.find((a) => a.bas_id === agenceId);
-      clientIdChanged(ag?.bas_clientId ?? "");
+      if (ag?.bas_clientId) {
+        clientIdChanged(ag.bas_clientId);
+        return;
+      }
     }
 
-    if (agenceId) {
-      setAgenceIntloading(true);
-      fetchStats({ agenceId })
-        .catch((error) =>
-          console.error("Erreur lors du chargement des statistiques d'agence : ", error),
-        )
-        .finally(() => setAgenceIntloading(false));
-    }
+    const scope = agenceId ? { agenceId } : clientId ? { clientId } : {};
+    setStatsLoading(true);
+    fetchStats(scope)
+      .catch((error) =>
+        console.error("Erreur lors du chargement des statistiques : ", error),
+      )
+      .finally(() => setStatsLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [agenceId]);
-
-  const resetStats = () => {
-    setSelectedStat("total");
-    setDisplayedInterventions([]);
-    setNombreTotalInterventions(0);
-    setNombreInterventionsEnCours(0);
-    setNombreInterventionsTerminees(0);
-    setNombreInterventionsEnAttenteDePiece(0);
-    setNombreInterventionsAnnulees(0);
-    setNombreInterventionsRefusees(0);
-    setNombreInterventionsAttenteAccord(0);
-    setNombreVehiculesSansIntervention(0);
-
-    setTotalInterventions([]);
-    setInterventionsEnCours([]);
-    setInterventionsTerminees([]);
-    setInterventionsEnAttenteDePiece([]);
-    setInterventionsAnnulees([]);
-    setInterventionsRefusees([]);
-    setInterventionsAttenteAccord([]);
-  };
+  }, [clientId, agenceId]);
 
   const clientIdChanged = (id: string) => {
     setClientId(id);
@@ -256,8 +229,6 @@ export function SectionCards({ user }: { user?: any }) {
     });
     setOpenDetailModal(true);
   }
-
-  const [open, setOpen] = useState(false);
 
   // const baseInterventions = useMemo(() => {
   //   if (agenceId) {
@@ -340,13 +311,14 @@ export function SectionCards({ user }: { user?: any }) {
       <div className="flex px-3 pt-3 sm:px-6 sm:pt-6 gap-2 flex-wrap">
         <div className="flex-1 min-w-0 max-w-xl">
           <Select
-            open={open}
-            onOpenChange={setOpen}
-            value={clientId}
+            value={clientId || "all"}
             onValueChange={(Id) => {
-              clientIdChanged(Id);
-              setAgenceId("");
-              resetStats();
+              if (Id === "all") {
+                displayGlobalStatistiques();
+              } else {
+                clientIdChanged(Id);
+                setAgenceId("");
+              }
             }}
           >
             <SelectTrigger className="h-9 sm:h-12">
@@ -354,27 +326,10 @@ export function SectionCards({ user }: { user?: any }) {
               {loading && <Spinner className="size-4" />}
             </SelectTrigger>
             <SelectContent className="z-[2000]">
-              {clientId ? (
-                <button
-                  className="bg-gray-50 cursor-pointer p-1 rounded text-sm hover:bg-gray-100 w-full"
-                  onClick={() => {
-                    displayGlobalStatistiques();
-                    setOpen(false);
-                  }}
-                >
-                  Afficher les statistiques globales
-                </button>
-              ) : (
-                ""
-              )}
+              <SelectItem value="all">Tous les clients</SelectItem>
               {clients.map((c) => (
-                <SelectItem key={c.cli_id} value={c.cli_id} className="">
+                <SelectItem key={c.cli_id} value={c.cli_id}>
                   {c.cli_name}
-                  {/* {globalInterventions.some((i) => i.int_clientId === c.cli_id) && (
-                    <span className="ml-2 text-xs text-muted-foreground">
-                      ({globalInterventions.filter((i) => i.int_clientId === c.cli_id).length})
-                    </span>
-                  )} */}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -388,14 +343,15 @@ export function SectionCards({ user }: { user?: any }) {
         </div>
         <div className="flex-1 min-w-0 max-w-xl">
           <Select
-            value={agenceId}
-            onValueChange={(baseId) => setAgenceId(baseId)}
+            value={agenceId || "all"}
+            onValueChange={(baseId) => setAgenceId(baseId === "all" ? "" : baseId)}
           >
             <SelectTrigger className="h-9 sm:h-12">
               <SelectValue placeholder={"Sélectionnez une agence"} />
               {loading && <Spinner className="size-4" />}
             </SelectTrigger>
             <SelectContent className="z-[2000]">
+              <SelectItem value="all">Toutes les agences</SelectItem>
               {agencesFiltered.map((b) => (
                 <SelectItem key={b.bas_id} value={b.bas_id}>
                   {b.bas_location}
@@ -403,9 +359,6 @@ export function SectionCards({ user }: { user?: any }) {
               ))}
             </SelectContent>
           </Select>
-          {/* <p className="text-sm text-muted-foreground">
-            Selectionnez une agence 
-          </p> */}
         </div>
       </div>
       {/* <div className="px-8 py-1 min-h-[38px]">
@@ -474,7 +427,7 @@ export function SectionCards({ user }: { user?: any }) {
             {
               key: "attente",
               title: "En attente de pièces",
-              value: AgenceIntloading ? (
+              value: statsLoading ? (
                 <Spinner className="size-4 text-white" />
               ) : (
                 isFilterMode ? filteredStats.attente : nombreInterventionsEnAttenteDePiece
@@ -604,7 +557,7 @@ export function SectionCards({ user }: { user?: any }) {
                 </div>
 
                 <CardTitle className="mt-0.5 sm:mt-1 text-lg sm:text-xl lg:text-2xl font-semibold tabular-nums tracking-tight text-gray-900">
-                  {loading || AgenceIntloading ? (
+                  {loading || statsLoading ? (
                     <span className="inline-flex items-center">
                       <Spinner className={`size-4 ${c.tone.accent}`} />
                     </span>
@@ -751,6 +704,13 @@ export function SectionCards({ user }: { user?: any }) {
                               <span className="text-[10px] sm:text-xs bg-slate-100 px-1.5 py-0.5 sm:px-2 rounded-md text-gray-600">
                                 {inv.int_vehicle?.veh_color ?? ""}
                               </span>
+                            </span>
+                          </div>
+
+                          <div className="mt-0.5 sm:mt-1 flex flex-wrap gap-1 sm:gap-1.5 text-[11px] sm:text-sm text-gray-600">
+                            <span>{inv.int_vehicle?.veh_client?.cli_name ?? "—"}</span>
+                            <span className="text-gray-400">
+                              • {inv.int_vehicle?.veh_base?.bas_location ?? "—"}
                             </span>
                           </div>
 
