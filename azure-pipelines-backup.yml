@@ -1,0 +1,76 @@
+trigger: none
+
+# 3x/jour a 6h/14h/22h heure de Paris (4h/12h/20h UTC), pour eviter les heures
+# de bureau (l'ancien creneau de 10h UTC = midi Paris tombait en pleine charge).
+schedules:
+  - cron: "0 4,12,20 * * *"
+    displayName: "Backup MySQL prod - 3x/jour"
+    branches:
+      include:
+        - main
+    always: true
+
+pool:
+  vmImage: "ubuntu-latest"
+
+variables:
+  - name: azureServiceConnection
+    value: "sc-sfeauto-azure"
+  - name: keyVaultName
+    value: "kv-latel-dev"
+  - name: mysqlHost
+    value: "azurelateliers.mysql.database.azure.com"
+  - name: backupContainer
+    value: "mysql-backups"
+
+steps:
+  - task: AzureKeyVault@2
+    displayName: "Recuperer les secrets de backup depuis Key Vault"
+    inputs:
+      azureSubscription: "$(azureServiceConnection)"
+      KeyVaultName: "$(keyVaultName)"
+      SecretsFilter: "mysql-backup-username,mysql-backup-password,backup-storage-connection-string,mysql-backup-databases"
+      RunAsPreJob: false
+
+  - script: |
+      sudo apt-get update -qq
+      sudo apt-get install -y -qq mysql-client
+    displayName: "Installer mysql-client"
+
+  - script: |
+      set -e
+
+      # mysql-backup-databases est une liste JSON (ex: ["sfeauto_prod1"]),
+      # ecrite par backup/terraform.tfvars -> Key Vault. Pour ajouter une base,
+      # il suffit d'etendre cette liste cote Terraform et de re-appliquer :
+      # rien a changer ici.
+      DATABASES=$(python3 -c "import json; print(' '.join(json.load(open('/dev/stdin'))))" <<< "$BACKUP_DATABASES")
+      TIMESTAMP=$(date -u +%Y%m%dT%H%M%SZ)
+
+      for DB in $DATABASES; do
+        echo "=== Backup de $DB ==="
+
+        mysqldump --host="$MYSQL_HOST" \
+          --user="$BACKUP_USER" \
+          --password="$BACKUP_PASSWORD" \
+          --single-transaction --routines --triggers --events \
+          --no-tablespaces --ssl-mode=REQUIRED \
+          "$DB" | gzip -9 > "${DB}_${TIMESTAMP}.sql.gz"
+
+        az storage blob upload \
+          --connection-string "$BACKUP_STORAGE_CONN" \
+          --container-name "$(backupContainer)" \
+          --name "${DB}/${DB}_${TIMESTAMP}.sql.gz" \
+          --file "${DB}_${TIMESTAMP}.sql.gz" \
+          --overwrite
+
+        rm -f "${DB}_${TIMESTAMP}.sql.gz"
+        echo "=== $DB OK ==="
+      done
+    displayName: "Backup + upload de chaque base"
+    env:
+      MYSQL_HOST: $(mysqlHost)
+      BACKUP_USER: $(mysql-backup-username)
+      BACKUP_PASSWORD: $(mysql-backup-password)
+      BACKUP_STORAGE_CONN: $(backup-storage-connection-string)
+      BACKUP_DATABASES: $(mysql-backup-databases)

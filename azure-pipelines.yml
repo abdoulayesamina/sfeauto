@@ -1,9 +1,8 @@
-trigger:
-  branches:
-    include:
-      - develop
-      - staging
-      - main
+# Desactive : le deploiement se fait desormais sur Azure App Service
+# (azure-pipelines-dev.yml, branches standalone / standalone_prod), plus sur
+# Vercel. Fichier garde pour reference, trigger coupe pour eviter tout
+# deploiement Vercel accidentel sur un push vers main/develop/staging.
+trigger: none
 
 pool:
   vmImage: 'ubuntu-latest'
