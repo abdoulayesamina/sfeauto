@@ -64,7 +64,14 @@ export async function notifyAdmins(input: NotifyAdminsInput): Promise<void> {
     logError("Failed to notify admins", error);
   }
 
-  await notifyByEmail({ title, message, interventionId });
+  // Le client ne veut être notifié par email qu'à la création d'une
+  // intervention (la fin passe par notifyFacturation, pas par ici) — plus
+  // aucun email sur modification, changement de statut ou annulation, il
+  // suit ça dans l'application. La notification en base + socket reste
+  // inchangée pour tous les types.
+  if (type === "INTERVENTION_CREATED") {
+    await notifyByEmail({ title, message, interventionId });
+  }
 }
 
 function formatDate(value: Date | null | undefined): string {
@@ -99,6 +106,8 @@ type InterventionEmailInput = {
   title: string;
   message: string;
   interventionId?: string | null;
+  /** Nom de la personne à l'origine de l'action (ex: qui a terminé l'intervention). */
+  actorName?: string | null;
 };
 
 /**
@@ -142,6 +151,7 @@ async function buildInterventionEmailContent(
         ${row("Dernière mise à jour", formatDate(intervention.int_updatedAt))}
         ${row("Annulée", intervention.int_annulee ? "Oui" : null)}
         ${row("Prise en charge par", intervention.int_handledBy?.usr_name)}
+        ${row("Terminée par", input.actorName)}
       </table>
     `
     : "";

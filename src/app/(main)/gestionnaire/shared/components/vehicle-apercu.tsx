@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
-import { Eye, PlusCircle, FileText, Pencil, CircleSlash2, CarFront } from "lucide-react";
+import { Eye, PlusCircle, FileText, Pencil, CircleSlash2, CarFront, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/src/shared/components/ui/button";
@@ -11,6 +11,8 @@ import { getStatusMeta, computeUIStatus } from "@/src/utils/constants/interventi
 import { getInterventionAgeMeta } from "@/src/utils/constants/intervention-age";
 import { canCreateDevis } from "@/src/utils/permissions";
 import { useManageApi } from "../useManage.api";
+import { useInterventionApi } from "../hooks/useInterventionApi.api";
+import { confirmAlert, errorAlert, successAlert } from "@/src/lib/alerts";
 
 import IntervDetailGes from "./Intervention";
 import { CreateDevisModal } from "./CreateDevisModal";
@@ -68,6 +70,26 @@ export function VehiclePreview({
 
   const { setVehicleAbsence } = useManageApi();
   const canToggleAbsence = ["MANAGER", "MECHANIC", "ADMIN"].includes(role ?? "");
+  const canRestoreIntervention = ["MANAGER", "MECHANIC", "ADMIN"].includes(role ?? "");
+
+  const { restoreIntervention } = useInterventionApi();
+
+  const handleRestoreIntervention = async (inv: any) => {
+    const confirmed = await confirmAlert(
+      "Annuler l'annulation",
+      "L'intervention va être restaurée dans son état précédent. Continuer ?",
+    );
+    if (!confirmed) return;
+
+    const result = await restoreIntervention(inv.int_id);
+    if (!result.ok) {
+      errorAlert("Erreur restauration intervention", result.error);
+      return;
+    }
+
+    successAlert("Intervention restaurée avec succès");
+    reloadInterventionList();
+  };
 
   const [isAbsent, setIsAbsent] = useState<boolean>(isAbsentProp);
   const [absentLoading, setAbsentLoading] = useState(false);
@@ -416,6 +438,18 @@ export function VehiclePreview({
                     >
                       <Pencil size={14} />
                       Modifier
+                    </Button>
+                  )}
+
+                  {inv?.uiStatus === "CANCELLED" && canRestoreIntervention && !isAbsent && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm h-auto px-2.5 py-1 sm:px-3 sm:py-1.5 border-orange-300 text-orange-700 hover:bg-orange-50"
+                      onClick={() => handleRestoreIntervention(inv)}
+                    >
+                      <RotateCcw size={14} />
+                      Annuler l'annulation
                     </Button>
                   )}
 

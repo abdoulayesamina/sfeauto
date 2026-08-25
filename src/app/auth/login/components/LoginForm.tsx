@@ -12,8 +12,9 @@ import { Input } from "@/src/shared/components/ui/input"
 import { Label } from "@/src/shared/components/ui/label"
 import { Button } from "@/src/shared/components/ui/button"
 import { useForm } from "react-hook-form"
-import { Loader2 } from "lucide-react"
+import { Loader2, Eye, EyeOff } from "lucide-react"
 import Image from "next/image"
+import { useState } from "react"
 
 import { getSession, signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
@@ -33,25 +34,41 @@ export default function LoginForm() {
   } = useForm<LoginForm>()
 
   const router = useRouter()
+  const [showPassword, setShowPassword] = useState(false)
 
   const onSubmit = async (data: LoginForm) => {
-    const res = await signIn("credentials", {
-      email: data.email,
-      password: data.password,
-      redirect: false,
-    })
+    try {
+      const res = await signIn("credentials", {
+        email: data.email,
+        password: data.password,
+        redirect: false,
+      })
 
-    if (res?.ok) {
-      const session = await getSession()
-      const role = (session?.user as any)?.role
-      router.push(role === "AGENCE" ? "/agenceClient" : (role === "CLIENT") ? "/client" : "/dashboard")
-    } else {
+      if (res?.ok) {
+        const session = await getSession()
+        const role = (session?.user as any)?.role
+        router.push(role === "AGENCE" ? "/agenceClient" : (role === "CLIENT") ? "/client" : "/dashboard")
+        return
+      }
+
       Swal.fire(
         {
           title: "Erreur !",
           text: 'Email ou mot de passe incorrect',
           icon: "error"
-        }  
+        }
+      )
+    } catch (error) {
+      // La requête n'a même pas pu atteindre le serveur (réseau, VPN,
+      // proxy...) — à distinguer d'un mauvais email/mot de passe pour ne pas
+      // induire l'utilisateur en erreur.
+      console.error("Erreur réseau lors de la connexion :", error)
+      Swal.fire(
+        {
+          title: "Connexion impossible",
+          text: "Impossible de contacter le serveur. Vérifiez votre connexion internet (wifi/4G, VPN) et réessayez.",
+          icon: "error"
+        }
       )
     }
   }
@@ -101,7 +118,6 @@ export default function LoginForm() {
                 <div className="space-y-1">
                   <Label className="text-gray-200">Email</Label>
                   <Input
-                    placeholder="admin@gestcars.com"
                     className="text-white bg-white/20 border-white/30 placeholder:text-gray-300 focus:border-white focus:ring-white/40"
                     {...register("email", {
                       required: "Email obligatoire",
@@ -120,14 +136,28 @@ export default function LoginForm() {
 
                 <div className="space-y-1">
                   <Label className="text-gray-200">Mot de passe</Label>
-                  <Input
-                    type="password"
-                    placeholder="••••••••"
-                    className="text-white bg-white/20 border-white/30 placeholder:text-gray-300 focus:border-white focus:ring-white/40"
-                    {...register("password", {
-                      required: "Mot de passe obligatoire",
-                    })}
-                  />
+                  <div className="relative">
+                    <Input
+                      type={showPassword ? "text" : "password"}
+                      className="text-white bg-white/20 border-white/30 placeholder:text-gray-300 focus:border-white focus:ring-white/40 pr-10"
+                      {...register("password", {
+                        required: "Mot de passe obligatoire",
+                      })}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-300 hover:text-white"
+                      aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                      tabIndex={-1}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
                   {errors.password && (
                     <p className="text-sm text-red-400">
                       {errors.password.message}

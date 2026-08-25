@@ -240,8 +240,9 @@ export async function PATCH(request: NextRequest, context: Ctx) {
     if (statusChanged && newStatus === "FIXING_FINISHED") {
       await notifyFacturation({
         title: "Intervention terminée",
-        message: `L'intervention du véhicule ${updated.int_vehicle?.veh_licensePlate ?? ""} est terminée.`,
+        message: `L'intervention du véhicule ${updated.int_vehicle?.veh_licensePlate ?? ""} est terminée, prise en charge par ${session.user.name}.`,
         interventionId: id,
+        actorName: session.user.name,
       });
     }
 
