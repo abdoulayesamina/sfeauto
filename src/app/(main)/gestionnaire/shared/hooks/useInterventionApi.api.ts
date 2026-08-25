@@ -73,5 +73,29 @@ export function useInterventionApi() {
     }
   };
 
-  return { patchIntervention, cancelIntervention, loading };
+  const restoreIntervention = async (id: string) => {
+    setLoading(true);
+    try {
+      if (!id) throw new Error("ID intervention manquant");
+
+      const res = await fetch(`/api/interventions/${id}/restore`, {
+        method: "POST",
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        const msg = data?.error ?? "Erreur lors de la restauration";
+        return { ok: false as const, error: msg };
+      }
+
+      return { ok: true as const, data };
+    } catch (err: any) {
+      return { ok: false as const, error: err?.message ?? "Erreur réseau" };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { patchIntervention, cancelIntervention, restoreIntervention, loading };
 }

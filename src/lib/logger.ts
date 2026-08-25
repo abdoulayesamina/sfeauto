@@ -21,3 +21,14 @@ export function logError(
   // Output as JSON for easy parsing and searching
   console.error(JSON.stringify(logEntry, null, 2));
 }
+
+export function logInfo(message: string, context?: Record<string, any>) {
+  const logEntry = {
+    level: 'info',
+    message,
+    ...(context && { context }),
+    timestamp: new Date().toISOString(),
+  };
+
+  console.log(JSON.stringify(logEntry, null, 2));
+}

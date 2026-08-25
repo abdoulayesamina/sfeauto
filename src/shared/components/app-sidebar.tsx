@@ -16,7 +16,8 @@ import {
   BadgePercent,
   Receipt,
   FileText,
-  Car
+  Car,
+  MapPin
 } from "lucide-react"
 
 import { NavDocuments } from "@/src/shared/components/nav-documents"
@@ -120,6 +121,12 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       icon: Wrench,
       roles: ["MECHANIC"],
 
+    },
+    {
+      title: "Localisation mécaniciens",
+      url: "/mecaniciens",
+      icon: MapPin,
+      roles: ["ADMIN", "MANAGER", "MECHANIC"],
     },
 
     {
