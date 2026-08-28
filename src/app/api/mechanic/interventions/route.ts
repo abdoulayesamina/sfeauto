@@ -123,7 +123,6 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    console.log("Saaluuut");
     const startTime = Date.now();
 
     const interventions = await prisma.intervention_int.findMany({

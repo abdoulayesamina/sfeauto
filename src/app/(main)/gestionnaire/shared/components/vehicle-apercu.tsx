@@ -76,7 +76,7 @@ export function VehiclePreview({
 
   const handleRestoreIntervention = async (inv: any) => {
     const confirmed = await confirmAlert(
-      "Annuler l'annulation",
+      "Réactiver l'intervention",
       "L'intervention va être restaurée dans son état précédent. Continuer ?",
     );
     if (!confirmed) return;
@@ -276,7 +276,7 @@ export function VehiclePreview({
                 onClick={onEditVehicle}
               >
                 <Pencil size={14} className="mr-1" />
-                Modifier
+                Modifier A/C
               </Button>
             )}
           </div>
@@ -449,7 +449,7 @@ export function VehiclePreview({
                       onClick={() => handleRestoreIntervention(inv)}
                     >
                       <RotateCcw size={14} />
-                      Annuler l'annulation
+                      Réactiver l'intervention
                     </Button>
                   )}
 
