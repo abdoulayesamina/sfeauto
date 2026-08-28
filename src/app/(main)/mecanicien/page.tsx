@@ -23,6 +23,7 @@ import {
   CheckCircle2,
   Clock,
   SearchX,
+  CircleSlash2,
 } from "lucide-react";
 import { useBases } from "./shared/useBases.api";
 import { useStatusInt } from "./shared/useStatusInt.api";
@@ -33,6 +34,7 @@ import { Modal } from "@/src/shared/components/modal";
 import { Spinner } from "@/src/shared/components/spinner";
 import { errorAlert, confirmAlert } from "@/src/lib/alerts";
 import { toast } from "sonner";
+import { useManageApi } from "../gestionnaire/shared/useManage.api";
 import { getInterventionAgeMeta } from "@/src/utils/constants/intervention-age";
 
 export const statusStyles: Record<string, string> = {
@@ -157,6 +159,26 @@ export default function MecanicienPage() {
     loading: statusLoading,
     error: statusError,
   } = useStatusInt();
+
+  const { setVehicleAbsence } = useManageApi();
+  const [absenceLoadingId, setAbsenceLoadingId] = useState<string | null>(null);
+
+  const handleMarkAbsent = async (inv: any) => {
+    if (!inv?.vehicle?.id || absenceLoadingId) return;
+
+    setAbsenceLoadingId(inv.vehicle.id);
+    try {
+      await setVehicleAbsence(inv.vehicle.id, true);
+      toast.success("Véhicule marqué absent");
+      setInterventions((prev: any) =>
+        prev.filter((item: any) => item.vehicle.id !== inv.vehicle.id),
+      );
+    } catch (err: any) {
+      toast.error(err?.message || "Échec du marquage du véhicule absent");
+    } finally {
+      setAbsenceLoadingId(null);
+    }
+  };
 
   const openModal = (intervention: any) => {
     setSelectedIntervention(intervention);
@@ -465,6 +487,20 @@ export default function MecanicienPage() {
                     </SelectContent>
                   </Select>
                   )}
+
+                  <Button
+                    variant="outline"
+                    className="gap-2 shrink-0 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                    disabled={absenceLoadingId === inv.vehicle.id}
+                    onClick={() => handleMarkAbsent(inv)}
+                  >
+                    {absenceLoadingId === inv.vehicle.id ? (
+                      <Spinner className="size-4" />
+                    ) : (
+                      <CircleSlash2 size={16} />
+                    )}
+                    Marquer absent
+                  </Button>
 
                   <Button
                     variant="outline"
