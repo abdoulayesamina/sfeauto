@@ -234,6 +234,9 @@ export async function GET(request: NextRequest) {
         veh_createdAt: true,
         veh_updatedAt: true,
 
+        veh_clientId: true,
+        veh_baseId: true,
+
         veh_client: {
           select: {
             cli_id: true,

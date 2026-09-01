@@ -284,6 +284,7 @@ export default function GestionnairePage() {
 
   const handleEditVehicleClick = () => {
     setVehicleToEdit(selectedVehicle);
+    console.log("Editing vehicle:", selectedVehicle);
     setOpenEditVehiculeModal(true);
   };
 

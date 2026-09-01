@@ -68,26 +68,36 @@ export function AddVehiculeForm({
   const { getClients } = useClientApi()
   const { getAgences } = useAgenceApi()
 
-  const [vehicule, setVehicule] = useState<Vehicule>({
-    veh_baseId: "",
-    veh_clientId: "",
-    veh_licensePlate: "",
-    veh_brandId: undefined,
-    veh_modelId: undefined,
-    veh_year: new Date().getFullYear(),
-    veh_color: "",
-    veh_kilometrage: "",
+  const [vehicule, setVehicule] = useState<Vehicule>(() => {
+    if (mode === "edit" && data) {
+      return {
+        ...data,
+        veh_baseId: data.veh_baseId ?? data.veh_base?.bas_id ?? "",
+        veh_clientId: data.veh_clientId ?? data.veh_client?.cli_id ?? "",
+        veh_version: data.veh_version ?? "",
+      }
+    }
 
-    veh_firstRegistrationDate: undefined,
-    veh_energy: undefined,
-    veh_doorsCount: undefined,
-    veh_bodyType: undefined,
-    veh_realPowerHp: undefined,
-    veh_fiscalPowerCv: undefined,
-    veh_gearboxType: undefined,
-    veh_version: "",
-    veh_registrationCardDate: undefined,
+    return {
+      veh_baseId: "",
+      veh_clientId: "",
+      veh_licensePlate: "",
+      veh_brandId: undefined,
+      veh_modelId: undefined,
+      veh_year: new Date().getFullYear(),
+      veh_color: "",
+      veh_kilometrage: "",
 
+      veh_firstRegistrationDate: undefined,
+      veh_energy: undefined,
+      veh_doorsCount: undefined,
+      veh_bodyType: undefined,
+      veh_realPowerHp: undefined,
+      veh_fiscalPowerCv: undefined,
+      veh_gearboxType: undefined,
+      veh_version: "",
+      veh_registrationCardDate: undefined,
+    }
   })
 
   const [clients, setClients] = useState<any[]>([])
@@ -129,7 +139,6 @@ export function AddVehiculeForm({
   useEffect(() => {
     if (!vehicule.veh_clientId) {
       setAgences([])
-      setVehicule((prev) => ({ ...prev, veh_baseId: "" }))
       return
     }
 
