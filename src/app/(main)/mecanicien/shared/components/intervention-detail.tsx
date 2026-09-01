@@ -37,6 +37,15 @@ export default function InterventionDetail({
 
   const history = selectedIntervention?.statusHistory ?? []
 
+  // Client/agence enregistrés sur l'intervention au moment de sa création,
+  // comparés au client/agence actuels du véhicule : signale un véhicule
+  // ayant migré depuis (même logique que vehicle-apercu.tsx côté gestionnaire).
+  const historicalClient = selectedIntervention?.interventionClient?.name
+  const historicalBase = selectedIntervention?.interventionBase?.location
+  const isHistorical =
+    (historicalClient && historicalClient !== selectedIntervention?.vehicle?.client?.name) ||
+    (historicalBase && historicalBase !== selectedIntervention?.vehicle?.base?.location)
+
   const {
     photos,
     loading: photosLoading,
@@ -141,6 +150,21 @@ export default function InterventionDetail({
           </div>
         </div>
       </div>
+
+      {isHistorical && (
+        <div
+          className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs sm:text-sm text-amber-800 flex items-center justify-between gap-2 flex-wrap"
+          title="Ce client/agence a changé depuis cette intervention"
+        >
+          <span>
+            <strong>Au moment de l'intervention :</strong>{" "}
+            {historicalClient ?? selectedIntervention?.vehicle?.client?.name} • {historicalBase ?? selectedIntervention?.vehicle?.base?.location}
+          </span>
+          <span className="inline-flex items-center rounded-full bg-amber-200 px-2 py-0.5 font-semibold text-amber-900">
+            Historique
+          </span>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 

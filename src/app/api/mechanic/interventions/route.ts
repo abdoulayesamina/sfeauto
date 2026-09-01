@@ -196,15 +196,28 @@ export async function GET(request: NextRequest) {
           model: intervention.int_vehicle?.veh_model?.mod_name ?? null,
           year: intervention.int_vehicle?.veh_year,
           color: intervention.int_vehicle?.veh_color,
+          // Client/agence ACTUELS du véhicule (peuvent avoir changé depuis
+          // la création de l'intervention — voir interventionClient/Base
+          // ci-dessous pour le snapshot historique).
           client: {
-            id: intervention.int_clientId ?? intervention.int_vehicle?.veh_client?.cli_id ?? "unknown",
-            name: intervention.int_client?.cli_name ?? intervention.int_vehicle?.veh_client?.cli_name ?? "Client inconnu",
+            id: intervention.int_vehicle?.veh_client?.cli_id ?? intervention.int_clientId ?? "unknown",
+            name: intervention.int_vehicle?.veh_client?.cli_name ?? intervention.int_client?.cli_name ?? "Client inconnu",
           },
           base: {
-            id: intervention.int_baseId ?? intervention.int_vehicle?.veh_base?.bas_id ?? "unknown",
-            location: intervention.int_base?.bas_location ?? intervention.int_vehicle?.veh_base?.bas_location ?? "Lieu inconnu",
+            id: intervention.int_vehicle?.veh_base?.bas_id ?? intervention.int_baseId ?? "unknown",
+            location: intervention.int_vehicle?.veh_base?.bas_location ?? intervention.int_base?.bas_location ?? "Lieu inconnu",
           },
         },
+        // Client/agence enregistrés SUR l'intervention au moment de sa
+        // création : sert à détecter/afficher qu'un véhicule a migré vers
+        // un autre client/agence depuis (même logique que vehicle-apercu.tsx
+        // côté gestionnaire).
+        interventionClient: intervention.int_client
+          ? { id: intervention.int_client.cli_id, name: intervention.int_client.cli_name }
+          : null,
+        interventionBase: intervention.int_base
+          ? { id: intervention.int_base.bas_id, location: intervention.int_base.bas_location }
+          : null,
         handledBy: intervention.int_handledBy
           ? {
             name: intervention.int_handledBy.usr_name,

@@ -388,6 +388,15 @@ export default function MecanicienPage() {
               const uiStatus = inv.status;
               const ageMeta = getInterventionAgeMeta(inv.status, inv.createdAt);
 
+              // Client/agence enregistrés sur l'intervention au moment de sa
+              // création, comparés au client/agence actuels du véhicule :
+              // permet de signaler qu'un véhicule a migré depuis.
+              const historicalClient = inv.interventionClient?.name;
+              const historicalBase = inv.interventionBase?.location;
+              const isHistorical =
+                (historicalClient && historicalClient !== inv.vehicle.client.name) ||
+                (historicalBase && historicalBase !== inv.vehicle.base.location);
+
               return (
                 <div
                   key={inv.id}
@@ -425,6 +434,21 @@ export default function MecanicienPage() {
                         </span>
                       </p>
                     </div>
+
+                    {isHistorical && (
+                      <div
+                        className="flex flex-wrap items-center gap-2 text-[11px] sm:text-xs bg-amber-50 border border-amber-200 rounded-md px-2 py-1 text-amber-800"
+                        title="Ce client/agence a changé depuis cette intervention"
+                      >
+                        <span>
+                          <strong>Au moment de l'intervention :</strong>{" "}
+                          {historicalClient ?? inv.vehicle.client.name} • {historicalBase ?? inv.vehicle.base.location}
+                        </span>
+                        <span className="inline-flex items-center rounded-full bg-amber-200 px-2 py-0.5 font-semibold text-amber-900">
+                          Historique
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-2">
